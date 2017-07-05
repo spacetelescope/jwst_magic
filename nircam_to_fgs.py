@@ -14,8 +14,9 @@ from scipy import ndimage
 
 #Local
 from mkproc import mkproc
-import utils
-import counts_to_jmag
+from find_psfs import *
+from utils import *
+from counts_to_jmag import *
 
 '''
 Python Img Re-Binning Tool for FGS comissioning data
@@ -132,7 +133,7 @@ def pad_data(data, padding):
 def resize_nircam_image(data, NIRCam_scale,FGS_pix,FGS_plate_size):
     cropped = data[4:-4,4:-4] # crop 4pixel zero-padding
     binned_pix = int(round((data.shape[0]*NIRCam_scale*FGS_pix)/(FGS_plate_size*60)))
-    data_resized = utils.resize_array(cropped,binned_pix,binned_pix)
+    data_resized = resize_array(cropped,binned_pix,binned_pix)
 
     padding = (cropped.shape[0] - binned_pix)/2
     data_pad = pad_data(data_resized, padding)
@@ -141,18 +142,18 @@ def resize_nircam_image(data, NIRCam_scale,FGS_pix,FGS_plate_size):
     return fgs_data
 
 
-def normalize_data(data, fgs_counts, objects=None):
+def normalize_data(data, fgs_counts, threshold=5):
     '''
     Passing in the objects array will ensure that the total counts in the image
     are only distributed to the psfs
-    '''
-    if objects is not None:
-        objs = objects!=0
-        psfs_only = data * objs
-        data_norm = (float(fgs_counts)/psfs_only.sum()) * psfs_only.astype(np.float64)
 
-    else:
-        data_norm = (float(fgs_counts)/data.sum()) * data.astype(np.float64)
+    Threshold of 5 assumes background is very low. *This will need to be automated
+    later.*
+    '''
+    mask = data>threshold
+    data_norm = np.copy(mask*data.astype(np.float64))
+    data_norm *= (fgs_counts/data_norm.sum()) #renormalize by sum of non-masked data
+    data_norm[mask==0] = data[mask==0] #background is not normalized
 
     return data_norm
 
@@ -173,7 +174,7 @@ def add_bias_to_data(bias_data_path, FGS_data, root, guider='', output_path='',
        guider1: "g1bias.fits"
        guider2: "g2bias.fits"
     """
-    header, guider = utils.read_fits(bias_data_path,index=0)
+    header, guider = read_fits(bias_data_path,index=0)
 
     binned_pad_norm_bias = FGS_data + guider
 
@@ -185,45 +186,10 @@ def add_bias_to_data(bias_data_path, FGS_data, root, guider='', output_path='',
             guider_name = bias_data_path.split('/')[-1].split('.')[0][-6:]
         out_path =  os.path.join(output_path,'bin_norm_bias_imgs',
                       '{}_G{}_binned_pad_norm.fits'.format(root,guider))
-        utils.write_fits(out_path,binned_pad_norm_bias)
+        write_fits(out_path,binned_pad_norm_bias)
 
     return binned_pad_norm_bias
 
-def find_objects(smoothed_data):
-    '''
-    Smooth image and pull out individual psfs
-
-    Returns 'objects' - image array with all pixels belonging to one object
-    given the same value - and 'num_objects' - the total number of objects
-    '''
-    # Use Otsu thresholding to pull out only bright regions
-    global_otsu = utils.threshold_im(smoothed_data)
-    # Use labels to pull out the 18 psfs
-    objects, num_objects = ndimage.measurements.label(global_otsu)
-
-    return objects, num_objects
-
-
-def find_centroids(data, objects, num_objects, root, guider, output_path='',
-                   write_out_file=False):
-    """
-    Given an image with multiple PSFs, smooth first with a Gaussian filter before
-    using Otsu thresholding to pull out of the PSFs. Then, label each of these
-    PSFs so that their centroids can be found and these coordinates returned.
-    """
-    ## Pull out coords of each psf
-    ## **Coords are Y,X**
-    coords = []
-    for i in range(1,num_objects+1):
-        im = np.copy(objects)
-        im[objects!=i]=0
-        coords.append(ndimage.measurements.center_of_mass(im*data))
-
-    if write_out_file:
-        filename= os.path.join(output_path,'{}_G{}_psf_centers.csv'.format(root,guider))
-        utils.write_to_file(filename,coords,labels=['y','x'])
-
-    return coords
 
 def plot_centroids(data,coords,root,guider,output_path):
     plt.clf()
@@ -247,7 +213,7 @@ def count_rate_total(data, smoothed_data, gs_points, threshold = None,
     """
     if threshold is None:
         threshold = smoothed_data.max() * 0.05
-    objects, num_objects = utils.isolate_psfs(smoothed_data,threshold)
+    objects, num_objects = isolate_psfs(smoothed_data,threshold)
 
     counts = []
     coords = []
@@ -259,7 +225,7 @@ def count_rate_total(data, smoothed_data, gs_points, threshold = None,
         coord = ndimage.measurements.center_of_mass(im*data)
         coords.append(coord)
         if counts_3x3:
-            counts.append(utils.countrate_3x3(coord,data))
+            counts.append(countrate_3x3(coord,data))
         else:
             counts.append(np.sum(im*data))
         val.append(np.sum(im*1.))
@@ -345,9 +311,9 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None):
         if jmag is None:
             print('No counts or J magnitude given, setting to default')
             jmag=11
-        fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag,guider)
+        fgs_counts = jmag_to_fgs_counts(jmag,guider)
     else:
-        jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts,guider)
+        jmag = fgs_counts_to_jmag(fgs_counts,guider)
 
     print('J magnitude = {:.1f}'.format(jmag))
 
@@ -374,7 +340,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
-        header, data = utils.read_fits(im)
+        header, data = read_fits(im)
 
         # ---------------------------------------------------------------------
         ## Create FGS image
@@ -393,8 +359,8 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None):
         out_path = os.path.join(output_path,
                                 'FGS_imgs','{}_G{}_binned_pad_norm.fits'.format(root,guider))
         data_norm[data_norm >= 65535] = 65535 #any value about 65535 will wrap when converted to uint16
-        hdr = utils.read_fits(header_file,0)[0]
-        utils.write_fits(out_path,np.uint16(data_norm),header=hdr)
+        hdr = read_fits(header_file,0)[0]
+        write_fits(out_path,np.uint16(data_norm),header=hdr)
 
         # ---------------------------------------------------------------------
         ## Get coordinates and count rate
@@ -404,7 +370,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None):
         y, x, counts, val=count_rate_total(data_norm, smoothed_data,coords,
                                              counts_3x3=True)
         cols=create_cols_for_coords_counts(y,x,counts,val)
-        utils.write_cols_to_file(output_path,
+        write_cols_to_file(output_path,
                            filename='{0}_G{1}_psf_count_rates.txt'.format(root,guider),
                            labels=['y','x','count rate'],
                            cols=cols)

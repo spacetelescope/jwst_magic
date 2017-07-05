@@ -7,10 +7,16 @@ import os
 from skimage.filters import threshold_otsu
 from scipy import ndimage
 
-def write_to_fits(outfile,data,header=None):
+import matplotlib.pyplot as plt
+
+def write_fits(outfile,data,header=None):
     '''
     Write data to a simple fits. Assumes one extension and no header.
     '''
+    out_dir = os.path.dirname(outfile)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
     hdul = fits.PrimaryHDU(data=data)
     if header is not None:
         hdul.header = header
@@ -19,7 +25,7 @@ def write_to_fits(outfile,data,header=None):
     print("Successfully wrote: {}".format(outfile))
 
 
-def get_fits_data(filename, index = 1):
+def read_fits(filename, index = 1):
     '''
     Get the header and data (for the specified index) from a fits file
     '''
@@ -45,6 +51,10 @@ def write_to_file(filename,rows,labels=None,mode='w'):
     labels : list, optional
         List of labels for each column
     """
+    out_dir = os.path.dirname(filename)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
     mode=mode
     if filename.endswith('csv'):
         with open(filename, mode) as fout:
@@ -55,16 +65,75 @@ def write_to_file(filename,rows,labels=None,mode='w'):
             for i in rows:
                 csvwriter.writerow(i)
     else:
-        np.savetxt(filename,rows,fmt='%.4f',header=' '.join(labels))
+        np.savetxt(filename,rows,fmt='%.4f',header=' '.join(labels))#,fmt='%.4f'
 
 
 def write_cols_to_file(output_path, filename, labels, cols):
     filename= os.path.join(output_path,filename)
     write_to_file(filename,cols,labels=labels)
 
+# http://stackoverflow.com/questions/8090229/resize-with-averaging-or-rebin-a-numpy-2d-array
+def resize_array(a, new_rows, new_cols):
+    '''
+    This function takes an 2D numpy array and produces a smaller array
+    of size new_rows, new_cols. new_rows and new_cols must be less than
+    or equal to the number of rows and columns in a. new_rows and new_columns
+    do not have to be integer factors of the original array rows and columns.
+    '''
+    rows = len(a)
+    cols = len(a[0])
+    yscale = float(rows) / new_rows
+    xscale = float(cols) / new_cols
+
+    # first average across the cols to shorten rows
+    new_a = np.zeros((rows, new_cols))
+    for j in range(new_cols):
+        # get the indices of the original array we are going to average across
+        the_x_range = (j*xscale, (j+1)*xscale)
+        firstx = int(the_x_range[0])
+        lastx = int(the_x_range[1])
+        # figure out the portion of the first and last index that overlap
+        # with the new index, and thus the portion of those cells that
+        # we need to include in our average
+        x0_scale = 1 - (the_x_range[0]-int(the_x_range[0]))
+        xEnd_scale =  (the_x_range[1]-int(the_x_range[1]))
+        # scale_line is a 1d array that corresponds to the portion of each old
+        # index in the_x_range that should be included in the new average
+        scale_line = np.ones((lastx-firstx+1))
+        scale_line[0] = x0_scale
+        scale_line[-1] = xEnd_scale
+        # Make sure you don't screw up and include an index that is too large
+        # for the array. This isn't great, as there could be some floating
+        # point errors that mess up this comparison.
+        if scale_line[-1] == 0:
+            scale_line = scale_line[:-1]
+            lastx = lastx - 1
+        # Now it's linear algebra time. Take the dot product of a slice of
+        # the original array and the scale_line
+        new_a[:,j] = np.dot(a[:,firstx:lastx+1], scale_line)/scale_line.sum()
+    # Then average across the rows to shorten the cols. Same method as above.
+    # It is probably possible to simplify this code, as this is more or less
+    # the same procedure as the block of code above, but transposed.
+    # Here I'm reusing the variable a. Sorry if that's confusing.
+    a = np.zeros((new_rows, new_cols))
+    for i in range(new_rows):
+        the_y_range = (i*yscale, (i+1)*yscale)
+        firsty = int(the_y_range[0])
+        lasty = int(the_y_range[1])
+        y0_scale = 1 - (the_y_range[0]-int(the_y_range[0]))
+        yEnd_scale =  (the_y_range[1]-int(the_y_range[1]))
+        scale_line = np.ones((lasty-firsty+1))
+        scale_line[0] = y0_scale
+        scale_line[-1] = yEnd_scale
+        if scale_line[-1] == 0:
+            scale_line = scale_line[:-1]
+            lasty = lasty - 1
+        a[i:,] = np.dot(scale_line, new_a[firsty:lasty+1,])/scale_line.sum()
+
+    return a
 
 
-def isolate_psfs(smoothed_data,threshold):
+def isolate_psfs(smoothed_data,threshold,num_psfs=18):
     psfs_only = smoothed_data>threshold
     objects, num_objects = ndimage.measurements.label(psfs_only)
 
@@ -73,8 +142,13 @@ def isolate_psfs(smoothed_data,threshold):
     # the threshold will be very high which will ruin the fun for all the other PSFs.
     # **This is NOT a permanent fix.**
 
-    while num_objects != 18: # assume you want 18 PSFs
-        threshold +=5
+    while num_objects > num_psfs: # assume you want 18 PSFs
+        threshold = .95*threshold
+        psfs_only = smoothed_data > threshold
+        objects, num_objects = ndimage.measurements.label(psfs_only)
+
+    while num_objects < num_psfs: # assume you want 18 PSFs
+        threshold = 1.05*threshold
         psfs_only = smoothed_data > threshold
         objects, num_objects = ndimage.measurements.label(psfs_only)
 
@@ -90,25 +164,16 @@ def threshold_im(im):
     return global_otsu
 
 ## All the ways to get the countrate:
-def count_rate_3x3(root, data, gs_points, radius):
+def countrate_3x3(coords,data):
     """
     Using the coordinates of each PSF,place a 3x3 box around center pixel, and sum
     the counts of the pixels in this box.
     """
+    xx = int(coords[1])
+    yy = int(coords[0])
 
-    for point in gs_points:
-
-        xx = int(point[1])
-        yy = int(point[0])
-
-        tmp2 = []
-        tmp = []
-        for ii in range(-1,2):
-            for jj in range(-1,2):
-                tmp.append(p_data[yy+jj,xx+ii])
-
-        tmp2.append(sum(tmp))
-    return tmp2
+    counts = np.sum(data[yy-1:yy+2,xx-1:xx+2])
+    return counts
 
 def get_countrate(x,y,arr):
     """
