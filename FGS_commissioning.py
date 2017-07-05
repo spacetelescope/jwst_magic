@@ -70,13 +70,13 @@ class FGS(object):
         ## READ IN IMAGE
         if isinstance(im,str):
             hdu=fits.open(im) #*_bin_norm from FGS_bin_tool
-            self.truth = np.uint16(hdu[0].data)
+            self.input_im = np.uint16(hdu[0].data)
         else:
-            self.truth = np.uint16(im)
+            self.input_im = np.uint16(im)
 
         # Correct for negative, saturated pixels and other nonesense
-        self.truth = correct_image(self.truth)
-        print('Truth: {}'.format(np.max(self.truth)))
+        self.input_im = correct_image(self.input_im)
+        print('Max of input image: {}'.format(np.max(self.input_im)))
 
         self.get_coords_and_counts(reg_file=reg_file)
         if guide_star_coords is None:
@@ -95,7 +95,7 @@ class FGS(object):
 
         if reg_file.endswith('reg'):
             self.x,self.y = np.loadtxt(reg_file)
-            self.countrate = utils.get_countrate(self.x,self.y,self.truth)
+            self.countrate = utils.get_countrate(self.x,self.y,self.input_im)
         else:
             self.y,self.x,self.countrate = np.loadtxt(reg_file,delimiter=' ',skiprows=1).T #includes y, x, coords and countrate
 
@@ -224,6 +224,10 @@ class FGS(object):
         nx, ny = 32
         nramps = 5
         ACQ2 = repeat 5x(reset, drop, read, drop, drop, drop, read, drop)
+
+        TRK:
+        nx, ny = 32
+        nramps = a large number (i.e. 5000+)
         '''
 
         self.nx = nx
@@ -243,13 +247,11 @@ class FGS(object):
             else:
                 self.nstrips = nstrips
 
-        elif self.step is not 'ID':
-            self.truth = create_im_subarray(self.truth,self.xgs,self.ygs,self.nx,self.ny)
-
         else:
-            pass
+            self.input_im = create_im_subarray(self.input_im,self.xgs,self.ygs,self.nx,self.ny)
 
-        self.sky = self.truth * tcds
+
+        self.sky = self.input_im * tcds
 
 
     def create_arrays(self, x, y, acqNum=None, cds=True):
@@ -265,13 +267,13 @@ class FGS(object):
                                     self.nramps, self.nx, self.ny,
                                     self.biasZeroPt, self.biasKTC, self.biasPed,
                                     data_path = self.data_path)
-        self.arr = self.create_noisy_sky(self.bias, self.sky, self.poissonNoise, acqNum)
+        self.image = self.create_noisy_sky(self.bias, self.sky, self.poissonNoise, acqNum)
 
         if cds:
-            self.cds = self.create_cds_image(self.arr)
+            self.cds = self.create_cds_image(self.image)
 
         if self.step == 'ID':
-            self.strips = self.create_strips(self.arr)
+            self.strips = self.create_strips(self.image)
 
 
     def write_out_files(self,x,y,countrate,acqNum=''):
@@ -327,7 +329,7 @@ class FGS(object):
 
             # Create ff fits file
             filename_ff = os.path.join(self.out_dir,'{}_G{}_{}ff.fits'.format(self.root,self.guider,self.step))
-            utils.write_fits(filename_ff,np.uint16(self.arr))
+            utils.write_fits(filename_ff,np.uint16(self.image))
 
             # Extract strips from ff img
             filename_id_strips = os.path.join(self.out_dir,'{}_G{}_{}strips.fits'.format(self.root,self.guider,self.step))
@@ -342,7 +344,7 @@ class FGS(object):
 
             # Noisy sky acquisition fits images
             filename_noisy_sky = os.path.join(self.out_dir,'{}_G{}_{}{}.fits'.format(self.root,self.guider,self.step,acqNum))
-            utils.write_fits(filename_noisy_sky,np.uint16(self.arr))
+            utils.write_fits(filename_noisy_sky,np.uint16(self.image))
 
         else:
             pass
@@ -372,9 +374,11 @@ def display(image, ind=0, vmin=None, vmax=None, cmap='Greys_r', x=None, y=None,
     plt.show()
 
 ### Arrays and array manipulation
-def add_jitter(cube,total_shift=3):
+def add_jitter(cube,x,y,nx,ny,total_shift=3):
     '''
     Add random single pixel jitter
+
+    VERY rudimentary. Uses np.roll so images look kind of funny.
     '''
     cube2 = np.zeros_like(cube)
     for i in range(len(cube)):
@@ -474,7 +478,7 @@ def run_ACQ(im, guider, root, out_dir=None, template_path=None, interactive=Fals
     if interactive:
         return acq1, acq2
 
-def run_TRK(im, guider, root, num_frames, out_dir=None, interactive=False):
+def run_TRK(im, guider, root, num_frames, out_dir=None, jitter=True, interactive=False):
     '''
     Create a TRK object and create all necessary files to fun the TRK simulation
     in DHAS. Returns TRK object.
@@ -485,14 +489,18 @@ def run_TRK(im, guider, root, num_frames, out_dir=None, interactive=False):
     trk.setup_step(nx=32, ny=32, nramps=num_frames, tcds=trk.tcdsTRK, step='TRK')
     print(trk.step)
     trk.create_arrays(trk.xgs,trk.ygs,cds=False)
+
+    if jitter:
+        trk.image = add_jitter(trk.image,trk.xgs,trk.ygs,trk.nx,trk.ny,total_shift=1)
+
     filename_noisy_sky = os.path.join(trk.out_dir,'{}_G{}_{}.fits'.format(trk.root,trk.guider,trk.step))
-    utils.write_fits(filename_noisy_sky,np.uint16(trk.arr))
+    utils.write_fits(filename_noisy_sky,np.uint16(trk.image))
 
     if interactive:
         return trk
 
-def run_ALL(im, guider, root, num_frames=None, out_dir=None, template_path=None):
+def run_ALL(im, guider, root, num_frames=None, out_dir=None, template_path=None, jitter=True):
     # Not interatctive!!
     run_ID(im, guider, root, out_dir, template_path)
     run_ACQ(im, guider, root, out_dir, template_path)
-    run_TRK(im, guider, root, num_frames, out_dir)
+    run_TRK(im, guider, root, num_frames, out_dir, jitter)

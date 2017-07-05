@@ -33,7 +33,7 @@ class mkproc(object):
 
         # Create output directory if does not exist
         if out_dir is None:
-            self.out_dir = os.path.join(local_path,'out',root)
+            self.out_dir = os.path.join(local_path,'out',root,'dhas_files')
         else:
             self.out_dir = out_dir
         if not os.path.exists(self.out_dir):
