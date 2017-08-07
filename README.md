@@ -18,6 +18,12 @@ Note: The image that you will use for FGS_commissioning.py is
 FGS_imgs/{root}_bin_norm_img. Guider is indicated in the file name.
 
 
+select_psfs.py
+---------------
+This tool will take the FGS image created with nircam_to_fgs, and allow the user
+to choose the guide and reference stars. This is a simple tool that displays the
+image, then the user clicks on the center of each star that they want to use.
+This allows for humans to choose the best PSFs without relying on software. 
 
 FGS_commissioning.py
 --------------------
