@@ -10,7 +10,7 @@ class mkproc(object):
     '''
     Makes CECIL proc files for FGS guider 1 and 2
     '''
-    def __init__(self,guider,root,x,y,c,step,thresh_factor=0.5,out_dir=None,
+    def __init__(self,guider,root,x,y,c,step,nref,thresh_factor=0.5,out_dir=None,
                  template_path=None):
         '''
         Parameters
@@ -20,7 +20,7 @@ class mkproc(object):
         root: str
             Root for data
         reg_file: str
-            <location>/<root>_psf_count_rates.txt (Include y, x, and counts for
+            <location>/<root>_regfile.txt (Include y, x, and counts for
             each star)
         step: str
             'ID' or 'ACQ'
@@ -50,7 +50,7 @@ class mkproc(object):
 
         # Depending on the 'step' create the correct CECIL proc files.
         if step == 'ID':
-            self.create_ID_proc_file(root,guider,x,y,c,thresh_factor=thresh_factor)
+            self.create_ID_proc_file(root,guider,x,y,c,thresh_factor=thresh_factor,nref=nref)
         elif step == 'ACQ':
             self.create_ACQ_proc_file(root,guider)
 
@@ -85,15 +85,15 @@ class mkproc(object):
                 file_out.write(line)
         t.close()
 
-    def create_ID_proc_file(self,root,guider,x,y,c,thresh_factor,nref=9):
+    def create_ID_proc_file(self,root,guider,x,y,c,thresh_factor,nref):
         eol='\n'
+        print('Number of reference stars: {}'.format(nref))
+        #sgid='_G{}'.format(guider)
 
-        sgid='_G{}'.format(guider)
-
-        with open(os.path.join(self.out_dir,'{0}{1}_ID.prc'.format(root,sgid)), 'w') as file_out:
+        with open(os.path.join(self.out_dir,'{0}_G{1}_ID.prc'.format(root,guider)), 'w') as file_out:
             self.write_from_template(self.templateHDR,file_out)
 
-            file_out.write('PROC {0}{1}_ID'.format(root,sgid))
+            file_out.write('PROC {0}_G{1}_ID'.format(root,guider))
             file_out.write(eol)
 
             self.write_from_template(self.templateA,file_out)
@@ -105,7 +105,6 @@ class mkproc(object):
             thresh=threshfactor*c
             nstar=len(xAngle)
 
-            #nref=nstar-1
             file_out.write('@IFGS_GUIDESTAR {0}, DFT,{1:12.4f},{2:12.4f},{3:12d},{4:8d}'.format(self.guider,xAngle[0],yAngle[0],int(c[0]),int(thresh[0])))
             file_out.write(eol)
 
@@ -117,14 +116,14 @@ class mkproc(object):
 
                 self.write_from_template(self.templateC,file_out)
 
-
-                for istar in range(1,nref+1):
-                    file_out.write('@IFGS_REFSTAR {0},{1:5d},{2:12.6f},{3:12.6f},{4:8d},{5:8d}'.format(self.guider,int(istar-1),xAngle[istar],yAngle[istar],int(c[istar]),int(thresh[istar])))
+                for istar in range(1,nref):
+                    file_out.write('@IFGS_REFSTAR {0},{1:5d},{2:12.6f},{3:12.6f},{4:8d},{5:8d}'.format(self.guider,int(istar),xAngle[istar],yAngle[istar],int(c[istar]),int(thresh[istar])))
                     file_out.write(eol)
                     self.write_from_template(self.templateD,file_out)
 
-                istar=nstar-1
-                file_out.write('@IFGS_REFSTAR {0},{1:5d},{2:12.6f},{3:12.6f},{4:8d},{5:8d}'.format(self.guider,int(istar-1),xAngle[istar],yAngle[istar],int(c[istar]),int(thresh[istar])))
+                #The last reference star ends with a different template so it written outside of the for loop
+                istar=nref
+                file_out.write('@IFGS_REFSTAR {0},{1:5d},{2:12.6f},{3:12.6f},{4:8d},{5:8d}'.format(self.guider,int(istar),xAngle[istar],yAngle[istar],int(c[istar]),int(thresh[istar])))
                 file_out.write(eol)
 
                 self.write_from_template(self.templateE,file_out)
@@ -132,29 +131,29 @@ class mkproc(object):
             self.write_from_template(self.templateF,file_out)
 
         file_out.close()
-        print("Successfully wrote: {0}{1}_ID.prc".format(root,sgid))
+        print("Successfully wrote: {0}_G{1}_ID.prc".format(root,guider))
 
 
     def create_ACQ_proc_file(self,root,guider):
         eol='\n'
 
-        sgid='_G{}'.format(guider)
+        #sgid='_G{}'.format(guider)
 
-        i1,x1,y1,c1 = np.loadtxt(os.path.join(self.out_dir,'{}{}_ACQ1.stc'.format(root,sgid))).T #corner coords & gs counts
+        i1,x1,y1,c1 = np.loadtxt(os.path.join(self.out_dir,'{}_G{}_ACQ1.stc'.format(root,guider))).T #corner coords & gs counts
         threshgs=0.50*c1
 
-        i2,x2,y2,c2 = np.loadtxt(os.path.join(self.out_dir,'{}{}_ACQ2.stc'.format(root,sgid))).T
+        i2,x2,y2,c2 = np.loadtxt(os.path.join(self.out_dir,'{}_G{}_ACQ2.stc'.format(root,guider))).T
 
-        with open(os.path.join(self.out_dir,'{0}{1}_ACQ.prc'.format(root,sgid)), 'w') as file_out:
+        with open(os.path.join(self.out_dir,'{0}_G{1}_ACQ.prc'.format(root,guider)), 'w') as file_out:
             self.write_from_template(self.templateHDR,file_out)
 
-            file_out.write('PROC {0}{1}_ACQ'.format(root,sgid))
+            file_out.write('PROC {0}_G{1}_ACQ'.format(root,guider))
             file_out.write(eol)
 
             self.write_from_template(self.templateA,file_out)
 
 
-            file_out.write('@IFGS_GUIDESTAR {}, 2,{:12.4f},{:12.4f},{:12.4f},{:8d}'.format(self.guider,float(x1),float(y1),float(c1),int(threshgs)))
+            file_out.write('@IFGS_GUIDESTAR {0}, 2,{1:12.4f},{2:12.4f},{3:12.4f},{4:8d}'.format(self.guider,float(x1),float(y1),float(c1),int(threshgs)))
             self.write_from_template(self.templateB,file_out)
             file_out.write('@IFGS_CONFIG {0}, SWADDRESS=spaceWireAddr1, SLOT=1, NINTS=1, \
             NGROUPS=groupNum1, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=128, NCOLS=128, \
@@ -171,7 +170,7 @@ class mkproc(object):
 
             self.write_from_template(self.templateD,file_out)
         file_out.close()
-        print("Successfully wrote: {0}{1}_ACQ.prc".format(root,sgid))
+        print("Successfully wrote: {0}_G{1}_ACQ.prc".format(root,guider))
 
 def convert_pix_to_ideal(guider,x,y):
         if guider == 1:

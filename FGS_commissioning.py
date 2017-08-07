@@ -91,8 +91,8 @@ class FGS(object):
 
         if reg_file is None:
             reg_file = os.path.join(os.path.join(self.local_path,'out', self.root,
-                                    '{0}_G{1}_psf_count_rates.txt'.format(self.root,self.guider)))#'{}.reg'.format(root)
-
+                                    '{0}_G{1}_regfile.txt'.format(self.root,self.guider)))#'{}.reg'.format(root)
+        print("Using {} as the reg file".format(reg_file))
         if reg_file.endswith('reg'):
             self.x,self.y = np.loadtxt(reg_file)
             self.countrate = utils.get_countrate(self.x,self.y,self.input_im)
@@ -181,7 +181,7 @@ class FGS(object):
             yi = [yi]
             countrate = [countrate]
 
-        inum = np.arange(-1,len(xi)-1,1)
+        inum = np.arange(len(xi))
         write_file = open(filename,'w+')
         data = np.array([inum,xi,yi,countrate]).T
         np.savetxt(write_file,data,fmt=['%d','%f','%f','%e'])
@@ -393,9 +393,14 @@ def create_im_subarray(image,x,y,nx,ny,show_fig=False):
     the guide star.
     '''
     im = np.copy(image)
-    x1 = int(x)-nx/2
+    if (nx % 2 == 1):
+        x1 = int(x)-(nx/2+1)
+        y1 = int(y)-(ny/2+1)
+    else:
+        x1 = int(x)-nx/2
+        y1 = int(y)-ny/2
+
     x2 = int(x)+nx/2
-    y1 = int(y)-ny/2
     y2 = int(y)+ny/2
 
     im = im[y1:y2,x1:x2]
@@ -432,7 +437,7 @@ def add_background(array,nx,ny,nz):
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-def run_ID(im, guider, root, out_dir=None, template_path=None, interactive=False):
+def run_ID(im, guider, root, out_dir=None, template_path=None, nref=10, interactive=False):
     '''
     Create an ID object and create all necessary files to fun the ID simulation
     in DHAS. Also creates CECIL proc file. Returns ID object.
@@ -445,7 +450,7 @@ def run_ID(im, guider, root, out_dir=None, template_path=None, interactive=False
     id0.write_out_files(id0.x,id0.y,id0.countrate)
 
     # Make CECIL proc file
-    mkproc(guider, root, id0.x, id0.y, id0.countrate, step='ID', out_dir=out_dir,
+    mkproc(guider, root, id0.x, id0.y, id0.countrate, step='ID', nref=nref, out_dir=out_dir,
            template_path=template_path)
 
     if interactive:
@@ -472,7 +477,7 @@ def run_ACQ(im, guider, root, out_dir=None, template_path=None, interactive=Fals
     acq2.write_out_files(acq2.xgs-(acq2.nx/2.),acq2.ygs-(acq2.ny/2.),acq2.countrategs,acqNum=2)
 
     # Make CECIL proc file
-    mkproc(guider, root, acq1.xgs, acq1.ygs, acq1.countrategs, step='ACQ',
+    mkproc(guider, root, acq1.xgs, acq1.ygs, acq1.countrategs, step='ACQ', nref=None,
            out_dir=out_dir, template_path=template_path)
 
     if interactive:
@@ -499,8 +504,17 @@ def run_TRK(im, guider, root, num_frames, out_dir=None, jitter=True, interactive
     if interactive:
         return trk
 
-def run_ALL(im, guider, root, num_frames=None, out_dir=None, template_path=None, jitter=True):
+def create_LOSTRK(im, guider, root, nx, ny, out_dir=None,interactive=False):
+    trk = FGS(im, guider, root, out_dir)
+    trk.nreads = 1 #want only single frame image
+    trk.setup_step(nx, ny, nramps=1, tcds=trk.tcdsTRK, step='TRK')
+    trk.create_arrays(trk.xgs,trk.ygs,cds=False)
+
+    filename_noisy_sky = os.path.join(trk.out_dir,'{}_G{}_LOS{}.fits'.format(trk.root,trk.guider,trk.step))
+    utils.write_fits(filename_noisy_sky,trk.image)
+
+def run_all(im, guider, root, num_frames=None, out_dir=None, template_path=None, jitter=True,nref=10):
     # Not interatctive!!
-    run_ID(im, guider, root, out_dir, template_path)
+    run_ID(im, guider, root, out_dir, template_path,nref)
     run_ACQ(im, guider, root, out_dir, template_path)
     run_TRK(im, guider, root, num_frames, out_dir, jitter)

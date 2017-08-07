@@ -133,6 +133,21 @@ def resize_array(a, new_rows, new_cols):
     return a
 
 
+def find_objects(smoothed_data):
+    '''
+    Smooth image and pull out individual psfs
+
+    Returns 'objects' - image array with all pixels belonging to one object
+    given the same value - and 'num_objects' - the total number of objects
+    '''
+    # Use Otsu thresholding to pull out only bright regions
+    global_otsu = threshold_im(smoothed_data)
+    # Use labels to pull out the 18 psfs
+    objects, num_objects = ndimage.measurements.label(global_otsu)
+
+    return objects, num_objects
+
+
 def isolate_psfs(smoothed_data,threshold,num_psfs=18):
     psfs_only = smoothed_data>threshold
     objects, num_objects = ndimage.measurements.label(psfs_only)

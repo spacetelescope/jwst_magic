@@ -9,7 +9,6 @@ import numpy as np
 
 
 ## read in X Y in pixels
-
 def g1RPtoIA(yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
              plateScale=0.06738281367, gain=1.5):
 
@@ -91,8 +90,6 @@ def g1RPtoIA(yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
 def g2RPtoIA(yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
              plateScale=0.06738281367, gain=1.5):
 
-    tint=0.338
-
     # the following coeffs are from julia
     # dated 17-Feb-2012
     realPToIdealPXCoeff0 = -3.2653125E+01
@@ -164,6 +161,128 @@ def g2RPtoIA(yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
     yAngle = (yIdealPixel - yOffset)*plateScale
 
     return xAngle, yAngle
+
+def RPtoIA(guider,yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
+             plateScale=0.06738281367, gain=1.5):
+    if guider == 1:
+        g = get_g1_conversion_factors()
+    elif guider == 2:
+        g = get_g2_conversion_factors()
+
+    #  Reverse calculation of the coordinate conversion
+    xIdealPixel = g['X']['Coeff0']
+    xIdealPixel = xIdealPixel + g['X']['Coeff1']*xRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff2']*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff3']*xRealPixel*xRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff4']*xRealPixel*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff5']*yRealPixel*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff6']*xRealPixel*xRealPixel*xRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff7']*xRealPixel*xRealPixel*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff8']*xRealPixel*yRealPixel*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff9']*yRealPixel*yRealPixel*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff10']*xRealPixel*xRealPixel*xRealPixel*xRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff11']*xRealPixel*xRealPixel*xRealPixel*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff12']*xRealPixel*xRealPixel*yRealPixel*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff13']*xRealPixel*yRealPixel*yRealPixel*yRealPixel
+    xIdealPixel = xIdealPixel + g['X']['Coeff14']*yRealPixel*yRealPixel*yRealPixel*yRealPixel
+
+    yIdealPixel = g['Y']['Coeff0']
+    yIdealPixel = yIdealPixel + g['Y']['Coeff1']*xRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff2']*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff3']*xRealPixel*xRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff4']*xRealPixel*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff5']*yRealPixel*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff6']*xRealPixel*xRealPixel*xRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff7']*xRealPixel*xRealPixel*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff8']*xRealPixel*yRealPixel*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff9']*yRealPixel*yRealPixel*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff10']*xRealPixel*xRealPixel*xRealPixel*xRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff11']*xRealPixel*xRealPixel*xRealPixel*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff12']*xRealPixel*xRealPixel*yRealPixel*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff13']*xRealPixel*yRealPixel*yRealPixel*yRealPixel
+    yIdealPixel = yIdealPixel + g['Y']['Coeff14']*yRealPixel*yRealPixel*yRealPixel*yRealPixel
+
+    xAngle = (xIdealPixel - xOffset)*plateScale
+    yAngle = (yIdealPixel - yOffset)*plateScale
+
+    return xAngle, yAngle
+
+def get_g1_conversion_factors():
+    g1 = {}
+    g1['X'] = {}
+    g1['X']['Coeff0'] = -2.3132211E+01
+    g1['X']['Coeff1']  = 9.9858571E-01
+    g1['X']['Coeff2']  = 1.0458177E-02
+    g1['X']['Coeff3']  = 2.6914738E-06
+    g1['X']['Coeff4']  = 6.7167416E-06
+    g1['X']['Coeff5']  = 9.9063452E-07
+    g1['X']['Coeff6']  = 1.2100144E-09
+    g1['X']['Coeff7']  = -3.4359146E-11
+    g1['X']['Coeff8']  = 1.2718376E-09
+    g1['X']['Coeff9']  = -2.0353075E-11
+    g1['X']['Coeff10'] = 5.3149090E-14
+    g1['X']['Coeff11'] = 9.3076979E-14
+    g1['X']['Coeff12'] = 8.3907183E-14
+    g1['X']['Coeff13'] = 9.7074620E-14
+    g1['X']['Coeff14'] = 1.9366816E-14
+
+    g1['Y'] = {}
+    g1['Y']['Coeff0'] = -2.6649388E+01
+    g1['Y']['Coeff1'] = -2.5585494E-03
+    g1['Y']['Coeff2'] = 1.0114078E+00
+    g1['Y']['Coeff3'] = 2.4056198E-06
+    g1['Y']['Coeff4'] = 2.0788818E-06
+    g1['Y']['Coeff5'] = 9.3110110E-06
+    g1['Y']['Coeff6'] = -1.6052215E-11
+    g1['Y']['Coeff7'] = 1.2730773E-09
+    g1['Y']['Coeff8'] = -9.1059163E-11
+    g1['Y']['Coeff9'] = 1.3291468E-09
+    g1['Y']['Coeff10'] = 2.1479653E-14
+    g1['Y']['Coeff11'] = 5.2933520E-14
+    g1['Y']['Coeff12'] = 1.4401378E-13
+    g1['Y']['Coeff13'] = 7.4524608E-14
+    g1['Y']['Coeff14'] = 1.2816500E-13
+
+    return g1
+
+
+def get_g2_conversion_factors():
+    g2 = {}
+    g2['X'] = {}
+    g2['X']['Coeff0'] = -3.2653125E+01
+    g2['X']['Coeff1']  = 1.0343933E+00
+    g2['X']['Coeff2']  = 2.1128135E-02
+    g2['X']['Coeff3']  = -9.0969494E-06
+    g2['X']['Coeff4']  = -1.4320516E-05
+    g2['X']['Coeff5']  = -3.9403361E-06
+    g2['X']['Coeff6']  = 1.6122843E-09
+    g2['X']['Coeff7']  = 5.9346314E-10
+    g2['X']['Coeff8']  = 2.0380335E-09
+    g2['X']['Coeff9'] = 2.0974142E-10
+    g2['X']['Coeff10'] = -2.8502771E-14
+    g2['X']['Coeff11'] = -8.3569450E-14
+    g2['X']['Coeff12'] = -5.0976659E-14
+    g2['X']['Coeff13'] = -9.1800561E-14
+    g2['X']['Coeff14'] = -8.9563271E-15
+
+    g2['Y'] = {}
+    g2['Y']['Coeff0'] = -7.7165127E+01
+    g2['Y']['Coeff1'] = 2.9152735E-02
+    g2['Y']['Coeff2'] = 1.0773690E+00
+    g2['Y']['Coeff3'] = -6.2761496E-06
+    g2['Y']['Coeff4'] = -7.8529777E-06
+    g2['Y']['Coeff5'] = -2.1370284E-05
+    g2['Y']['Coeff6'] = 2.0146586E-10
+    g2['Y']['Coeff7'] = 2.0163576E-09
+    g2['Y']['Coeff8'] = 6.6916423E-10
+    g2['Y']['Coeff9'] = 2.4400761E-09
+    g2['Y']['Coeff10'] = -1.9936426E-14
+    g2['Y']['Coeff11'] = -3.2487010E-14
+    g2['Y']['Coeff12'] = -1.3263445E-13
+    g2['Y']['Coeff13'] = -4.2058076E-14
+    g2['Y']['Coeff14'] = -1.2323597E-13
+
+    return g2
 
 
 def write_to_file(xAngle, yAngle):
