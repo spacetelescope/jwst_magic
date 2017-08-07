@@ -8,6 +8,20 @@ from glob import glob
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+import matplotlib
+from matplotlib import cycler
+matplotlib.rcParams['image.cmap'] = 'viridis'
+matplotlib.rcParams['axes.prop_cycle'] = cycler(u'color',['#1f77b4',
+            '#ff7f0e',
+            '#2ca02c',
+            '#d62728',
+            '#9467bd',
+            '#8c564b',
+            '#e377c2',
+            '#7f7f7f',
+            '#bcbd22',
+            '#17becf'])
+matplotlib.rcParams['image.origin'] = 'upper'
 
 from skimage.filters import threshold_otsu
 from scipy import ndimage
@@ -191,81 +205,11 @@ def add_bias_to_data(bias_data_path, FGS_data, root, guider='', output_path='',
     return binned_pad_norm_bias
 
 
-def plot_centroids(data,coords,root,guider,output_path):
-    plt.clf()
-    plt.imshow(data,cmap='Greys_r',norm=LogNorm())
-    for i in range(len(coords)):
-        plt.scatter(coords[i][1],coords[i][0],color='blue')
-    plt.title('Centroids found for {}'.format(root))
-    plt.xlim(0,np.shape(data)[0])
-    plt.ylim(0,np.shape(data)[0])
-    plt.savefig(os.path.join(output_path,'{}_G{}_centers.png'.format(root,guider)))
-    plt.close()
-
-
-def count_rate_total(data, smoothed_data, gs_points, threshold = None,
-                     counts_3x3=True):
-    """
-    Get the x,y, and counts for each psf in the image
-
-    The threshold default of 150, assumes that your data type is uint16. If not,
-    a good start is 40.
-    """
-    if threshold is None:
-        threshold = smoothed_data.max() * 0.05
-    objects, num_objects = isolate_psfs(smoothed_data,threshold)
-
-    counts = []
-    coords = []
-    val = []
-    for i in range(1,num_objects+1):
-        im = np.copy(objects)
-        im[objects!=i]=False
-        im[objects==i]=True
-        coord = ndimage.measurements.center_of_mass(im*data)
-        coords.append(coord)
-        if counts_3x3:
-            counts.append(countrate_3x3(coord,data))
-        else:
-            counts.append(np.sum(im*data))
-        val.append(np.sum(im*1.))
-
-    coords_master = []
-    #Pad the range over which the coordinates can match over a sufficiently large
-    # range, but not large enough that another PSF center could be within this area
-    pad = 12
-    #Make a master coordinate list that matches with the coords list, but gives
-    # the gs_points coordinates
-    for i in range(len(coords)):
-        for j in range(len(gs_points)):
-            if (coords[i][1]-pad < gs_points[j][1] < coords[i][1]+pad) and (coords[i][0]-pad < gs_points[j][0] < coords[i][0]+pad):
-                coords_master.append(gs_points[j])
-
-    y,x = map(list,zip(*coords_master))
-
-    return y, x, counts, val
-
-def create_cols_for_coords_counts(y,x,counts,val):
-    """
-    Create an array of columns of y, x, and counts of each PSF to be written out.
-    Put the PSF with the most compact PSF first in the list to make it the
-    Guide Star.
-    """
-
-    cols = []
-    for i, (yy,xx,co) in enumerate(zip(y,x,counts)):
-        cols.append([yy,xx,co]) ## these coordinates are y,x
-
-    #Find most compact PSF
-    min_ind = np.where(val == np.min(val))[0][0]
-    #Move most compact PSF to top of the list
-    cols.insert(0, cols.pop(min_ind))
-
-    return cols
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None):
+def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
+               return_im=True, output_path=None):
     '''
     Takes NIRCam image and turns it into an FGS-like image, gets count rate and location of
     each guide star in each image
@@ -336,11 +280,12 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None):
         root = basename.split('.')[0]
         print('Beginning to create FGS image from {}'.format(root))
 
-        output_path = os.path.join(local_path,'out',root)
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+        if output_path is None:
+            output_path = os.path.join(local_path,'out',root)
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
 
-        header, data = read_fits(im)
+        header, data = read_fits(im,1)
 
         # ---------------------------------------------------------------------
         ## Create FGS image
@@ -362,19 +307,8 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None):
         hdr = read_fits(header_file,0)[0]
         write_fits(out_path,np.uint16(data_norm),header=hdr)
 
-        # ---------------------------------------------------------------------
-        ## Get coordinates and count rate
-        coords = find_centroids(data_norm, objects, num_objects, root, guider,
-                                output_path=output_path)
-        plot_centroids(data_norm,coords,root,guider,output_path)
-        y, x, counts, val=count_rate_total(data_norm, smoothed_data,coords,
-                                             counts_3x3=True)
-        cols=create_cols_for_coords_counts(y,x,counts,val)
-        write_cols_to_file(output_path,
-                           filename='{0}_G{1}_psf_count_rates.txt'.format(root,guider),
-                           labels=['y','x','count rate'],
-                           cols=cols)
-
-        # ---------------------------------------------------------------------
 
         print ("Finished for {}, Guider = {}".format(root,guider))
+
+        if return_im:
+            return data_norm
