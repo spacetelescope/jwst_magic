@@ -11,13 +11,11 @@ import nircam_to_fgs
 local_path = os.path.dirname(os.path.realpath(__file__))
 
 def run_all(nircam_im, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_mod=None, convert_nircam=True, create_reg=True, create_files=True):
+            nircam_mod=None):
     if root is None:
         root = os.path.basename(nircam_im).split('.')[0]
 
     # convert NIRCam image to an FGS image
-    #if convert_nircam:
-    #else: go find file
     fgs_im = nircam_to_fgs.convert_im(nircam_im, guider, fgs_counts=fgs_counts,
                                       jmag=jmag, nircam_mod=None, return_im=True)
 
