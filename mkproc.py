@@ -2,6 +2,7 @@
 
 import numpy as np
 import os
+import shutil
 
 #local
 import grptoia
@@ -132,6 +133,8 @@ class mkproc(object):
 
         file_out.close()
         print("Successfully wrote: {0}_G{1}_ID.prc".format(root,guider))
+        shutil.copy2(os.path.join(self.out_dir,'dhas','{0}_G{1}_ID.prc'.format(root,guider)),
+                     os.path.join(self.out_dir,'ground_system'))
 
 
     def create_ACQ_proc_file(self,root,guider):
@@ -171,6 +174,8 @@ class mkproc(object):
             self.write_from_template(self.templateD,file_out)
         file_out.close()
         print("Successfully wrote: {0}_G{1}_ACQ.prc".format(root,guider))
+        shutil.copy2(os.path.join(self.out_dir,'dhas','{0}_G{1}_ACQ.prc'.format(root,guider)),
+                     os.path.join(self.out_dir,'ground_system'))
 
 def convert_pix_to_ideal(guider,x,y):
         if guider == 1:
