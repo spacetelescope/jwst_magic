@@ -150,7 +150,7 @@ def update_all(dir, string, outdir):
 
     os.chdir(dir)
     print os.getcwd()
-    for filename in glob.glob('*'+string+'*cal.fits'):
+    for filename in glob.glob('*'+string+'*.fits'):
         update_one_file(filename, outdir)
 
 
