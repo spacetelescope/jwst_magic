@@ -61,7 +61,7 @@ def plot_centroids(data,coords,root,guider,output_path):
 
 
 def count_rate_total(data, smoothed_data, gs_points, threshold = None,
-                     counts_3x3=True):
+                     counts_3x3=True,num_psfs=18):
     """
     Get the x,y, and counts for each psf in the image
 
@@ -70,7 +70,7 @@ def count_rate_total(data, smoothed_data, gs_points, threshold = None,
     """
     if threshold is None:
         threshold = smoothed_data.max() * 0.05
-    objects, num_objects = isolate_psfs(smoothed_data,threshold)
+    objects, num_objects = isolate_psfs(smoothed_data,threshold,num_psfs)
 
     counts = []
     coords = []
@@ -211,7 +211,7 @@ def pick_stars(data,xarray,yarray,root=''):
         return obj.inds
 
 
-def create_reg_file(data, root, guider, output_path, return_nref=False):
+def create_reg_file(data, root, guider, output_path, return_nref=False, num_psfs=18):
     if isinstance(data,str):
         data = read_fits(filename, index=0)[1]
 
@@ -223,7 +223,7 @@ def create_reg_file(data, root, guider, output_path, return_nref=False):
 
     plot_centroids(data,coords,root,guider,output_path)
     y, x, counts, val = count_rate_total(data, smoothed_data,coords,
-                                         counts_3x3=True)
+                                         counts_3x3=True,num_psfs=num_psfs)
     inds = pick_stars(data,x,y,root=root)
 
     cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
