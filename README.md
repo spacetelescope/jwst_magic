@@ -4,7 +4,7 @@
 The Mosaic Simulator can be used to generate images with WCS header information consistent with the different observations of 
 OTE-01 Initial Image Mosaic (APT program 1134):
 
-![alt text](https://grit.stsci.edu/wfsc/tools/raw/commissioning/OTE-01-Observations.png "SGD cartoon")
+![alt text](https://grit.stsci.edu/wfsc/tools/raw/commissioning/OTE-01-Observations.png "Initial Image Mosaic Observations")
 
 
 The sequence of events as the tool runs is as follows:
@@ -23,3 +23,9 @@ overlapping images. This is important because of the way QUIP displays overlappi
 The user should specify in the script which observation number is desired. Values range from 1 to 7 inclusively (see image 
 above).
 
+
+
+## 2. Mosaic Congrid
+This tool is a function taken out of the Mosaic Simulator and downsamples the input images into 100x100 images, which can then be 
+fed to QUIP. The WCS header information needs to be modified in order for the scaling to be correct; in particular the CDELTX and 
+CDX_Y keywords.
