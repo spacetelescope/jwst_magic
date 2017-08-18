@@ -12,7 +12,9 @@ from matplotlib.colors import LogNorm
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from matplotlib.text import Text
-from matplotlib.image import AxesImage
+from matplotlib.image import
+import matplotlib
+matplotlib.rcParams['image.origin'] = 'lower'
 
 #local
 from utils import *
@@ -201,7 +203,7 @@ def pick_stars(data,xarray,yarray,root=''):
         fig = plt.figure(figsize=(8,8))
         ax = fig.add_subplot(111)
         ax.imshow(data,cmap='coolwarm',interpolation='nearest',norm=LogNorm())
-        ax.set_ylim(1524,524)
+        ax.set_ylim(524,1524)
         ax.set_xlim(524,1524)
 
         fig.show()
@@ -211,12 +213,16 @@ def pick_stars(data,xarray,yarray,root=''):
         return obj.inds
 
 
-def create_reg_file(data, root, guider, output_path, return_nref=False, num_psfs=18):
+def create_reg_file(data, root, guider, output_path, return_nref=False,
+                    num_psfs=18, compact=False):
     if isinstance(data,str):
         data = read_fits(filename, index=0)[1]
 
-    smoothed_data = ndimage.gaussian_filter(data,sigma=25)
-    objects, num_objects = find_objects(smoothed_data)
+    if compact:
+        objects, num_objects = isolate_psfs(smoothed_data,threshold,num_psfs=num_psfs)
+    else:
+        smoothed_data = ndimage.gaussian_filter(data,sigma=25)
+        objects, num_objects = find_objects(smoothed_data)
 
     coords = find_centroids(data, objects, num_objects, root, guider,
                             output_path=output_path)
