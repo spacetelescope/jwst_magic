@@ -13,6 +13,8 @@ tool:
 * -s : string to match when processing the files (e.g. "-s NRCA" will process all the files starting with NRCA)
 * -o : full/relative path to save the output images. Default is the input directory.
 
+Example usage: python fix_isim.py /Users/Lajoie/Desktop/OTIS_Images/ -s NRC310 -o ./Fixed_NRC310
+
 For more information: python fix_isim.py --help
 
 ## LVDT TRACKING TOOL
