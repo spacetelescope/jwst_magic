@@ -25,4 +25,4 @@ also verify that the MSDB and WFC Record file names match what's in your archive
 
 Here is a screenshot of a typical output for the tool:
 
-![alt text](https://grit.stsci.edu/wfsc/tools/blob/jsc-testing/LVDT_Tool_preview.png "LVDT Tool Preview")
+![alt text](https://grit.stsci.edu/wfsc/tools/raw/jsc-testing/LVDT_Tool_preview.png "LVDT Tool Preview")
