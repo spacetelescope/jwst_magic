@@ -59,13 +59,16 @@ class FGS(object):
             self.data_path = data_path
         # Define output directory
         if out_dir is None:
-            self.out_dir = os.path.join(self.local_path,'out', self.root,'dhas_files')
+            self.out_dir = os.path.join(self.local_path,'out', self.root)
         else:
             self.out_dir = out_dir
 
-        if not os.path.exists(self.out_dir):
-            os.makedirs(self.out_dir)
-
+        if not os.path.exists(os.path.join(self.out_dir,'dhas')):
+            os.makedirs(os.path.join(self.out_dir,'dhas'))
+        if not os.path.exists(os.path.join(self.out_dir,'ground_system')):
+            os.makedirs(os.path.join(self.out_dir,'ground_system'))
+        if not os.path.exists(os.path.join(self.out_dir,'stsci')):
+            os.makedirs(os.path.join(self.out_dir,'stsci'))
 
         ## READ IN IMAGE
         if isinstance(im,str):
@@ -173,6 +176,8 @@ class FGS(object):
             xi, yi = grptoia.g1RPtoIA(x,y)
         elif self.guider == 2:
             xi, yi = grptoia.g2RPtoIA(x,y)
+
+        #xi, yi = grptoia.RPtoIA(self.guider,x,y) #THIS IS STILL WRONG
 
         try:
             len(xi)
@@ -304,46 +309,49 @@ class FGS(object):
         <name>_G<guider><step><acqnum>.fits :   fits cube of the sky with added bias and noise
                                             to simulate the read and ramp cycle for ID
         '''
-
+        ## STScI only files - mostly just for quick checks of the data
         print('baseline {}'.format(np.max(self.sky)))
-        filename_sky = os.path.join(self.out_dir,'{}_G{}_{}{}sky.fits'.format(self.root,self.guider,self.step,acqNum))
+        filename_sky = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}sky.fits'.format(self.root,self.guider,self.step,acqNum))
         utils.write_fits(filename_sky, self.sky)
 
-
         # Write stc files using offset, rotated catalog
-        filename_stc = os.path.join(self.out_dir,'{}_G{}_{}{}.stc'.format(self.root,self.guider,self.step,acqNum))
+        filename_stc = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}.stc'.format(self.root,self.guider,self.step,acqNum))
         self.write_stc(filename_stc,x,y,countrate)
 
         # Bias image
-        filename_bias = os.path.join(self.out_dir,'{}_G{}_{}{}bias.fits'.format(self.root,self.guider,self.step,acqNum))
+        filename_bias = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}bias.fits'.format(self.root,self.guider,self.step,acqNum))
         utils.write_fits(filename_bias,self.bias)
 
         # Create CDS image
-        filename_cds = os.path.join(self.out_dir,'{}_G{}_{}{}cds.fits'.format(self.root,self.guider,self.step,acqNum))
+        filename_cds = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}cds.fits'.format(self.root,self.guider,self.step,acqNum))
         utils.write_fits(filename_cds, self.cds)
 
         if self.step == 'ID':
+            ## STScI only files - mostly just for quick checks of the data
             # Star catalog in real pixs
-            filename_starcat = os.path.join(self.out_dir,'{}_G{}_{}.gssscat'.format(self.root,self.guider,self.step))
+            filename_starcat = os.path.join(self.out_dir,'stsci','{}_G{}_{}.gssscat'.format(self.root,self.guider,self.step))
             self.write_cat(filename_starcat,self.x,self.y)
 
             # Create ff fits file
-            filename_ff = os.path.join(self.out_dir,'{}_G{}_{}ff.fits'.format(self.root,self.guider,self.step))
+            filename_ff = os.path.join(self.out_dir,'stsci','{}_G{}_{}ff.fits'.format(self.root,self.guider,self.step))
             utils.write_fits(filename_ff,np.uint16(self.image))
 
+            ## DHAS file
             # Extract strips from ff img
-            filename_id_strips = os.path.join(self.out_dir,'{}_G{}_{}strips.fits'.format(self.root,self.guider,self.step))
+            filename_id_strips = os.path.join(self.out_dir,'dhas','{}_G{}_{}strips.fits'.format(self.root,self.guider,self.step))
             # Write to strips to fits file
             hdr0 = fits.open(os.path.join(self.data_path,'newG{}magicHdrImg.fits'.format(self.guider)))[0].header
             utils.write_fits(filename_id_strips,self.strips,header=hdr0)
 
         elif self.step == 'ACQ':
+            ## STScI only files - mostly just for quick checks of the data
             # star catalog in real pixs
-            filename_starcat = os.path.join(self.out_dir,'{}_G{}_{}{}.cat'.format(self.root,self.guider,self.step,acqNum))
+            filename_starcat = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}.cat'.format(self.root,self.guider,self.step,acqNum))
             self.write_cat(filename_starcat,self.xgs,self.ygs)
 
+            ## DHAS file
             # Noisy sky acquisition fits images
-            filename_noisy_sky = os.path.join(self.out_dir,'{}_G{}_{}{}.fits'.format(self.root,self.guider,self.step,acqNum))
+            filename_noisy_sky = os.path.join(self.out_dir,'dhas','{}_G{}_{}{}.fits'.format(self.root,self.guider,self.step,acqNum))
             utils.write_fits(filename_noisy_sky,np.uint16(self.image))
 
         else:
@@ -498,7 +506,7 @@ def run_TRK(im, guider, root, num_frames, out_dir=None, jitter=True, interactive
     if jitter:
         trk.image = add_jitter(trk.image,trk.xgs,trk.ygs,trk.nx,trk.ny,total_shift=1)
 
-    filename_noisy_sky = os.path.join(trk.out_dir,'{}_G{}_{}.fits'.format(trk.root,trk.guider,trk.step))
+    filename_noisy_sky = os.path.join(trk.out_dir,'dhas','{}_G{}_{}.fits'.format(trk.root,trk.guider,trk.step))
     utils.write_fits(filename_noisy_sky,np.uint16(trk.image))
 
     if interactive:
@@ -510,6 +518,7 @@ def create_LOSTRK(im, guider, root, nx, ny, out_dir=None,interactive=False):
     trk.setup_step(nx, ny, nramps=1, tcds=trk.tcdsTRK, step='TRK')
     trk.create_arrays(trk.xgs,trk.ygs,cds=False)
 
+    # This is a ground system file, but needs to be in .dat format
     filename_noisy_sky = os.path.join(trk.out_dir,'{}_G{}_LOS{}.fits'.format(trk.root,trk.guider,trk.step))
     utils.write_fits(filename_noisy_sky,trk.image)
 

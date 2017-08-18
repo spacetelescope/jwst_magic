@@ -33,7 +33,7 @@ class mkproc(object):
 
         # Create output directory if does not exist
         if out_dir is None:
-            self.out_dir = os.path.join(local_path,'out',root,'dhas_files')
+            self.out_dir = os.path.join(local_path,'out',root)
         else:
             self.out_dir = out_dir
         if not os.path.exists(self.out_dir):
@@ -90,7 +90,7 @@ class mkproc(object):
         print('Number of reference stars: {}'.format(nref))
         #sgid='_G{}'.format(guider)
 
-        with open(os.path.join(self.out_dir,'{0}_G{1}_ID.prc'.format(root,guider)), 'w') as file_out:
+        with open(os.path.join(self.out_dir,'dhas','{0}_G{1}_ID.prc'.format(root,guider)), 'w') as file_out:
             self.write_from_template(self.templateHDR,file_out)
 
             file_out.write('PROC {0}_G{1}_ID'.format(root,guider))
@@ -139,12 +139,12 @@ class mkproc(object):
 
         #sgid='_G{}'.format(guider)
 
-        i1,x1,y1,c1 = np.loadtxt(os.path.join(self.out_dir,'{}_G{}_ACQ1.stc'.format(root,guider))).T #corner coords & gs counts
+        i1,x1,y1,c1 = np.loadtxt(os.path.join(self.out_dir,'stsci','{}_G{}_ACQ1.stc'.format(root,guider))).T #corner coords & gs counts
         threshgs=0.50*c1
 
-        i2,x2,y2,c2 = np.loadtxt(os.path.join(self.out_dir,'{}_G{}_ACQ2.stc'.format(root,guider))).T
+        i2,x2,y2,c2 = np.loadtxt(os.path.join(self.out_dir,'stsci','{}_G{}_ACQ2.stc'.format(root,guider))).T
 
-        with open(os.path.join(self.out_dir,'{0}_G{1}_ACQ.prc'.format(root,guider)), 'w') as file_out:
+        with open(os.path.join(self.out_dir,'dhas','{0}_G{1}_ACQ.prc'.format(root,guider)), 'w') as file_out:
             self.write_from_template(self.templateHDR,file_out)
 
             file_out.write('PROC {0}_G{1}_ACQ'.format(root,guider))

@@ -164,10 +164,13 @@ def g2RPtoIA(yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
 
 def RPtoIA(guider,yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
              plateScale=0.06738281367, gain=1.5):
+
     if guider == 1:
         g = get_g1_conversion_factors()
+        guider_scale = 1
     elif guider == 2:
         g = get_g2_conversion_factors()
+        guider_scale = -1
 
     #  Reverse calculation of the coordinate conversion
     xIdealPixel = g['X']['Coeff0']
@@ -203,7 +206,7 @@ def RPtoIA(guider,yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
     yIdealPixel = yIdealPixel + g['Y']['Coeff14']*yRealPixel*yRealPixel*yRealPixel*yRealPixel
 
     xAngle = (xIdealPixel - xOffset)*plateScale
-    yAngle = (yIdealPixel - yOffset)*plateScale
+    yAngle = (yIdealPixel - yOffset)*plateScale*guider_scale
 
     return xAngle, yAngle
 
