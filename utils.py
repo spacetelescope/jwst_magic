@@ -156,13 +156,6 @@ def isolate_psfs(smoothed_data,threshold,num_psfs=18):
     #The problem with this is that if we have two PSFs really close to each other,
     # the threshold will be very high which will ruin the fun for all the other PSFs.
     # **This is NOT a permanent fix.**
-    if num_psfs < 18:
-        while num_objects < 2: # assume you want 18 PSFs
-            print("Num of objects detected: {}".format(num_objects))
-            threshold = 1.05*threshold
-            psfs_only = smoothed_data > threshold
-            objects, num_objects = ndimage.measurements.label(psfs_only)
-        return objects, num_objects
 
     while num_objects > num_psfs: # assume you want 18 PSFs
         #print("Num of objects detected: {}".format(num_objects))

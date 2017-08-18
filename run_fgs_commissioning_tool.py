@@ -30,7 +30,7 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     nref = select_psfs.create_reg_file(fgs_im,root,guider,output_path=output_path,
-                                       return_nref=True, num_psfs=num_psfs)
+                                       return_nref=True, num_psfs=num_psfs,compact=True)
     # create all files for FSW/DHAS/FGSES/etc.
     FGS_commissioning.run_ID(fgs_im, guider, root, nref=nref)
     FGS_commissioning.run_ACQ(fgs_im, guider, root)
