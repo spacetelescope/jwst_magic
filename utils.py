@@ -6,6 +6,7 @@ import csv
 import os
 from skimage.filters import threshold_otsu
 from scipy import ndimage
+import itertools
 
 import matplotlib.pyplot as plt
 
@@ -25,12 +26,17 @@ def write_fits(outfile,data,header=None):
     print("Successfully wrote: {}".format(outfile))
 
 
-def read_fits(filename, index = 1):
+def read_fits(filename):
     '''
     Get the header and data (for the specified index) from a fits file
     '''
     f = fits.open(filename)
-    data = f[index].data
+    try:
+        if f[1].name == 'SCI':
+            data = f[1].data #Try first for the SCI extension
+    except IndexError:
+        data = f[0].data #If SCI extension doesn't exist, use PrimaryHDU
+
     header = f[0].header
     f.close()
 
@@ -132,6 +138,27 @@ def resize_array(a, new_rows, new_cols):
 
     return a
 
+def find_xy_between_two_points(coords1,coords2):
+    diff1 = np.abs((coords1[0] - coords2[0]))
+    diff2 = np.abs((coords1[1] - coords2[1]))
+
+    return diff1, diff2
+
+
+def find_resultant(coords1, coords2):
+    diff1, diff2 = find_xy_between_two_points(coords1,coords2)
+
+    z = np.sqrt(diff1**2 + diff2**2)
+
+    return z
+
+def find_dist_between_points(coords):
+    dists = []
+    for c1, c2 in itertools.combinations(coords, 2):
+        dists.append(find_resultant(c1,c2))
+
+    return dists
+
 
 def find_objects(smoothed_data):
     '''
@@ -149,10 +176,12 @@ def find_objects(smoothed_data):
 
 
 def isolate_psfs(smoothed_data,threshold,num_psfs=18):
+    if threshold is None:
+        threshold = smoothed_data.max() * 0.05
     psfs_only = smoothed_data>threshold
     objects, num_objects = ndimage.measurements.label(psfs_only)
 
-    #Check to make sure you have 18 PSFs.
+    #Check to make sure you have num_psfs PSFs.
     #The problem with this is that if we have two PSFs really close to each other,
     # the threshold will be very high which will ruin the fun for all the other PSFs.
     # **This is NOT a permanent fix.**
@@ -168,7 +197,6 @@ def isolate_psfs(smoothed_data,threshold,num_psfs=18):
         threshold = 1.05*threshold
         psfs_only = smoothed_data > threshold
         objects, num_objects = ndimage.measurements.label(psfs_only)
-
 
     return objects, num_objects
 

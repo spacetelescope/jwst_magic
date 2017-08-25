@@ -5,16 +5,16 @@ import csv
 import os
 
 from skimage.filters import threshold_otsu
-from scipy import ndimage
+from scipy import ndimage,signal
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from matplotlib.text import Text
-from matplotlib.image import
+from matplotlib.image import AxesImage
 import matplotlib
-matplotlib.rcParams['image.origin'] = 'lower'
+matplotlib.rcParams['image.origin'] = 'upper'
 
 #local
 from utils import *
@@ -47,22 +47,27 @@ def distance_calc((x1,y1),(x2,y2)):
     return np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
 
 
-def plot_centroids(data,coords,root,guider,output_path):
+def plot_centroids(data,coords,root,guider,output_path,compact=False):
     #labels = ['gs','rs1','rs2','rs3','rs4','rs5','rs6','rs7','rs8','rs9','rs10',
     #          'rs11','rs12','rs13','rs14','rs15','rs16','rs17']
+    if compact:
+        pad = 150
+    else:
+        pad = 500
+
     plt.figure(figsize=(17,17))
     plt.imshow(data,cmap='Greys',norm=LogNorm())
     for i in range(len(coords)):
         plt.scatter(coords[i][1],coords[i][0])
-        plt.annotate('({},{})'.format(int(coords[i][1]),int(coords[i][0])),(coords[i][1]-30,coords[i][0]+30))
+        plt.annotate('({},{})'.format(int(coords[i][0]),int(coords[i][1])),(coords[i][1]-(pad*0.05),coords[i][0]+(pad*0.05)))
     plt.title('Centroids found for {}'.format(root))
-    plt.xlim(0,np.shape(data)[0])
-    plt.ylim(0,np.shape(data)[0])
+    plt.xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
+    plt.ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
     plt.savefig(os.path.join(output_path,'{}_G{}_centers.png'.format(root,guider)))
     plt.close()
 
 
-def count_rate_total(data, smoothed_data, gs_points, threshold = None,
+def count_rate_total(data, smoothed_data, gs_points, dist=None, threshold = None,
                      counts_3x3=True,num_psfs=18):
     """
     Get the x,y, and counts for each psf in the image
@@ -71,7 +76,7 @@ def count_rate_total(data, smoothed_data, gs_points, threshold = None,
     a good start is 40.
     """
     if threshold is None:
-        threshold = smoothed_data.max() * 0.05
+       threshold = smoothed_data.max() * 0.05
     objects, num_objects = isolate_psfs(smoothed_data,threshold,num_psfs)
 
     counts = []
@@ -92,7 +97,10 @@ def count_rate_total(data, smoothed_data, gs_points, threshold = None,
     coords_master = []
     #Pad the range over which the coordinates can match over a sufficiently large
     # range, but not large enough that another PSF center could be within this area
-    pad = 12
+    if dist is None:
+        pad = 12
+    else:
+        pad = dist-1
     #Make a master coordinate list that matches with the coords list, but gives
     # the gs_points coordinates
     for i in range(len(coords)):
@@ -101,17 +109,15 @@ def count_rate_total(data, smoothed_data, gs_points, threshold = None,
                 coords_master.append(gs_points[j])
 
     y,x = map(list,zip(*coords_master))
-
     return y, x, counts, val
 
 def create_cols_for_coords_counts(y,x,counts,val,inds=None):
     """
     Create an array of columns of y, x, and counts of each PSF to be written out.
-    Put the PSF with the most compact PSF first in the list to make it the
-    Guide Star.
+    Use the inds returned from pick_stars based on user input.
 
-    inds is a list of indices of the gs and ref stars you want to keep. This is applied
-    AFTER the most compact star is made the guide star
+    If no inds are given, put the PSF with the most compact PSF first in the list to make it the
+    Guide Star. **This method is not fool-proof, use at own risk***
     """
 
     cols = []
@@ -179,7 +185,7 @@ class SelectStars(object):
         return ind
 
 
-def pick_stars(data,xarray,yarray,root=''):
+def pick_stars(data,xarray,yarray,dist,root='',compact=False):
         '''
         Parameters:
             data: str, ndarray
@@ -195,6 +201,11 @@ def pick_stars(data,xarray,yarray,root=''):
             f = fits.open(data)
             data = f[0].data
 
+        if compact:
+            pad = 150
+        else:
+            pad = 300
+
         print("Click as near to the center of the star as possible.\n \
                The first star that is choosen will be the guide star.\n \
                All additional stars that are clicked on, are the\n \
@@ -203,12 +214,12 @@ def pick_stars(data,xarray,yarray,root=''):
         fig = plt.figure(figsize=(8,8))
         ax = fig.add_subplot(111)
         ax.imshow(data,cmap='coolwarm',interpolation='nearest',norm=LogNorm())
-        ax.set_ylim(524,1524)
-        ax.set_xlim(524,1524)
+        ax.set_ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
+        ax.set_xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
 
         fig.show()
 
-        obj = SelectStars(fig,ax,data,xarray,yarray)
+        obj = SelectStars(fig,ax,data,xarray,yarray,dist=dist)
 
         return obj.inds
 
@@ -216,21 +227,25 @@ def pick_stars(data,xarray,yarray,root=''):
 def create_reg_file(data, root, guider, output_path, return_nref=False,
                     num_psfs=18, compact=False):
     if isinstance(data,str):
-        data = read_fits(filename, index=0)[1]
+        data = read_fits(filename)[1]
 
     if compact:
-        objects, num_objects = isolate_psfs(smoothed_data,threshold,num_psfs=num_psfs)
+        smoothed_data = signal.medfilt(data,5)
+        objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
     else:
         smoothed_data = ndimage.gaussian_filter(data,sigma=25)
         objects, num_objects = find_objects(smoothed_data)
 
+
     coords = find_centroids(data, objects, num_objects, root, guider,
                             output_path=output_path)
 
-    plot_centroids(data,coords,root,guider,output_path)
-    y, x, counts, val = count_rate_total(data, smoothed_data,coords,
+    dist = np.floor(np.min(find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
+
+    plot_centroids(data,coords,root,guider,output_path,compact=compact)
+    y, x, counts, val = count_rate_total(data, smoothed_data,coords,dist=dist,
                                          counts_3x3=True,num_psfs=num_psfs)
-    inds = pick_stars(data,x,y,root=root)
+    inds = pick_stars(data,x,y,dist,root=root)
 
     cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
     write_cols_to_file(output_path,
