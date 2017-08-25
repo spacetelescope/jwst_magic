@@ -187,7 +187,7 @@ def add_bias_to_data(bias_data_path, FGS_data, root, guider='', output_path='',
        guider1: "g1bias.fits"
        guider2: "g2bias.fits"
     """
-    header, guider = read_fits(bias_data_path,index=0)
+    header, guider = read_fits(bias_data_path)
 
     binned_pad_norm_bias = FGS_data + guider
 
@@ -284,7 +284,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
             if not os.path.exists(output_path):
                 os.makedirs(output_path)
 
-        header, data = read_fits(im,1)
+        header, data = read_fits(im)
 
         # ---------------------------------------------------------------------
         ## Create FGS image
@@ -303,7 +303,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         out_path = os.path.join(output_path,
                                 'FGS_imgs','{}_G{}_binned_pad_norm.fits'.format(root,guider))
         data_norm[data_norm >= 65535] = 65535 #any value about 65535 will wrap when converted to uint16
-        hdr = read_fits(header_file,0)[0]
+        hdr = read_fits(header_file)[0]
         write_fits(out_path,np.uint16(data_norm),header=hdr)
 
 
