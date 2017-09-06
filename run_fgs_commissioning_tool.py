@@ -1,4 +1,5 @@
 import os
+import shutil
 
 # From local
 import FGS_commissioning
@@ -24,6 +25,10 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
     else:
         print("This is a FGS image")
         fgs_im = utils.read_fits(im)[1]
+        if not os.path.exists(os.path.join(local_path,'out',root,'FGS_imgs')):
+            os.makedirs(os.path.join(local_path,'out',root,'FGS_imgs'))
+
+        shutil.copyfile(im,os.path.join(local_path,'out',root,'FGS_imgs','{}.fits'.format(root)))
 
     # create reg file
     output_path = os.path.join(local_path,'out',root)
