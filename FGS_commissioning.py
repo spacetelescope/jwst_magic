@@ -525,8 +525,12 @@ def create_LOSTRK(im, guider, root, nx, ny, out_dir=None,interactive=False):
     trk.create_arrays(trk.xgs,trk.ygs,cds=False)
 
     # This is a ground system file, but needs to be in .dat format
-    filename_noisy_sky = os.path.join(trk.out_dir,'{}_G{}_LOS{}.fits'.format(trk.root,trk.guider,trk.step))
+    filename_noisy_sky = os.path.join(trk.out_dir,'dhas','{}_G{}_LOS{}.fits'.format(trk.root,trk.guider,trk.step))
     utils.write_fits(filename_noisy_sky,trk.image)
+
+    ## Gound system file
+    utils.convert_fits_to_dat(filename_noisy_sky,trk.step,os.path.join(trk.out_dir,'ground_system'))
+
 
 def run_all(im, guider, root, num_frames=None, out_dir=None, template_path=None, jitter=True,nref=10):
     # Not interatctive!!
