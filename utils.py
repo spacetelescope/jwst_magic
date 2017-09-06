@@ -110,7 +110,7 @@ def convert_fits_to_dat(infile,obsmode,out_dir,root=None):
     obsmode = obsmode.upper()
 
     if isinstance(infile, str):
-        header,data = utils.read_fits(infile)
+        header,data = read_fits(infile)
 
         filename = infile.split('/')[-1]
         root = filename.split('.')[0]
@@ -120,7 +120,7 @@ def convert_fits_to_dat(infile,obsmode,out_dir,root=None):
     print("Converting {}.fits to .dat".format(root))
 
     outfile = '{}.dat'.format(root)
-    #data = utils.swap_if_little_endian(data)
+    #data = swap_if_little_endian(data)
     fl = data.flatten()
 
     if (obsmode == 'PSF') or (obsmode == 'TRK'):
