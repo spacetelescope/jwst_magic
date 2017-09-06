@@ -178,6 +178,8 @@ class SelectStars(object):
         if d[ind]>=self.epsilon:
             print('No star within {} pixels. No star selected.'.format(self.epsilon))
             return
+        elif ind in self.inds:
+            print('Star already selected, please choose another star')
         else:
             print('Star selected: x={:.1f}, y={:.1f}'.format(self.xt[ind],self.yt[ind]))
             self.inds.append(ind)
