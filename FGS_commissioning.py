@@ -343,6 +343,9 @@ class FGS(object):
             hdr0 = fits.open(os.path.join(self.data_path,'newG{}magicHdrImg.fits'.format(self.guider)))[0].header
             utils.write_fits(filename_id_strips,self.strips,header=hdr0)
 
+            ## Gound system file
+            utils.convert_fits_to_dat(filename_id_strips,self.step,os.path.join(self.out_dir,'ground_system'))
+
         elif self.step == 'ACQ':
             ## STScI only files - mostly just for quick checks of the data
             # star catalog in real pixs
@@ -353,6 +356,9 @@ class FGS(object):
             # Noisy sky acquisition fits images
             filename_noisy_sky = os.path.join(self.out_dir,'dhas','{}_G{}_{}{}.fits'.format(self.root,self.guider,self.step,acqNum))
             utils.write_fits(filename_noisy_sky,np.uint16(self.image))
+
+            ## Gound system file
+            utils.convert_fits_to_dat(filename_noisy_sky,self.step,os.path.join(self.out_dir,'ground_system'))
 
         else:
             pass

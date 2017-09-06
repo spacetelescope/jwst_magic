@@ -22,7 +22,7 @@ def write_fits(outfile,data,header=None):
     if header is not None:
         hdul.header = header
 
-    hdul.writeto(outfile,clobber=True)
+    hdul.writeto(outfile,overwrite=True)
     print("Successfully wrote: {}".format(outfile))
 
 
@@ -77,6 +77,70 @@ def write_to_file(filename,rows,labels=None,mode='w'):
 def write_cols_to_file(output_path, filename, labels, cols):
     filename= os.path.join(output_path,filename)
     write_to_file(filename,cols,labels=labels)
+
+
+def swap_if_little_endian(data):
+    if sys.byteorder == 'little':
+        data = data.byteswap()
+    return data
+
+def swap_if_big_endian(data):
+    if sys.byteorder == 'big':
+        data = data.byteswap()
+    return data
+
+def convert_fits_to_dat(infile,obsmode,out_dir,root=None):
+    '''
+    Convert a .fits file to a .dat file for use on the ground system
+
+    If 'infile' is an array, provide 'root'.
+
+    Parameters
+    ----------
+    infile: str, array-like
+        Can be a str (implies that this is a .fits file) or an array/cube
+    obsmode: str
+        The mode of image (i.e. 'PSF', 'CAL', 'TRK', 'ACQ'/'ACQ1'/'ACQ2', or 'ID')
+    outfile: str
+        Where to save the file
+    root: str
+        If infile is array-like, please provide the root image name
+    '''
+
+    obsmode = obsmode.upper()
+
+    if isinstance(infile, str):
+        header,data = utils.read_fits(infile)
+
+        filename = infile.split('/')[-1]
+        root = filename.split('.')[0]
+    else:
+        root = '{}_{}'.format(root,obsmode)
+
+    print("Converting {}.fits to .dat".format(root))
+
+    outfile = '{}.dat'.format(root)
+    #data = utils.swap_if_little_endian(data)
+    fl = data.flatten()
+
+    if (obsmode == 'PSF') or (obsmode == 'TRK'):
+        # ascii float format
+        f = '{:16.7e} '
+
+    elif (obsmode == 'ID') or (obsmode == 'ACQ1') or (obsmode == 'ACQ2') or (obsmode == 'ACQ') or (obsmode == 'CAL'):
+        # ascii hex dat format
+        f = '{:04X} '
+
+    else:
+        print("Observation mode not recognized. Returning.")
+
+    with open(os.path.join(out_dir,outfile), 'w') as file_out:
+        for i,d in enumerate(fl.astype(np.uint16)):
+            file_out.write(f.format(d))
+
+    print("Successfully wrote: {}".format(os.path.join(out_dir,outfile)))
+    return
+
 
 # http://stackoverflow.com/questions/8090229/resize-with-averaging-or-rebin-a-numpy-2d-array
 def resize_array(a, new_rows, new_cols):
