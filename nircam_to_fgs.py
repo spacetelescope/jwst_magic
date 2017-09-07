@@ -27,7 +27,7 @@ from skimage.filters import threshold_otsu
 from scipy import ndimage
 
 #Local
-from find_psfs import *
+from select_psfs import *
 from utils import *
 from counts_to_jmag import *
 
