@@ -31,16 +31,21 @@ The FGS_commissioning tool (name in progress) will take in an FGS image and crea
 the necessary files to run the image through ID, ACQ, and TRK.
 
 To run FGS_commissioning.py, open IPython and do the following:
+
+```
 In[1]: import FGS_commissioning
+
 In[2]: root = ‘image_root’
      ex:  'jw00000_100_001_01100_00000_NRCA3_img'
+
 In[3]: guider = 1
      Or guider = 2
+
 In[4]: im = ‘full/path/to/bin_norm_imgs/image.fits’
      ex: '/Users/kbrooks/Documents/tel/FGS/out/
           {}/bin_norm_imgs/
           {}_NRCA3_img_G{}_binned_pad_norm.fits'.format(root,root,guider)
-
+```
 
 You can specify out_dir and template_path, but it is not necessary to do so, as
 long as you don’t mind the files going to the same ‘out' directory as where
