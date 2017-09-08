@@ -54,9 +54,11 @@ FGS_bin_tool.py put things, and you have a ‘templates’ directory with all th
 
 Now, you can run ID, ACQ, and TRK with:
 
+```
 id0 = FGS_commissioning.run_ID(im, guider, root, interactive=True)
 acq1, acq2 = FGS_commissioning.run_ACQ(im, guider, root, interactive=True)
 trk = FGS_commissioning.run_TRK(im, guider, root, num_frames=5000, interactive=True)
+```
 
 With id0, acq1, acq2, and trk being objects that have all the information needed
 to run these through DHAS as attributes. You don’t need these since these
