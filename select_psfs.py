@@ -17,8 +17,93 @@ import matplotlib
 matplotlib.rcParams['image.origin'] = 'upper'
 
 #local
-from utils import *
+import utils
 
+def find_objects(smoothed_data):
+    '''
+    Smooth image and pull out individual psfs
+
+    Returns 'objects' - image array with all pixels belonging to one object
+    given the same value - and 'num_objects' - the total number of objects
+    '''
+    # Use Otsu thresholding to pull out only bright regions
+    global_otsu = threshold_im(smoothed_data)
+    # Use labels to pull out the 18 psfs
+    objects, num_objects = ndimage.measurements.label(global_otsu)
+
+    return objects, num_objects
+
+
+def isolate_psfs(smoothed_data,threshold,num_psfs=18):
+    if threshold is None:
+        threshold = smoothed_data.max() * 0.05
+    psfs_only = smoothed_data>threshold
+    objects, num_objects = ndimage.measurements.label(psfs_only)
+
+    #Check to make sure you have num_psfs PSFs.
+    #The problem with this is that if we have two PSFs really close to each other,
+    # the threshold will be very high which will ruin the fun for all the other PSFs.
+    # **This is NOT a permanent fix.**
+
+    while num_objects > num_psfs: # assume you want 18 PSFs
+        #print("Num of objects detected: {}".format(num_objects))
+        threshold = .95*threshold
+        psfs_only = smoothed_data > threshold
+        objects, num_objects = ndimage.measurements.label(psfs_only)
+
+    while num_objects < num_psfs: # assume you want 18 PSFs
+        #print("Num of objects detected: {}".format(num_objects))
+        threshold = 1.05*threshold
+        psfs_only = smoothed_data > threshold
+        objects, num_objects = ndimage.measurements.label(psfs_only)
+
+    return objects, num_objects
+
+
+def threshold_im(im):
+    """
+    Uses Otsu thresholding to pull out the smoothed PSFs in the image
+    """
+    threshold_global_otsu = threshold_otsu(im)
+    global_otsu = im >= threshold_global_otsu
+    return global_otsu
+
+## All the ways to get the countrate:
+def countrate_3x3(coords,data):
+    """
+    Using the coordinates of each PSF,place a 3x3 box around center pixel, and sum
+    the counts of the pixels in this box.
+    """
+    xx = int(coords[1])
+    yy = int(coords[0])
+
+    counts = np.sum(data[yy-1:yy+2,xx-1:xx+2])
+    return counts
+
+def get_countrate(x,y,arr):
+    """
+    If the countrate isn't given by a file, use the coords given by the
+    reg file to find the countrates for each PSF.
+    """
+    countrate=[] #create countrate array of len nstars
+    for i in range(len(x)):
+        x1 = x[i]-50
+        x2 = x[i]+50
+        y1 = y[i]-50
+        y2 = y[i]+50
+        if x1 < 50:
+            x1=0
+        if x2 > 2047:
+            x2=2047
+        if y1 < 50:
+            y1=0
+        if y2> 2047:
+            y2=2047
+        countrate.append(np.sum(arr[y1:y2,x1:x2])) # counts/sec NOT ADU
+        print('Countrate: {}'.format(np.sum(arr[y1:y2,x1:x2])))
+
+    countrate = np.asarray(float(countrate))
+    return countrate
 
 
 def find_centroids(data, objects, num_objects, root, guider, output_path='',
@@ -38,7 +123,7 @@ def find_centroids(data, objects, num_objects, root, guider, output_path='',
 
     if write_out_file:
         filename= os.path.join(output_path,'{}_G{}_psf_centers.csv'.format(root,guider))
-        write_to_file(filename,coords,labels=['y','x'])
+        utils.write_to_file(filename,coords,labels=['y','x'])
 
     return coords
 
@@ -48,10 +133,8 @@ def distance_calc((x1,y1),(x2,y2)):
 
 
 def plot_centroids(data,coords,root,guider,output_path,compact=False):
-    #labels = ['gs','rs1','rs2','rs3','rs4','rs5','rs6','rs7','rs8','rs9','rs10',
-    #          'rs11','rs12','rs13','rs14','rs15','rs16','rs17']
     if compact:
-        pad = 150
+        pad = 300
     else:
         pad = 500
 
@@ -67,7 +150,32 @@ def plot_centroids(data,coords,root,guider,output_path,compact=False):
     plt.close()
 
 
-def count_rate_total(data, smoothed_data, gs_points, dist=None, threshold = None,
+def count_rate_total(data, objects, num_objects, gs_points, dist=None, threshold = None,
+                     counts_3x3=True,num_psfs=18):
+    """
+    Get the x,y, and counts for each psf in the image
+
+    The threshold default of 150, assumes that your data type is uint16. If not,
+    a good start is 40.
+    """
+
+    counts = []
+    val = []
+    for i in range(1,num_objects+1):
+        im = np.copy(objects)
+        im[objects!=i]=False
+        im[objects==i]=True
+        if counts_3x3:
+            counts.append(countrate_3x3(gs_points[i-1],data))
+        else:
+            counts.append(np.sum(im*data))
+        val.append(np.sum(im*1.))
+
+
+    y,x = map(list,zip(*gs_points))
+    return y, x, counts, val
+
+def OLD_count_rate_total(data, smoothed_data, gs_points, dist=None, threshold = None,
                      counts_3x3=True,num_psfs=18):
     """
     Get the x,y, and counts for each psf in the image
@@ -110,6 +218,7 @@ def count_rate_total(data, smoothed_data, gs_points, dist=None, threshold = None
 
     y,x = map(list,zip(*coords_master))
     return y, x, counts, val
+
 
 def create_cols_for_coords_counts(y,x,counts,val,inds=None):
     """
@@ -204,9 +313,9 @@ def pick_stars(data,xarray,yarray,dist,root='',compact=False):
             data = f[0].data
 
         if compact:
-            pad = 150
-        else:
             pad = 300
+        else:
+            pad = 500
 
         print("Click as near to the center of the star as possible.\n \
                The first star that is choosen will be the guide star.\n \
@@ -229,28 +338,32 @@ def pick_stars(data,xarray,yarray,dist,root='',compact=False):
 def create_reg_file(data, root, guider, output_path, return_nref=False,
                     num_psfs=18, compact=False):
     if isinstance(data,str):
-        data = read_fits(filename)[1]
+        data = utils.read_fits(data)[1]
 
     if compact:
         smoothed_data = signal.medfilt(data,5)
-        objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
     else:
         smoothed_data = ndimage.gaussian_filter(data,sigma=25)
-        objects, num_objects = find_objects(smoothed_data)
 
-
+    objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
     coords = find_centroids(data, objects, num_objects, root, guider,
                             output_path=output_path)
-
-    dist = np.floor(np.min(find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
+    if len(coords)<2:
+        print('Less than two objects have been found. Cannot proceed. Exiting')
+        return
+        
+    dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
 
     plot_centroids(data,coords,root,guider,output_path,compact=compact)
-    y, x, counts, val = count_rate_total(data, smoothed_data,coords,dist=dist,
+    y, x, counts, val = count_rate_total(data, objects, num_objects, coords,dist=dist,
                                          counts_3x3=True,num_psfs=num_psfs)
-    inds = pick_stars(data,x,y,dist,root=root)
+
+    inds = pick_stars(data,x,y,dist,root=root,compact=compact)
+    print('1 guide star and {} reference stars selected'.format(len(inds)-1))
+
 
     cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
-    write_cols_to_file(output_path,
+    utils.write_cols_to_file(output_path,
                        filename='{0}_G{1}_regfile.txt'.format(root,guider),
                        labels=['y','x','count rate'],
                        cols=cols)
