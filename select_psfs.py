@@ -3,10 +3,8 @@ from astropy.io import fits
 import numpy as np
 import csv
 import os
-
 from skimage.filters import threshold_otsu
 from scipy import ndimage,signal
-
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib.lines import Line2D
@@ -18,6 +16,7 @@ matplotlib.rcParams['image.origin'] = 'upper'
 
 #local
 import utils
+import log
 
 def find_objects(smoothed_data):
     '''
@@ -46,13 +45,13 @@ def isolate_psfs(smoothed_data,threshold,num_psfs=18):
     # **This is NOT a permanent fix.**
 
     while num_objects > num_psfs: # assume you want 18 PSFs
-        #print("Num of objects detected: {}".format(num_objects))
+        #log.info("Num of objects detected: {}".format(num_objects))
         threshold = .95*threshold
         psfs_only = smoothed_data > threshold
         objects, num_objects = ndimage.measurements.label(psfs_only)
 
     while num_objects < num_psfs: # assume you want 18 PSFs
-        #print("Num of objects detected: {}".format(num_objects))
+        #log.info("Num of objects detected: {}".format(num_objects))
         threshold = 1.05*threshold
         psfs_only = smoothed_data > threshold
         objects, num_objects = ndimage.measurements.label(psfs_only)
@@ -100,7 +99,7 @@ def get_countrate(x,y,arr):
         if y2> 2047:
             y2=2047
         countrate.append(np.sum(arr[y1:y2,x1:x2])) # counts/sec NOT ADU
-        print('Countrate: {}'.format(np.sum(arr[y1:y2,x1:x2])))
+        log.info('Countrate: {}'.format(np.sum(arr[y1:y2,x1:x2])))
 
     countrate = np.asarray(float(countrate))
     return countrate
@@ -285,12 +284,12 @@ class SelectStars(object):
         ind = indseq[0]
 
         if d[ind]>=self.epsilon:
-            print('No star within {} pixels. No star selected.'.format(self.epsilon))
+            log.warning('No star within {} pixels. No star selected.'.format(self.epsilon))
             return
         elif ind in self.inds:
-            print('Star already selected, please choose another star')
+            log.warning('Star already selected, please choose another star')
         else:
-            print('Star selected: x={:.1f}, y={:.1f}'.format(self.xt[ind],self.yt[ind]))
+            log.info('Star selected: x={:.1f}, y={:.1f}'.format(self.xt[ind],self.yt[ind]))
             self.inds.append(ind)
 
         return ind
@@ -317,7 +316,8 @@ def pick_stars(data,xarray,yarray,dist,root='',compact=False):
         else:
             pad = 500
 
-        print("Click as near to the center of the star as possible.\n \
+        print("\
+               Click as near to the center of the star as possible.\n \
                The first star that is choosen will be the guide star.\n \
                All additional stars that are clicked on, are the\n \
                reference stars.")
@@ -348,13 +348,13 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
         else:
             smoothed_data = ndimage.gaussian_filter(data,sigma=25)
 
-        objects, num_objects = isolate_psfs(smoothed_data, threshold=None, num_psfs=num_psfs)
+        objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
         coords = find_centroids(data, objects, num_objects, root, guider,
                                 output_path=output_path)
         if len(coords)<2:
-            print('Less than two objects have been found. Cannot proceed. Exiting')
+            log.error('Less than two objects have been found. Cannot proceed. Exiting')
             return
-            
+
         dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
 
         plot_centroids(data,coords,root,guider,output_path,compact=compact)
@@ -362,8 +362,7 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
                                              counts_3x3=True,num_psfs=num_psfs)
 
         inds = pick_stars(data,x,y,dist,root=root,compact=compact)
-        print('1 guide star and {} reference stars selected'.format(len(inds)-1))
-
+        log.info('1 guide star and {} reference stars selected'.format(len(inds)-1))
 
         cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
     
@@ -371,7 +370,6 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
     else:
         # Read in .incat file
         incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
-
         incat['x'] = incat['x'].astype(float) # Does everything /really/ need to be a float?
         incat['y'] = incat['y'].astype(float)
         incat['ctot'] = incat['ctot'].astype(float)

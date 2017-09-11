@@ -47,3 +47,4 @@ Thumbs.db
 notebooks/*
 out/*
 .ipynb_checkpoints/*
+logs/*
