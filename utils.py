@@ -7,8 +7,70 @@ import os
 from skimage.filters import threshold_otsu
 from scipy import ndimage
 import itertools
+import time
 
 import matplotlib.pyplot as plt
+
+def ensure_dir_exists(fullpath):
+    #if not os.path.exists(filename):
+    #    os.makedirs(filename)
+    """Creates dirs from ``fullpath`` if they do not already exist.
+
+    Parameters
+    ----------
+    fullpath, mode : see :func:`create_path`
+
+    """
+    create_path(os.path.dirname(fullpath))
+
+def create_path(path):
+    """Recursively traverses directory path, creating directories as
+    needed so that the entire path exists.
+
+    Parameters
+    ----------
+    path : str
+        Path to traverse.
+    """
+    if path.startswith("./"):
+        path = path[2:]
+    if os.path.exists(path):
+        return
+
+    current = []
+    for c in path.split("/"):
+        if not c:
+            current.append("/")
+            continue
+        current.append(str(c))
+        d = os.path.join(*current)
+        d.replace("//","/")
+        try:
+            os.mkdir(d)
+        except OSError, exc:
+            if "File exists" not in str(exc):
+                raise
+
+def get_logname(logdir, taskname):
+    """Generate log filename based on time stamp and task name.
+
+    Parameters
+    ----------
+    logdir : str
+        Path where log file is stored.
+
+    taskname : str
+        Name of the task associated with log file.
+
+    Returns
+    -------
+    logname : str
+        Log filename.
+
+    """
+    return os.path.join(
+        logdir,
+        '{0}_{1}.log'.format(taskname, time.ctime().replace(' ', '_')))
 
 def write_fits(outfile,data,header=None):
     '''

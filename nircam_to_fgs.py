@@ -28,7 +28,7 @@ from scipy import ndimage
 
 #Local
 from select_psfs import *
-from utils import *
+import utils
 from counts_to_jmag import *
 
 '''
@@ -146,7 +146,7 @@ def pad_data(data, padding):
 def resize_nircam_image(data, NIRCam_scale,FGS_pix,FGS_plate_size):
     cropped = data[4:-4,4:-4] # crop 4pixel zero-padding
     binned_pix = int(round((data.shape[0]*NIRCam_scale*FGS_pix)/(FGS_plate_size*60)))
-    data_resized = resize_array(cropped,binned_pix,binned_pix)
+    data_resized = utils.resize_array(cropped,binned_pix,binned_pix)
 
     padding = (cropped.shape[0] - binned_pix)/2
     data_pad = pad_data(data_resized, padding)
@@ -187,19 +187,18 @@ def add_bias_to_data(bias_data_path, FGS_data, root, guider='', output_path='',
        guider1: "g1bias.fits"
        guider2: "g2bias.fits"
     """
-    header, guider = read_fits(bias_data_path)
+    header, guider = utils.read_fits(bias_data_path)
 
     binned_pad_norm_bias = FGS_data + guider
 
     if save_to_fits:
-        if not os.path.exists(os.path.join(output_path,'bin_norm_bias_imgs')):
-            os.makedirs(os.path.join(output_path,'bin_norm_bias_imgs'))
+        utils.ensure_dir_exists(os.path.join(output_path,'bin_norm_bias_imgs'))
 
         if guider_name is None:
             guider_name = bias_data_path.split('/')[-1].split('.')[0][-6:]
         out_path =  os.path.join(output_path,'bin_norm_bias_imgs',
                       '{}_G{}_binned_pad_norm.fits'.format(root,guider))
-        write_fits(out_path,binned_pad_norm_bias)
+        utils.write_fits(out_path,binned_pad_norm_bias)
 
     return binned_pad_norm_bias
 
@@ -281,8 +280,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
 
         if output_path is None:
             output_path = os.path.join(local_path,'out',root)
-            if not os.path.exists(output_path):
-                os.makedirs(output_path)
+            utils.ensure_dir_exists(os.path.exists(output_path))
 
         header, data = read_fits(im)
 
@@ -296,15 +294,15 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         data_pad = resize_nircam_image(data, NIRCam_scale,FGS_pix,FGS_plate_size)
         # Find individual psfs
         smoothed_data = ndimage.gaussian_filter(data_pad,sigma=25)
-        objects, num_objects = find_objects(smoothed_data)
+        objects, num_objects = utils.find_objects(smoothed_data)
         # Normalize image
         data_norm = normalize_data(data_pad, fgs_counts)
 
         out_path = os.path.join(output_path,
                                 'FGS_imgs','{}_G{}_binned_pad_norm.fits'.format(root,guider))
         data_norm[data_norm >= 65535] = 65535 #any value about 65535 will wrap when converted to uint16
-        hdr = read_fits(header_file)[0]
-        write_fits(out_path,np.uint16(data_norm),header=hdr)
+        hdr = utils.read_fits(header_file)[0]
+        utils.write_fits(out_path,np.uint16(data_norm),header=hdr)
 
 
         print ("Finished for {}, Guider = {}".format(root,guider))

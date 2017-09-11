@@ -63,12 +63,9 @@ class FGS(object):
         else:
             self.out_dir = out_dir
 
-        if not os.path.exists(os.path.join(self.out_dir,'dhas')):
-            os.makedirs(os.path.join(self.out_dir,'dhas'))
-        if not os.path.exists(os.path.join(self.out_dir,'ground_system')):
-            os.makedirs(os.path.join(self.out_dir,'ground_system'))
-        if not os.path.exists(os.path.join(self.out_dir,'stsci')):
-            os.makedirs(os.path.join(self.out_dir,'stsci'))
+        utils.ensure_dir_exists(os.path.join(self.out_dir,'dhas'))
+        utils.ensure_dir_exists(os.path.join(self.out_dir,'ground_system'))
+        utils.ensure_dir_exists(os.path.join(self.out_dir,'stsci'))
 
         ## READ IN IMAGE
         if isinstance(im,str):

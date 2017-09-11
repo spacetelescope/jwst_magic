@@ -8,9 +8,11 @@ import numpy as np
 #gain=1.5
 
 
-## read in X Y in pixels
-def g1RPtoIA(yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
+## pass in X Y in pixels
+def g1RPtoIA(x,y,xOffset=1023.5, yOffset=1023.5,
              plateScale=0.06738281367, gain=1.5):
+
+    yRealPixel, xRealPixel = x, y # THIS IS NECESSARY, DO NOT QUESTION
 
     # the following coeffs are from julia
     # dated 17-Feb-2012
@@ -87,9 +89,10 @@ def g1RPtoIA(yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
     return xAngle, yAngle
 
 
-def g2RPtoIA(yRealPixel,xRealPixel,xOffset=1023.5, yOffset=1023.5,
+def g2RPtoIA(x,y,xOffset=1023.5, yOffset=1023.5,
              plateScale=0.06738281367, gain=1.5):
 
+    yRealPixel, xRealPixel = x, y # THIS IS NECESSARY, DO NOT QUESTION
     # the following coeffs are from julia
     # dated 17-Feb-2012
     realPToIdealPXCoeff0 = -3.2653125E+01
