@@ -8,48 +8,14 @@ from skimage.filters import threshold_otsu
 from scipy import ndimage
 import itertools
 import time
-
 import matplotlib.pyplot as plt
 
 def ensure_dir_exists(fullpath):
-    #if not os.path.exists(filename):
-    #    os.makedirs(filename)
     """Creates dirs from ``fullpath`` if they do not already exist.
-
-    Parameters
-    ----------
-    fullpath, mode : see :func:`create_path`
-
     """
-    create_path(os.path.dirname(fullpath))
+    if not os.path.exists(fullpath):
+        os.makedirs(fullpath)
 
-def create_path(path):
-    """Recursively traverses directory path, creating directories as
-    needed so that the entire path exists.
-
-    Parameters
-    ----------
-    path : str
-        Path to traverse.
-    """
-    if path.startswith("./"):
-        path = path[2:]
-    if os.path.exists(path):
-        return
-
-    current = []
-    for c in path.split("/"):
-        if not c:
-            current.append("/")
-            continue
-        current.append(str(c))
-        d = os.path.join(*current)
-        d.replace("//","/")
-        try:
-            os.mkdir(d)
-        except OSError, exc:
-            if "File exists" not in str(exc):
-                raise
 
 def get_logname(logdir, taskname):
     """Generate log filename based on time stamp and task name.
@@ -68,9 +34,11 @@ def get_logname(logdir, taskname):
         Log filename.
 
     """
+    timestamp = time.ctime().replace(' ', '_')
+    timestamp = timestamp.replace('/', ':')
     return os.path.join(
         logdir,
-        '{0}_{1}.log'.format(taskname, time.ctime().replace(' ', '_')))
+        '{0}_{1}.log'.format(taskname, timestamp))
 
 def write_fits(outfile,data,header=None):
     '''
@@ -150,58 +118,6 @@ def swap_if_big_endian(data):
     if sys.byteorder == 'big':
         data = data.byteswap()
     return data
-
-def convert_fits_to_dat(infile,obsmode,out_dir,root=None):
-    '''
-    Convert a .fits file to a .dat file for use on the ground system
-
-    If 'infile' is an array, provide 'root'.
-
-    Parameters
-    ----------
-    infile: str, array-like
-        Can be a str (implies that this is a .fits file) or an array/cube
-    obsmode: str
-        The mode of image (i.e. 'PSF', 'CAL', 'TRK', 'ACQ'/'ACQ1'/'ACQ2', or 'ID')
-    outfile: str
-        Where to save the file
-    root: str
-        If infile is array-like, please provide the root image name
-    '''
-
-    obsmode = obsmode.upper()
-
-    if isinstance(infile, str):
-        header,data = read_fits(infile)
-
-        filename = infile.split('/')[-1]
-        root = filename.split('.')[0]
-    else:
-        root = '{}_{}'.format(root,obsmode)
-
-    print("Converting {}.fits to .dat".format(root))
-
-    outfile = '{}.dat'.format(root)
-    #data = swap_if_little_endian(data)
-    fl = data.flatten()
-
-    if (obsmode == 'PSF') or (obsmode == 'TRK'):
-        # ascii float format
-        f = '{:16.7e} '
-
-    elif (obsmode == 'ID') or (obsmode == 'ACQ1') or (obsmode == 'ACQ2') or (obsmode == 'ACQ') or (obsmode == 'CAL'):
-        # ascii hex dat format
-        f = '{:04X} '
-
-    else:
-        print("Observation mode not recognized. Returning.")
-
-    with open(os.path.join(out_dir,outfile), 'w') as file_out:
-        for i,d in enumerate(fl.astype(np.uint16)):
-            file_out.write(f.format(d))
-
-    print("Successfully wrote: {}".format(os.path.join(out_dir,outfile)))
-    return
 
 
 # http://stackoverflow.com/questions/8090229/resize-with-averaging-or-rebin-a-numpy-2d-array

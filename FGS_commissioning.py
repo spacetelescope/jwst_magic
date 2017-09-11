@@ -13,6 +13,7 @@ import grptoia
 import getbias
 import utils
 from mkproc import mkproc
+import log
 
 
 class FGS(object):
@@ -76,7 +77,7 @@ class FGS(object):
 
         # Correct for negative, saturated pixels and other nonesense
         self.input_im = correct_image(self.input_im)
-        print('Max of input image: {}'.format(np.max(self.input_im)))
+        log.info('Max of input image: {}'.format(np.max(self.input_im)))
 
         self.get_coords_and_counts(reg_file=reg_file)
         if guide_star_coords is None:
@@ -92,7 +93,7 @@ class FGS(object):
         if reg_file is None:
             reg_file = os.path.join(os.path.join(self.local_path,'out', self.root,
                                     '{0}_G{1}_regfile.txt'.format(self.root,self.guider)))#'{}.reg'.format(root)
-        print("Using {} as the reg file".format(reg_file))
+        log.info("Using {} as the reg file".format(reg_file))
         if reg_file.endswith('reg'):
             self.x,self.y = np.loadtxt(reg_file)
             self.countrate = utils.get_countrate(self.x,self.y,self.input_im)
@@ -108,7 +109,7 @@ class FGS(object):
         self.xgs=self.x[gs_ind]
         self.ygs=self.y[gs_ind]
         self.countrategs = self.countrate[gs_ind]
-        print('Coordinates of Guide Star: x={0}, y={1}'.format(self.xgs,self.ygs))
+        log.info('Coordinates of Guide Star: x={0}, y={1}'.format(self.xgs,self.ygs))
 
 
     def create_noisy_sky(self,bias,sky,poissonNoise=True,acqNum=None):
@@ -277,7 +278,6 @@ class FGS(object):
         if self.step == 'ID':
             self.strips = self.create_strips(self.image)
 
-
     def write_out_files(self,x,y,countrate,acqNum=''):
         '''
         Create **all** the files and images needs for ID & ACQ
@@ -307,7 +307,7 @@ class FGS(object):
                                             to simulate the read and ramp cycle for ID
         '''
         ## STScI only files - mostly just for quick checks of the data
-        print('baseline {}'.format(np.max(self.sky)))
+        log.info('Baseline {}'.format(np.max(self.sky)))
         filename_sky = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}sky.fits'.format(self.root,self.guider,self.step,acqNum))
         utils.write_fits(filename_sky, self.sky)
 
@@ -341,7 +341,7 @@ class FGS(object):
             utils.write_fits(filename_id_strips,self.strips,header=hdr0)
 
             ## Gound system file
-            utils.convert_fits_to_dat(filename_id_strips,self.step,os.path.join(self.out_dir,'ground_system'))
+            convert_fits_to_dat(filename_id_strips,self.step,os.path.join(self.out_dir,'ground_system'))
 
         elif self.step == 'ACQ':
             ## STScI only files - mostly just for quick checks of the data
@@ -355,10 +355,61 @@ class FGS(object):
             utils.write_fits(filename_noisy_sky,np.uint16(self.image))
 
             ## Gound system file
-            utils.convert_fits_to_dat(filename_noisy_sky,self.step,os.path.join(self.out_dir,'ground_system'))
+            convert_fits_to_dat(filename_noisy_sky,self.step,os.path.join(self.out_dir,'ground_system'))
 
         else:
             pass
+
+#-------------------------------------------------------------------------------
+def convert_fits_to_dat(infile,obsmode,out_dir,root=None):
+    '''
+    Convert a .fits file to a .dat file for use on the ground system
+
+    If 'infile' is an array, provide 'root'.
+
+    Parameters
+    ----------
+    infile: str, array-like
+        Can be a str (implies that this is a .fits file) or an array/cube
+    obsmode: str
+        The mode of image (i.e. 'PSF', 'CAL', 'TRK', 'ACQ'/'ACQ1'/'ACQ2', or 'ID')
+    outfile: str
+        Where to save the file
+    root: str
+        If infile is array-like, please provide the root image name
+    '''
+
+    obsmode = obsmode.upper()
+
+    if isinstance(infile, str):
+        header,data = utils.read_fits(infile)
+
+        filename = infile.split('/')[-1]
+        root = filename.split('.')[0]
+    else:
+        root = '{}_{}'.format(root,obsmode)
+
+    outfile = '{}.dat'.format(root)
+    #data = swap_if_little_endian(data)
+    fl = data.flatten()
+
+    if (obsmode == 'PSF') or (obsmode == 'TRK'):
+        # ascii float format
+        f = '{:16.7e} '
+
+    elif (obsmode == 'ID') or (obsmode == 'ACQ1') or (obsmode == 'ACQ2') or (obsmode == 'ACQ') or (obsmode == 'CAL'):
+        # ascii hex dat format
+        f = '{:04X} '
+
+    else:
+        log.error("Observation mode not recognized. Returning.")
+
+    with open(os.path.join(out_dir,outfile), 'w') as file_out:
+        for i,d in enumerate(fl.astype(np.uint16)):
+            file_out.write(f.format(d))
+
+    print("Successfully wrote: {}".format(os.path.join(out_dir,outfile)))
+    return
 
 #-------------------------------------------------------------------------------
 def display(image, ind=0, vmin=None, vmax=None, cmap='Greys_r', x=None, y=None,
@@ -456,7 +507,7 @@ def run_ID(im, guider, root, out_dir=None, template_path=None, nref=10, interact
     # ID
     id0 = FGS(im, guider, root, out_dir)
     id0.setup_step(2048, 2048, 2, tcds=id0.tcdsID, step='ID')
-    print(id0.step)
+    log.info("Step: {}".format(id0.step))
     id0.create_arrays(id0.x,id0.y,acqNum=None)
     id0.write_out_files(id0.x,id0.y,id0.countrate)
 
@@ -477,7 +528,7 @@ def run_ACQ(im, guider, root, out_dir=None, template_path=None, interactive=Fals
     # Acquisition #1
     acq1 = FGS(im, guider, root, out_dir)
     acq1.setup_step(nx=128, ny=128, nramps=6, tcds=acq1.tcdsACQ1,step='ACQ')
-    print(acq1.step)
+    log.info("Step: {}".format(acq1.step))
     acq1.create_arrays(acq1.xgs,acq1.ygs,acqNum=1)
     acq1.write_out_files(acq1.xgs-(acq1.nx/2.),acq1.ygs-(acq1.ny/2.),acq1.countrategs,acqNum=1)
 
@@ -503,7 +554,7 @@ def run_TRK(im, guider, root, num_frames, out_dir=None, jitter=True, interactive
         num_frames = 5000
     trk = FGS(im, guider, root, out_dir)
     trk.setup_step(nx=32, ny=32, nramps=num_frames, tcds=trk.tcdsTRK, step='TRK')
-    print(trk.step)
+    log.info("Step: {}".format(trk.step))
     trk.create_arrays(trk.xgs,trk.ygs,cds=False)
 
     if jitter:
@@ -526,7 +577,7 @@ def create_LOSTRK(im, guider, root, nx, ny, out_dir=None,interactive=False):
     utils.write_fits(filename_noisy_sky,trk.image)
 
     ## Gound system file
-    utils.convert_fits_to_dat(filename_noisy_sky,trk.step,os.path.join(trk.out_dir,'ground_system'))
+    convert_fits_to_dat(filename_noisy_sky,trk.step,os.path.join(trk.out_dir,'ground_system'))
 
 
 def run_all(im, guider, root, num_frames=None, out_dir=None, template_path=None, jitter=True,nref=10):

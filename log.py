@@ -162,7 +162,7 @@ remove_stream_handler = THE_LOGGER.remove_stream_handler
 
 def set_log_file(filename, level=logging.DEBUG, mode="w+"):
     """Output log info to `filename`."""
-    utils.ensure_dir_exists(filename)
+    utils.ensure_dir_exists(os.path.dirname(filename))
     f = open(filename, mode)
     h = THE_LOGGER.add_stream_handler(f, level=level)
     return f, h  # So we can close it gracefully
