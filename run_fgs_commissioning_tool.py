@@ -13,7 +13,7 @@ import utils
 local_path = os.path.dirname(os.path.realpath(__file__))
 
 def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_mod=None, nircam=True,num_psfs=18,compact=False):
+            nircam_mod=None, nircam=True,num_psfs=18,compact=False, incat=None):
     if root is None:
         root = os.path.basename(im).split('.')[0]
 
@@ -34,8 +34,10 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
     output_path = os.path.join(local_path,'out',root)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    nref = select_psfs.create_reg_file(fgs_im,root,guider,output_path=output_path,
-                                       return_nref=True, num_psfs=num_psfs,compact=compact)
+    nref = select_psfs.create_reg_file(fgs_im,root, guider, output_path=output_path,
+                                       return_nref=True, num_psfs=num_psfs, 
+                                       compact=compact, incat=None)
+    
     # create all files for FSW/DHAS/FGSES/etc.
     FGS_commissioning.run_ID(fgs_im, guider, root, nref=nref)
     FGS_commissioning.run_ACQ(fgs_im, guider, root)
