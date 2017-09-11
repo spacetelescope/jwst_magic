@@ -336,33 +336,49 @@ def pick_stars(data,xarray,yarray,dist,root='',compact=False):
 
 
 def create_reg_file(data, root, guider, output_path, return_nref=False,
-                    num_psfs=18, compact=False):
-    if isinstance(data,str):
-        data = utils.read_fits(data)[1]
+                    num_psfs=18, compact=False, incat=None):
+    
+    # If no .incat file provided, create reg file with manual star selection in GUI
+    if incat == None:
+        if isinstance(data, str):
+            data = utils.read_fits(data)[1]
 
-    if compact:
-        smoothed_data = signal.medfilt(data,5)
+        if compact:
+            smoothed_data = signal.medfilt(data,5)
+        else:
+            smoothed_data = ndimage.gaussian_filter(data,sigma=25)
+
+        objects, num_objects = isolate_psfs(smoothed_data, threshold=None, num_psfs=num_psfs)
+        coords = find_centroids(data, objects, num_objects, root, guider,
+                                output_path=output_path)
+        if len(coords)<2:
+            print('Less than two objects have been found. Cannot proceed. Exiting')
+            return
+            
+        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
+
+        plot_centroids(data,coords,root,guider,output_path,compact=compact)
+        y, x, counts, val = count_rate_total(data, objects, num_objects, coords,dist=dist,
+                                             counts_3x3=True,num_psfs=num_psfs)
+
+        inds = pick_stars(data,x,y,dist,root=root,compact=compact)
+        print('1 guide star and {} reference stars selected'.format(len(inds)-1))
+
+
+        cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
+    
+    # If .incat file provided, create reg file with provided information
     else:
-        smoothed_data = ndimage.gaussian_filter(data,sigma=25)
+        # Read in .incat file
+        incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
 
-    objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
-    coords = find_centroids(data, objects, num_objects, root, guider,
-                            output_path=output_path)
-    if len(coords)<2:
-        print('Less than two objects have been found. Cannot proceed. Exiting')
-        return
-        
-    dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
+        incat['x'] = incat['x'].astype(float) # Does everything /really/ need to be a float?
+        incat['y'] = incat['y'].astype(float)
+        incat['ctot'] = incat['ctot'].astype(float)
 
-    plot_centroids(data,coords,root,guider,output_path,compact=compact)
-    y, x, counts, val = count_rate_total(data, objects, num_objects, coords,dist=dist,
-                                         counts_3x3=True,num_psfs=num_psfs)
-
-    inds = pick_stars(data,x,y,dist,root=root,compact=compact)
-    print('1 guide star and {} reference stars selected'.format(len(inds)-1))
+        cols = incat['x', 'y', 'ctot'] # Only use relevant columns
 
 
-    cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
     utils.write_cols_to_file(output_path,
                        filename='{0}_G{1}_regfile.txt'.format(root,guider),
                        labels=['y','x','count rate'],
