@@ -5,7 +5,8 @@ import csv
 from astropy.io import fits
 import scipy.signal
 from glob import glob
-
+from skimage.filters import threshold_otsu
+from scipy import ndimage
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import matplotlib
@@ -23,13 +24,11 @@ matplotlib.rcParams['axes.prop_cycle'] = cycler(u'color',['#1f77b4',
             '#17becf'])
 matplotlib.rcParams['image.origin'] = 'upper'
 
-from skimage.filters import threshold_otsu
-from scipy import ndimage
-
 #Local
 from select_psfs import *
-from utils import *
+import utils
 from counts_to_jmag import *
+import log
 
 '''
 Python Img Re-Binning Tool for FGS comissioning data
@@ -113,7 +112,7 @@ def rotate_nircam_image(im,fgs_guider,header,nircam_mod):
             ## FGS guider = 2; No change necessary!
             pass
     else:
-        print('Check the header keyword "DETECTOR" for the NIRCAM module, \
+        log.error('Check the header keyword "DETECTOR" for the NIRCAM module, \
               then re-run using the "nircam_mod" keyword to bypass the header query.')
     return im
 
@@ -146,7 +145,7 @@ def pad_data(data, padding):
 def resize_nircam_image(data, NIRCam_scale,FGS_pix,FGS_plate_size):
     cropped = data[4:-4,4:-4] # crop 4pixel zero-padding
     binned_pix = int(round((data.shape[0]*NIRCam_scale*FGS_pix)/(FGS_plate_size*60)))
-    data_resized = resize_array(cropped,binned_pix,binned_pix)
+    data_resized = utils.resize_array(cropped,binned_pix,binned_pix)
 
     padding = (cropped.shape[0] - binned_pix)/2
     data_pad = pad_data(data_resized, padding)
@@ -187,19 +186,18 @@ def add_bias_to_data(bias_data_path, FGS_data, root, guider='', output_path='',
        guider1: "g1bias.fits"
        guider2: "g2bias.fits"
     """
-    header, guider = read_fits(bias_data_path)
+    header, guider = utils.read_fits(bias_data_path)
 
     binned_pad_norm_bias = FGS_data + guider
 
     if save_to_fits:
-        if not os.path.exists(os.path.join(output_path,'bin_norm_bias_imgs')):
-            os.makedirs(os.path.join(output_path,'bin_norm_bias_imgs'))
+        utils.ensure_dir_exists(os.path.join(output_path,'bin_norm_bias_imgs'))
 
         if guider_name is None:
             guider_name = bias_data_path.split('/')[-1].split('.')[0][-6:]
         out_path =  os.path.join(output_path,'bin_norm_bias_imgs',
                       '{}_G{}_binned_pad_norm.fits'.format(root,guider))
-        write_fits(out_path,binned_pad_norm_bias)
+        utils.write_fits(out_path,binned_pad_norm_bias)
 
     return binned_pad_norm_bias
 
@@ -252,13 +250,13 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     ## Find FGS counts to be used for normalization
     if fgs_counts is None:
         if jmag is None:
-            print('No counts or J magnitude given, setting to default')
+            log.warning('No counts or J magnitude given, setting to default')
             jmag=11
         fgs_counts = jmag_to_fgs_counts(jmag,guider)
     else:
         jmag = fgs_counts_to_jmag(fgs_counts,guider)
 
-    print('J magnitude = {:.1f}'.format(jmag))
+    log.info('J magnitude = {:.1f}'.format(jmag))
 
     # ---------------------------------------------------------------------
     ## Get list of images from input path: can take file,list,dir
@@ -269,7 +267,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     elif os.path.isdir(input_im):
         im_list = (glob(os.path.join(input_im, '*.fits')))
     else:
-        print("Input format not recognized. Exiting.")
+        log.info("Input format not recognized. Exiting.")
         return
 
     # ---------------------------------------------------------------------
@@ -277,12 +275,11 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     for im in im_list:
         basename = os.path.basename(im)
         root = basename.split('.')[0]
-        print('Beginning to create FGS image from {}'.format(root))
+        log.info('Beginning to create FGS image from {}'.format(root))
 
         if output_path is None:
             output_path = os.path.join(local_path,'out',root)
-            if not os.path.exists(output_path):
-                os.makedirs(output_path)
+            utils.ensure_dir_exists(os.path.exists(output_path))
 
         header, data = read_fits(im)
 
@@ -296,15 +293,15 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         data_pad = resize_nircam_image(data, NIRCam_scale,FGS_pix,FGS_plate_size)
         # Find individual psfs
         smoothed_data = ndimage.gaussian_filter(data_pad,sigma=25)
-        objects, num_objects = find_objects(smoothed_data)
+        objects, num_objects = utils.find_objects(smoothed_data)
         # Normalize image
         data_norm = normalize_data(data_pad, fgs_counts)
 
         out_path = os.path.join(output_path,
                                 'FGS_imgs','{}_G{}_binned_pad_norm.fits'.format(root,guider))
         data_norm[data_norm >= 65535] = 65535 #any value about 65535 will wrap when converted to uint16
-        hdr = read_fits(header_file)[0]
-        write_fits(out_path,np.uint16(data_norm),header=hdr)
+        hdr = utils.read_fits(header_file)[0]
+        utils.write_fits(out_path,np.uint16(data_norm),header=hdr)
 
 
         print ("Finished for {}, Guider = {}".format(root,guider))
