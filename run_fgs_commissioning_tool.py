@@ -12,9 +12,9 @@ import time
 #Because Jupyter Notebook cannot open a matplotlib object, I have copied what is
 # done in Run RGS Commissioning Tool.ipynb into this script that should be run in
 # IPython
-LOCAL_PAATH= os.path.dirname(os.path.realpath(__file__))
+LOCAL_PATH= os.path.dirname(os.path.realpath(__file__))
 TASKNAME = 'run_all'
-LOGNAME = utils.get_logname(os.path.join(local_path,'logs'), TASKNAME)
+LOGNAME = utils.get_logname(os.path.join(LOCAL_PATH,'logs'), TASKNAME)
 
 @log.logtofile(LOGNAME)
 def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
@@ -23,6 +23,7 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
         root = os.path.basename(im).split('.')[0]
 
     output_path = os.path.join(LOCAL_PATH,'out',root)
+    log.info("Processing request for {}. \nAll data will be saved in: {}".format(root,output_path))
     utils.ensure_dir_exists(output_path)
 
     # convert NIRCam image to an FGS image
@@ -34,13 +35,8 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
         log.info("This is a FGS image")
         fgs_im = utils.read_fits(im)[1]
         utils.ensure_dir_exists(os.path.join(output_path,'FGS_imgs'))
-        if not os.path.exists(os.path.join(output_path,'FGS_imgs')):
-            print(os.path.join(output_path,'FGS_imgs'))
-            print('didnt work')
+        shutil.copyfile(im,os.path.join(LOCAL_PATH,'out',root,'FGS_imgs','{}.fits'.format(root)))
 
-        shutil.copyfile(im,os.path.join(local_path,'out',root,'FGS_imgs','{}.fits'.format(root)))
-
-    exit
     # create reg file
     utils.ensure_dir_exists(output_path)
     nref = select_psfs.create_reg_file(fgs_im,root,guider,output_path=output_path,

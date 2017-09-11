@@ -5,7 +5,8 @@ import csv
 from astropy.io import fits
 import scipy.signal
 from glob import glob
-
+from skimage.filters import threshold_otsu
+from scipy import ndimage
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import matplotlib
@@ -23,13 +24,11 @@ matplotlib.rcParams['axes.prop_cycle'] = cycler(u'color',['#1f77b4',
             '#17becf'])
 matplotlib.rcParams['image.origin'] = 'upper'
 
-from skimage.filters import threshold_otsu
-from scipy import ndimage
-
 #Local
 from select_psfs import *
 import utils
 from counts_to_jmag import *
+import log
 
 '''
 Python Img Re-Binning Tool for FGS comissioning data
@@ -113,7 +112,7 @@ def rotate_nircam_image(im,fgs_guider,header,nircam_mod):
             ## FGS guider = 2; No change necessary!
             pass
     else:
-        print('Check the header keyword "DETECTOR" for the NIRCAM module, \
+        log.error('Check the header keyword "DETECTOR" for the NIRCAM module, \
               then re-run using the "nircam_mod" keyword to bypass the header query.')
     return im
 
@@ -251,13 +250,13 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     ## Find FGS counts to be used for normalization
     if fgs_counts is None:
         if jmag is None:
-            print('No counts or J magnitude given, setting to default')
+            log.warning('No counts or J magnitude given, setting to default')
             jmag=11
         fgs_counts = jmag_to_fgs_counts(jmag,guider)
     else:
         jmag = fgs_counts_to_jmag(fgs_counts,guider)
 
-    print('J magnitude = {:.1f}'.format(jmag))
+    log.info('J magnitude = {:.1f}'.format(jmag))
 
     # ---------------------------------------------------------------------
     ## Get list of images from input path: can take file,list,dir
@@ -268,7 +267,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     elif os.path.isdir(input_im):
         im_list = (glob(os.path.join(input_im, '*.fits')))
     else:
-        print("Input format not recognized. Exiting.")
+        log.info("Input format not recognized. Exiting.")
         return
 
     # ---------------------------------------------------------------------
@@ -276,7 +275,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     for im in im_list:
         basename = os.path.basename(im)
         root = basename.split('.')[0]
-        print('Beginning to create FGS image from {}'.format(root))
+        log.info('Beginning to create FGS image from {}'.format(root))
 
         if output_path is None:
             output_path = os.path.join(local_path,'out',root)
