@@ -95,10 +95,20 @@ class FGS(object):
                                     '{0}_G{1}_regfile.txt'.format(self.root,self.guider)))#'{}.reg'.format(root)
         log.info("Using {} as the reg file".format(reg_file))
         if reg_file.endswith('reg'):
-            self.x,self.y = np.loadtxt(reg_file)
-            self.countrate = utils.get_countrate(self.x,self.y,self.input_im)
+            self.x, self.y = np.loadtxt(reg_file)
+            self.countrate = utils.get_countrate(self.x, self.y, self.input_im)
         else:
             self.y,self.x,self.countrate = np.loadtxt(reg_file,delimiter=' ',skiprows=1).T #includes y, x, coords and countrate
+
+        # Cover cases where there is only one entry in the reg file
+        try:
+            self.x[0]
+        except IndexError:
+            # print('Note: only one entry in catalog.')
+            log.warning('Only one entry in catalog.')
+            self.x = np.array([self.x])
+            self.y = np.array([self.y])
+            self.countrate = np.array([self.countrate])
 
 
     def get_guide_star_coords(self, gs_ind=0):
