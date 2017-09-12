@@ -1,5 +1,6 @@
 import argparse
 from astropy.io import fits
+from astropy.io import ascii as asc
 import numpy as np
 import csv
 import os
@@ -370,9 +371,9 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
     else:
         # Read in .incat file
         incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
-        incat['x'] = incat['x'].astype(float) # Does everything /really/ need to be a float?
-        incat['y'] = incat['y'].astype(float)
-        incat['ctot'] = incat['ctot'].astype(float)
+        incat['x'] = incat['x'].astype(int) # Need to be an integer
+        incat['y'] = incat['y'].astype(int)
+        incat['ctot'] = incat['ctot'].astype(int)
 
         cols = incat['x', 'y', 'ctot'] # Only use relevant columns
 
@@ -381,6 +382,6 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
                        filename='{0}_G{1}_regfile.txt'.format(root,guider),
                        labels=['y','x','count rate'],
                        cols=cols)
-    if return_nref:
-        nref = len(inds)-1
-        return nref
+    # if return_nref:
+    #     nref = len(inds)-1
+    #     return nref
