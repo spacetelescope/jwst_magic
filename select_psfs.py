@@ -14,6 +14,8 @@ from matplotlib.text import Text
 from matplotlib.image import AxesImage
 import matplotlib
 matplotlib.rcParams['image.origin'] = 'upper'
+import sys
+from inspect import currentframe, getframeinfo
 
 #local
 import utils
@@ -34,9 +36,10 @@ def find_objects(smoothed_data):
     return objects, num_objects
 
 
-def isolate_psfs(smoothed_data,threshold,num_psfs=18):
+def isolate_psfs(smoothed_data, threshold, num_psfs=18):
     if threshold is None:
         threshold = smoothed_data.max() * 0.05
+    
     psfs_only = smoothed_data>threshold
     objects, num_objects = ndimage.measurements.label(psfs_only)
 
@@ -45,17 +48,21 @@ def isolate_psfs(smoothed_data,threshold,num_psfs=18):
     # the threshold will be very high which will ruin the fun for all the other PSFs.
     # **This is NOT a permanent fix.**
 
-    while num_objects > num_psfs: # assume you want 18 PSFs
-        #log.info("Num of objects detected: {}".format(num_objects))
-        threshold = .95*threshold
-        psfs_only = smoothed_data > threshold
-        objects, num_objects = ndimage.measurements.label(psfs_only)
+    # ONLY WORKS if you know IN ADVANCE the number of PSFS
 
-    while num_objects < num_psfs: # assume you want 18 PSFs
+    while num_objects > num_psfs: # assume you want 18 PSFs
         #log.info("Num of objects detected: {}".format(num_objects))
         threshold = 1.05*threshold
         psfs_only = smoothed_data > threshold
         objects, num_objects = ndimage.measurements.label(psfs_only)
+
+
+    while num_objects < num_psfs: # assume you want 18 PSFs
+        #log.info("Num of objects detected: {}".format(num_objects))
+        threshold = .95*threshold
+        psfs_only = smoothed_data > threshold
+        objects, num_objects = ndimage.measurements.label(psfs_only)
+        print(threshold, num_objects)
 
     return objects, num_objects
 
@@ -113,8 +120,9 @@ def find_centroids(data, objects, num_objects, root, guider, output_path='',
     using Otsu thresholding to pull out of the PSFs. Then, label each of these
     PSFs so that their centroids can be found and these coordinates returned.
     """
-    ## Pull out coords of each psf
-    ## **Coords are Y,X**
+
+    # Pull out coords of each psf
+    # **Coords are Y,X**
     coords = []
     for i in range(1,num_objects+1):
         im = np.copy(objects)
@@ -128,7 +136,7 @@ def find_centroids(data, objects, num_objects, root, guider, output_path='',
     return coords
 
 
-def distance_calc((x1,y1),(x2,y2)):
+def distance_calc((x1,y1), (x2,y2)):
     return np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
 
 
@@ -138,16 +146,33 @@ def plot_centroids(data,coords,root,guider,output_path,compact=False):
     else:
         pad = 500
 
+    # Determine x and y limits that encompass all PSFS
+    xarray, yarray = [x for (x,y) in coords], [y for (x,y) in coords] # Backwards... :^(
+    x_mid = (min(xarray) + max(xarray)) / 2
+    y_mid = (min(yarray) + max(yarray)) / 2
+    x_range = max(xarray) - min(xarray)
+    y_range = max(yarray) - min(yarray)
+    ax_range = max(x_range, y_range) # Choose the larger of the dimensions
+    ax_range += 100 # Make sure not to clip off the edge of border PSFS
+
     plt.figure(figsize=(17,17))
     plt.imshow(data,cmap='Greys',norm=LogNorm())
     for i in range(len(coords)):
         plt.scatter(coords[i][1],coords[i][0])
-        plt.annotate('({},{})'.format(int(coords[i][0]),int(coords[i][1])),(coords[i][1]-(pad*0.05),coords[i][0]+(pad*0.05)))
+        plt.annotate('({},{})'.format(int(coords[i][0]),int(coords[i][1])),
+                     (coords[i][1]-(pad*0.05), coords[i][0]+(pad*0.05)))
     plt.title('Centroids found for {}'.format(root))
-    plt.xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
-    plt.ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
+    # plt.xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
+    # plt.ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
+    plt.ylim(min(2048, x_mid + ax_range/2), max(0, x_mid - ax_range/2))
+    plt.xlim(max(0, y_mid - ax_range/2), min(2048, y_mid + ax_range/2))
     plt.savefig(os.path.join(output_path,'{}_G{}_centers.png'.format(root,guider)))
+    # print('xlim: {}, ylim: {}'.format(plt.gca().get_xlim(), plt.gca().get_ylim()))
+
     plt.close()
+
+    # print('xrange: {}, yrange: {}, axrange: {}, pad: {}'.format(x_range, y_range, ax_range, pad))
+    # print('xmid: {}, ymid: {}'.format(x_mid, y_mid))
 
 
 def count_rate_total(data, objects, num_objects, gs_points, dist=None, threshold = None,
@@ -312,10 +337,18 @@ def pick_stars(data,xarray,yarray,dist,root='',compact=False):
             f = fits.open(data)
             data = f[0].data
 
-        if compact:
-            pad = 300
-        else:
-            pad = 500
+        # if compact:
+        #     pad = 300
+        # else:
+        #     pad = 500
+
+        # Determine x and y limits that encompass all PSFS
+        x_mid = (min(xarray) + max(xarray)) / 2
+        y_mid = (min(yarray) + max(yarray)) / 2
+        x_range = max(xarray) - min(xarray)
+        y_range = max(yarray) - min(yarray)
+        ax_range = max(x_range, y_range) # Choose the larger of the dimensions
+        ax_range += 100 # Make sure not to clip off the edge of border PSFS
 
         print("\
                Click as near to the center of the star as possible.\n \
@@ -326,9 +359,10 @@ def pick_stars(data,xarray,yarray,dist,root='',compact=False):
         fig = plt.figure(figsize=(8,8))
         ax = fig.add_subplot(111)
         ax.imshow(data,cmap='coolwarm',interpolation='nearest',norm=LogNorm())
-        ax.set_ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
-        ax.set_xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
-
+        # ax.set_ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
+        # ax.set_xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
+        ax.set_xlim(max(0, x_mid - (ax_range/2)), min(2048, x_mid + (ax_range/2)))
+        ax.set_ylim(min(2048, y_mid + (ax_range/2)), max(0, y_mid - (ax_range/2)))
         fig.show()
 
         obj = SelectStars(fig,ax,data,xarray,yarray,dist=dist)
@@ -352,6 +386,7 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
         objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
         coords = find_centroids(data, objects, num_objects, root, guider,
                                 output_path=output_path)
+
         if len(coords)<2:
             log.error('Less than two objects have been found. Cannot proceed. Exiting')
             return
@@ -362,7 +397,7 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
         y, x, counts, val = count_rate_total(data, objects, num_objects, coords,dist=dist,
                                              counts_3x3=True,num_psfs=num_psfs)
 
-        inds = pick_stars(data,x,y,dist,root=root,compact=compact)
+        inds = pick_stars(data,x,y,dist,root=root,compact=compact) # Call the GUI
         log.info('1 guide star and {} reference stars selected'.format(len(inds)-1))
 
         cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
@@ -375,13 +410,22 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
         incat['y'] = incat['y'].astype(int)
         incat['ctot'] = incat['ctot'].astype(int)
 
-        cols = incat['x', 'y', 'ctot'] # Only use relevant columns
+        # Only use stars in the catalog
+        incat = incat[incat['incat']==1]
+        # Only use relevant columns
+        cols = incat['y', 'x', 'ctot'] # Make sure to flip x and y!!
+        inds = incat['x']
+
+        coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
+
+        plot_centroids(data,coords,root,guider,output_path,compact=compact)
 
 
     utils.write_cols_to_file(output_path,
                        filename='{0}_G{1}_regfile.txt'.format(root,guider),
                        labels=['y','x','count rate'],
                        cols=cols)
-    # if return_nref:
-    #     nref = len(inds)-1
-    #     return nref
+    
+    if return_nref:
+        nref = len(inds)-1
+        return nref
