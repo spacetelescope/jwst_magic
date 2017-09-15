@@ -1,12 +1,11 @@
-import numpy as np
-np.seterr(all='raise')
+# STDLIB
 import os
-import csv
+
+# Third Party
+import numpy as np
 from astropy.io import fits
-import scipy.signal
 from glob import glob
-from skimage.filters import threshold_otsu
-from scipy import ndimage
+from scipy import ndimage, signal
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import matplotlib
@@ -24,11 +23,12 @@ matplotlib.rcParams['axes.prop_cycle'] = cycler(u'color',['#1f77b4',
             '#17becf'])
 matplotlib.rcParams['image.origin'] = 'upper'
 
-#Local
-from select_psfs import *
-import utils
-from counts_to_jmag import *
+# LOCAL
+import counts_to_jmag
 import log
+import select_psfs
+import utils
+
 
 '''
 Python Img Re-Binning Tool for FGS comissioning data
@@ -53,14 +53,11 @@ simulating Global Alignment using the short wavelength channel
 def bad_pixel_correction(data,BP_thresh):
     '''Finds and smooths out bad pixels with a median filter'''
     #apply median filter
-    smooth = scipy.signal.medfilt(data,3)
+    smooth = signal.medfilt(data,3)
 
     #set negative values to zero
     j = smooth.copy()
     j[j < 0] = 0
-
-    #create array of zeros, for the bad pixel mask
-    bpmask = np.zeros(data.shape)
 
     #difference between image and smoothed image; leaves the background behind so we can filter out the bad pixels
     delta = data-smooth
@@ -193,8 +190,8 @@ def add_bias_to_data(bias_data_path, FGS_data, root, guider='', output_path='',
     if save_to_fits:
         utils.ensure_dir_exists(os.path.join(output_path,'bin_norm_bias_imgs'))
 
-        if guider_name is None:
-            guider_name = bias_data_path.split('/')[-1].split('.')[0][-6:]
+        if guider is None:
+            guider = bias_data_path.split('/')[-1].split('.')[0][-6:]
         out_path =  os.path.join(output_path,'bin_norm_bias_imgs',
                       '{}_G{}_binned_pad_norm.fits'.format(root,guider))
         utils.write_fits(out_path,binned_pad_norm_bias)
@@ -252,9 +249,9 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         if jmag is None:
             log.warning('No counts or J magnitude given, setting to default')
             jmag=11
-        fgs_counts = jmag_to_fgs_counts(jmag,guider)
+        fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag,guider)
     else:
-        jmag = fgs_counts_to_jmag(fgs_counts,guider)
+        jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts,guider)
 
     log.info('J magnitude = {:.1f}'.format(jmag))
 
@@ -281,7 +278,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
             output_path = os.path.join(local_path,'out',root)
             utils.ensure_dir_exists(os.path.exists(output_path))
 
-        header, data = read_fits(im)
+        header, data = utils.read_fits(im)
 
         # ---------------------------------------------------------------------
         ## Create FGS image
@@ -293,7 +290,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         data_pad = resize_nircam_image(data, NIRCam_scale,FGS_pix,FGS_plate_size)
         # Find individual psfs
         smoothed_data = ndimage.gaussian_filter(data_pad,sigma=25)
-        objects, num_objects = utils.find_objects(smoothed_data)
+        objects, num_objects = select_psfs.find_objects(smoothed_data)
         # Normalize image
         data_norm = normalize_data(data_pad, fgs_counts)
 

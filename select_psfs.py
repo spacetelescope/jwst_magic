@@ -1,10 +1,10 @@
+# STDLIB
 import argparse
-from astropy.io import fits
-import numpy as np
-import csv
 import os
-from skimage.filters import threshold_otsu
-from scipy import ndimage,signal
+
+# Third Party
+from astropy.io import fits
+import csv
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib.lines import Line2D
@@ -13,8 +13,11 @@ from matplotlib.text import Text
 from matplotlib.image import AxesImage
 import matplotlib
 matplotlib.rcParams['image.origin'] = 'upper'
+import numpy as np
+from skimage.filters import threshold_otsu
+from scipy import ndimage,signal
 
-#local
+# LOCAL
 import utils
 import log
 

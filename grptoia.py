@@ -1,13 +1,5 @@
 import numpy as np
 
-#real pixel to ideal angle
-
-#xOffset = 1023.5
-#yOffset = 1023.5
-#plateScale = 0.06738281367
-#gain=1.5
-
-
 ## pass in X Y in pixels
 def g1RPtoIA(x,y,xOffset=1023.5, yOffset=1023.5,
              plateScale=0.06738281367, gain=1.5):
