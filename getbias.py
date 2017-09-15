@@ -1,6 +1,9 @@
+# STDLIB
+import os
+
+# Third Party
 from astropy.io import fits
 import numpy as np
-import os
 
 def getbias(guider, x, y, nreads, nramps, nx, ny, bzp=True,
             bktc=True, bp=True, data_path=None):

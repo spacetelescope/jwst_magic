@@ -1,10 +1,13 @@
 #This code is adapted from mkIDproc.pro from Sherie Hofeltz.
 
-import numpy as np
+#STDLIB
 import os
 import shutil
 
-#local
+# Third Party
+import numpy as np
+
+# LOCAL
 import grptoia
 
 class mkproc(object):

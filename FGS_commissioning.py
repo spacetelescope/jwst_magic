@@ -1,14 +1,17 @@
+# STDLIB
 import argparse
-from astropy.io import fits
-import numpy as np
-import csv
 import os
-from skimage.filters import threshold_otsu
-from scipy import ndimage
+
+# Third Party
+from astropy.io import fits
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+import csv
+import numpy as np
+from skimage.filters import threshold_otsu
+from scipy import ndimage
 
-#local
+# LOCAL
 import grptoia
 import getbias
 import utils

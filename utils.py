@@ -1,14 +1,15 @@
-#!/usr/bin/python
-
-from astropy.io import fits
-import numpy as np
-import csv
+# STDLIB
 import os
-from skimage.filters import threshold_otsu
-from scipy import ndimage
 import itertools
 import time
+
+# Third Party
+from astropy.io import fits
+import csv
 import matplotlib.pyplot as plt
+import numpy as np
+from skimage.filters import threshold_otsu
+from scipy import ndimage
 
 def ensure_dir_exists(fullpath):
     """Creates dirs from ``fullpath`` if they do not already exist.
