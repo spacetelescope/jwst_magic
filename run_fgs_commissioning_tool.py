@@ -1,13 +1,15 @@
+# STDLIB
 import os
 import shutil
-
-# From local
-import FGS_commissioning
-import select_psfs
-import nircam_to_fgs
-import utils
-import log
 import time
+
+# LOCAL
+import FGS_commissioning
+import log
+import nircam_to_fgs
+import select_psfs
+import utils
+
 
 #Because Jupyter Notebook cannot open a matplotlib object, I have copied what is
 # done in Run RGS Commissioning Tool.ipynb into this script that should be run in
