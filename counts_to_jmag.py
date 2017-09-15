@@ -1,7 +1,8 @@
-import numpy as np
+# Third Party
 import matplotlib.pyplot as plt
 from matplotlib import cycler
 import matplotlib
+import numpy as np
 
 # Set plots to default to matplotlib 2.0 colors
 matplotlib.rcParams['image.cmap'] = 'viridis'
