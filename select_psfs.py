@@ -4,6 +4,7 @@ import os
 import sys
 from inspect import currentframe, getframeinfo
 import csv
+import warnings
 
 # Third Party
 from astropy.io import fits
@@ -19,6 +20,8 @@ import matplotlib
 matplotlib.rcParams['image.origin'] = 'upper'
 from skimage.filters import threshold_otsu
 from scipy import ndimage,signal
+from astropy.stats import sigma_clipped_stats
+from photutils import find_peaks
 
 # LOCAL
 import utils
@@ -38,10 +41,26 @@ def find_objects(smoothed_data):
 
     return objects, num_objects
 
+def count_psfs(smoothed_data, gauss_sigma):
+    '''
+    Use photutils.find_peaks to count how many PSFS are present in the data
+    '''
+
+    # Perform statistics
+    mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
+
+    # Find PSFs
+    threshold = median + (3 * std)
+    sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
+    num_psfs = len(sources)
+
+    log.info('{} PSFs expected from Gaussian-smoothed data (sigma = {})'.format(num_psfs, gauss_sigma))
+    return num_psfs
+
 
 def isolate_psfs(smoothed_data, threshold, num_psfs=18):
     if threshold is None:
-        threshold = smoothed_data.max() * 0.05
+        threshold = smoothed_data.max() * 0.95
     
     psfs_only = smoothed_data>threshold
     objects, num_objects = ndimage.measurements.label(psfs_only)
@@ -58,6 +77,11 @@ def isolate_psfs(smoothed_data, threshold, num_psfs=18):
         threshold = 1.05*threshold
         psfs_only = smoothed_data > threshold
         objects, num_objects = ndimage.measurements.label(psfs_only)
+        if (threshold < 1) or (threshold > smoothed_data.max()):
+            warnings.warn('Runaway threshold calculation while num_objects > num_psfs', RuntimeWarning)
+            log.warning('Runaway threshold calculation while num_objects > num_psfs; threshold = {}'.format(threshold))
+            log.warning('{} PSFs found during threshold calculation'.format(num_objects))
+            break
 
 
     while num_objects < num_psfs: # assume you want 18 PSFs
@@ -65,7 +89,12 @@ def isolate_psfs(smoothed_data, threshold, num_psfs=18):
         threshold = .95*threshold
         psfs_only = smoothed_data > threshold
         objects, num_objects = ndimage.measurements.label(psfs_only)
-        print(threshold, num_objects)
+        # print(threshold, num_objects)
+        if (threshold < 1) or (threshold > smoothed_data.max()):
+            warnings.warn('Runaway threshold calculation while num_objects < num_psfs', RuntimeWarning)
+            log.warning('Runaway threshold calculation while num_objects < num_psfs; threshold = {}'.format(threshold))
+            log.warning('{} PSFs found during threshold calculation'.format(num_objects))
+            break
 
     return objects, num_objects
 
@@ -143,11 +172,12 @@ def distance_calc((x1,y1), (x2,y2)):
     return np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
 
 
-def plot_centroids(data,coords,root,guider,output_path,compact=False):
-    if compact:
-        pad = 300
-    else:
-        pad = 500
+def plot_centroids(data,coords,root,guider,output_path):
+    # if compact:
+    #     pad = 300
+    # else:
+    #     pad = 500
+    pad=300
 
     # Determine x and y limits that encompass all PSFS
     xarray, yarray = [x for (x,y) in coords], [y for (x,y) in coords] # Backwards... :^(
@@ -324,7 +354,7 @@ class SelectStars(object):
         return ind
 
 
-def pick_stars(data,xarray,yarray,dist,root='',compact=False):
+def pick_stars(data,xarray,yarray,dist,root=''):
         '''
         Parameters:
             data: str, ndarray
@@ -374,18 +404,32 @@ def pick_stars(data,xarray,yarray,dist,root='',compact=False):
 
 
 def create_reg_file(data, root, guider, output_path, return_nref=False,
-                    num_psfs=18, compact=False, incat=None):
+                    num_psfs=None, global_alignment=False, incat=None):
     
     # If no .incat file provided, create reg file with manual star selection in GUI
     if incat == None:
         if isinstance(data, str):
             data = utils.read_fits(data)[1]
 
-        if compact:
-            smoothed_data = signal.medfilt(data,5)
-        else:
-            smoothed_data = ndimage.gaussian_filter(data,sigma=25)
+        # if compact:
+        #     smoothed_data = signal.medfilt(data,5)
+        # else:
+        #     smoothed_data = ndimage.gaussian_filter(data,sigma=25)
 
+        if global_alignment:
+            gauss_sigma = 25
+        else:
+            gauss_sigma = 5
+
+        smoothed_data = ndimage.gaussian_filter(data, sigma = gauss_sigma)
+
+        # Read or determine number of PSFs to expect
+        if num_psfs == None:
+            num_psfs = count_psfs(smoothed_data, gauss_sigma)
+        else:
+            log.info('{} user-specified PSFs '.format(num_psfs))
+
+        # Find and locate PSFs
         objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
         coords = find_centroids(data, objects, num_objects, root, guider,
                                 output_path=output_path)
@@ -396,11 +440,11 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
 
         dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
 
-        plot_centroids(data,coords,root,guider,output_path,compact=compact)
+        plot_centroids(data,coords,root,guider,output_path)
         y, x, counts, val = count_rate_total(data, objects, num_objects, coords,dist=dist,
                                              counts_3x3=True,num_psfs=num_psfs)
 
-        inds = pick_stars(data,x,y,dist,root=root,compact=compact) # Call the GUI
+        inds = pick_stars(smoothed_data,x,y,dist,root=root) # Call the GUI
         log.info('1 guide star and {} reference stars selected'.format(len(inds)-1))
 
         cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
@@ -421,7 +465,7 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
 
         coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
 
-        plot_centroids(data,coords,root,guider,output_path,compact=compact)
+        plot_centroids(data,coords,root,guider,output_path)
 
 
     utils.write_cols_to_file(output_path,
