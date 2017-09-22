@@ -61,7 +61,7 @@ def count_psfs(smoothed_data, gauss_sigma):
 def isolate_psfs(smoothed_data, threshold, num_psfs=18):
     if threshold is None:
         threshold = smoothed_data.max() * 0.95
-    
+
     psfs_only = smoothed_data>threshold
     objects, num_objects = ndimage.measurements.label(psfs_only)
 
@@ -145,7 +145,7 @@ def get_countrate(x,y,arr):
     return countrate
 
 
-def find_centroids(data, objects, num_objects, root, guider, output_path='',
+def find_centroids(data, objects, num_objects, root, guider, out_dir='',
                    write_out_file=False):
     """
     Given an image with multiple PSFs, smooth first with a Gaussian filter before
@@ -162,17 +162,17 @@ def find_centroids(data, objects, num_objects, root, guider, output_path='',
         coords.append(ndimage.measurements.center_of_mass(im*data)) #y,x
 
     if write_out_file:
-        filename= os.path.join(output_path,'{}_G{}_psf_centers.csv'.format(root,guider))
+        filename= os.path.join(out_dir,'{}_G{}_psf_centers.csv'.format(root,guider))
         utils.write_to_file(filename,coords,labels=['y','x'])
 
     return coords
 
 
-def distance_calc((x1,y1), (x2,y2)):
+def distance_calc((x1, y1), (x2, y2)):
     return np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
 
 
-def plot_centroids(data,coords,root,guider,output_path):
+def plot_centroids(data, coords, root, guider, out_dir):
     # if compact:
     #     pad = 300
     # else:
@@ -195,17 +195,11 @@ def plot_centroids(data,coords,root,guider,output_path):
         plt.annotate('({},{})'.format(int(coords[i][0]),int(coords[i][1])),
                      (coords[i][1]-(pad*0.05), coords[i][0]+(pad*0.05)))
     plt.title('Centroids found for {}'.format(root))
-    # plt.xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
-    # plt.ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
     plt.ylim(min(2048, x_mid + ax_range/2), max(0, x_mid - ax_range/2))
     plt.xlim(max(0, y_mid - ax_range/2), min(2048, y_mid + ax_range/2))
-    plt.savefig(os.path.join(output_path,'{}_G{}_centers.png'.format(root,guider)))
-    # print('xlim: {}, ylim: {}'.format(plt.gca().get_xlim(), plt.gca().get_ylim()))
+    plt.savefig(os.path.join(out_dir,'{}_G{}_centers.png'.format(root,guider)))
 
     plt.close()
-
-    # print('xrange: {}, yrange: {}, axrange: {}, pad: {}'.format(x_range, y_range, ax_range, pad))
-    # print('xmid: {}, ymid: {}'.format(x_mid, y_mid))
 
 
 def count_rate_total(data, objects, num_objects, gs_points, dist=None, threshold = None,
@@ -278,7 +272,7 @@ def OLD_count_rate_total(data, smoothed_data, gs_points, dist=None, threshold = 
     return y, x, counts, val
 
 
-def create_cols_for_coords_counts(y,x,counts,val,inds=None):
+def create_cols_for_coords_counts(y, x, counts, val, inds=None):
     """
     Create an array of columns of y, x, and counts of each PSF to be written out.
     Use the inds returned from pick_stars based on user input.
@@ -301,7 +295,7 @@ def create_cols_for_coords_counts(y,x,counts,val,inds=None):
 
 
 class SelectStars(object):
-    def __init__(self,fig,ax,data,xarray,yarray,dist=15):
+    def __init__(self, fig, ax, data, xarray, yarray, dist=15):
         self.data = data
         self.xt = xarray
         self.yt = yarray
@@ -354,7 +348,7 @@ class SelectStars(object):
         return ind
 
 
-def pick_stars(data,xarray,yarray,dist,root=''):
+def pick_stars(data, xarray, yarray, dist, root=''):
         '''
         Parameters:
             data: str, ndarray
@@ -403,11 +397,43 @@ def pick_stars(data,xarray,yarray,dist,root=''):
         return obj.inds
 
 
-def create_reg_file(data, root, guider, output_path, return_nref=False,
-                    num_psfs=None, global_alignment=False, incat=None):
-    
-    # If no .incat file provided, create reg file with manual star selection in GUI
-    if incat == None:
+def create_reg_file(data, root, guider, out_dir, return_nref=False,
+                    num_psfs=None, global_alignment=False, incat=None, reg_file=None):
+
+    # If .incat file provided, create reg file with provided information
+    if incat:
+        # Read in .incat file
+        incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
+        incat['x'] = incat['x'].astype(int) # Need to be an integer
+        incat['y'] = incat['y'].astype(int)
+        incat['ctot'] = incat['ctot'].astype(int)
+
+        # Only use stars in the catalog
+        incat = incat[incat['incat']==1]
+        # Only use relevant columns
+        cols = incat['y', 'x', 'ctot'] # Make sure to flip x and y!!
+        nref = len(incat['x'])-1
+
+        coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
+
+        plot_centroids(data,coords,root,guider,out_dir)
+
+        utils.write_cols_to_file(out_dir,
+                           filename='{0}_G{1}_regfile.txt'.format(root,guider),
+                           labels=['y','x','count rate'],
+                           cols=cols)
+
+    elif reg_file:
+        y,x,c = (np.loadtxt(reg_file, delimiter=' ', skiprows=1)).T  # star coords & gs counts
+        coords = [(yy,xx) for xx, yy in zip(x, y)]
+
+        plot_centroids(data,coords,root,guider,out_dir)
+
+        nref = len(y)-1
+
+
+    # If no .incat or reg file provided, create reg file with manual star selection in GUI
+    else:
         if isinstance(data, str):
             data = utils.read_fits(data)[1]
 
@@ -432,47 +458,29 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
         # Find and locate PSFs
         objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
         coords = find_centroids(data, objects, num_objects, root, guider,
-                                output_path=output_path)
+                                out_dir=out_dir)
 
         if len(coords)<2:
             log.error('Less than two objects have been found. Cannot proceed. Exiting')
             return
 
-        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
+        #find the minimum distance between PSFs
+        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. 
 
-        plot_centroids(data,coords,root,guider,output_path)
+        plot_centroids(data,coords,root,guider,out_dir)
         y, x, counts, val = count_rate_total(data, objects, num_objects, coords,dist=dist,
                                              counts_3x3=True,num_psfs=num_psfs)
 
         inds = pick_stars(smoothed_data,x,y,dist,root=root) # Call the GUI
+        nref = len(inds)-1
         log.info('1 guide star and {} reference stars selected'.format(len(inds)-1))
 
         cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
-    
-    # If .incat file provided, create reg file with provided information
-    else:
-        # Read in .incat file
-        incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
-        incat['x'] = incat['x'].astype(int) # Need to be an integer
-        incat['y'] = incat['y'].astype(int)
-        incat['ctot'] = incat['ctot'].astype(int)
 
-        # Only use stars in the catalog
-        incat = incat[incat['incat']==1]
-        # Only use relevant columns
-        cols = incat['y', 'x', 'ctot'] # Make sure to flip x and y!!
-        inds = incat['x']
+        utils.write_cols_to_file(out_dir,
+                           filename='{0}_G{1}_regfile.txt'.format(root,guider),
+                           labels=['y','x','count rate'],
+                           cols=cols)
 
-        coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
-
-        plot_centroids(data,coords,root,guider,output_path)
-
-
-    utils.write_cols_to_file(output_path,
-                       filename='{0}_G{1}_regfile.txt'.format(root,guider),
-                       labels=['y','x','count rate'],
-                       cols=cols)
-    
     if return_nref:
-        nref = len(inds)-1
         return nref
