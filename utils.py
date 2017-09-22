@@ -2,6 +2,7 @@
 import os
 import itertools
 import time
+import sys
 
 # Third Party
 from astropy.io import fits
@@ -74,7 +75,7 @@ def read_fits(filename):
     return header, data
 
 
-def write_to_file(filename,rows,labels=None,mode='w'):
+def write_to_file(filename, rows, labels=None, mode='w'):
     """ Write out results to a csv, dat, txt, etc file.
 
     Parameters
@@ -92,7 +93,7 @@ def write_to_file(filename,rows,labels=None,mode='w'):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    mode=mode
+    mode = mode
     if filename.endswith('csv'):
         with open(filename, mode) as fout:
             csvwriter = csv.writer(fout)
@@ -102,12 +103,12 @@ def write_to_file(filename,rows,labels=None,mode='w'):
             for i in rows:
                 csvwriter.writerow(i)
     else:
-        np.savetxt(filename,rows,fmt='%.4f',header=' '.join(labels))#,fmt='%.4f'
+        np.savetxt(filename, rows, fmt='%.4f', header=' '.join(labels))#,fmt='%.4f'
 
 
 def write_cols_to_file(output_path, filename, labels, cols):
-    filename= os.path.join(output_path,filename)
-    write_to_file(filename,cols,labels=labels)
+    filename = os.path.join(output_path, filename)
+    write_to_file(filename, cols, labels=labels)
 
 
 def swap_if_little_endian(data):
@@ -145,7 +146,7 @@ def resize_array(a, new_rows, new_cols):
         # with the new index, and thus the portion of those cells that
         # we need to include in our average
         x0_scale = 1 - (the_x_range[0]-int(the_x_range[0]))
-        xEnd_scale =  (the_x_range[1]-int(the_x_range[1]))
+        xEnd_scale = (the_x_range[1]-int(the_x_range[1]))
         # scale_line is a 1d array that corresponds to the portion of each old
         # index in the_x_range that should be included in the new average
         scale_line = np.ones((lastx-firstx+1))
@@ -159,7 +160,7 @@ def resize_array(a, new_rows, new_cols):
             lastx = lastx - 1
         # Now it's linear algebra time. Take the dot product of a slice of
         # the original array and the scale_line
-        new_a[:,j] = np.dot(a[:,firstx:lastx+1], scale_line)/scale_line.sum()
+        new_a[:, j] = np.dot(a[:, firstx:lastx+1], scale_line)/scale_line.sum()
     # Then average across the rows to shorten the cols. Same method as above.
     # It is probably possible to simplify this code, as this is more or less
     # the same procedure as the block of code above, but transposed.
@@ -170,7 +171,7 @@ def resize_array(a, new_rows, new_cols):
         firsty = int(the_y_range[0])
         lasty = int(the_y_range[1])
         y0_scale = 1 - (the_y_range[0]-int(the_y_range[0]))
-        yEnd_scale =  (the_y_range[1]-int(the_y_range[1]))
+        yEnd_scale = (the_y_range[1]-int(the_y_range[1]))
         scale_line = np.ones((lasty-firsty+1))
         scale_line[0] = y0_scale
         scale_line[-1] = yEnd_scale
@@ -189,7 +190,7 @@ def find_xy_between_two_points(coords1,coords2):
 
 
 def find_resultant(coords1, coords2):
-    diff1, diff2 = find_xy_between_two_points(coords1,coords2)
+    diff1, diff2 = find_xy_between_two_points(coords1, coords2)
 
     z = np.sqrt(diff1**2 + diff2**2)
 
@@ -198,6 +199,6 @@ def find_resultant(coords1, coords2):
 def find_dist_between_points(coords):
     dists = []
     for c1, c2 in itertools.combinations(coords, 2):
-        dists.append(find_resultant(c1,c2))
+        dists.append(find_resultant(c1, c2))
 
     return dists

@@ -579,7 +579,7 @@ def run_TRK(im, guider, root, num_frames, out_dir=None, jitter=True, interactive
     if interactive:
         return trk
 
-def create_LOSTRK(im, guider, root, nx, ny, out_dir=None,interactive=False):
+def create_LOSTRK(im, guider, root, nx, ny, out_dir=None, interactive=False):
     trk = FGS(im, guider, root, out_dir)
     trk.nreads = 1 #want only single frame image
     trk.setup_step(nx, ny, nramps=1, tcds=trk.tcdsTRK, step='TRK')
