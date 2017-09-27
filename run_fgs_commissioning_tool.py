@@ -20,7 +20,7 @@ LOGNAME = utils.get_logname(os.path.join(LOCAL_PATH,'logs'), TASKNAME)
 
 @log.logtofile(LOGNAME)
 def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_mod=None, nircam=True,num_psfs=None, global_alignment=False, incat=None):
+            nircam_mod=None, nircam=True, global_alignment=False, incat=None):
     if root is None:
         root = os.path.basename(im).split('.')[0]
 
@@ -40,8 +40,8 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
         shutil.copyfile(im,os.path.join(LOCAL_PATH,'out',root,'FGS_imgs','{}.fits'.format(root)))
 
     # create reg file
-    nref = select_psfs.create_reg_file(fgs_im,root,guider,output_path=output_path,
-                                       return_nref=True, num_psfs=num_psfs,
+    nref = select_psfs_findpeaks.create_reg_file(fgs_im,root,guider,output_path=output_path, 
+                                       return_nref=True,               
                                        global_alignment=global_alignment, incat=incat)
 
     # create all files for FSW/DHAS/FGSES/etc.
