@@ -76,7 +76,6 @@ Choice: ''')
     else:
         return num_psfs, coords, threshold
 
-
 def countrate_3x3(coords, data):
     """
     Using the coordinates of each PSF,place a 3x3 box around center pixel, and sum
@@ -88,8 +87,7 @@ def countrate_3x3(coords, data):
     counts = np.sum(data[yy - 1:yy + 2, xx - 1:xx + 2])
     return counts
 
-
-def plot_centroids(data,coords,root,guider,output_path):
+def plot_centroids(data, coords, root, guider, out_dir):
     # if compact:
     #     pad = 300
     # else:
@@ -112,17 +110,11 @@ def plot_centroids(data,coords,root,guider,output_path):
         plt.annotate('({},{})'.format(int(coords[i][0]),int(coords[i][1])),
                      (coords[i][1]-(pad*0.05), coords[i][0]+(pad*0.05)))
     plt.title('Centroids found for {}'.format(root))
-    # plt.xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
-    # plt.ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
     plt.ylim(min(2048, x_mid + ax_range/2), max(0, x_mid - ax_range/2))
     plt.xlim(max(0, y_mid - ax_range/2), min(2048, y_mid + ax_range/2))
-    plt.savefig(os.path.join(output_path,'{}_G{}_centers.png'.format(root,guider)))
-    # print('xlim: {}, ylim: {}'.format(plt.gca().get_xlim(), plt.gca().get_ylim()))
+    plt.savefig(os.path.join(out_dir,'{}_G{}_centers.png'.format(root,guider)))
 
     plt.close()
-
-    # print('xrange: {}, yrange: {}, axrange: {}, pad: {}'.format(x_range, y_range, ax_range, pad))
-    # print('xmid: {}, ymid: {}'.format(x_mid, y_mid))
 
 
 def count_rate_total(data, objects, num_objects, gs_points, counts_3x3=True):
@@ -148,7 +140,7 @@ def count_rate_total(data, objects, num_objects, gs_points, counts_3x3=True):
     return counts, val
 
 
-def create_cols_for_coords_counts(y,x,counts,val,inds=None):
+def create_cols_for_coords_counts(y, x, counts, val, inds=None):
     """
     Create an array of columns of y, x, and counts of each PSF to be written out.
     Use the inds returned from pick_stars based on user input.
@@ -197,7 +189,8 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
             log.error('Less than two objects have been found. Cannot proceed. Exiting')
             raise ValueError('cannot guide on < 2 objects')
 
-        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
+        #find the minimum distance between PSFs
+        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. 
 
         plot_centroids(data, coords, root, guider, output_path) # Save pretty PNG in out dir
         counts, val = count_rate_total(data, objects, num_psfs, coords, counts_3x3=True) # Calculate count rate
@@ -207,7 +200,8 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
         dataToShow = data.copy()
         dataToShow[data == 0] = 0.1 # Alter null pixel values to appear as black in LogNorm image
         inds = SelectStarsGUI.run_SelectStars(dataToShow, x, y, dist, printOutput=False)
-        log.info('1 guide star and {} reference stars selected'.format(len(inds)-1))
+        nref = len(inds)-1
+        log.info('1 guide star and {} reference stars selected'.format(nref)
 
         cols = create_cols_for_coords_counts(y, x, counts, val, inds=inds)
     
@@ -224,17 +218,12 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
         # Only use relevant columns
         cols = incat['y', 'x', 'ctot'] # Make sure to flip x and y!!
         inds = incat['x']
+        nref = len(inds)-1
 
         coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
 
         plot_centroids(data,coords,root,guider,output_path) # Save pretty PNG in out dir
 
 
-    utils.write_cols_to_file(output_path,
-                       filename='{0}_G{1}_regfile.txt'.format(root,guider),
-                       labels=['y','x','count rate'],
-                       cols=cols)
-    
     if return_nref:
-        nref = len(inds)-1
         return nref
