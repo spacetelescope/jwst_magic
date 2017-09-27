@@ -268,7 +268,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     elif os.path.isdir(input_im):
         im_list = (glob(os.path.join(input_im, '*.fits')))
     else:
-        log.info("Input format not recognized. Exiting.")
+        log.error("Input format not recognized. Exiting.")
         return
 
     # ---------------------------------------------------------------------

@@ -7,14 +7,16 @@ import warnings
 # Third Party
 from astropy.io import fits
 from astropy.io import ascii as asc
+from astropy.stats import sigma_clipped_stats
 import numpy as np
+from photutils import find_peaks
+from scipy import ndimage,signal
+
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
-import matplotlib
 matplotlib.rcParams['image.origin'] = 'upper'
-from scipy import ndimage,signal
-from astropy.stats import sigma_clipped_stats
-from photutils import find_peaks
+
 
 # LOCAL
 import utils
@@ -162,9 +164,9 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
     return cols
 
 
-def create_reg_file(data, root, guider, output_path, return_nref=False,
-                    global_alignment=False, incat=None):
-    
+def create_reg_file(data, root, guider, out_dir, return_nref=False,
+                    global_alignment=False, incat=None, reg_file=None):
+
     # If no .incat file provided, create reg file with manual star selection in GUI
     if incat == None:
         if isinstance(data, str):
@@ -190,9 +192,9 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
             raise ValueError('cannot guide on < 2 objects')
 
         #find the minimum distance between PSFs
-        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. 
+        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
 
-        plot_centroids(data, coords, root, guider, output_path) # Save pretty PNG in out dir
+        plot_centroids(data, coords, root, guider, out_dir) # Save pretty PNG in out dir
         counts, val = count_rate_total(data, objects, num_psfs, coords, counts_3x3=True) # Calculate count rate
         # print(y, x, counts,val)
 
@@ -201,10 +203,10 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
         dataToShow[data == 0] = 0.1 # Alter null pixel values to appear as black in LogNorm image
         inds = SelectStarsGUI.run_SelectStars(dataToShow, x, y, dist, printOutput=False)
         nref = len(inds)-1
-        log.info('1 guide star and {} reference stars selected'.format(nref)
+        log.info('1 guide star and {} reference stars selected'.format(nref))
 
         cols = create_cols_for_coords_counts(y, x, counts, val, inds=inds)
-    
+
     # If .incat file provided, create reg file with provided information
     else:
         # Read in .incat file
@@ -222,7 +224,7 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
 
         coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
 
-        plot_centroids(data,coords,root,guider,output_path) # Save pretty PNG in out dir
+        plot_centroids(data,coords,root,guider,out_dir) # Save pretty PNG in out dir
 
 
     if return_nref:
