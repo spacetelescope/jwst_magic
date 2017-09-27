@@ -49,8 +49,8 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
     nref = select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,
                                        return_nref=True,
                                        global_alignment=global_alignment,
-                                       incat=incat,
-                                       reg_file=reg_file)
+                                       incat=incat)#,
+                                       # reg_file=reg_file)
 
     # create all files for FSW/DHAS/FGSES/etc.
     FGS_commissioning.run_ID(fgs_im, guider, root, nref=nref, out_dir=out_dir)

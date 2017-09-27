@@ -382,7 +382,7 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             if len(self.inds) == 0: 
                 color = 'yellow'
             else: 
-                color = 'orange'
+                color = 'darkorange'
             self.canvas.axes.scatter(self.x[ind], self.y[ind], s=500, facecolors='none', edgecolors=color,  lw=2, marker='o')
             self.canvas.draw()
 
@@ -399,7 +399,7 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             '''
 
             # Plot current guide star as regular star
-            self.canvas.axes.scatter(self.x[self.inds[0]], self.y[self.inds[0]], s=500, facecolors='none', edgecolors='orange',  lw=2, marker='o')
+            self.canvas.axes.scatter(self.x[self.inds[0]], self.y[self.inds[0]], s=500, facecolors='none', edgecolors='darkorange',  lw=2, marker='o')
 
             # Update self.inds
             guide_ind = self.guidestar_buttons.index(button)
