@@ -1,9 +1,7 @@
 # STDLIB
-import argparse
 import os
 import sys
 from inspect import currentframe, getframeinfo
-import csv
 import warnings
 
 # Third Party
@@ -12,13 +10,8 @@ from astropy.io import ascii as asc
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
-from matplotlib.lines import Line2D
-from matplotlib.patches import Rectangle
-from matplotlib.text import Text
-from matplotlib.image import AxesImage
 import matplotlib
 matplotlib.rcParams['image.origin'] = 'upper'
-from skimage.filters import threshold_otsu
 from scipy import ndimage,signal
 from astropy.stats import sigma_clipped_stats
 from photutils import find_peaks
@@ -26,22 +19,10 @@ from photutils import find_peaks
 # LOCAL
 import utils
 import log
+import SelectStarsGUI
 
-def find_objects(smoothed_data):
-    '''
-    Smooth image and pull out individual psfs
 
-    Returns 'objects' - image array with all pixels belonging to one object
-    given the same value - and 'num_objects' - the total number of objects
-    '''
-    # Use Otsu thresholding to pull out only bright regions
-    global_otsu = threshold_im(smoothed_data)
-    # Use labels to pull out the 18 psfs
-    objects, num_objects = ndimage.measurements.label(global_otsu)
-
-    return objects, num_objects
-
-def count_psfs(smoothed_data, gauss_sigma):
+def count_psfs(smoothed_data, gauss_sigma, choose=False):
     '''
     Use photutils.find_peaks to count how many PSFS are present in the data
     '''
@@ -53,62 +34,50 @@ def count_psfs(smoothed_data, gauss_sigma):
     threshold = median + (3 * std)
     sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
     num_psfs = len(sources)
+    coords = sources['x_peak', 'y_peak']
+    coords = [(x, y) for [x,y] in coords]
 
-    log.info('{} PSFs expected from Gaussian-smoothed data (sigma = {})'.format(num_psfs, gauss_sigma))
-    return num_psfs
+    log.info('{} PSFs detected in Gaussian-smoothed data (threshold = {}; sigma = {})'.format(num_psfs, threshold, gauss_sigma))
 
+    if choose:
+        # fig = plt.figure(figsize(20, 10))
+        plt.ion()
+        smoothed_data[smoothed_data == 0] = 0.1
+        fig, [ax1, ax2] = plt.subplots(1, 2, figsize=(10,20))
 
-def isolate_psfs(smoothed_data, threshold, num_psfs=18):
-    if threshold is None:
-        threshold = smoothed_data.max() * 0.95
-    
-    psfs_only = smoothed_data>threshold
-    objects, num_objects = ndimage.measurements.label(psfs_only)
+        ax1.imshow(smoothed_data, cmap='bone', interpolation='nearest' , clim=(0.1,100), norm=LogNorm())
+        ax1.scatter(sources['x_peak'], sources['y_peak'], c='r', marker='+')
+        ax1.set_title('Threshold = 3 * std')
 
-    #Check to make sure you have num_psfs PSFs.
-    #The problem with this is that if we have two PSFs really close to each other,
-    # the threshold will be very high which will ruin the fun for all the other PSFs.
-    # **This is NOT a permanent fix.**
+        # Recalculate with threshold = mean
+        sources = find_peaks(smoothed_data, mean, box_size=gauss_sigma)
 
-    # ONLY WORKS if you know IN ADVANCE the number of PSFS
+        ax2.imshow(smoothed_data, cmap='bone', interpolation='nearest' , clim=(0.1,100), norm=LogNorm())
+        ax2.scatter(sources['x_peak'], sources['y_peak'], c='r', marker='+')
+        ax2.set_title('Threshold = Mean')
 
-    while num_objects > num_psfs: # assume you want 18 PSFs
-        #log.info("Num of objects detected: {}".format(num_objects))
-        threshold = 1.05*threshold
-        psfs_only = smoothed_data > threshold
-        objects, num_objects = ndimage.measurements.label(psfs_only)
-        if (threshold < 1) or (threshold > smoothed_data.max()):
-            warnings.warn('Runaway threshold calculation while num_objects > num_psfs', RuntimeWarning)
-            log.warning('Runaway threshold calculation while num_objects > num_psfs; threshold = {}'.format(threshold))
-            log.warning('{} PSFs found during threshold calculation'.format(num_objects))
-            break
+        plt.show()
 
+        choice = raw_input('''
+Examine the two options presented. To use the stars selected with a 3 \
+standard deviation threshold, type "S". To use the stars selected with a mean threshold, \
+type "M". To use neither and cancel the program, press enter.
 
-    while num_objects < num_psfs: # assume you want 18 PSFs
-        #log.info("Num of objects detected: {}".format(num_objects))
-        threshold = .95*threshold
-        psfs_only = smoothed_data > threshold
-        objects, num_objects = ndimage.measurements.label(psfs_only)
-        # print(threshold, num_objects)
-        if (threshold < 1) or (threshold > smoothed_data.max()):
-            warnings.warn('Runaway threshold calculation while num_objects < num_psfs', RuntimeWarning)
-            log.warning('Runaway threshold calculation while num_objects < num_psfs; threshold = {}'.format(threshold))
-            log.warning('{} PSFs found during threshold calculation'.format(num_objects))
-            break
-
-    return objects, num_objects
+Choice: ''')
 
 
-def threshold_im(im):
-    """
-    Uses Otsu thresholding to pull out the smoothed PSFs in the image
-    """
-    threshold_global_otsu = threshold_otsu(im)
-    global_otsu = im >= threshold_global_otsu
-    return global_otsu
+        if choice == 'S':
+            return num_psfs, coords, threshold
+        if choice == 'M':
+            return len(sources), [(x, y) for [x,y] in sources['x_peak', 'y_peak']], mean
+        else:
+            log.error('User rejection of identified PSFs.')
+            raise StandardError('User rejection of identified PSFs.')
+    else:
+        return num_psfs, coords, threshold
 
-## All the ways to get the countrate:
-def countrate_3x3(coords,data):
+
+def countrate_3x3(coords, data):
     """
     Using the coordinates of each PSF,place a 3x3 box around center pixel, and sum
     the counts of the pixels in this box.
@@ -116,60 +85,8 @@ def countrate_3x3(coords,data):
     xx = int(coords[1])
     yy = int(coords[0])
 
-    counts = np.sum(data[yy-1:yy+2,xx-1:xx+2])
+    counts = np.sum(data[yy - 1:yy + 2, xx - 1:xx + 2])
     return counts
-
-def get_countrate(x,y,arr):
-    """
-    If the countrate isn't given by a file, use the coords given by the
-    reg file to find the countrates for each PSF.
-    """
-    countrate=[] #create countrate array of len nstars
-    for i in range(len(x)):
-        x1 = x[i]-50
-        x2 = x[i]+50
-        y1 = y[i]-50
-        y2 = y[i]+50
-        if x1 < 50:
-            x1=0
-        if x2 > 2047:
-            x2=2047
-        if y1 < 50:
-            y1=0
-        if y2> 2047:
-            y2=2047
-        countrate.append(np.sum(arr[y1:y2,x1:x2])) # counts/sec NOT ADU
-        log.info('Countrate: {}'.format(np.sum(arr[y1:y2,x1:x2])))
-
-    countrate = np.asarray(float(countrate))
-    return countrate
-
-
-def find_centroids(data, objects, num_objects, root, guider, output_path='',
-                   write_out_file=False):
-    """
-    Given an image with multiple PSFs, smooth first with a Gaussian filter before
-    using Otsu thresholding to pull out of the PSFs. Then, label each of these
-    PSFs so that their centroids can be found and these coordinates returned.
-    """
-
-    # Pull out coords of each psf
-    # **Coords are Y,X**
-    coords = []
-    for i in range(1,num_objects+1):
-        im = np.copy(objects)
-        im[objects!=i]=0
-        coords.append(ndimage.measurements.center_of_mass(im*data)) #y,x
-
-    if write_out_file:
-        filename= os.path.join(output_path,'{}_G{}_psf_centers.csv'.format(root,guider))
-        utils.write_to_file(filename,coords,labels=['y','x'])
-
-    return coords
-
-
-def distance_calc((x1,y1), (x2,y2)):
-    return np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
 
 
 def plot_centroids(data,coords,root,guider,output_path):
@@ -208,8 +125,7 @@ def plot_centroids(data,coords,root,guider,output_path):
     # print('xmid: {}, ymid: {}'.format(x_mid, y_mid))
 
 
-def count_rate_total(data, objects, num_objects, gs_points, dist=None, threshold = None,
-                     counts_3x3=True,num_psfs=18):
+def count_rate_total(data, objects, num_objects, gs_points, counts_3x3=True):
     """
     Get the x,y, and counts for each psf in the image
 
@@ -219,63 +135,17 @@ def count_rate_total(data, objects, num_objects, gs_points, dist=None, threshold
 
     counts = []
     val = []
-    for i in range(1,num_objects+1):
+    for i in range(1, num_objects + 1):
         im = np.copy(objects)
-        im[objects!=i]=False
-        im[objects==i]=True
+        im[objects != i] = False
+        im[objects == i] = True
         if counts_3x3:
-            counts.append(countrate_3x3(gs_points[i-1],data))
+            counts.append(countrate_3x3(gs_points[i-1], data))
         else:
             counts.append(np.sum(im*data))
         val.append(np.sum(im*1.))
 
-
-    y,x = map(list,zip(*gs_points))
-    return y, x, counts, val
-
-def OLD_count_rate_total(data, smoothed_data, gs_points, dist=None, threshold = None,
-                     counts_3x3=True,num_psfs=18):
-    """
-    Get the x,y, and counts for each psf in the image
-
-    The threshold default of 150, assumes that your data type is uint16. If not,
-    a good start is 40.
-    """
-    if threshold is None:
-       threshold = smoothed_data.max() * 0.05
-    objects, num_objects = isolate_psfs(smoothed_data,threshold,num_psfs)
-
-    counts = []
-    coords = []
-    val = []
-    for i in range(1,num_objects+1):
-        im = np.copy(objects)
-        im[objects!=i]=False
-        im[objects==i]=True
-        coord = ndimage.measurements.center_of_mass(im*data)
-        coords.append(coord)
-        if counts_3x3:
-            counts.append(countrate_3x3(coord,data))
-        else:
-            counts.append(np.sum(im*data))
-        val.append(np.sum(im*1.))
-
-    coords_master = []
-    #Pad the range over which the coordinates can match over a sufficiently large
-    # range, but not large enough that another PSF center could be within this area
-    if dist is None:
-        pad = 12
-    else:
-        pad = dist-1
-    #Make a master coordinate list that matches with the coords list, but gives
-    # the gs_points coordinates
-    for i in range(len(coords)):
-        for j in range(len(gs_points)):
-            if (coords[i][1]-pad < gs_points[j][1] < coords[i][1]+pad) and (coords[i][0]-pad < gs_points[j][0] < coords[i][0]+pad):
-                coords_master.append(gs_points[j])
-
-    y,x = map(list,zip(*coords_master))
-    return y, x, counts, val
+    return counts, val
 
 
 def create_cols_for_coords_counts(y,x,counts,val,inds=None):
@@ -300,154 +170,46 @@ def create_cols_for_coords_counts(y,x,counts,val,inds=None):
     return cols
 
 
-class SelectStars(object):
-    def __init__(self,fig,ax,data,xarray,yarray,dist=15):
-        self.data = data
-        self.xt = xarray
-        self.yt = yarray
-
-        self._ind = None
-        self.coords=[]
-
-        self.epsilon = dist
-
-        self.fig = fig
-        self.ax = ax
-        self.canvas = fig.canvas
-        self.inds=[]
-
-        self.cid = []
-        self.cid.extend((
-            self.canvas.mpl_connect('button_press_event', self.button_press_callback),
-            ))
-
-        self.canvas.mpl_disconnect(self.canvas.manager.key_press_handler_id)
-        plt.show()
-
-        return
-
-
-    def button_press_callback(self, event):
-        'whenever a mouse button is pressed'
-        if event.inaxes==None: return
-        if event.button != 1: return
-        self._ind = self.get_ind_under_point(event)
-
-
-    def get_ind_under_point(self, event):
-        'get the index of the vertex under point if within epsilon tolerance'
-        # xt and yt are arrays of the points to compare with
-        d = np.sqrt((self.xt-event.xdata)**2 + (self.yt-event.ydata)**2)
-        i = np.unravel_index(np.nanargmin(d), d.shape)
-        indseq = np.nonzero(np.equal(d, np.amin(d)))[0]
-        ind = indseq[0]
-
-        if d[ind]>=self.epsilon:
-            log.warning('No star within {} pixels. No star selected.'.format(self.epsilon))
-            return
-        elif ind in self.inds:
-            log.warning('Star already selected, please choose another star')
-        else:
-            log.info('Star selected: x={:.1f}, y={:.1f}'.format(self.xt[ind],self.yt[ind]))
-            self.inds.append(ind)
-
-        return ind
-
-
-def pick_stars(data,xarray,yarray,dist,root=''):
-        '''
-        Parameters:
-            data: str, ndarray
-                Either the full path to the data or an array
-            xarray: array, list
-                Array of x coordinates of each star in the image
-            yarray: array, list
-                Array of y coordinates of each star in the image
-            root: str
-                Root name of the images
-        '''
-        if isinstance(data, str):
-            f = fits.open(data)
-            data = f[0].data
-
-        # if compact:
-        #     pad = 300
-        # else:
-        #     pad = 500
-
-        # Determine x and y limits that encompass all PSFS
-        x_mid = (min(xarray) + max(xarray)) / 2
-        y_mid = (min(yarray) + max(yarray)) / 2
-        x_range = max(xarray) - min(xarray)
-        y_range = max(yarray) - min(yarray)
-        ax_range = max(x_range, y_range) # Choose the larger of the dimensions
-        ax_range += 100 # Make sure not to clip off the edge of border PSFS
-
-        print("\
-               Click as near to the center of the star as possible.\n \
-               The first star that is choosen will be the guide star.\n \
-               All additional stars that are clicked on, are the\n \
-               reference stars.")
-
-        fig = plt.figure(figsize=(8,8))
-        ax = fig.add_subplot(111)
-        ax.imshow(data,cmap='coolwarm',interpolation='nearest',norm=LogNorm())
-        # ax.set_ylim(np.shape(data)[0]/2+pad,np.shape(data)[0]/2-pad)
-        # ax.set_xlim(np.shape(data)[1]/2-pad,np.shape(data)[1]/2+pad)
-        ax.set_xlim(max(0, x_mid - (ax_range/2)), min(2048, x_mid + (ax_range/2)))
-        ax.set_ylim(min(2048, y_mid + (ax_range/2)), max(0, y_mid - (ax_range/2)))
-        fig.show()
-
-        obj = SelectStars(fig,ax,data,xarray,yarray,dist=dist)
-
-        return obj.inds
-
-
 def create_reg_file(data, root, guider, output_path, return_nref=False,
-                    num_psfs=None, global_alignment=False, incat=None):
+                    global_alignment=False, incat=None):
     
     # If no .incat file provided, create reg file with manual star selection in GUI
     if incat == None:
         if isinstance(data, str):
             data = utils.read_fits(data)[1]
 
-        # if compact:
-        #     smoothed_data = signal.medfilt(data,5)
-        # else:
-        #     smoothed_data = ndimage.gaussian_filter(data,sigma=25)
-
         if global_alignment:
-            gauss_sigma = 25
+            gauss_sigma = 26
         else:
             gauss_sigma = 5
 
         smoothed_data = ndimage.gaussian_filter(data, sigma = gauss_sigma)
 
-        # Read or determine number of PSFs to expect
-        if num_psfs == None:
-            num_psfs = count_psfs(smoothed_data, gauss_sigma)
-        else:
-            log.info('{} user-specified PSFs '.format(num_psfs))
+        # Use photutils.find_peaks to locate all PSFs in image
+        num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, choose=False)
+        x, y = map(list, zip(*coords))
 
-        # Find and locate PSFs
-        objects, num_objects = isolate_psfs(smoothed_data,threshold=None,num_psfs=num_psfs)
-        coords = find_centroids(data, objects, num_objects, root, guider,
-                                output_path=output_path)
+        # Use labeling to map locations of objects in array
+        objects, num_objects = ndimage.measurements.label(smoothed_data > threshold)
+        # NOTE: num_objects might not equal num_psfs
 
         if len(coords)<2:
             log.error('Less than two objects have been found. Cannot proceed. Exiting')
-            return
+            raise ValueError('cannot guide on < 2 objects')
 
         dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. #find the minimum distance between PSFs
 
-        plot_centroids(data,coords,root,guider,output_path)
-        y, x, counts, val = count_rate_total(data, objects, num_objects, coords,dist=dist,
-                                             counts_3x3=True,num_psfs=num_psfs)
+        plot_centroids(data, coords, root, guider, output_path) # Save pretty PNG in out dir
+        counts, val = count_rate_total(data, objects, num_psfs, coords, counts_3x3=True) # Calculate count rate
+        # print(y, x, counts,val)
 
-        inds = pick_stars(smoothed_data,x,y,dist,root=root) # Call the GUI
+        # Call the GUI
+        dataToShow = data.copy()
+        dataToShow[data == 0] = 0.1 # Alter null pixel values to appear as black in LogNorm image
+        inds = SelectStarsGUI.run_SelectStars(dataToShow, x, y, dist, printOutput=False)
         log.info('1 guide star and {} reference stars selected'.format(len(inds)-1))
 
-        cols = create_cols_for_coords_counts(y,x,counts,val,inds=inds)
+        cols = create_cols_for_coords_counts(y, x, counts, val, inds=inds)
     
     # If .incat file provided, create reg file with provided information
     else:
@@ -465,7 +227,7 @@ def create_reg_file(data, root, guider, output_path, return_nref=False,
 
         coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
 
-        plot_centroids(data,coords,root,guider,output_path)
+        plot_centroids(data,coords,root,guider,output_path) # Save pretty PNG in out dir
 
 
     utils.write_cols_to_file(output_path,
