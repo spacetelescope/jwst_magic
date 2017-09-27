@@ -48,3 +48,9 @@ notebooks/*
 out/*
 .ipynb_checkpoints/*
 logs/*
+
+# Files #
+#########
+Smoothing&IsolatingPSFs.ipynb
+select_psfs_OLD.py
+select_psfs_OLD2.py
