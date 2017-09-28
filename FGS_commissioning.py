@@ -4,6 +4,8 @@ import os
 
 # Third Party
 from astropy.io import fits
+import matplotlib
+matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import csv
