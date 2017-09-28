@@ -9,7 +9,6 @@ import random
 # Third Party
 import numpy as np
 import matplotlib
-matplotlib.use('Qt5Agg') # Make sure that we are using Qt5
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm
@@ -22,6 +21,10 @@ from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from scipy import ndimage
 from photutils import find_peaks
+
+matplotlib.rcParams['font.family'] = 'serif'
+matplotlib.rcParams['font.weight']='light'
+matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
 
 class MyMplCanvas(FigureCanvas):
@@ -49,19 +52,21 @@ class MyMplCanvas(FigureCanvas):
         Resets axes limits to (0, 2048)
     """
 
-    def __init__(self, parent=None, width=15, height=15, dpi=100, data=None, x=None, y=None):
+    def __init__(self, parent=None, width=15, height=15, dpi=100, data=None, 
+        x=None, y=None, left=None, right=None, bottom=0.05):
 
         self.data = data
+        self.x = x
+        self.y = y
 
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
-        self.fig.subplots_adjust(top=.95, left = .07)
+        self.fig.subplots_adjust(top=.95, left=left, right=right, bottom=bottom)
 
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
 
-        self.compute_initial_figure(self.fig, data, x, y)
-        self.zoom_to_fit()
+        # self.compute_initial_figure(self.fig, data, x, y)
 
         # FigureCanvas.setSizePolicy(self,
         #                            QtWidgets.QSizePolicy.Expanding,
@@ -72,13 +77,30 @@ class MyMplCanvas(FigureCanvas):
         fitsplot = self.axes.imshow(data, cmap='bone', interpolation='nearest' , clim=(0.1,100), norm=LogNorm())
         self.axes.scatter(x, y, c='r', marker='+')
         self.fig.colorbar(fitsplot, ax=self.axes, fraction=0.046, pad=0.04)
+        self.draw()
+
+    # def compute_initial_profile(self, fig, data, x, y):
+    #     self.axes(plot)
 
     def zoom_to_fit(self): 
         self.axes.set_xlim(0, np.shape(self.data)[0])
         self.axes.set_ylim(np.shape(self.data)[1], 0)
         self.draw()
 
-    
+    def zoom_to_crop(self,):
+        # Calculate initial axis limits to show all sources
+        xarray, yarray = [self.y, self.x]
+        x_mid = (min(xarray) + max(xarray)) / 2
+        y_mid = (min(yarray) + max(yarray)) / 2
+        x_range = max(xarray) - min(xarray)
+        y_range = max(yarray) - min(yarray)
+        ax_range = max(x_range, y_range) # Choose the larger of the dimensions
+        ax_range += 100 # Make sure not to clip off the edge of border PSFS
+
+        self.axes.set_ylim(min(2048, x_mid + ax_range/2), max(0, x_mid - ax_range/2))
+        self.axes.set_xlim(max(0, y_mid - ax_range/2), min(2048, y_mid + ax_range/2))
+        self.draw()
+
 
 class ApplicationWindow(QtWidgets.QMainWindow):
     """Interactive PyQt GUI window used to select stars from an FGS image.
@@ -133,7 +155,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         Changes the axes limits of the matplotlib canvas to the current values of the axis limit textboxes
     update_textboxes
         Changes the values of the axis limit textboxes to the current axis limits of the matplotlib canvas
-    move_in_axes
+    update_cursor_position
         Updates the cursor position textbox when the cursor moves within the matplotlib axis
     button_press_callback
         Determines if a button press is within the matplotlib axis; if so calls get_ind_under_point
@@ -183,21 +205,25 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.main_widget)
 
         # Add plot - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        sc = MyMplCanvas(self.main_widget, width=5, height=4, dpi=100, data=self.data, x=self.x, y=self.y)
+        sc = MyMplCanvas(self.main_widget, width=5, height=4, dpi=100, 
+            data=self.data, x=self.x, y=self.y, left=0.1, right=0.9)
         self.canvas = sc
-        mainGrid.addWidget(sc, 0, 0, 3, 2)
+        self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x, self.y)
+        self.canvas.zoom_to_crop()
+        mainGrid.addWidget(sc, 0, 0, 4, 2)
 
         mainGrid.setColumnMinimumWidth(0, self.image_dim - 150)
 
         # Show current cursor position
         self.cursor_label = QLabel('Cursor Position:', self, alignment=QtCore.Qt.AlignRight)
-        mainGrid.addWidget(self.cursor_label, 3, 0)
+        mainGrid.addWidget(self.cursor_label, 4, 0)
 
         self.cursor_textbox = QLineEdit(self)
         self.cursor_textbox.setPlaceholderText('Move cursor into axes')
-        mainGrid.addWidget(self.cursor_textbox, 3, 1)
+        self.cursor_textbox.setMinimumSize(200, 20)
+        mainGrid.addWidget(self.cursor_textbox, 4, 1)
 
-        self.canvas.mpl_connect('motion_notify_event', self.move_in_axes)
+        self.canvas.mpl_connect('motion_notify_event', self.update_cursor_position)
 
         # Star selection!
         self.canvas.mpl_connect('button_press_event', self.button_press_callback)
@@ -226,11 +252,25 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
         # Log to update
         self.log_textbox = QTextEdit(self)
         self.log_textbox.setPlaceholderText('No stars selected.')
-        self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
-        self.log_textbox.setMinimumSize(10, 500)
+        # self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
+        self.log_textbox.setMinimumSize(10, 300)
         mainGrid.addWidget(self.log_textbox, 1, 2, alignment=QtCore.Qt.AlignTop)
 
-        mainGrid.setRowMinimumHeight(1, self.image_dim*.5)
+        # mainGrid.setRowMinimumHeight(1, self.image_dim*.2)
+
+
+        # Plot slice of profile under cursor
+        prof = MyMplCanvas(self.main_widget, width=4, height=3, 
+            dpi=100, data=self.data, left=0.2, right=0.95, bottom=0.2)
+        self.profile = prof
+        self.profile.axes.set_ylim(0.1, 5 * np.max(self.data))
+        self.profile.axes.set_yscale('log')
+        self.profile.axes.set_ylabel('Counts')
+        self.profile.axes.set_xlabel('X Pixels')
+
+        self.canvas.mpl_connect('motion_notify_event', self.update_profile)
+        mainGrid.addWidget(self.profile, 2, 2)
+        mainGrid.setRowMinimumHeight(2, self.image_dim*.25)
 
 
         # Create axis-updating section
@@ -270,7 +310,15 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
         self.zoom_button.clicked.connect(self.update_textboxes)
         axGrid.addWidget(self.zoom_button, 4, 0, 1, 5)
 
-        mainGrid.addWidget(axGroupBox, 2, 2, 2, 1)
+        # Add "Crop to Data" button
+        self.crop_button = QPushButton('Crop to Data', self)
+        self.crop_button.setToolTip('Zoom crop to data')
+        self.crop_button.clicked.connect(sc.zoom_to_crop)
+        self.crop_button.clicked.connect(self.update_textboxes)
+        axGrid.addWidget(self.crop_button, 5, 0, 1, 5)
+
+
+        mainGrid.addWidget(axGroupBox, 3, 2, 2, 1)
 
         
         # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -280,15 +328,15 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
 
         # Show selected stars
         col2Form.addRow(QLabel('Guide\nStar?', self), QLabel('Star Position', self))
-        nStars = 15
+        self.nStars = 11
 
         self.star_positions = []
         self.guidestar_buttons = []
-        for n in range(nStars):
+        for n in range(self.nStars):
             # Create radio buttons
             guidestar_button = QRadioButton(starsGroupBox)
             if n == 0: guidestar_button.setChecked(True)
-            guidestar_button.toggled.connect(self.make_setGuideStar(guidestar_button))
+            guidestar_button.toggled.connect(self.make_setguidestar(guidestar_button))
             if n == 0: guidestar_button.setEnabled(False)
             if n!= 0: guidestar_button.setCheckable(False)
 
@@ -304,14 +352,14 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
         col2Form.setLabelAlignment(QtCore.Qt.AlignHCenter)
 
         starsGroupBox.setLayout(col2Form)
-        mainGrid.addWidget(starsGroupBox, 1, 3, 1, 1)
+        mainGrid.addWidget(starsGroupBox, 1, 3, 2, 1)
 
         # Add "Done" button
         self.done_button = QPushButton('Done', self)
         self.done_button.setToolTip('Close the window')
         self.done_button.clicked.connect(self.fileQuit)
         self.done_button.setMinimumSize(150, 50)
-        mainGrid.addWidget(self.done_button, 2, 3, 2, 1, alignment = QtCore.Qt.AlignVCenter)
+        mainGrid.addWidget(self.done_button, 3, 3, 2, 1, alignment = QtCore.Qt.AlignVCenter)
 
 
     
@@ -331,12 +379,26 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
         self.y1_textbox.setText(str(self.canvas.axes.get_ylim()[1]))
         self.y2_textbox.setText(str(self.canvas.axes.get_ylim()[0]))
 
-    def move_in_axes(self, event):
+    def update_cursor_position(self, event):
         '''Updates the cursor position textbox when the cursor moves within the matplotlib axis'''
         if event.inaxes:
-            # self.cursor_textbox.setEnabled(True)
             self.cursor_textbox.setText('({:.0f}, {:.0f})'.format(event.xdata, event.ydata))
-            
+
+
+    def update_profile(self, event):
+        '''Updates the cursor position textbox when the cursor moves within the matplotlib axis'''
+        if event.inaxes:
+            x = np.arange(np.floor(event.xdata - self.epsilon), np.ceil(event.xdata + self.epsilon)).astype(int)
+            y = self.data[int(event.ydata), x]
+
+            self.profile.axes.clear()
+            self.profile_line = self.profile.axes.plot(x, y)
+            self.profile.axes.set_xlim(int(np.floor(event.xdata - self.epsilon)), int(np.ceil(event.xdata + self.epsilon)))
+            self.profile.axes.set_ylim(0.1, 5 * np.max(self.data))
+            self.profile.axes.set_yscale('log')
+            self.profile.axes.set_ylabel('Counts')
+            self.profile.axes.set_xlabel('X Pixels')
+            self.profile.draw()
 
     def button_press_callback(self, event):
         '''WHenever a mouse button is pressed, determines if a button press is within the matplotlib axis; 
@@ -348,11 +410,20 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
     def get_ind_under_point(self, event):
         '''If user clicks within one epsilon of an identified star, appends that star's position to inds;
         notifies user if no star is nearby or if selected star is already selected'''
-        
+       
         d = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
         i = np.unravel_index(np.nanargmin(d), d.shape)
         indseq = np.nonzero(np.equal(d, np.amin(d)))[0]
         ind = indseq[0]
+
+        if len(self.inds) == self.nStars:
+            if self.printOutput: print('Maximum number of stars, {}, already selected.'.format(self.nStars))
+            redText = "<br/><span style=\" color:#ff0000;\" >"
+            redText += 'Maximum number of stars, {}, already selected.'.format(self.nStars)
+            redText += "</span>"
+                      
+            self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
+            return
 
         if d[ind] >= self.epsilon:
             if self.printOutput: print('No star within {} pixels. No star selected.'.format(self.epsilon))
@@ -360,9 +431,9 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             redText = "<br/><span style=\" color:#ff0000;\" >"
             redText += 'No star within {} pixels. No star selected.'.format(self.epsilon)
             redText += "</span>"
-                       
-            self.log_textbox.setHtml(self.log_textbox.toHtml() + redText)
-        
+                      
+            self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
+       
         elif ind in self.inds:
             if self.printOutput: print('Star already selected, please choose another star')
 
@@ -370,19 +441,22 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             redText += 'Star already selected, please choose another star'
             redText += "</span>"
 
-            self.log_textbox.setHtml(self.log_textbox.toHtml() + redText) 
+            self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
 
         else:
-            if self.printOutput: print('Star selected: x={:.1f}, y={:.1f}'.format(self.x[ind],self.y[ind]))
-            self.log_textbox.setHtml(self.log_textbox.toHtml() + '<br/>Star selected: x={:.1f}, y={:.1f}'.format(self.x[ind],self.y[ind]))
+            if len(self.inds) == 0:  # First star selected
+                color = 'yellow'
+                newstar_string = '1 star selected: x={:.1f}, y={:.1f}'.format(self.x[ind], self.y[ind])
+            else:  # >= second star selected
+                color = 'darkorange'
+                newstar_string = '{} stars selected: x={:.1f}, y={:.1f}'.format(len(self.inds) + 1, self.x[ind], self.y[ind])
+
+            if self.printOutput: print(newstar_string)
+            self.log_textbox.setHtml('<br/>' + newstar_string + self.log_textbox.toHtml())
             self.star_positions[len(self.inds)].setText('x={:.1f}, y={:.1f}'.format(self.x[ind],self.y[ind]))
             self.guidestar_buttons[0].setEnabled(True)
             self.guidestar_buttons[len(self.inds)].setCheckable(True)
-            
-            if len(self.inds) == 0: 
-                color = 'yellow'
-            else: 
-                color = 'darkorange'
+          
             self.canvas.axes.scatter(self.x[ind], self.y[ind], s=500, facecolors='none', edgecolors=color,  lw=2, marker='o')
             self.canvas.draw()
 
@@ -390,9 +464,9 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
 
         return ind
 
-    def make_setGuideStar(self, button):
+    def make_setguidestar(self, button):
         # Have to define second function inside to return a function to the toggle.connect method
-        def setGuideStar():
+        def setguidestar():
             '''
             Change order of self.inds to reflect the new guide star
             Update GUI plotted circles
@@ -409,7 +483,7 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             self.canvas.axes.scatter(self.x[self.inds[0]], self.y[self.inds[0]], s=500, facecolors='none', edgecolors='yellow',  lw=2, marker='o')
             self.canvas.draw()
             
-        return setGuideStar
+        return setguidestar
 
 
     def fileQuit(self):
@@ -449,6 +523,7 @@ def run_SelectStars(data, x, y, dist, printOutput=False):
     qApp = QApplication(sys.argv)
     aw = ApplicationWindow(data=data, x=x, y=y, dist=dist, qApp=qApp, printOutput=printOutput)
     aw.show()
+    plt.get_current_fig_manager().window.raise_()
     inds = aw.inds
     qApp.exec_() # Begin interactive session; pauses until qApp.exit() is called
 
