@@ -8,11 +8,11 @@ import warnings
 from astropy.io import fits
 from astropy.io import ascii as asc
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
-import matplotlib
-matplotlib.rcParams['image.origin'] = 'upper'
-from scipy import ndimage,signal
+from matplotlib import rcParams
+from scipy import ndimage, signal
 from astropy.stats import sigma_clipped_stats
 from photutils import find_peaks
 
@@ -21,60 +21,94 @@ import utils
 import log
 import SelectStarsGUI
 
+# Adjust matplotlib origin
+rcParams['image.origin'] = 'upper'
+
+# Make plots pretty
+rcParams['font.family'] = 'serif'
+rcParams['font.weight']='light'
+rcParams['mathtext.bf'] = 'serif:normal'
+
+# rcParams['xtick.labelsize'] = 14
+# rcParams['ytick.labelsize'] = 14
+
 
 def count_psfs(smoothed_data, gauss_sigma, choose=False):
-    '''
-    Use photutils.find_peaks to count how many PSFS are present in the data
-    '''
+    """Use photutils.find_peaks to count how many PSFS are present in the data
+    """
 
+    if choose:
+        num_psfs, coords, threshold = choose_threshold(smoothed_data, gauss_sigma)
+
+    else:
+        # Perform statistics
+        mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
+
+        # Find PSFs
+        threshold = (3 * std)  # Used to be median + 3 * std
+        sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
+        num_psfs = len(sources)
+        coords = sources['x_peak', 'y_peak']
+        coords = [(x, y) for [x, y] in coords]
+
+        log.info('{} PSFs detected in Gaussian-smoothed data \
+            (threshold = {}; sigma = {})'.format(num_psfs, threshold, gauss_sigma))
+
+    return num_psfs, coords, threshold
+
+
+def choose_threshold(smoothed_data, gauss_sigma):
     # Perform statistics
     mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
 
-    # Find PSFs
-    threshold = median + (3 * std)
-    sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
-    num_psfs = len(sources)
-    coords = sources['x_peak', 'y_peak']
-    coords = [(x, y) for [x,y] in coords]
+    # Run find_peaks with two different threshold options
+    thresholds = [3*std, mean]
+    sources_std = find_peaks(smoothed_data, thresholds[0], box_size=gauss_sigma)
+    sources_mean = find_peaks(smoothed_data, thresholds[1], box_size=gauss_sigma)
 
-    log.info('{} PSFs detected in Gaussian-smoothed data (threshold = {}; sigma = {})'.format(num_psfs, threshold, gauss_sigma))
+    # Show plots of each for user to chooose between
+    plt.ion()
+    smoothed_data[smoothed_data == 0] = 0.1  # Allow LogNorm plotting
+    fig, [ax1, ax2] = plt.subplots(1, 2, figsize=(16, 8))
+    fig.subplots_adjust(top=.95, left=.05, bottom=.05)
 
-    if choose:
-        # fig = plt.figure(figsize(20, 10))
-        plt.ion()
-        smoothed_data[smoothed_data == 0] = 0.1
-        fig, [ax1, ax2] = plt.subplots(1, 2, figsize=(10,20))
+    ax1.imshow(smoothed_data, cmap='bone', interpolation='nearest',
+               clim=(0.1, 100), norm=LogNorm())
+    ax1.scatter(sources_std['x_peak'], sources_std['y_peak'], c='r', marker='+')
+    ax1.set_title('Threshold = 3$\sigma$ ({} sources found)'.format(len(sources_std)))
 
-        ax1.imshow(smoothed_data, cmap='bone', interpolation='nearest' , clim=(0.1,100), norm=LogNorm())
-        ax1.scatter(sources['x_peak'], sources['y_peak'], c='r', marker='+')
-        ax1.set_title('Threshold = 3 * std')
+    ax2.imshow(smoothed_data, cmap='bone', interpolation='nearest',
+               clim=(0.1, 100), norm=LogNorm())
+    ax2.scatter(sources_mean['x_peak'], sources_mean['y_peak'], c='r', marker='+')
+    ax2.set_title('Threshold = Mean ({} sources found)'.format(len(sources_mean)))
 
-        # Recalculate with threshold = mean
-        sources = find_peaks(smoothed_data, mean, box_size=gauss_sigma)
+    # fig = plt.gcf()
+    # fig.canvas.manager.window.raise_()
+    plt.get_current_fig_manager().window.raise_()
 
-        ax2.imshow(smoothed_data, cmap='bone', interpolation='nearest' , clim=(0.1,100), norm=LogNorm())
-        ax2.scatter(sources['x_peak'], sources['y_peak'], c='r', marker='+')
-        ax2.set_title('Threshold = Mean')
+    plt.show()
 
-        plt.show()
-
-        choice = raw_input('''
+    # Prompt user to choose
+    choice = raw_input('''
 Examine the two options presented. To use the stars selected with a 3 \
-standard deviation threshold, type "S". To use the stars selected with a mean threshold, \
-type "M". To use neither and cancel the program, press enter.
+standard deviation threshold, type "S". To use the stars selected with a mean \
+threshold, type "M". To use neither and cancel the program, press enter.
 
 Choice: ''')
+    plt.close()
 
-
-        if choice == 'S':
-            return num_psfs, coords, threshold
-        if choice == 'M':
-            return len(sources), [(x, y) for [x,y] in sources['x_peak', 'y_peak']], mean
-        else:
-            log.error('User rejection of identified PSFs.')
-            raise StandardError('User rejection of identified PSFs.')
+    if choice == 'S':
+        num_psfs = len(sources_std)
+        coords = [(x, y) for [x, y] in sources_std['x_peak', 'y_peak']]
+        return num_psfs, coords, thresholds[0]
+    if choice == 'M':
+        num_psfs = len(sources_mean)
+        coords = [(x, y) for [x, y] in sources_mean['x_peak', 'y_peak']]
+        return num_psfs, coords, thresholds[1]
     else:
-        return num_psfs, coords, threshold
+        log.error('User rejection of identified PSFs.')
+        raise StandardError('User rejection of identified PSFs.')
+
 
 def countrate_3x3(coords, data):
     """
@@ -86,6 +120,7 @@ def countrate_3x3(coords, data):
 
     counts = np.sum(data[yy - 1:yy + 2, xx - 1:xx + 2])
     return counts
+
 
 def plot_centroids(data, coords, root, guider, out_dir):
     # if compact:
@@ -164,7 +199,7 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
 
 def create_reg_file(data, root, guider, out_dir, return_nref=False,
                     global_alignment=False, incat=None):
-    
+   
     # If no .incat file provided, create reg file with manual star selection in GUI
     if incat == None:
         if isinstance(data, str):
@@ -178,7 +213,7 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
         smoothed_data = ndimage.gaussian_filter(data, sigma = gauss_sigma)
 
         # Use photutils.find_peaks to locate all PSFs in image
-        num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, choose=False)
+        num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, choose=True)
         x, y = map(list, zip(*coords))
 
         # Use labeling to map locations of objects in array
@@ -204,10 +239,11 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
         log.info('1 guide star and {} reference stars selected'.format(nref))
 
         cols = create_cols_for_coords_counts(y, x, counts, val, inds=inds)
-    
+   
     # If .incat file provided, create reg file with provided information
     else:
         # Read in .incat file
+        log.info('Selecting stars from .incat file {}'.format(incat))
         incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
         incat['x'] = incat['x'].astype(int) # Need to be an integer
         incat['y'] = incat['y'].astype(int)
@@ -222,12 +258,12 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
 
         coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
 
-        plot_centroids(data,coords,root,guider,output_path) # Save pretty PNG in out dir
+        plot_centroids(data, coords, root, guider, out_dir)  # Save pretty PNG
 
-    utils.write_cols_to_file(output_path,
-                   filename='{0}_G{1}_regfile.txt'.format(root,guider),
-                   labels=['y','x','count rate'],
-                   cols=cols)
+    utils.write_cols_to_file(out_dir,
+                           filename='{0}_G{1}_regfile.txt'.format(root, guider),
+                           labels=['y','x','count rate'],
+                           cols=cols)
 
     if return_nref:
         return nref
