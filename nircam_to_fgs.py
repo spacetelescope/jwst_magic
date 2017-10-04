@@ -157,9 +157,6 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
 
 def normalize_data(data, fgs_counts, threshold=5):
     '''
-    Passing in the objects array will ensure that the total counts in the image
-    are only distributed to the psfs
-
     Threshold of 5 assumes background is very low. *This will need to be automated
     later.*
     '''
@@ -292,9 +289,6 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         data_rot = rotate_nircam_image(data_masked, guider, header, nircam_mod)
         # Pad image
         data_pad = resize_nircam_image(data_rot, nircam_scale, fgs_pix, fgs_plate_size)
-        # Find individual psfs
-        smoothed_data = ndimage.gaussian_filter(data_pad, sigma=25)
-        objects, num_objects = select_psfs.find_objects(smoothed_data)
         # Normalize image
         data_norm = normalize_data(data_pad, fgs_counts)
 
@@ -303,7 +297,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         #any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
         hdr = utils.read_fits(header_file)[0]
-        utils.write_fits(out_path, np.uint16(data_norm),header = hdr)
+        utils.write_fits(out_path, np.uint16(data_norm), header = hdr)
 
 
         print ("Finished for {}, Guider = {}".format(root, guider))
