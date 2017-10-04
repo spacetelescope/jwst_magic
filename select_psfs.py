@@ -71,7 +71,7 @@ Choice: ''')
         if choice == 'S':
             return num_psfs, coords, threshold
         if choice == 'M':
-            return len(sources), [(x, y) for [x,y] in sources['x_peak', 'y_peak']], mean
+            return len(sources), [(x, y) for [x, y] in sources['x_peak', 'y_peak']], mean
         else:
             log.error('User rejection of identified PSFs.')
             raise StandardError('User rejection of identified PSFs.')
@@ -94,10 +94,10 @@ def plot_centroids(data, coords, root, guider, out_dir):
     #     pad = 300
     # else:
     #     pad = 500
-    pad=300
+    pad = 300
 
     # Determine x and y limits that encompass all PSFS
-    xarray, yarray = [x for (x,y) in coords], [y for (x,y) in coords] # Backwards... :^(
+    xarray, yarray = [x for (x, y) in coords], [y for (x, y) in coords] # Backwards... :^(
     x_mid = (min(xarray) + max(xarray)) / 2
     y_mid = (min(yarray) + max(yarray)) / 2
     x_range = max(xarray) - min(xarray)
@@ -105,16 +105,16 @@ def plot_centroids(data, coords, root, guider, out_dir):
     ax_range = max(x_range, y_range) # Choose the larger of the dimensions
     ax_range += 100 # Make sure not to clip off the edge of border PSFS
 
-    plt.figure(figsize=(17,17))
-    plt.imshow(data,cmap='Greys',norm=LogNorm())
+    plt.figure(figsize=(17, 17))
+    plt.imshow(data, cmap='Greys', norm=LogNorm())
     for i in range(len(coords)):
-        plt.scatter(coords[i][1],coords[i][0])
-        plt.annotate('({},{})'.format(int(coords[i][0]),int(coords[i][1])),
+        plt.scatter(coords[i][1], coords[i][0])
+        plt.annotate('({}, {})'.format(int(coords[i][0]), int(coords[i][1])),
                      (coords[i][1]-(pad*0.05), coords[i][0]+(pad*0.05)))
     plt.title('Centroids found for {}'.format(root))
     plt.ylim(min(2048, x_mid + ax_range/2), max(0, x_mid - ax_range/2))
     plt.xlim(max(0, y_mid - ax_range/2), min(2048, y_mid + ax_range/2))
-    plt.savefig(os.path.join(out_dir,'{}_G{}_centers.png'.format(root,guider)))
+    plt.savefig(os.path.join(out_dir, '{}_G{}_centers.png'.format(root, guider)))
 
     plt.close()
 
@@ -152,7 +152,7 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
     """
 
     cols = []
-    for i, (yy,xx,co) in enumerate(zip(y,x,counts)):
+    for i, (yy, xx, co) in enumerate(zip(y, x, counts)):
         cols.append([yy,xx,co]) ## these coordinates are y,x
 
     if inds is None:
@@ -167,8 +167,39 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
 def create_reg_file(data, root, guider, out_dir, return_nref=False,
                     global_alignment=False, incat=None, reg_file=None):
 
-    # If no .incat file provided, create reg file with manual star selection in GUI
-    if incat == None:
+    # If .incat file provided, create reg file with provided information
+    if incat:
+        # Read in .incat file
+        incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
+        incat['x'] = incat['x'].astype(int) # Need to be an integer
+        incat['y'] = incat['y'].astype(int)
+        incat['ctot'] = incat['ctot'].astype(int)
+
+        # Only use stars in the catalog
+        incat = incat[incat['incat'] == 1]
+        # Only use relevant columns
+        cols = incat['y', 'x', 'ctot'] # Make sure to flip x and y!!
+        nref = len(incat['x'])-1
+
+        coords = [(y, x) for x, y in zip(incat['x'], incat['y'])]
+
+        plot_centroids(data, coords, root, guider, out_dir) # Save pretty PNG in out dir
+
+    elif reg_file:
+        # star coords & gs counts
+        y, x, counts = (np.loadtxt(reg_file, delimiter=' ', skiprows=1)).T
+
+        coords = [(yy, xx) for xx, yy in zip(x, y)]
+        nref = len(x)-1
+
+        plot_centroids(data, coords, root, guider, out_dir) # Save pretty PNG in out dir
+
+        cols = []
+        for i, (yy, xx, co) in enumerate(zip(y, x, counts)):
+            cols.append([yy, xx, co]) ## these coordinates are y,x
+
+    # If no .incat or reg file provided, create reg file with manual star selection in GUI
+    else:
         if isinstance(data, str):
             data = utils.read_fits(data)[1]
 
@@ -177,7 +208,7 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
         else:
             gauss_sigma = 5
 
-        smoothed_data = ndimage.gaussian_filter(data, sigma = gauss_sigma)
+        smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
 
         # Use photutils.find_peaks to locate all PSFs in image
         num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, choose=False)
@@ -207,30 +238,10 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
 
         cols = create_cols_for_coords_counts(y, x, counts, val, inds=inds)
 
-    # If .incat file provided, create reg file with provided information
-    else:
-        # Read in .incat file
-        incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
-        incat['x'] = incat['x'].astype(int) # Need to be an integer
-        incat['y'] = incat['y'].astype(int)
-        incat['ctot'] = incat['ctot'].astype(int)
-
-        # Only use stars in the catalog
-        incat = incat[incat['incat']==1]
-        # Only use relevant columns
-        cols = incat['y', 'x', 'ctot'] # Make sure to flip x and y!!
-        inds = incat['x']
-        nref = len(inds)-1
-
-        coords = [(y,x) for x, y in zip(incat['x'], incat['y'])]
-
-        plot_centroids(data,coords,root,guider,out_dir) # Save pretty PNG in out dir
-
-
     utils.write_cols_to_file(out_dir,
-                       filename='{0}_G{1}_regfile.txt'.format(root,guider),
-                       labels=['y','x','count rate'],
-                       cols=cols)
+                             filename='{0}_G{1}_regfile.txt'.format(root, guider),
+                             labels=['y', 'x', 'count rate'],
+                             cols=cols)
 
     if return_nref:
         return nref
