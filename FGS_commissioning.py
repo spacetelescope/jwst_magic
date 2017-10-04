@@ -163,8 +163,8 @@ class FGS(object):
         '''
         Create the ID strips fits image to be passed into DHAS
         '''
-        strips=np.zeros((self.nstrips*self.nz,self.h,self.nx))
-        nn=0
+        strips = np.zeros((self.nstrips*self.nz, self.h, self.nx))
+        nn = 0
         for i in range(self.nstrips):
            for iz in range(self.nz):
                y1 = i*(self.h-self.overlap)+self.yoffset
@@ -225,11 +225,11 @@ class FGS(object):
     def setup_step(self, nx, ny, nramps, tcds, step, yoffset=0, h=64, overlap=8,
                    nstrips=None):
         '''
-        Set up attributes and basic arrays for ID, or acquisitions 1 or 2:
+        Set up attributes and basic arrays for ID, acquisitions 1 or 2, and TRK:
         ID:
         nx, ny = 2048 (or size of truth image)
         nramps = 2
-        nstrips = [32,33,34,35,36,37,39,40,42] for overlap =  [0,2,4,6,8,10,12,14,16,18]
+        nstrips = [32,33,34,35,36,37,39,40,42] for overlap = [0,2,4,6,8,10,12,14,16,18]
 
         Acq 1:
         nx, ny = 128
@@ -258,13 +258,14 @@ class FGS(object):
             self.h = h
             self.overlap = overlap
             if nstrips is None:
-                nstrips_arr = [32,33,34,35,36,37,39,40,42]
+                nstrips_arr = [32, 33, 34, 35, 36, 37, 39, 40, 42]
                 self.nstrips = nstrips_arr[overlap/2]
             else:
                 self.nstrips = nstrips
 
         else:
-            self.input_im = create_im_subarray(self.input_im,self.xgs,self.ygs,self.nx,self.ny)
+            self.input_im = create_im_subarray(self.input_im, self.xgs,
+                                               self.ygs, self.nx, self.ny)
 
 
         self.sky = self.input_im * tcds
@@ -282,8 +283,9 @@ class FGS(object):
         self.bias = getbias.getbias(self.guider, x, y, self.nreads,
                                     self.nramps, self.nx, self.ny,
                                     self.biasZeroPt, self.biasKTC, self.biasPed,
-                                    data_path = self.data_path)
-        self.image = self.create_noisy_sky(self.bias, self.sky, self.poissonNoise, acqNum)
+                                    data_path=self.data_path)
+        self.image = self.create_noisy_sky(self.bias, self.sky,
+                                           self.poissonNoise, acqNum)
 
         if cds:
             self.cds = self.create_cds_image(self.image)
@@ -291,7 +293,7 @@ class FGS(object):
         if self.step == 'ID':
             self.strips = self.create_strips(self.image)
 
-    def write_out_files(self,x,y,countrate,acqNum=''):
+    def write_out_files(self, x, y, countrate, acqNum=''):
         '''
         Create **all** the files and images needs for ID & ACQ
         Requires: sky, x,y,countrate,bias,idarr
@@ -321,54 +323,101 @@ class FGS(object):
         '''
         ## STScI only files - mostly just for quick checks of the data
         log.info('Baseline {}'.format(np.max(self.sky)))
-        filename_sky = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}sky.fits'.format(self.root,self.guider,self.step,acqNum))
+
+        # Sky imge
+        filename_sky = os.path.join(self.out_dir,
+                                    'stsci',
+                                    '{}_G{}_{}{}sky.fits'.format(self.root,
+                                                                 self.guider,
+                                                                 self.step,
+                                                                 acqNum))
         utils.write_fits(filename_sky, self.sky)
 
-        # Write stc files using offset, rotated catalog
-        filename_stc = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}.stc'.format(self.root,self.guider,self.step,acqNum))
-        self.write_stc(filename_stc,x,y,countrate)
+        # STC files using offset, rotated catalog
+        filename_stc = os.path.join(self.out_dir,
+                                    'stsci',
+                                    '{}_G{}_{}{}.stc'.format(self.root,
+                                                             self.guider,
+                                                             self.step,
+                                                             acqNum))
+        self.write_stc(filename_stc, x, y, countrate)
 
         # Bias image
-        filename_bias = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}bias.fits'.format(self.root,self.guider,self.step,acqNum))
-        utils.write_fits(filename_bias,self.bias)
+        filename_bias = os.path.join(self.out_dir,
+                                     'stsci',
+                                     '{}_G{}_{}{}bias.fits'.format(self.root,
+                                                                   self.guider,
+                                                                   self.step,
+                                                                   acqNum))
+        utils.write_fits(filename_bias, self.bias)
 
         # Create CDS image
-        filename_cds = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}cds.fits'.format(self.root,self.guider,self.step,acqNum))
+        filename_cds = os.path.join(self.out_dir,
+                                    'stsci',
+                                    '{}_G{}_{}{}cds.fits'.format(self.root,
+                                                                 self.guider,
+                                                                 self.step,
+                                                                 acqNum))
         utils.write_fits(filename_cds, self.cds)
 
         if self.step == 'ID':
             ## STScI only files - mostly just for quick checks of the data
             # Star catalog in real pixs
-            filename_starcat = os.path.join(self.out_dir,'stsci','{}_G{}_{}.gssscat'.format(self.root,self.guider,self.step))
-            self.write_cat(filename_starcat,self.x,self.y)
+            filename_starcat = os.path.join(self.out_dir,
+                                            'stsci',
+                                            '{}_G{}_{}.gssscat'.format(self.root,
+                                                                       self.guider,
+                                                                       self.step))
+            self.write_cat(filename_starcat, self.x, self.y)
 
             # Create ff fits file
-            filename_ff = os.path.join(self.out_dir,'stsci','{}_G{}_{}ff.fits'.format(self.root,self.guider,self.step))
-            utils.write_fits(filename_ff,np.uint16(self.image))
+            filename_ff = os.path.join(self.out_dir,
+                                       'stsci',
+                                       '{}_G{}_{}ff.fits'.format(self.root,
+                                                                 self.guider,
+                                                                 self.step))
+            utils.write_fits(filename_ff, np.uint16(self.image))
 
             ## DHAS file
             # Extract strips from ff img
-            filename_id_strips = os.path.join(self.out_dir,'dhas','{}_G{}_{}strips.fits'.format(self.root,self.guider,self.step))
+            filename_id_strips = os.path.join(self.out_dir,
+                                              'dhas',
+                                              '{}_G{}_{}strips.fits'.format(self.root,
+                                                                            self.guider,
+                                                                            self.step))
             # Write to strips to fits file
-            hdr0 = fits.open(os.path.join(self.data_path,'newG{}magicHdrImg.fits'.format(self.guider)))[0].header
-            utils.write_fits(filename_id_strips,self.strips,header=hdr0)
+            hdr0 = fits.open(os.path.join(self.data_path,
+                                          'newG{}magicHdrImg.fits'.format(self.guider)))[0].header
+            utils.write_fits(filename_id_strips, self.strips, header=hdr0)
 
             ## Gound system file
-            convert_fits_to_dat(filename_id_strips,self.step,os.path.join(self.out_dir,'ground_system'))
+            convert_fits_to_dat(filename_id_strips, self.step,
+                                os.path.join(self.out_dir, 'ground_system'))
 
         elif self.step == 'ACQ':
             ## STScI only files - mostly just for quick checks of the data
             # star catalog in real pixs
-            filename_starcat = os.path.join(self.out_dir,'stsci','{}_G{}_{}{}.cat'.format(self.root,self.guider,self.step,acqNum))
-            self.write_cat(filename_starcat,self.xgs,self.ygs)
+            filename_starcat = os.path.join(self.out_dir,
+                                            'stsci',
+                                            '{}_G{}_{}{}.cat'.format(self.root,
+                                                                     self.guider,
+                                                                     self.step,
+                                                                     acqNum))
+            self.write_cat(filename_starcat, self.xgs, self.ygs)
 
             ## DHAS file
             # Noisy sky acquisition fits images
-            filename_noisy_sky = os.path.join(self.out_dir,'dhas','{}_G{}_{}{}.fits'.format(self.root,self.guider,self.step,acqNum))
-            utils.write_fits(filename_noisy_sky,np.uint16(self.image))
+            filename_noisy_sky = os.path.join(self.out_dir,
+                                              'dhas',
+                                              '{}_G{}_{}{}.fits'.format(self.root,
+                                                                        self.guider,
+                                                                        self.step,
+                                                                        acqNum))
+            utils.write_fits(filename_noisy_sky, np.uint16(self.image))
 
             ## Gound system file
-            convert_fits_to_dat(filename_noisy_sky,self.step,os.path.join(self.out_dir,'ground_system'))
+            convert_fits_to_dat(filename_noisy_sky, self.step,
+                                os.path.join(self.out_dir, 'ground_system'))
 
         else:
             pass
@@ -418,7 +467,7 @@ def convert_fits_to_dat(infile,obsmode,out_dir,root=None):
         log.error("Observation mode not recognized. Returning.")
 
     with open(os.path.join(out_dir,outfile), 'w') as file_out:
-        for i,d in enumerate(fl.astype(np.uint16)):
+        for i, d in enumerate(fl.astype(np.uint16)):
             file_out.write(f.format(d))
 
     print("Successfully wrote: {}".format(os.path.join(out_dir,outfile)))
@@ -521,12 +570,12 @@ def run_ID(im, guider, root, out_dir=None, template_path=None, nref=10, interact
     id0 = FGS(im, guider, root, out_dir)
     id0.setup_step(2048, 2048, 2, tcds=id0.tcdsID, step='ID')
     log.info("Step: {}".format(id0.step))
-    id0.create_arrays(id0.x,id0.y,acqNum=None)
-    id0.write_out_files(id0.x,id0.y,id0.countrate)
+    id0.create_arrays(id0.x, id0.y, acqNum=None)
+    id0.write_out_files(id0.x, id0.y, id0.countrate)
 
     # Make CECIL proc file
-    mkproc(guider, root, id0.x, id0.y, id0.countrate, step='ID', nref=nref, out_dir=out_dir,
-           template_path=template_path)
+    mkproc(guider, root, id0.x, id0.y, id0.countrate, step='ID', nref=nref,
+           out_dir=out_dir, template_path=template_path)
 
     if interactive:
         return id0
@@ -586,7 +635,11 @@ def create_LOSTRK(im, guider, root, nx, ny, out_dir=None, interactive=False):
     trk.create_arrays(trk.xgs,trk.ygs,cds=False)
 
     # This is a ground system file, but needs to be in .dat format
-    filename_noisy_sky = os.path.join(trk.out_dir,'dhas','{}_G{}_LOS{}.fits'.format(trk.root,trk.guider,trk.step))
+    filename_noisy_sky = os.path.join(trk.out_dir,
+                                      'dhas',
+                                      '{}_G{}_LOS{}.fits'.format(trk.root,
+                                                                 trk.guider,
+                                                                 trk.step))
     utils.write_fits(filename_noisy_sky,trk.image)
 
     ## Gound system file

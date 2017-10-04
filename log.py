@@ -296,7 +296,7 @@ def handle_standard_options(args, parser=None,
 
 def standard_run(run_str, options, globals_dict, locals_dict):
     """Use options to step run_str, profile run_str,  or just run it."""
-    exec run_str in globals_dict, locals_dict
+    exec(run_str in globals_dict, locals_dict)
 
 
 def standard_status():

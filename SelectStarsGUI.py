@@ -9,7 +9,7 @@ import random
 # Third Party
 import numpy as np
 import matplotlib
-matplotlib.use('Qt5Agg') # Make sure that we are using Qt5
+#matplotlib.use('Qt5Agg') # Make sure that we are using Qt5
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm
@@ -26,8 +26,8 @@ from photutils import find_peaks
 
 class MyMplCanvas(FigureCanvas):
     """Creates a matplotlib canvas as a PyQt widget to plot an FGS image.
-    
-    Initializes and draws a matplotlib canvas which plots the following: 
+
+    Initializes and draws a matplotlib canvas which plots the following:
     the provided FGS image and the locations of the PSFs as identified by
     photutils.find_peaks.
 
@@ -73,16 +73,16 @@ class MyMplCanvas(FigureCanvas):
         self.axes.scatter(x, y, c='r', marker='+')
         self.fig.colorbar(fitsplot, ax=self.axes, fraction=0.046, pad=0.04)
 
-    def zoom_to_fit(self): 
+    def zoom_to_fit(self):
         self.axes.set_xlim(0, np.shape(self.data)[0])
         self.axes.set_ylim(np.shape(self.data)[1], 0)
         self.draw()
 
-    
+
 
 class ApplicationWindow(QtWidgets.QMainWindow):
     """Interactive PyQt GUI window used to select stars from an FGS image.
-    
+
 
     Main Widgets
     ------------
@@ -99,7 +99,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         allows the user to change the selected guide star
     done
         Exits the program
-    
+
 
     Attributes
     ----------
@@ -174,15 +174,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("FGS Guide & Reference Star Selector")
 
-        
+
         self.main_widget = QWidget(self)
-      
+
         mainGrid = QGridLayout() # set grid layout
         self.main_widget.setLayout(mainGrid)
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
 
-        # Add plot - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # Add plot - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         sc = MyMplCanvas(self.main_widget, width=5, height=4, dpi=100, data=self.data, x=self.x, y=self.y)
         self.canvas = sc
         mainGrid.addWidget(sc, 0, 0, 3, 2)
@@ -201,9 +201,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # Star selection!
         self.canvas.mpl_connect('button_press_event', self.button_press_callback)
-      
-        # Add first column  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        
+
+        # Add first column  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
         # Make Group Box to put the label in, because it will misbehave
         instructionsGroupBox = QGroupBox('Instructions', self)
         vBox = QVBoxLayout()
@@ -215,7 +215,7 @@ All additional stars that are clicked on are the \
 right as they are selected; the guide star can be re-selected \
 using the radio buttons. Errors will be shown in the output box below.''', self)
         # self.instructions.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        
+
         self.instructions.setWordWrap(True)
 
         vBox.addWidget(self.instructions)
@@ -261,7 +261,7 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
         self.axlims_button = QPushButton('Update axis limits', self)
         self.axlims_button.clicked.connect(self.update_axes)   # connect button to function on_click
         axGrid.addWidget(self.axlims_button, 3, 0, 1, 5)
-        
+
 
         # Add "Zoom Fit" button
         self.zoom_button = QPushButton('Zoom Fit', self)
@@ -272,10 +272,10 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
 
         mainGrid.addWidget(axGroupBox, 2, 2, 2, 1)
 
-        
-        # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        starsGroupBox = QGroupBox(self)      
+        # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        starsGroupBox = QGroupBox(self)
         col2Form = QFormLayout()
 
         # Show selected stars
@@ -314,7 +314,7 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
         mainGrid.addWidget(self.done_button, 2, 3, 2, 1, alignment = QtCore.Qt.AlignVCenter)
 
 
-    
+
     @pyqtSlot()
     def update_axes(self):
         '''Changes the axes limits of the matplotlib canvas to the current values of the axis limit textboxes
@@ -336,10 +336,10 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
         if event.inaxes:
             # self.cursor_textbox.setEnabled(True)
             self.cursor_textbox.setText('({:.0f}, {:.0f})'.format(event.xdata, event.ydata))
-            
+
 
     def button_press_callback(self, event):
-        '''WHenever a mouse button is pressed, determines if a button press is within the matplotlib axis; 
+        '''WHenever a mouse button is pressed, determines if a button press is within the matplotlib axis;
         if so calls get_ind_under_point'''
         if not event.inaxes: return
         if event.button != 1: return
@@ -348,7 +348,7 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
     def get_ind_under_point(self, event):
         '''If user clicks within one epsilon of an identified star, appends that star's position to inds;
         notifies user if no star is nearby or if selected star is already selected'''
-        
+
         d = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
         i = np.unravel_index(np.nanargmin(d), d.shape)
         indseq = np.nonzero(np.equal(d, np.amin(d)))[0]
@@ -360,9 +360,9 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             redText = "<br/><span style=\" color:#ff0000;\" >"
             redText += 'No star within {} pixels. No star selected.'.format(self.epsilon)
             redText += "</span>"
-                       
+
             self.log_textbox.setHtml(self.log_textbox.toHtml() + redText)
-        
+
         elif ind in self.inds:
             if self.printOutput: print('Star already selected, please choose another star')
 
@@ -370,7 +370,7 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             redText += 'Star already selected, please choose another star'
             redText += "</span>"
 
-            self.log_textbox.setHtml(self.log_textbox.toHtml() + redText) 
+            self.log_textbox.setHtml(self.log_textbox.toHtml() + redText)
 
         else:
             if self.printOutput: print('Star selected: x={:.1f}, y={:.1f}'.format(self.x[ind],self.y[ind]))
@@ -378,11 +378,12 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             self.star_positions[len(self.inds)].setText('x={:.1f}, y={:.1f}'.format(self.x[ind],self.y[ind]))
             self.guidestar_buttons[0].setEnabled(True)
             self.guidestar_buttons[len(self.inds)].setCheckable(True)
-            
-            if len(self.inds) == 0: 
+
+            if len(self.inds) == 0:
                 color = 'yellow'
             else: 
                 color = 'darkorange'
+
             self.canvas.axes.scatter(self.x[ind], self.y[ind], s=500, facecolors='none', edgecolors=color,  lw=2, marker='o')
             self.canvas.draw()
 
@@ -408,7 +409,7 @@ using the radio buttons. Errors will be shown in the output box below.''', self)
             # Plot new guide star as guide star
             self.canvas.axes.scatter(self.x[self.inds[0]], self.y[self.inds[0]], s=500, facecolors='none', edgecolors='yellow',  lw=2, marker='o')
             self.canvas.draw()
-            
+
         return setGuideStar
 
 
@@ -434,7 +435,7 @@ def run_SelectStars(data, x, y, dist, printOutput=False):
     y (list)
         List of y-coordinates of identified PSFs
     dist (int)
-        Minimum distance between identified PSFs; maximum distance from a star the user 
+        Minimum distance between identified PSFs; maximum distance from a star the user
         can click to select that star
     printOutput (boolean)
         Flag enabling output to the terminal
@@ -457,11 +458,10 @@ def run_SelectStars(data, x, y, dist, printOutput=False):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if __name__ == '__main__':  
+if __name__ == '__main__':
     data = fits.open('../data/LMCfootprint_80/LMCfootprint_80.31512449419834_-70.45278790693078.fits')[0].data
     data[data == 0] = 0.1 # Adjust so 0 shows up as such with a logNorm colorbar
     gauss_sigma = 5
     dist = 16
 
     inds = run_SelectStars(data, gauss_sigma, dist)
-
