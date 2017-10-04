@@ -227,5 +227,10 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
         plot_centroids(data,coords,root,guider,out_dir) # Save pretty PNG in out dir
 
 
+    utils.write_cols_to_file(out_dir,
+                       filename='{0}_G{1}_regfile.txt'.format(root,guider),
+                       labels=['y','x','count rate'],
+                       cols=cols)
+
     if return_nref:
         return nref

@@ -73,8 +73,8 @@ class mkproc(object):
         template_path: str
             Path to the templates
         '''
-        self.guider='GUIDER{}'.format(guider)
-        self.templateHDR= os.path.join(template_path,'g{}{}templateHDR.prc'.format(guider,step))
+        self.guider ='GUIDER{}'.format(guider)
+        self.templateHDR = os.path.join(template_path,'g{}{}templateHDR.prc'.format(guider,step))
         self.templateA = os.path.join(template_path,'g{}{}templateA.prc'.format(guider,step))
         self.templateB = os.path.join(template_path,'g{}{}templateB.prc'.format(guider,step))
         self.templateC = os.path.join(template_path,'g{}{}templateC.prc'.format(guider,step))
