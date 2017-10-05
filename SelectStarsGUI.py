@@ -83,7 +83,6 @@ class MyMplCanvas(FigureCanvas):
         # x_range = range(2048)
         # self.y_slices = [self.data[i] for i in range(2048)]
         # self.lines = [self.axes.plot(x_range, y, c='white') for y in self.y_slices]
-
         self.axes.set_ylim(0.1, 5 * np.max(self.data))
         self.axes.set_yscale('log')
         self.axes.set_ylabel('Counts')
@@ -213,9 +212,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         QMainWindow.__init__(self)
         # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("FGS Guide & Reference Star Selector")
-
         self.main_widget = QWidget(self)
-
         mainGrid = QGridLayout()  # set grid layout
         self.main_widget.setLayout(mainGrid)
         self.main_widget.setFocus()

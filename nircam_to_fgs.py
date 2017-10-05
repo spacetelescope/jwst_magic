@@ -265,7 +265,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     elif os.path.isdir(input_im):
         im_list = (glob(os.path.join(input_im, '*.fits')))
     else:
-        log.info("Input format not recognized. Exiting.")
+        log.error("Input format not recognized. Exiting.")
         return
 
     # ---------------------------------------------------------------------
@@ -297,7 +297,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         #any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
         hdr = utils.read_fits(header_file)[0]
-        utils.write_fits(out_path, np.uint16(data_norm),header = hdr)
+        utils.write_fits(out_path, np.uint16(data_norm), header = hdr)
 
 
         print ("Finished for {}, Guider = {}".format(root, guider))

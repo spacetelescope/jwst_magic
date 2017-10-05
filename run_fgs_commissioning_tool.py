@@ -1,7 +1,6 @@
 # STDLIB
 import os
 import shutil
-import time
 
 # LOCAL
 import select_psfs
@@ -22,6 +21,36 @@ LOGNAME = utils.get_logname(os.path.join(LOCAL_PATH, 'logs'), TASKNAME)
 def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
             nircam_mod=None, nircam=True, global_alignment=False,
             incat=None, reg_file=None):
+    """
+    This function will take any FGS or NIRCam image and create the outputs needed
+    to run the image through the DHAS or other FGS FSW simulator. If no incat or
+    reg file are provided, the user will be prompted to use a GUI for selecting
+    the guide star and reference stars necessary for the FSW.
+
+    Parameters
+    ==========
+    im: str
+        The path to the image.
+    guider: int
+        Which guider is being used: 1 or 2
+    root: str
+        The root desired for output images if different than root in im
+    fgs_counts: float
+        If the user wants to specify the FGS counts, they do so here
+    jmag: float
+        Like fgs_counts but for the J magnitude (NOT JAB)
+    nircam_mod: str
+        The NIRCam module used for this observation. Only applicable for NIRCam
+        images and if cannot be parsed from header.
+    nircam: bool
+        If this is a FGS image, set this flag to False
+    global_alignment: bool
+        If this is not a global_alignment image, set this flag to False
+    incat: str
+        If this image comes with an incat file, this is the path to that file
+    regfile: str
+        If this image comes with a reg file, this is the path to that file
+    """
     if root is None:
         root = os.path.basename(im).split('.')[0]
 
