@@ -10,7 +10,7 @@ import nircam_to_fgs
 import utils
 
 
-#Because Jupyter Notebook cannot open a matplotlib object, I have copied what is
+# Because Jupyter Notebook cannot open a matplotlib object, I have copied what is
 # done in Run RGS Commissioning Tool.ipynb into this script that should be run in
 # IPython
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -19,8 +19,7 @@ LOGNAME = utils.get_logname(os.path.join(LOCAL_PATH, 'logs'), TASKNAME)
 
 @log.logtofile(LOGNAME)
 def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_mod=None, nircam=True, global_alignment=False,
-            incat=None, reg_file=None):
+            nircam_mod=None, nircam=True, global_alignment=False, in_file=None):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -46,10 +45,8 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
         If this is a FGS image, set this flag to False
     global_alignment: bool
         If this is not a global_alignment image, set this flag to False
-    incat: str
-        If this image comes with an incat file, this is the path to that file
-    regfile: str
-        If this image comes with a reg file, this is the path to that file
+    in_file: str
+        If this image comes with an incat or reg file, the file path
     """
     if root is None:
         root = os.path.basename(im).split('.')[0]
@@ -76,8 +73,7 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
     nref = select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,
                                        return_nref=True,
                                        global_alignment=global_alignment,
-                                       incat=incat)#,
-                                       # reg_file=reg_file)
+                                       in_file=in_file)
 
     # create all files for FSW/DHAS/FGSES/etc.
     FGS_commissioning.run_ID(fgs_im, guider, root, nref=nref, out_dir=out_dir)
