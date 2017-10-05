@@ -110,15 +110,15 @@ Choice: ''')
         raise StandardError('User rejection of identified PSFs.')
 
 
-def countrate_3x3(coords, data):
+def countrate_3x3(x, y, data):
     """
-    Using the coordinates of each PSF,place a 3x3 box around center pixel, and sum
+    Using the coordinates of each PSF, place a 3x3 box around center pixel and sum
     the counts of the pixels in this box.
     """
-    xx = int(coords[1])
-    yy = int(coords[0])
+    x = int(x)
+    y = int(y)
 
-    counts = np.sum(data[yy - 1:yy + 2, xx - 1:xx + 2])
+    counts = np.sum(data[y - 1:y + 2, x - 1:x + 2])
     return counts
 
 
@@ -130,7 +130,7 @@ def plot_centroids(data, coords, root, guider, out_dir):
     pad = 300
 
     # Determine x and y limits that encompass all PSFS
-    xarray, yarray = [x for (x, y) in coords], [y for (x, y) in coords] # Backwards... :^(
+    xarray, yarray = [x for (x, y) in coords], [y for (x, y) in coords]
     x_mid = (min(xarray) + max(xarray)) / 2
     y_mid = (min(yarray) + max(yarray)) / 2
     x_range = max(xarray) - min(xarray)
@@ -141,18 +141,19 @@ def plot_centroids(data, coords, root, guider, out_dir):
     plt.figure(figsize=(17, 17))
     plt.imshow(data, cmap='Greys', norm=LogNorm())
     for i in range(len(coords)):
-        plt.scatter(coords[i][1], coords[i][0])
+        plt.scatter(coords[i][0], coords[i][1])
         plt.annotate('({}, {})'.format(int(coords[i][0]), int(coords[i][1])),
-                     (coords[i][1]-(pad*0.05), coords[i][0]+(pad*0.05)))
+                     (coords[i][0] - (pad * 0.05),
+                      coords[i][1] + (pad * 0.05)))
     plt.title('Centroids found for {}'.format(root))
-    plt.ylim(min(2048, x_mid + ax_range/2), max(0, x_mid - ax_range/2))
-    plt.xlim(max(0, y_mid - ax_range/2), min(2048, y_mid + ax_range/2))
+    plt.xlim(max(0, x_mid - ax_range / 2), min(2048, x_mid + ax_range / 2))
+    plt.ylim(min(2048, y_mid + ax_range / 2), max(0, y_mid - ax_range / 2))
     plt.savefig(os.path.join(out_dir, '{}_G{}_centers.png'.format(root, guider)))
 
     plt.close()
 
 
-def count_rate_total(data, objects, num_objects, gs_points, counts_3x3=True):
+def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
     """
     Get the x,y, and counts for each psf in the image
 
@@ -167,15 +168,15 @@ def count_rate_total(data, objects, num_objects, gs_points, counts_3x3=True):
         im[objects != i] = False
         im[objects == i] = True
         if counts_3x3:
-            counts.append(countrate_3x3(gs_points[i-1], data))
+            counts.append(countrate_3x3(x[i-1], y[i-1], data))
         else:
-            counts.append(np.sum(im*data))
-        val.append(np.sum(im*1.))
+            counts.append(np.sum(im * data))
+        val.append(np.sum(im * 1.))  # Number of pixels in object
 
     return counts, val
 
 
-def create_cols_for_coords_counts(y, x, counts, val, inds=None):
+def create_cols_for_coords_counts(x, y, counts, val, inds=None):
     """
     Create an array of columns of y, x, and counts of each PSF to be written out.
     Use the inds returned from pick_stars based on user input.
@@ -185,7 +186,7 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
     """
 
     cols = []
-    for i, (yy, xx, co) in enumerate(zip(y, x, counts)):
+    for yy, xx, co in zip(y, x, counts):
         cols.append([yy, xx, co])  # these coordinates are y,x
 
     if inds is None:
@@ -197,14 +198,14 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
     return cols
 
 def parse_in_file(in_file):
-    '''Determines if the input file is an .incat or a reg file, and extracts
+    '''Determines if the input file is an incat or a reg file, and extracts
     the locations and countrates of the stars accordingly. Assumes incat files
     have 5 columns, while regfiles have 3 columns.'''
 
     file = asc.read(in_file)
 
     if len(file.columns) == 5:
-        log.info('Selecting stars from .incat file {}'.format(in_file))
+        log.info('Selecting stars from incat file {}'.format(in_file))
 
         # Rename columns
         colnames = ['x', 'y', 'ctot', 'inimg', 'incat']
@@ -233,7 +234,7 @@ def parse_in_file(in_file):
     file['ctot'] = file['ctot'].astype(int)
 
     cols = file['y', 'x', 'ctot'] # Make sure to flip x and y!!
-    coords = [(y, x) for x, y in zip(file['x'], file['y'])]  # Note switch
+    coords = [(x, y) for x, y in zip(file['x'], file['y'])]  # Note switch
     nref = len(file['x']) - 1
 
     return cols, coords, nref
@@ -267,7 +268,8 @@ def manual_star_selection(data, global_alignment):
     dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
 
     # Calculate count rate
-    counts, val = count_rate_total(data, objects, num_psfs, coords, counts_3x3=True)
+    counts, val = count_rate_total(data, objects, num_psfs, x, y, counts_3x3=True)
+    print(counts)
 
     # Call the GUI to pick PSF indices
     gui_data = data.copy()
@@ -277,7 +279,8 @@ def manual_star_selection(data, global_alignment):
     nref = len(inds) - 1
     log.info('1 guide star and {} reference stars selected'.format(nref))
 
-    cols = create_cols_for_coords_counts(y, x, counts, val, inds=inds)
+    cols = create_cols_for_coords_counts(x, y, counts, val, inds=inds)
+    print(cols)
 
     return cols, coords, nref
 
