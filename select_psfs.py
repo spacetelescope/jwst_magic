@@ -9,6 +9,7 @@ from astropy.io import fits
 from astropy.io import ascii as asc
 import numpy as np
 import matplotlib
+matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib import rcParams
@@ -45,7 +46,7 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
         mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
 
         # Find PSFs
-        threshold = (3 * std)  # Used to be median + 3 * std
+        threshold = median + (3 * std)  # Used to be median + 3 * std
         sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
         num_psfs = len(sources)
         coords = sources['x_peak', 'y_peak']
@@ -62,7 +63,7 @@ def choose_threshold(smoothed_data, gauss_sigma):
     mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
 
     # Run find_peaks with two different threshold options
-    thresholds = [3*std, mean]
+    thresholds = [3 * std, mean]
     sources_std = find_peaks(smoothed_data, thresholds[0], box_size=gauss_sigma)
     sources_mean = find_peaks(smoothed_data, thresholds[1], box_size=gauss_sigma)
 
@@ -80,12 +81,9 @@ def choose_threshold(smoothed_data, gauss_sigma):
     ax2.imshow(smoothed_data, cmap='bone', interpolation='nearest',
                clim=(0.1, 100), norm=LogNorm())
     ax2.scatter(sources_mean['x_peak'], sources_mean['y_peak'], c='r', marker='+')
-    ax2.set_title('Threshold = Mean ({} sources found)'.format(len(sources_mean)))
+    ax2.set_title('fThreshold = Mean ({} sources found)'.format(len(sources_mean)))
 
-    # fig = plt.gcf()
-    # fig.canvas.manager.window.raise_()
     plt.get_current_fig_manager().window.raise_()
-
     plt.show()
 
     # Prompt user to choose
@@ -95,6 +93,7 @@ standard deviation threshold, type "S". To use the stars selected with a mean \
 threshold, type "M". To use neither and cancel the program, press enter.
 
 Choice: ''')
+
     plt.close()
 
     if choice == 'S':
@@ -199,7 +198,7 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
 
 def create_reg_file(data, root, guider, out_dir, return_nref=False,
                     global_alignment=False, incat=None):
-   
+
     # If no .incat file provided, create reg file with manual star selection in GUI
     if incat == None:
         if isinstance(data, str):
@@ -213,33 +212,34 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
         smoothed_data = ndimage.gaussian_filter(data, sigma = gauss_sigma)
 
         # Use photutils.find_peaks to locate all PSFs in image
-        num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, choose=True)
+        num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, choose=False)
         x, y = map(list, zip(*coords))
 
         # Use labeling to map locations of objects in array
         objects, num_objects = ndimage.measurements.label(smoothed_data > threshold)
         # NOTE: num_objects might not equal num_psfs
 
-        if len(coords)<2:
+        if len(coords) < 2:
             log.error('Less than two objects have been found. Cannot proceed. Exiting')
             raise ValueError('cannot guide on < 2 objects')
 
-        #find the minimum distance between PSFs
-        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1. 
+        # Find the minimum distance between PSFs
+        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
 
-        plot_centroids(data, coords, root, guider, out_dir) # Save pretty PNG in out dir
-        counts, val = count_rate_total(data, objects, num_psfs, coords, counts_3x3=True) # Calculate count rate
+        plot_centroids(data, coords, root, guider, out_dir)  # Save pretty PNG in out dir
+        counts, val = count_rate_total(data, objects, num_psfs, coords, counts_3x3=True)  # Calculate count rate
         # print(y, x, counts,val)
 
         # Call the GUI
-        dataToShow = data.copy()
-        dataToShow[data == 0] = 0.1 # Alter null pixel values to appear as black in LogNorm image
-        inds = SelectStarsGUI.run_SelectStars(dataToShow, x, y, dist, printOutput=False)
+        gui_data = data.copy()
+        gui_data[data == 0] = 0.1 # Alter null pixel values to appear as black in LogNorm image
+        inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
+                                              print_output=False)
         nref = len(inds)-1
         log.info('1 guide star and {} reference stars selected'.format(nref))
 
         cols = create_cols_for_coords_counts(y, x, counts, val, inds=inds)
-   
+
     # If .incat file provided, create reg file with provided information
     else:
         # Read in .incat file
