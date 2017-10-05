@@ -186,90 +186,116 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
 
     cols = []
     for i, (yy, xx, co) in enumerate(zip(y, x, counts)):
-        cols.append([yy,xx,co]) ## these coordinates are y,x
+        cols.append([yy, xx, co])  # these coordinates are y,x
 
     if inds is None:
-        min_ind = np.where(val == np.min(val))[0][0] #Find most compact PSF
-        cols.insert(0, cols.pop(min_ind)) #Move most compact PSF to top of the list
+        min_ind = np.where(val == np.min(val))[0][0]  # Find most compact PSF
+        cols.insert(0, cols.pop(min_ind))  # Move most compact PSF to top of the list
     else:
         cols = [cols[i] for i in inds]
 
     return cols
 
+def parse_in_file(in_file):
+    '''Determines if the input file is an .incat or a reg file, and extracts
+    the locations and countrates of the stars accordingly. Assumes incat files
+    have 5 columns, while regfiles have 3 columns.'''
 
-def create_reg_file(data, root, guider, out_dir, return_nref=False,
-                    global_alignment=False, incat=None, reg_file=None):
+    file = asc.read(in_file)
 
-    # If .incat file provided, create reg file with provided information
-    if incat:
-        # Read in .incat file
-        log.info('Selecting stars from .incat file {}'.format(incat))
-        incat = asc.read(incat, names=['x', 'y', 'ctot', 'inimg', 'incat'])
-        incat['x'] = incat['x'].astype(int) # Need to be an integer
-        incat['y'] = incat['y'].astype(int)
-        incat['ctot'] = incat['ctot'].astype(int)
+    if len(file.columns) == 5:
+        log.info('Selecting stars from .incat file {}'.format(in_file))
+
+        # Rename columns
+        colnames = ['x', 'y', 'ctot', 'inimg', 'incat']
+        for old_colname, new_colname in zip(file.colnames, colnames):
+            file.rename_column(old_colname, new_colname)
 
         # Only use stars in the catalog
-        incat = incat[incat['incat'] == 1]
-        # Only use relevant columns
-        cols = incat['y', 'x', 'ctot'] # Make sure to flip x and y!!
-        nref = len(incat['x'])-1
+        file = file[file['incat'] == 1]
 
-        coords = [(y, x) for x, y in zip(incat['x'], incat['y'])]
+    elif len(file.columns) == 3:
+        log.info('Selecting stars from regfile {}'.format(in_file))
 
-        plot_centroids(data, coords, root, guider, out_dir) # Save pretty PNG in out dir
+        # Rename columns
+        colnames = ['y', 'x', 'ctot']  # Might be backwards....
+        for old_colname, new_colname in zip(file.colnames, colnames):
+            file.rename_column(old_colname, new_colname)
 
-    elif reg_file:
-        # star coords & gs counts
-        y, x, counts = (np.loadtxt(reg_file, delimiter=' ', skiprows=1)).T
-
-        coords = [(yy, xx) for xx, yy in zip(x, y)]
-        nref = len(x)-1
-
-        plot_centroids(data, coords, root, guider, out_dir) # Save pretty PNG in out dir
-
-        cols = []
-        for i, (yy, xx, co) in enumerate(zip(y, x, counts)):
-            cols.append([yy, xx, co]) ## these coordinates are y,x
-
-    # If no .incat or reg file provided, create reg file with manual star selection in GUI
     else:
-        if isinstance(data, str):
-            data = utils.read_fits(data)[1]
+        raise TypeError('Unknown in_file format: {}'.format(in_file))
+        log.error('Unknown in_file format: {}'.format(in_file))
+        return
 
-        if global_alignment:
-            gauss_sigma = 26
-        else:
-            gauss_sigma = 5
+    # Set data types
+    file['x'] = file['x'].astype(int) # Need to be an integer
+    file['y'] = file['y'].astype(int)
+    file['ctot'] = file['ctot'].astype(int)
 
-        smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
+    cols = file['y', 'x', 'ctot'] # Make sure to flip x and y!!
+    coords = [(y, x) for x, y in zip(file['x'], file['y'])]  # Note switch
+    nref = len(file['x']) - 1
 
-        # Use photutils.find_peaks to locate all PSFs in image
-        num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, choose=False)
-        x, y = map(list, zip(*coords))
+    return cols, coords, nref
 
-        # Use labeling to map locations of objects in array
-        objects, num_objects = ndimage.measurements.label(smoothed_data > threshold)
-        # NOTE: num_objects might not equal num_psfs
+def manual_star_selection(data, global_alignment):
+    '''Algorithmically find and locate all PSFs in image using
+    photutils.find_peaks; prompt user to select guide and reference stars
+    using GUI.'''
+    if global_alignment:
+        gauss_sigma = 26
+    else:
+        gauss_sigma = 5
 
-        if len(coords) < 2:
-            log.error('Less than two objects have been found. Cannot proceed. Exiting')
-            raise ValueError('cannot guide on < 2 objects')
+    smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
 
-        # Find the minimum distance between PSFs
-        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
+    # Use photutils.find_peaks to locate all PSFs in image
+    num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma,
+                                             choose=False)
+    x, y = map(list, zip(*coords))
 
-        plot_centroids(data, coords, root, guider, out_dir)  # Save pretty PNG in out dir
-        counts, val = count_rate_total(data, objects, num_psfs, coords, counts_3x3=True)  # Calculate count rate
-        # print(y, x, counts,val)
+    # Use labeling to map locations of objects in array
+    # (Kept for possible alternate countrate calculations; see count_rate_total)
+    objects, num_objects = ndimage.measurements.label(smoothed_data > threshold)
+    # NOTE: num_objects might not equal num_psfs
 
-        # Call the GUI
-        gui_data = data.copy()
-        gui_data[data == 0] = 0.1 # Alter null pixel values to appear as black in LogNorm image
-        inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
-                                              print_output=False)
-        nref = len(inds)-1
-        log.info('1 guide star and {} reference stars selected'.format(nref))
+    if len(coords) < 2:
+        log.error('Less than two objects have been found. Cannot proceed. Exiting')
+        raise ValueError('cannot guide on < 2 objects')
+
+    # Find the minimum distance between PSFs
+    dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
+
+    # Calculate count rate
+    counts, val = count_rate_total(data, objects, num_psfs, coords, counts_3x3=True)
+
+    # Call the GUI to pick PSF indices
+    gui_data = data.copy()
+    gui_data[data == 0] = 0.1  # Alter null pixel values for LogNorm imshow
+    inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
+                                          print_output=False)
+    nref = len(inds) - 1
+    log.info('1 guide star and {} reference stars selected'.format(nref))
+
+    cols = create_cols_for_coords_counts(y, x, counts, val, inds=inds)
+
+    return cols, coords, nref
+
+
+def create_reg_file(data, root, guider, out_dir, return_nref=False,
+                    global_alignment=False, in_file=None):
+    if in_file:
+        # Determine the kind of in_file and parse out the PSF locations and
+        # countrates accordingly
+        cols, coords, nref = parse_in_file(in_file)
+
+    else:
+        # If no .incat or reg file provided, create reg file with manual
+        # star selection using the SelectStarsGUI
+        cols, coords, nref = manual_star_selection(data, global_alignment)
+
+    # Save PNG of image and all PSF locations in out_dir
+    plot_centroids(data, coords, root, guider, out_dir)
 
     utils.write_cols_to_file(out_dir,
                              filename='{0}_G{1}_regfile.txt'.format(root, guider),
