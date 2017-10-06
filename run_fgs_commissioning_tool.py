@@ -76,6 +76,6 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
                                        in_file=in_file)
 
     # create all files for FSW/DHAS/FGSES/etc.
-    FGS_commissioning.run_ID(fgs_im, guider, root, nref=nref, out_dir=out_dir)
-    FGS_commissioning.run_ACQ(fgs_im, guider, root, out_dir=out_dir)
-    FGS_commissioning.create_LOSTRK(fgs_im, guider, root, nx=43, ny=43, out_dir=out_dir)
+    FGS_commissioning.run_id(fgs_im, guider, root, nref=nref, out_dir=out_dir)
+    FGS_commissioning.run_acq(fgs_im, guider, root, out_dir=out_dir)
+    FGS_commissioning.create_lostrk(fgs_im, guider, root, nx=43, ny=43, out_dir=out_dir)

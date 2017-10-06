@@ -75,7 +75,7 @@ def read_fits(filename):
     return header, data
 
 
-def write_to_file(filename, rows, labels=None, mode='w'):
+def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
     """ Write out results to a csv, dat, txt, etc file.
 
     Parameters
@@ -103,7 +103,7 @@ def write_to_file(filename, rows, labels=None, mode='w'):
             for i in rows:
                 csvwriter.writerow(i)
     else:
-        np.savetxt(filename, rows, fmt='%.4f', header=' '.join(labels))#,fmt='%.4f'
+        np.savetxt(filename, rows, fmt=fmt, header=' '.join(labels))
 
 
 def write_cols_to_file(output_path, filename, labels, cols):
