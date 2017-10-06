@@ -260,16 +260,17 @@ def manual_star_selection(data, global_alignment):
     objects, num_objects = ndimage.measurements.label(smoothed_data > threshold)
     # NOTE: num_objects might not equal num_psfs
 
-    if len(coords) < 2:
-        log.error('Less than two objects have been found. Cannot proceed. Exiting')
-        raise ValueError('cannot guide on < 2 objects')
-
     # Find the minimum distance between PSFs
-    dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
+    if len(coords) < 2:
+        # For cases where we only have star, we assume that we are sufficiently
+        #isolated from other stars, but also that the guide star's PSF may be
+        #distorted enough that it might appear quite large on the detector
+        dist = 20
+    else:
+        dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
 
     # Calculate count rate
     counts, val = count_rate_total(data, objects, num_psfs, x, y, counts_3x3=True)
-    print(counts)
 
     # Call the GUI to pick PSF indices
     gui_data = data.copy()
@@ -280,7 +281,6 @@ def manual_star_selection(data, global_alignment):
     log.info('1 guide star and {} reference stars selected'.format(nref))
 
     cols = create_cols_for_coords_counts(x, y, counts, val, inds=inds)
-    print(cols)
 
     return cols, coords, nref
 
