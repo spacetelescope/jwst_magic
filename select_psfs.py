@@ -197,46 +197,94 @@ def create_cols_for_coords_counts(y, x, counts, val, inds=None):
     return cols
 
 def parse_in_file(in_file):
-    '''Determines if the input file is an .incat or a reg file, and extracts
-    the locations and countrates of the stars accordingly. Assumes incat files
-    have 5 columns, while regfiles have 3 columns.'''
+    '''Determines if the input file contains x, y, and countrate data. If so,
+    extracts the locations and countrates of the stars accordingly. Recognizes
+    columns named "x" or "xreal"; "y" or "yreal"; "countrate", "count rate", or
+    "ctot".'''
 
-    file = asc.read(in_file)
+    in_table = asc.read(in_file)
+    colnames = in_table.colnames
 
-    if len(file.columns) == 5:
-        log.info('Selecting stars from .incat file {}'.format(in_file))
+    # Handle old regfiles where countrate column is titled "count rate" and thus
+    # astropy can't automatically identify it as a single column name
+    if 'col1' in colnames:
+        # If astropy doesn't know how to read the column names...
+        fo = open(in_file)
+        raw_columns = fo.readlines()[0]
+        fo.close()
 
-        # Rename columns
-        colnames = ['x', 'y', 'ctot', 'inimg', 'incat']
-        for old_colname, new_colname in zip(file.colnames, colnames):
-            file.rename_column(old_colname, new_colname)
+        if 'x' and 'y' and 'count rate' in raw_columns:
+            # If this is formatted like an old regfile, just fix it and continue
+            raw_columns = str.replace(raw_columns, 'count rate', 'countrate')
+            fix_colnames = raw_columns.split()
 
-        # Only use stars in the catalog
-        file = file[file['incat'] == 1]
+            if '#' in fix_colnames:
+                # Remove commenting mark
+                fix_colnames.pop(fix_colnames.index('#'))
 
-    elif len(file.columns) == 3:
-        log.info('Selecting stars from regfile {}'.format(in_file))
+            if len(fix_colnames) != len(in_table.columns):
+                # Fix didn't work
+                err_message = 'Unknown in_file format: {}. Expecting columns named \
+"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
+named {}. Please rename columns.'.format(in_file, fix_colnames)
+                raise TypeError(err_message)
+                log.error(err_message)
+                return
 
-        # Rename columns
-        colnames = ['y', 'x', 'ctot']  # Might be backwards....
-        for old_colname, new_colname in zip(file.colnames, colnames):
-            file.rename_column(old_colname, new_colname)
+            for old_col, fix_col in zip(colnames, fix_colnames):
+                # Assign fixed column names to table
+                in_table.rename_column(old_col, fix_col)
 
-    else:
-        raise TypeError('Unknown in_file format: {}'.format(in_file))
-        log.error('Unknown in_file format: {}'.format(in_file))
+            colnames = fix_colnames
+
+        else:
+            # If not just an old regfile, it is something unfamiliar
+            err_message = 'Unknown in_file format: {}. Expecting columns named \
+"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
+named {}. Please rename columns.'.format(in_file, raw_columns.split())
+            raise TypeError(err_message)
+            log.error(err_message)
+            return
+
+    # Make sure all the necessary columns are present
+    x_check = 'x' in colnames or 'xreal' in colnames
+    y_check = 'y' in colnames or 'yreal' in colnames
+    counts_check = 'countrate' in colnames or 'ctot' in colnames
+
+    if not (x_check and y_check and counts_check):
+        err_message = 'Unknown in_file format: {}. Expecting columns named \
+"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
+named {}. Please rename columns.'.format(in_file, colnames)
+        raise TypeError(err_message)
+        log.error(err_message)
         return
 
+    # Passed all the checkpoints! Move on to process the file.
+    log.info('Selecting stars from input file {}'.format(in_file))
+
+    # Rename relevant old columns, if necessary:
+    for col in colnames:
+        if col == 'xreal':
+            in_table.rename_column(col, 'x')
+        if col == 'yreal':
+            in_table.rename_column(col, 'y')
+        if col == 'countrate':
+            in_table.rename_column(col, 'ctot')
+
+    # If an incat, only use stars in the catalog
+    if 'cat' in colnames:
+        in_table = in_table[in_table['cat'] == 1]
+
     # Set data types
-    file['x'] = file['x'].astype(int) # Need to be an integer
-    file['y'] = file['y'].astype(int)
-    file['ctot'] = file['ctot'].astype(int)
+    in_table['x'] = in_table['x'].astype(int)  # Need to be an integer
+    in_table['y'] = in_table['y'].astype(int)
+    in_table['ctot'] = in_table['ctot'].astype(int)
 
-    cols = file['y', 'x', 'ctot'] # Make sure to flip x and y!!
-    coords = [(y, x) for x, y in zip(file['x'], file['y'])]  # Note switch
-    nref = len(file['x']) - 1
+    out_cols = in_table['y', 'x', 'ctot']  # Make sure to flip x and y!!
+    coords = [(y, x) for x, y in zip(in_table['x'], in_table['y'])]
+    nref = len(in_table['x']) - 1
 
-    return cols, coords, nref
+    return out_cols, coords, nref
 
 def manual_star_selection(data, global_alignment):
     '''Algorithmically find and locate all PSFs in image using
@@ -299,7 +347,7 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
 
     utils.write_cols_to_file(out_dir,
                              filename='{0}_G{1}_regfile.txt'.format(root, guider),
-                             labels=['y', 'x', 'count rate'],
+                             labels=['y', 'x', 'countrate'],
                              cols=cols)
 
     if return_nref:
