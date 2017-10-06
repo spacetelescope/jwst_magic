@@ -98,7 +98,7 @@ def rotate_nircam_image(im, fgs_guider, header, nircam_mod):
     if module == 'A':
         ## NIRCAM Module A
         if fgs_guider == 1:
-            ## FGS guider = 2; Perform a Left-Right flip
+            ## FGS guider = 1; Perform a Left-Right flip
             im = np.fliplr(im)# equivalent to im[:,::-1]
         else:
             ## FGS guider = 2; Perform a 180 degree rotation
@@ -107,7 +107,7 @@ def rotate_nircam_image(im, fgs_guider, header, nircam_mod):
     elif module == 'B':
         ## NIRCAM Module B
         if fgs_guider == 1:
-            ## FGS guider = 2; Perform a Up-Down flip
+            ## FGS guider = 1; Perform a Up-Down flip
             im = np.flipud(im)# equivalent to im[::-1,...]
         else:
             ## FGS guider = 2; No change necessary!
