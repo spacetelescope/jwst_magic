@@ -275,6 +275,7 @@ the guide star can be re-selected using the radio buttons. Errors will be shown\
         self.log_textbox.setPlaceholderText('No stars selected.')
         # self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
         self.log_textbox.setMinimumSize(10, 300)
+        mainGrid.setRowMinimumHeight(1, 350)
         mainGrid.addWidget(self.log_textbox, 1, 2, alignment=QtCore.Qt.AlignTop)
 
         # mainGrid.setRowMinimumHeight(1, self.image_dim*.2)
@@ -287,6 +288,7 @@ the guide star can be re-selected using the radio buttons. Errors will be shown\
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
         mainGrid.addWidget(self.profile, 2, 2)
         mainGrid.setRowMinimumHeight(2, self.image_dim * .25)
+        mainGrid.setColumnMinimumWidth(2, self.image_dim * .5)
 
         # Create axis-updating section
         axGroupBox = QGroupBox('Axes Limits', self)
@@ -344,6 +346,8 @@ the guide star can be re-selected using the radio buttons. Errors will be shown\
         guide_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         col2Grid.addWidget(guide_label, 0, 0)
         col2Grid.addWidget(QLabel('Star Position', self), 0, 1)
+        col2Grid.setColumnMinimumWidth(0, 50)
+        col2Grid.setColumnMinimumWidth(1, 120)
         self.nStars = 11
 
         self.star_positions = []
