@@ -1,16 +1,14 @@
 # STDLIB
-import os
+import csv
 import itertools
-import time
+import os
 import sys
+import time
 
 # Third Party
 from astropy.io import fits
-import csv
-import matplotlib.pyplot as plt
 import numpy as np
-from skimage.filters import threshold_otsu
-from scipy import ndimage
+
 
 def ensure_dir_exists(fullpath):
     """Creates dirs from ``fullpath`` if they do not already exist.
@@ -42,7 +40,7 @@ def get_logname(logdir, taskname):
         logdir,
         '{0}_{1}.log'.format(taskname, timestamp))
 
-def write_fits(outfile,data,header=None):
+def write_fits(outfile, data, header=None):
     '''
     Write data to a simple fits. Assumes one extension and no header.
     '''
@@ -54,25 +52,8 @@ def write_fits(outfile,data,header=None):
     if header is not None:
         hdul.header = header
 
-    hdul.writeto(outfile,overwrite=True)
+    hdul.writeto(outfile, overwrite=True)
     print("Successfully wrote: {}".format(outfile))
-
-
-def read_fits(filename):
-    '''
-    Get the header and data (for the specified index) from a fits file
-    '''
-    f = fits.open(filename)
-    try:
-        if f[1].name == 'SCI':
-            data = f[1].data #Try first for the SCI extension
-    except IndexError:
-        data = f[0].data #If SCI extension doesn't exist, use PrimaryHDU
-
-    header = f[0].header
-    f.close()
-
-    return header, data
 
 
 def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
@@ -107,31 +88,40 @@ def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
 
 
 def write_cols_to_file(output_path, filename, labels, cols):
+    '''
+    Write columns of data to a file
+    '''
     filename = os.path.join(output_path, filename)
     write_to_file(filename, cols, labels=labels)
 
 
 def swap_if_little_endian(data):
+    '''
+    Swap byte order if little endian
+    '''
     if sys.byteorder == 'little':
         data = data.byteswap()
     return data
 
 def swap_if_big_endian(data):
+    '''
+    Swap byte order if big endian
+    '''
     if sys.byteorder == 'big':
         data = data.byteswap()
     return data
 
 
 # http://stackoverflow.com/questions/8090229/resize-with-averaging-or-rebin-a-numpy-2d-array
-def resize_array(a, new_rows, new_cols):
+def resize_array(arr, new_rows, new_cols):
     '''
     This function takes an 2D numpy array and produces a smaller array
     of size new_rows, new_cols. new_rows and new_cols must be less than
     or equal to the number of rows and columns in a. new_rows and new_columns
     do not have to be integer factors of the original array rows and columns.
     '''
-    rows = len(a)
-    cols = len(a[0])
+    rows = len(arr)
+    cols = len(arr[0])
     yscale = float(rows) / new_rows
     xscale = float(cols) / new_cols
 
@@ -146,12 +136,12 @@ def resize_array(a, new_rows, new_cols):
         # with the new index, and thus the portion of those cells that
         # we need to include in our average
         x0_scale = 1 - (the_x_range[0]-int(the_x_range[0]))
-        xEnd_scale = (the_x_range[1]-int(the_x_range[1]))
+        xend_scale = (the_x_range[1]-int(the_x_range[1]))
         # scale_line is a 1d array that corresponds to the portion of each old
         # index in the_x_range that should be included in the new average
         scale_line = np.ones((lastx-firstx+1))
         scale_line[0] = x0_scale
-        scale_line[-1] = xEnd_scale
+        scale_line[-1] = xend_scale
         # Make sure you don't screw up and include an index that is too large
         # for the array. This isn't great, as there could be some floating
         # point errors that mess up this comparison.
@@ -160,29 +150,32 @@ def resize_array(a, new_rows, new_cols):
             lastx = lastx - 1
         # Now it's linear algebra time. Take the dot product of a slice of
         # the original array and the scale_line
-        new_a[:, j] = np.dot(a[:, firstx:lastx+1], scale_line)/scale_line.sum()
+        new_a[:, j] = np.dot(arr[:, firstx:lastx+1], scale_line)/scale_line.sum()
     # Then average across the rows to shorten the cols. Same method as above.
     # It is probably possible to simplify this code, as this is more or less
     # the same procedure as the block of code above, but transposed.
     # Here I'm reusing the variable a. Sorry if that's confusing.
-    a = np.zeros((new_rows, new_cols))
+    new_arr = np.zeros((new_rows, new_cols))
     for i in range(new_rows):
         the_y_range = (i*yscale, (i+1)*yscale)
         firsty = int(the_y_range[0])
         lasty = int(the_y_range[1])
         y0_scale = 1 - (the_y_range[0]-int(the_y_range[0]))
-        yEnd_scale = (the_y_range[1]-int(the_y_range[1]))
+        yend_scale = (the_y_range[1]-int(the_y_range[1]))
         scale_line = np.ones((lasty-firsty+1))
         scale_line[0] = y0_scale
-        scale_line[-1] = yEnd_scale
+        scale_line[-1] = yend_scale
         if scale_line[-1] == 0:
             scale_line = scale_line[:-1]
             lasty = lasty - 1
-        a[i:,] = np.dot(scale_line, new_a[firsty:lasty+1,])/scale_line.sum()
+        new_arr[i:,] = np.dot(scale_line, new_a[firsty:lasty+1,])/scale_line.sum()
 
-    return a
+    return new_arr
 
-def find_xy_between_two_points(coords1,coords2):
+def find_xy_between_two_points(coords1, coords2):
+    '''
+    Find the x and y differences between two points
+    '''
     diff1 = np.abs((coords1[0] - coords2[0]))
     diff2 = np.abs((coords1[1] - coords2[1]))
 
@@ -190,13 +183,18 @@ def find_xy_between_two_points(coords1,coords2):
 
 
 def find_resultant(coords1, coords2):
+    '''
+    Find the magnitude of the resultant vector described by two points
+    '''
     diff1, diff2 = find_xy_between_two_points(coords1, coords2)
+    resultant = np.sqrt(diff1**2 + diff2**2)
 
-    z = np.sqrt(diff1**2 + diff2**2)
-
-    return z
+    return resultant
 
 def find_dist_between_points(coords):
+    '''
+    Find distances between all combinations of points
+    '''
     dists = []
     for c1, c2 in itertools.combinations(coords, 2):
         dists.append(find_resultant(c1, c2))
