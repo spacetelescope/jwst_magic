@@ -39,7 +39,7 @@ def getbias(guider, x, y, nreads, nramps, nx, ny, bzp=True,
     # 0th read bias structure
     if bzp:
         bias0file = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
-        read0 = fits.open(bias0file)[0].data#.astype(np.uint16)
+        read0 = fits.getdata(bias0file)#.astype(np.uint16)
         bias += read0[x1:x2, y1:y2]
 
         bias[bias < 0] = 0.
