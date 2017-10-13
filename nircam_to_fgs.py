@@ -1,32 +1,15 @@
 # STDLIB
+from glob import glob
 import os
 
 # Third Party
 import numpy as np
 from astropy.io import fits
-from glob import glob
-from scipy import ndimage, signal
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-import matplotlib
-from matplotlib import cycler
-matplotlib.rcParams['image.cmap'] = 'viridis'
-matplotlib.rcParams['axes.prop_cycle'] = cycler(u'color',['#1f77b4',
-            '#ff7f0e',
-            '#2ca02c',
-            '#d62728',
-            '#9467bd',
-            '#8c564b',
-            '#e377c2',
-            '#7f7f7f',
-            '#bcbd22',
-            '#17becf'])
-matplotlib.rcParams['image.origin'] = 'upper'
+from scipy import signal
 
 # LOCAL
 import counts_to_jmag
 import log
-import select_psfs
 import utils
 
 
@@ -83,7 +66,7 @@ def bad_pixel_correction(data, bp_thresh):
     return data
 
 
-def rotate_nircam_image(im, fgs_guider, header, nircam_mod):
+def rotate_nircam_image(image, fgs_guider, header, nircam_mod):
     '''
     Given NIRCAM module A or B (given by the header in your original NIRCAM image),
     rotate/flip to put in correct orientation for FGS 1 and 2.
@@ -99,23 +82,23 @@ def rotate_nircam_image(im, fgs_guider, header, nircam_mod):
         ## NIRCAM Module A
         if fgs_guider == 1:
             ## FGS guider = 1; Perform a Left-Right flip
-            im = np.fliplr(im)# equivalent to im[:,::-1]
+            image = np.fliplr(image) # equivalent to image[:,::-1]
         else:
             ## FGS guider = 2; Perform a 180 degree rotation
-            im = np.rot90(im, k=20)
+            image = np.rot90(image, k=20)
 
     elif module == 'B':
         ## NIRCAM Module B
         if fgs_guider == 1:
             ## FGS guider = 1; Perform a Up-Down flip
-            im = np.flipud(im)# equivalent to im[::-1,...]
+            image = np.flipud(image) # equivalent to image[::-1,...]
         else:
             ## FGS guider = 2; No change necessary!
             pass
     else:
         log.error('Check the header keyword "DETECTOR" for the NIRCAM module, \
               then re-run using the "nircam_mod" keyword to bypass the header query.')
-    return im
+    return image
 
 
 def pad_data(data, padding):
@@ -144,6 +127,9 @@ def pad_data(data, padding):
     return padded_data
 
 def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
+    '''
+    Resize the passed in NIRCam image to match the expected FGS size
+    '''
     cropped = data[4:-4, 4:-4] # crop 4pixel zero-padding
     binned_pix = int(round((data.shape[0]*nircam_scale*fgs_pix)/(fgs_plate_size*60)))
     data_resized = utils.resize_array(cropped, binned_pix, binned_pix)
@@ -184,7 +170,7 @@ def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
        guider1: "g1bias.fits"
        guider2: "g2bias.fits"
     """
-    bias_data = utils.read_fits(bias_data_path)[1]
+    bias_data = fits.getdata(bias_data_path)
 
     binned_pad_norm_bias = fgs_data + bias_data
 
@@ -193,8 +179,8 @@ def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
 
         if guider is None:
             guider = bias_data_path.split('/')[-1].split('.')[0][-6:]
-        out_path =  os.path.join(output_path, 'bin_norm_bias_imgs',
-                      '{}_G{}_binned_pad_norm.fits'.format(root,guider))
+        out_path = os.path.join(output_path, 'bin_norm_bias_imgs',
+                                '{}_G{}_binned_pad_norm.fits'.format(root, guider))
         utils.write_fits(out_path, binned_pad_norm_bias)
 
     return binned_pad_norm_bias
@@ -234,7 +220,6 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     data_path = os.path.join(local_path, 'data')
     # Guider-dependent files
     header_file = os.path.join(data_path, 'newG{}magicHdrImg.fits'.format(guider))
-    bias_data_path = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
 
     # ---------------------------------------------------------------------
     ## Constants
@@ -270,8 +255,8 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
 
     # ---------------------------------------------------------------------
     ## For the images requested, convert to FGS images
-    for im in im_list:
-        basename = os.path.basename(im)
+    for image in im_list:
+        basename = os.path.basename(image)
         root = basename.split('.')[0]
         log.info('Beginning to create FGS image from {}'.format(root))
 
@@ -279,7 +264,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
             output_path = os.path.join(local_path, 'out', root)
             utils.ensure_dir_exists(os.path.exists(output_path))
 
-        header, data = utils.read_fits(im)
+        data, header = fits.getdata(image, header=True)
 
         # ---------------------------------------------------------------------
         ## Create FGS image
@@ -296,7 +281,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
                                 '{}_G{}_binned_pad_norm.fits'.format(root, guider))
         #any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
-        hdr = utils.read_fits(header_file)[0]
+        hdr, dummy_data = fits.getdata(header_file, header=True)
         utils.write_fits(out_path, np.uint16(data_norm), header = hdr)
 
 

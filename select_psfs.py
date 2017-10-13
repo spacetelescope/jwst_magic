@@ -185,9 +185,7 @@ def create_cols_for_coords_counts(x, y, counts, val, inds=None):
     Guide Star. **This method is not fool-proof, use at own risk***
     """
 
-    cols = []
-    for yy, xx, co in zip(y, x, counts):
-        cols.append([yy, xx, co])  # these coordinates are y,x
+    cols = [[yy, xx, co] for yy, xx, co in zip(y, x, counts)]# these coordinates are y,x
 
     if inds is None:
         min_ind = np.where(val == np.min(val))[0][0]  # Find most compact PSF
@@ -305,7 +303,7 @@ def manual_star_selection(data, global_alignment):
 
     # Use labeling to map locations of objects in array
     # (Kept for possible alternate countrate calculations; see count_rate_total)
-    objects, num_objects = ndimage.measurements.label(smoothed_data > threshold)
+    objects = ndimage.measurements.label(smoothed_data > threshold)[0]
     # NOTE: num_objects might not equal num_psfs
 
     # Find the minimum distance between PSFs
@@ -333,8 +331,8 @@ def manual_star_selection(data, global_alignment):
     return cols, coords, nref
 
 
-def create_reg_file(data, root, guider, out_dir, return_nref=False,
-                    global_alignment=False, in_file=None):
+def create_reg_file(data, root, guider, out_dir, in_file=None,
+                    global_alignment=False, return_all=False):
     if in_file:
         # Determine the kind of in_file and parse out the PSF locations and
         # countrates accordingly
@@ -353,5 +351,5 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
                              labels=['y', 'x', 'countrate'],
                              cols=cols)
 
-    if return_nref:
-        return nref
+    if return_all:
+        return cols, nref

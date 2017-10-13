@@ -1,5 +1,4 @@
 # STDLIB
-import argparse
 import os
 
 # Third Party
@@ -14,52 +13,55 @@ import getbias
 import utils
 from mkproc import mkproc
 import log
+import select_psfs
 
 # DEFINE ALL NECESSARY CONSTANTS
-tcdsID = 0.338    # neil 18 may 12
-tcdsACQ1 = 0.3612 # 20 apr 17 keira # 1cds time = 2*(128*128*10.e-6) = 0.32768s
-tcdsACQ2 = 0.0516 # 20 apr 17 keira brooks # 2cds time = 4*(32*32*10e-6) = 0.04096s
-tcdsTRK = 0.0256  # neil 18 may 12
-tcdsFG = 0.0512   # neil 18 may 12
+TCDSID = 0.338    # neil 18 may 12
+TCDSACQ1 = 0.3612 # 20 apr 17 keira # 1cds time = 2*(128*128*10.e-6) = 0.32768s
+TCDSACQ2 = 0.0516 # 20 apr 17 keira brooks # 2cds time = 4*(32*32*10e-6) = 0.04096s
+TCDSTRK = 0.0256  # neil 18 may 12
+TCDSFG = 0.0512   # neil 18 may 12
+
+LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+# Location of all necessary *.fits files (newmagicHdrImg, bias0, etc)
+DATA_PATH = os.path.join(LOCAL_PATH, 'data')
 
 class FGS(object):
     '''
     Creates an FGS simulation object for ID, ACQ, and/or TRK stages to be used
     with DHAS.
+
+    Expect the file with coordinates of the guide and reference stars to be in the
+    form '<root>_G<guider>_regfile.txt' with three columns: y, x, and countrate.
+    If your file is not in this form, use select_psfs to create this file.
     '''
-    def __init__(self, im, guider, root, out_dir=None, data_path=None,
-                 guide_star_coords=None, reg_file=None, overlap=0, biasZeroPt=False,
-                 biasKTC=False, biasPed=False, poissonNoise=False, background=False,
-                 SCdrift=False):
+    def __init__(self, im, guider, root, out_dir=None, guide_star_coords=None,
+                 reg_file=None, biasZeroPt=False, biasKTC=False, biasPed=False,
+                 poissonNoise=False, background=False, SCdrift=False,
+                 global_alignment=False):
 
 
         self.nreads = 2
 
         # Noise to add
-        self.biasZeroPt = biasZeroPt
-        self.biasKTC = biasKTC
-        self.biasPed = biasPed
-        self.poissonNoise = poissonNoise
+        self.biaszeropt = biasZeroPt
+        self.biasktc = biasKTC
+        self.biasped = biasPed
+        self.poissonnoise = poissonNoise
         self.background = background
 
         # Detector motion
-        self.SCdrift = SCdrift ## Do I want this here???
+        self.scdrift = SCdrift ## Do I want this here???
 
         # Practical things
         self.guider = guider
         self.root = root
-
+        self.global_alignment = global_alignment
 
         ## DEFINE ALL THINGS PATHS
-        self.local_path = os.path.dirname(os.path.realpath(__file__))
-        # Define location of all necessary *.fits files (newmagicHdrImg, bias0, etc)
-        if data_path is None:
-            self.data_path = os.path.join(self.local_path, 'data')
-        else:
-            self.data_path = data_path
         # Define output directory
         if out_dir is None:
-            self.out_dir = os.path.join(self.local_path, 'out', self.root)
+            self.out_dir = os.path.join(LOCAL_PATH, 'out', self.root)
         else:
             self.out_dir = out_dir
 
@@ -87,29 +89,38 @@ class FGS(object):
     def get_coords_and_counts(self, reg_file=None):
         '''
         Get coordinate information of guide star and reference stars
+
+        This code will first check if the default name for regfile exists, if it
+        does it will always use that regardless of user input.
         '''
-
-        if reg_file is None:
-            reg_file = os.path.join(os.path.join(self.local_path, 'out', self.root,
-                                                 '{0}_G{1}_regfile.txt'.format(self.root,
-                                                                               self.guider)))
-        log.info("Using {} as the reg file".format(reg_file))
-        if reg_file.endswith('reg'):
-            self.x, self.y = np.loadtxt(reg_file)
-            self.countrate = utils.get_countrate(self.x, self.y, self.input_im)
-        else:
-            self.y, self.x, self.countrate = np.loadtxt(reg_file, delimiter=' ',
-                                                        skiprows=1).T
-
-        # Cover cases where there is only one entry in the reg file
         try:
-            self.x[0]
-        except IndexError:
-            # print('Note: only one entry in catalog.')
-            log.warning('Only one entry in catalog.')
-            self.x = np.array([self.x])
-            self.y = np.array([self.y])
-            self.countrate = np.array([self.countrate])
+            default_reg_file = os.path.join(LOCAL_PATH, 'out', self.root,
+                                            '{0}_G{1}_regfile.txt'.format(self.root,
+                                                                          self.guider))
+            self.yarr, self.xarr, self.countrate = (np.loadtxt(default_reg_file,
+                                                               delimiter=' ',
+                                                               skiprows=1)).T
+        except IOError:
+            # create reg file
+            cols, self.nref = select_psfs.create_reg_file(self.input_im, self.root,
+                                                          self.guider,
+                                                          out_dir=self.out_dir,
+                                                          in_file=reg_file,
+                                                          global_alignment=self.global_alignment,
+                                                          return_all=True)
+
+            self.yarr = [col[0] for col in cols]
+            self.xarr = [col[1] for col in cols]
+            self.countrate = [col[1] for col in cols]
+
+        # try:
+        #     self.xarr[0]
+        # except IndexError:
+        #     # print('Note: only one entry in catalog.')
+        #     log.warning('Only one entry in catalog.')
+        #     self.xarr = np.array([self.xarr])
+        #     self.yarr = np.array([self.yarr])
+        #     self.countrate = np.array([self.countrate])
 
 
     def get_guide_star_coords(self, gs_ind=0):
@@ -117,8 +128,8 @@ class FGS(object):
         From the list of coordinates, pull out the guide star coordinates using
         the guide star index (gs_ind)
         '''
-        self.xgs = self.x[gs_ind]
-        self.ygs = self.y[gs_ind]
+        self.xgs = self.xarr[gs_ind]
+        self.ygs = self.yarr[gs_ind]
         self.countrategs = self.countrate[gs_ind]
         log.info('Coordinates of Guide Star: x={0}, y={1}'.format(self.xgs, self.ygs))
 
@@ -206,7 +217,7 @@ class FGS(object):
         '''
         Write out star catalog in real pixs
         '''
-        coords = np.array([self.x, self.y]).T
+        coords = np.array([self.xarr, self.yarr]).T
         try:
             utils.write_to_file(filename, coords, fmt=['%d', '%d'])
         except AttributeError:
@@ -275,10 +286,10 @@ class FGS(object):
         '''
         self.bias = getbias.getbias(self.guider, x, y, self.nreads,
                                     self.nramps, self.nx, self.ny,
-                                    self.biasZeroPt, self.biasKTC, self.biasPed,
-                                    data_path=self.data_path)
+                                    self.biaszeropt, self.biasktc, self.biasped,
+                                    DATA_PATH)
         self.image = self.create_noisy_sky(self.bias, self.sky,
-                                           self.poissonNoise, acqNum)
+                                           self.poissonnoise, acqNum)
 
         if cds:
             self.cds = self.create_cds_image(self.image)
@@ -361,7 +372,7 @@ class FGS(object):
                                             '{}_G{}_{}.gssscat'.format(self.root,
                                                                        self.guider,
                                                                        self.step))
-            self.write_cat(filename_starcat, self.x, self.y)
+            self.write_cat(filename_starcat, self.xarr, self.yarr)
 
             # Create ff fits file
             filename_ff = os.path.join(self.out_dir,
@@ -379,9 +390,9 @@ class FGS(object):
                                                                             self.guider,
                                                                             self.step))
             # Write to strips to fits file
-            filename_hdr = os.path.join(self.data_path,
+            filename_hdr = os.path.join(DATA_PATH,
                                         'newG{}magicHdrImg.fits'.format(self.guider))
-            hdr0 = fits.getdata(filename_hdr, header=True)[1]
+            dummy_data, hdr0 = fits.getdata(filename_hdr, header=True)
             utils.write_fits(filename_id_strips, self.strips, header=hdr0)
 
             ## Gound system file
@@ -557,63 +568,66 @@ def add_background(array,nx,ny,nz):
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-def run_id(im, guider, root, out_dir=None, template_path=None, nref=10, interactive=False):
+def run_id(image, guider, root, out_dir=None, interactive=False,
+           global_alignment=False):
     '''
     Create an ID object and create all necessary files to fun the ID simulation
     in DHAS. Also creates CECIL proc file. Returns ID object.
     '''
     # ID
-    id0 = FGS(im, guider, root, out_dir)
-    id0.setup_step(2048, 2048, 2, tcds=tcdsID, step='ID')
+    id0 = FGS(image, guider, root, out_dir, global_alignment=global_alignment)
+    id0.setup_step(2048, 2048, 2, tcds=TCDSID, step='ID')
     log.info("Step: {}".format(id0.step))
-    id0.create_arrays(id0.x, id0.y, acqNum=None)
-    id0.write_out_files(id0.x, id0.y, id0.countrate)
+    id0.create_arrays(id0.xarr, id0.yarr, acqNum=None)
+    id0.write_out_files(id0.xarr, id0.yarr, id0.countrate)
 
     # Make CECIL proc file
-    mkproc(guider, root, id0.x, id0.y, id0.countrate, step='ID', nref=nref,
-           out_dir=out_dir, template_path=template_path)
+    mkproc(guider, root, id0.xarr, id0.yarr, id0.countrate, step='ID',
+           out_dir=out_dir)
 
     if interactive:
         return id0
 
 
-def run_acq(im, guider, root, out_dir=None, template_path=None, interactive=False):
+def run_acq(image, guider, root, out_dir=None, interactive=False,
+            global_alignment=False):
     '''
     Creates two ACQ objects (for acquisitions #1 and #2) and create all necessary
     files to fun the ACQ simulation in DHAS. Also creates CECIL proc file.
     Returns ACQ1 and ACQ2 objects.
     '''
     # Acquisition #1
-    acq1 = FGS(im, guider, root, out_dir)
-    acq1.setup_step(nx=128, ny=128, nramps=6, tcds=tcdsACQ1, step='ACQ')
+    acq1 = FGS(image, guider, root, out_dir, global_alignment=global_alignment)
+    acq1.setup_step(nx=128, ny=128, nramps=6, tcds=TCDSACQ1, step='ACQ')
     log.info("Step: {}".format(acq1.step))
     acq1.create_arrays(acq1.xgs, acq1.ygs, acqNum=1)
     acq1.write_out_files(acq1.xgs-(acq1.nx/2.), acq1.ygs-(acq1.ny/2.),
                          acq1.countrategs, acqNum=1)
 
     # Acquistion #2
-    acq2 = FGS(im, guider, root, out_dir)
-    acq2.setup_step(nx=32, ny=32, nramps=5, tcds=tcdsACQ2, step='ACQ')
+    acq2 = FGS(image, guider, root, out_dir, global_alignment=global_alignment)
+    acq2.setup_step(nx=32, ny=32, nramps=5, tcds=TCDSACQ2, step='ACQ')
     acq2.create_arrays(acq2.xgs, acq2.ygs, acqNum=2)
     acq2.write_out_files(acq2.xgs-(acq2.nx/2.), acq2.ygs-(acq2.ny/2.),
                          acq2.countrategs, acqNum=2)
 
     # Make CECIL proc file
-    mkproc(guider, root, acq1.xgs, acq1.ygs, acq1.countrategs, step='ACQ', nref=None,
-           out_dir=out_dir, template_path=template_path)
+    mkproc(guider, root, acq1.xgs, acq1.ygs, acq1.countrategs, step='ACQ',
+           out_dir=out_dir)
 
     if interactive:
         return acq1, acq2
 
-def run_trk(im, guider, root, num_frames, out_dir=None, jitter=True, interactive=False):
+def run_trk(image, guider, root, num_frames, out_dir=None, jitter=True, interactive=False,
+            global_alignment=False):
     '''
     Create a TRK object and create all necessary files to fun the TRK simulation
     in DHAS. Returns TRK object.
     '''
     if num_frames is None:
         num_frames = 5000
-    trk = FGS(im, guider, root, out_dir)
-    trk.setup_step(nx=32, ny=32, nramps=num_frames, tcds=tcdsTRK, step='TRK')
+    trk = FGS(image, guider, root, out_dir, global_alignment=global_alignment)
+    trk.setup_step(nx=32, ny=32, nramps=num_frames, tcds=TCDSTRK, step='TRK')
     log.info("Step: {}".format(trk.step))
     trk.create_arrays(trk.xgs, trk.ygs, cds=False)
 
@@ -629,10 +643,11 @@ def run_trk(im, guider, root, num_frames, out_dir=None, jitter=True, interactive
     if interactive:
         return trk
 
-def create_lostrk(im, guider, root, nx, ny, out_dir=None):
-    trk = FGS(im, guider, root, out_dir)
+def create_lostrk(image, guider, root, nx, ny, out_dir=None,
+                  global_alignment=False):
+    trk = FGS(image, guider, root, out_dir, global_alignment=global_alignment)
     trk.nreads = 1 #want only single frame image
-    trk.setup_step(nx, ny, nramps=1, tcds=tcdsTRK, step='TRK')
+    trk.setup_step(nx, ny, nramps=1, tcds=TCDSTRK, step='TRK')
     trk.create_arrays(trk.xgs, trk.ygs, cds=False)
 
     # This is a ground system file, but needs to be in .dat format
@@ -648,8 +663,9 @@ def create_lostrk(im, guider, root, nx, ny, out_dir=None):
                                                                    'ground_system'))
 
 
-def run_all(im, guider, root, num_frames=None, out_dir=None, template_path=None, jitter=True,nref=10):
+def run_all(im, guider, root, num_frames=None, out_dir=None,
+            jitter=True, global_alignment=False):
     # Not interatctive!!
-    run_id(im, guider, root, out_dir, template_path, nref)
-    run_acq(im, guider, root, out_dir, template_path)
-    run_trk(im, guider, root, num_frames, out_dir, jitter)
+    run_id(im, guider, root, out_dir, global_alignment=global_alignment)
+    run_acq(im, guider, root, out_dir, global_alignment=global_alignment)
+    run_trk(im, guider, root, num_frames, out_dir, jitter, global_alignment=global_alignment)
