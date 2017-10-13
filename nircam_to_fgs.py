@@ -125,7 +125,7 @@ def pad_data(data, padding):
     size = np.shape(data)[0]
 
     # Create an array of size binned data + 2xpadding
-    background = np.zeros((size+2*(padding), size+2*(padding)))
+    background = np.zeros((size + 2 * (padding), size + 2 * (padding)))
 
     # Have a different median value based on pedestal
     # For each specified region in 'background', fill with median value of region in data image
@@ -148,7 +148,7 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
     binned_pix = int(round((data.shape[0]*nircam_scale*fgs_pix)/(fgs_plate_size*60)))
     data_resized = utils.resize_array(cropped, binned_pix, binned_pix)
 
-    padding = (cropped.shape[0] - binned_pix)/2
+    padding = int((cropped.shape[0] - binned_pix)/2)
     data_pad = pad_data(data_resized, padding)
     fgs_data = np.pad(data_pad, 4, 'constant')
 
@@ -277,7 +277,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
 
         if output_path is None:
             output_path = os.path.join(local_path, 'out', root)
-            utils.ensure_dir_exists(os.path.exists(output_path))
+            utils.ensure_dir_exists(output_path)
 
         header, data = utils.read_fits(im)
 
