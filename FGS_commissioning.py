@@ -567,7 +567,7 @@ def run_ID(im, guider, root, out_dir=None, template_path=None, nref=10,
     id0 = FGS(im, guider, root, out_dir)
     id0.setup_step(2048, 2048, 2, tcds=id0.tcdsID, step='ID')
     log.info("Step: {}".format(id0.step))
-    id0.create_arrays(id0.x, id0.y, acqNum=None)
+    id0.create_arrays(id0.xgs, id0.ygs, acqNum=None)
     id0.write_out_files(id0.x, id0.y, id0.countrate)
 
     # Make CECIL proc file
