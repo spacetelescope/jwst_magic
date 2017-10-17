@@ -124,33 +124,51 @@ def pad_data(data, padding):
     """
     size = np.shape(data)[0]
 
-    # Create an array of size binned data + 2xpadding
-    background = np.zeros((size + 2 * (padding), size + 2 * (padding)))
+    # Create an array of size binned data + 2*padding
+    padded_size = size + 2 * (padding)
+    background = np.zeros((padded_size, padded_size))
 
-    # Have a different median value based on pedestal
-    # For each specified region in 'background', fill with median value of region in data image
-    ped_size = size/4
-    medians = []
+    # Remove NIRCam pedestals
+    ped_size = size / 4
+    peddata = np.zeros((size, size))
     for i in range(4):
-        medians.append(np.median(data[:, i*ped_size:(i+1)*ped_size-1]))
-        background[:, padding+(i*ped_size):padding+((i+1)*ped_size)] = medians[i]
-    background[:, :padding] = medians[0]  # Add median value of last pedestal to first padded section
-    background[:, -padding:] = medians[3] # Add median value of last pedestal to last padded section
+        ped_start = i * ped_size
+        ped_stop = (i + 1) * ped_size
+        ped_strip = data[:, ped_start:ped_stop]
+        pedestal = np.median(ped_strip)
+
+        # Subtract median from each pedestal strip
+        peddata[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
+        print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
+
     # Add Poisson noise
-    padded_data = np.random.poisson(background)
-    # Add in real data
-    padded_data[padding:padding+size, padding:padding+size] = data
+    padded_data = np.random.poisson(lam=5, size=background.shape)
+
+    # Replace center of array with real data
+    padded_data[padding:padding + size, padding:padding + size] = data
+
+    # Add in FGS pedestal
+    fgs_ped = np.fix(15 * np.random.random_sample(size=4)).astype(int)  # Randomly generate values
+    ped_size = padded_size / 4
+    for i in range(4):
+        ped_start = i * ped_size
+        ped_stop = (i + 1) * ped_size
+        pedestal = fgs_ped[i]
+
+        # Add randomly generated pedestal to each padded pedestal strip
+        padded_data[:, ped_start:ped_stop] += pedestal
 
     return padded_data
 
 def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
-    cropped = data[4:-4, 4:-4] # crop 4pixel zero-padding
-    binned_pix = int(round((data.shape[0]*nircam_scale*fgs_pix)/(fgs_plate_size*60)))
+    cropped = data[4:-4, 4:-4]  # crop 4pixel zero-padding
+    binned_pix = int(round((data.shape[0] * nircam_scale * fgs_pix) / (fgs_plate_size * 60)))
+
     data_resized = utils.resize_array(cropped, binned_pix, binned_pix)
 
-    padding = int((cropped.shape[0] - binned_pix)/2)
+    padding = int((cropped.shape[0] - binned_pix) / 2)
     data_pad = pad_data(data_resized, padding)
-    fgs_data = np.pad(data_pad, 4, 'constant')
+    fgs_data = np.pad(data_pad, 4, 'constant')  # Add back reference pixels
 
     return fgs_data
 
@@ -227,25 +245,25 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         The NIRCAM module, otherwise the header will be parsed
     '''
 
-    ## Establish paths and necessary files
+    # Establish paths and necessary files
     # 'local_path' is the path where this script exists
     local_path = os.path.dirname(os.path.realpath(__file__))
     # Data path is the directory that includes *.fits files (ie newmagicHdrImg,bias0, etc)
     data_path = os.path.join(local_path, 'data')
     # Guider-dependent files
     header_file = os.path.join(data_path, 'newG{}magicHdrImg.fits'.format(guider))
-    bias_data_path = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
+    # bias_data_path = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
 
     # ---------------------------------------------------------------------
-    ## Constants
-    nircam_scale = 0.032 #NIRCam pixel scale
-    fgs_pix = 2048 #FGS image size in pixels
-    fgs_plate_size = 2.4 #FGS image size in arcseconds
-    ## Constants to change
-    bp_thresh = 2000 #Bad pixel threshold
+    # Constants
+    nircam_scale = 0.032  # NIRCam pixel scale
+    fgs_pix = 2048  # FGS image size in pixels
+    fgs_plate_size = 2.4  # FGS image size in arcseconds
+    # Constants to change
+    bp_thresh = 2000  # Bad pixel threshold
 
     # ---------------------------------------------------------------------
-    ## Find FGS counts to be used for normalization
+    # Find FGS counts to be used for normalization
     if fgs_counts is None:
         if jmag is None:
             log.warning('No counts or J magnitude given, setting to default')
@@ -257,7 +275,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     log.info('J magnitude = {:.1f}'.format(jmag))
 
     # ---------------------------------------------------------------------
-    ## Get list of images from input path: can take file,list,dir
+    # Get list of images from input path: can take file,list,dir
     if isinstance(input_im, list):
         im_list = input_im
     elif os.path.isfile(input_im):
@@ -269,7 +287,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         return
 
     # ---------------------------------------------------------------------
-    ## For the images requested, convert to FGS images
+    # For the images requested, convert to FGS images
     for im in im_list:
         basename = os.path.basename(im)
         root = basename.split('.')[0]
@@ -282,7 +300,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         header, data = utils.read_fits(im)
 
         # ---------------------------------------------------------------------
-        ## Create FGS image
+        # Create FGS image
         # Mask out bad pixels
         data_masked = bad_pixel_correction(data, bp_thresh)
         # Rotate the NIRCAM image into FGS frame
@@ -294,13 +312,12 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
 
         out_path = os.path.join(output_path, 'FGS_imgs',
                                 '{}_G{}_binned_pad_norm.fits'.format(root, guider))
-        #any value about 65535 will wrap when converted to uint16
+        # Any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
         hdr = utils.read_fits(header_file)[0]
-        utils.write_fits(out_path, np.uint16(data_norm), header = hdr)
+        utils.write_fits(out_path, np.uint16(data_norm), header=hdr)
 
-
-        print ("Finished for {}, Guider = {}".format(root, guider))
+        print("Finished for {}, Guider = {}".format(root, guider))
 
         if return_im:
             return data_norm

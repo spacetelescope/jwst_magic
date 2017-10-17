@@ -74,7 +74,7 @@ class MyMplCanvas(FigureCanvas):
 
     def compute_initial_figure(self, fig, data, x, y):
         fitsplot = self.axes.imshow(data, cmap='bone', interpolation='nearest',
-                                    clim=(0.1, 100), norm=LogNorm())
+                                    clim=(0.1, 1e5), norm=LogNorm())
         self.axes.scatter(x, y, c='r', marker='+')
         self.fig.colorbar(fitsplot, ax=self.axes, fraction=0.046, pad=0.04)
         self.draw()
