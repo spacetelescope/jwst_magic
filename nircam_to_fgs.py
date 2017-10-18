@@ -282,10 +282,10 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         #any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
         hdr, dummy_data = fits.getdata(header_file, header=True)
-        utils.write_fits(out_path, np.uint16(data_norm), header = hdr)
+        utils.write_fits(out_path, np.uint16(data_norm), header=hdr)
 
 
-        print ("Finished for {}, Guider = {}".format(root, guider))
+        print("Finished for {}, Guider = {}".format(root, guider))
 
         if return_im:
             return data_norm
