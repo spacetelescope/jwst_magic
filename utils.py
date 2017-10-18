@@ -1,3 +1,4 @@
+""" Common utilities for the FGS commissioning tool"""
 # STDLIB
 import csv
 import itertools
@@ -120,57 +121,36 @@ def resize_array(arr, new_rows, new_cols):
     or equal to the number of rows and columns in a. new_rows and new_columns
     do not have to be integer factors of the original array rows and columns.
     '''
-    rows = len(arr)
-    cols = len(arr[0])
+    rows, cols = np.shape(arr)
     yscale = float(rows) / new_rows
     xscale = float(cols) / new_cols
 
     # first average across the cols to shorten rows
     new_a = np.zeros((rows, new_cols))
     for j in range(new_cols):
-        # get the indices of the original array we are going to average across
-        the_x_range = (j*xscale, (j+1)*xscale)
-        firstx = int(the_x_range[0])
-        lastx = int(the_x_range[1])
-        # figure out the portion of the first and last index that overlap
-        # with the new index, and thus the portion of those cells that
-        # we need to include in our average
-        x0_scale = 1 - (the_x_range[0]-int(the_x_range[0]))
-        xend_scale = (the_x_range[1]-int(the_x_range[1]))
-        # scale_line is a 1d array that corresponds to the portion of each old
-        # index in the_x_range that should be included in the new average
-        scale_line = np.ones((lastx-firstx+1))
-        scale_line[0] = x0_scale
-        scale_line[-1] = xend_scale
-        # Make sure you don't screw up and include an index that is too large
-        # for the array. This isn't great, as there could be some floating
-        # point errors that mess up this comparison.
-        if scale_line[-1] == 0:
-            scale_line = scale_line[:-1]
-            lastx = lastx - 1
-        # Now it's linear algebra time. Take the dot product of a slice of
-        # the original array and the scale_line
-        new_a[:, j] = np.dot(arr[:, firstx:lastx+1], scale_line)/scale_line.sum()
-    # Then average across the rows to shorten the cols. Same method as above.
-    # It is probably possible to simplify this code, as this is more or less
-    # the same procedure as the block of code above, but transposed.
-    # Here I'm reusing the variable a. Sorry if that's confusing.
+        firstx, lastx = j*xscale, (j+1)*xscale
+        scale_line = rescale_array(firstx, lastx)
+        new_a[:, j] = np.dot(arr[:, int(firstx):int(lastx)+1], scale_line)/scale_line.sum()
+
     new_arr = np.zeros((new_rows, new_cols))
     for i in range(new_rows):
-        the_y_range = (i*yscale, (i+1)*yscale)
-        firsty = int(the_y_range[0])
-        lasty = int(the_y_range[1])
-        y0_scale = 1 - (the_y_range[0]-int(the_y_range[0]))
-        yend_scale = (the_y_range[1]-int(the_y_range[1]))
-        scale_line = np.ones((lasty-firsty+1))
-        scale_line[0] = y0_scale
-        scale_line[-1] = yend_scale
-        if scale_line[-1] == 0:
-            scale_line = scale_line[:-1]
-            lasty = lasty - 1
-        new_arr[i:,] = np.dot(scale_line, new_a[firsty:lasty+1,])/scale_line.sum()
+        firsty, lasty = i*yscale, (i+1)*yscale
+        scale_line = rescale_array(firsty, lasty)
+        new_arr[i:,] = np.dot(scale_line, new_a[int(firsty):int(lasty)+1,])/scale_line.sum()
 
     return new_arr
+def rescale_array(first, last):
+    '''
+    Rows can be rows or columns. To be used with resize_array.
+    '''
+    scale_line = np.ones((int(last)-int(first)+1))
+    scale_line[0] = 1 - (first-int(first))
+    scale_line[-1] = (last-int(last))
+    if last == int(last):
+        scale_line = scale_line[:-1]
+        last = int(last) - 1
+    return scale_line
+
 
 def find_xy_between_two_points(coords1, coords2):
     '''

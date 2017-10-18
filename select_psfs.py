@@ -1,3 +1,4 @@
+""" Find all the relevant PSFs in the image, be it manually or using a file."""
 # STDLIB
 import os
 import sys
@@ -30,9 +31,6 @@ rcParams['image.origin'] = 'upper'
 rcParams['font.family'] = 'serif'
 rcParams['font.weight']='light'
 rcParams['mathtext.bf'] = 'serif:normal'
-
-# rcParams['xtick.labelsize'] = 14
-# rcParams['ytick.labelsize'] = 14
 
 
 def count_psfs(smoothed_data, gauss_sigma, choose=False):
@@ -89,11 +87,13 @@ def choose_threshold(smoothed_data, gauss_sigma):
 
     # Prompt user to choose
     choice = raw_input('''
-Examine the two options presented. To use the stars selected with a 3 \
-standard deviation threshold, type "S". To use the stars selected with a mean \
-threshold, type "M". To use neither and cancel the program, press enter.
+                       Examine the two options presented. To use the stars \
+                       selected with a 3 standard deviation threshold, \
+                       type "S". To use the stars selected with a mean \
+                       threshold, type "M". To use neither and cancel the \
+                       program, press enter.
 
-Choice: ''')
+                       Choice: ''')
 
     plt.close()
 
@@ -123,10 +123,6 @@ def countrate_3x3(x, y, data):
 
 
 def plot_centroids(data, coords, root, guider, out_dir):
-    # if compact:
-    #     pad = 300
-    # else:
-    #     pad = 500
     pad = 300
 
     # Determine x and y limits that encompass all PSFS
@@ -224,8 +220,10 @@ def parse_in_file(in_file):
             if len(fix_colnames) != len(in_table.columns):
                 # Fix didn't work
                 err_message = 'Unknown in_file format: {}. Expecting columns named \
-"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
-named {}. Please rename columns.'.format(in_file, fix_colnames)
+                               "x"/"xreal", "y"/"yreal", and \
+                               "count rate"/"countrate"/"ctot". Found columns \
+                               named {}. Please rename columns.'.format(in_file,
+                                                                        fix_colnames)
                 raise TypeError(err_message)
                 log.error(err_message)
                 return
@@ -239,8 +237,10 @@ named {}. Please rename columns.'.format(in_file, fix_colnames)
         else:
             # If not just an old regfile, it is something unfamiliar
             err_message = 'Unknown in_file format: {}. Expecting columns named \
-"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
-named {}. Please rename columns.'.format(in_file, raw_columns.split())
+                           "x"/"xreal", "y"/"yreal", and \
+                           "count rate"/"countrate"/"ctot". Found columns \
+                           named {}. Please rename columns.'.format(in_file,
+                                                                    raw_columns.split())
             raise TypeError(err_message)
             log.error(err_message)
             return
@@ -252,8 +252,9 @@ named {}. Please rename columns.'.format(in_file, raw_columns.split())
 
     if not (x_check and y_check and counts_check):
         err_message = 'Unknown in_file format: {}. Expecting columns named \
-"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
-named {}. Please rename columns.'.format(in_file, colnames)
+                       "x"/"xreal", "y"/"yreal", and \
+                       "count rate"/"countrate"/"ctot". Found columns \
+                       named {}. Please rename columns.'.format(in_file, colnames)
         raise TypeError(err_message)
         log.error(err_message)
         return
