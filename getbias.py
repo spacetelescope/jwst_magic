@@ -5,8 +5,10 @@ import os
 from astropy.io import fits
 import numpy as np
 
-def getbias(guider, x, y, nreads, nramps, nx, ny, bzp=True,
-            bktc=True, bp=True, data_path=None):
+LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+
+def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
+            bktc=True, bp=True):
     """
     For ID: nreads = 2, nramps = 2, nx = 2048, ny = 2048
     For acquisition 1: nreads = 2, nramps = 6, nx, ny = 128, 128
@@ -15,24 +17,18 @@ def getbias(guider, x, y, nreads, nramps, nx, ny, bzp=True,
     # Establish location of 'data' directory. Includes *magicHdrImg.fits,
     #*bias.fits, etc. If data path not given, script will assume that the
     #'data' directory lives in the same directory as this script
-    local_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(LOCAL_PATH, 'data')
 
-    if data_path is None:
-        data_path = os.path.join(local_path, 'data')
-    else:
-        data_path = data_path
-
-    nz = nramps*nreads
+    nz = nramps * nreads
     if (nx == 2048) and (ny == 2048):
-        x1, y1 = 0, 0
-        x2 = nx
-        y2 = ny
+        xlow, ylow = 0, 0
+        xhigh, yhigh = nx, ny
 
     else:
-        x1 = np.fix(x) - nx / 2
-        x2 = np.fix(x) + nx / 2
-        y1 = np.fix(y) - ny / 2
-        y2 = np.fix(y) + ny / 2
+        xlow = np.fix(xcoord) - nx / 2
+        xhigh = np.fix(xcoord) + nx / 2
+        ylow = np.fix(ycoord) - ny / 2
+        yhigh = np.fix(ycoord) + ny / 2
 
     bias = np.zeros((nz, ny, nx))
 
@@ -40,7 +36,7 @@ def getbias(guider, x, y, nreads, nramps, nx, ny, bzp=True,
     if bzp:
         bias0file = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
         read0 = fits.getdata(bias0file)#.astype(np.uint16)
-        bias += read0[x1:x2, y1:y2]
+        bias += read0[xlow:xhigh, ylow:yhigh]
 
         bias[bias < 0] = 0.
         bias[bias > 40000] = 10000.
@@ -51,24 +47,25 @@ def getbias(guider, x, y, nreads, nramps, nx, ny, bzp=True,
     # KTC imprints at reset
     if bktc:
         ktc = 10. * np.random.standard_normal((nramps, ny, nx))
-        iz = 0
-        for iramp in range(nramps):
-            for iread in range(nreads):
-                bias[iz] += ktc[iramp]
-                iz += 1
+        ktc_full = np.repeat(ktc, nreads, axis=0) #repeat the KTC for all reads
+        bias += ktc_full
 
     # pedestal imprints at read
     if bp:
         nnx = 2048
         nny = 2048
         pedestal = np.zeros((nz, nny, nnx))
-        tmp = np.fix(np.round(25*np.random.standard_normal((4, nz))))
-        for iz in range(nz):
-            pedestal[iz, :, 0:511] = tmp[0, iz]
-            pedestal[iz, :, 512:1023] = tmp[1, iz]
-            pedestal[iz, :, 1024:1535] = tmp[2, iz]
-            pedestal[iz, :, 1536:2047] = tmp[3, iz]
-            bias[iz] += pedestal[iz, x1:x2, y1:y2]
+        for i in range(nz):
+            pedestal[i, :, 0:511] = np.fix(np.round(25 * np.random.standard_normal()))
+            pedestal[i, :, 512:1023] = np.fix(np.round(25 * np.random.standard_normal()))
+            pedestal[i, :, 1024:1535] = np.fix(np.round(25 * np.random.standard_normal()))
+            pedestal[i, :, 1536:2047] = np.fix(np.round(25 * np.random.standard_normal()))
+        #if pedestal doesnt change throughout cube:
+        #pedestal[:, :, 0:511] = np.fix(np.round(25 * np.random.standard_normal())
+        #pedestal[:, :, 512:1023] = np.fix(np.round(25 * np.random.standard_normal())
+        #pedestal[:, :, 1024:1535] = np.fix(np.round(25 * np.random.standard_normal())
+        #pedestal[:], :, 1536:2047] = np.fix(np.round(25 * np.random.standard_normal())
+        bias += pedestal[:, xlow:xhigh, ylow:yhigh]
 
     # rectify bias img
     bias[bias < 0] = 0.

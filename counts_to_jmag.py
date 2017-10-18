@@ -5,7 +5,6 @@ import matplotlib
 import numpy as np
 
 # Set plots to default to matplotlib 2.0 colors
-matplotlib.rcParams['image.cmap'] = 'viridis'
 matplotlib.rcParams['axes.prop_cycle'] = cycler(u'color', ['#1f77b4',
                                                            '#ff7f0e',
                                                            '#2ca02c',
