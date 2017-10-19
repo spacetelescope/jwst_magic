@@ -1,3 +1,6 @@
+'''
+Apply different types of bias
+'''
 # STDLIB
 import os
 
