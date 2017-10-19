@@ -1,4 +1,4 @@
-'''This code is adapted from mkIDproc.pro from Sherie Hofeltz.'''
+'''This code is adapted from mkIDproc.pro/mkACQproc.pro from Sherie Hofeltz.'''
 
 #STDLIB
 import os
@@ -8,7 +8,7 @@ import shutil
 import numpy as np
 
 # LOCAL
-import grptoia
+import rptoia
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 class Mkproc(object):
@@ -209,12 +209,7 @@ def convert_pix_to_ideal(guider, xarr, yarr):
     '''
     Convert the pixel coordinates to ideal angle coordinates
     '''
-    if guider == 1:
-        xangle, yangle = grptoia.g1RPtoIA(xarr, yarr) #this is correct: x then y
-    elif guider == 2:
-        xangle, yangle = grptoia.g2RPtoIA(xarr, yarr)
-    else:
-        print("Expecting '1' or '2'")
+    xangle, yangle = rptoia.rptoia(xarr, yarr, guider) #this is correct: x then y
 
     return xangle, yangle
 
