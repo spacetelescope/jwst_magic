@@ -73,6 +73,12 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         shutil.copyfile(image, os.path.join(LOCAL_PATH, 'out', root, 'FGS_imgs',
                                             '{}.fits'.format(root)))
 
+    # create reg file
+    nref = select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,
+                                       return_nref=True,
+                                       global_alignment=global_alignment,
+                                       in_file=in_file)
+
     # create all files for FSW/DHAS/FGSES/etc.
     FGS_commissioning.run_id(fgs_im, guider, root, out_dir=out_dir,
                              global_alignment=global_alignment)

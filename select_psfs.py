@@ -333,7 +333,7 @@ def manual_star_selection(data, global_alignment):
 
 
 def create_reg_file(data, root, guider, out_dir, in_file=None,
-                    global_alignment=False, return_all=False):
+                    global_alignment=False, return_nref=True):
     if in_file:
         # Determine the kind of in_file and parse out the PSF locations and
         # countrates accordingly
@@ -352,5 +352,5 @@ def create_reg_file(data, root, guider, out_dir, in_file=None,
                              labels=['y', 'x', 'countrate'],
                              cols=cols)
 
-    if return_all:
+    if return_nref:
         return cols, nref
