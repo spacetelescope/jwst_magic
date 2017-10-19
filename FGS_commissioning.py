@@ -8,10 +8,10 @@ from matplotlib.colors import LogNorm
 import numpy as np
 
 # LOCAL
-import grptoia
+import rptoia
 import getbias
 import utils
-from mkproc import mkproc
+from mkproc import Mkproc
 import log
 import select_psfs
 
@@ -149,24 +149,18 @@ class FGS(object):
         if self.step == 'ACQ':
             sky = 2.*sky
 
-        im = np.copy(bias)
+        image = np.copy(bias)
         if poissonNoise:
             for ireads in range(self.nreads):
-                im[ireads::(self.nreads)] += (ireads+1) * 0.25 * np.random.poisson(poissonfactor * sky)
+                image[ireads::(self.nreads)] += (ireads+1) * 0.25 * \
+                                             np.random.poisson(poissonfactor * sky)
         else:
             for ireads in range(self.nreads):
-                im[ireads::(self.nreads)] += (ireads+1) * poissonfactor * sky
+                image[ireads::(self.nreads)] += (ireads+1) * poissonfactor * sky
 
-        im = correct_image(im)
+        image = correct_image(image)
 
-        return im
-
-    def create_cds_image(self, arr):
-        '''
-        Create CDS image: Subtract the first read from the second read.
-        '''
-        return arr[1::2]-arr[:-1:2]
-
+        return image
 
     def create_strips(self, arr):
         '''
@@ -188,16 +182,11 @@ class FGS(object):
         return strips
 
     ### Write out files
-    def write_stc(self, filename, x, y, countrate):
+    def write_stc(self, filename, xarr, yarr, countrate):
         """
         Write out stc files using offset, rotated catalog
         """
-        if self.guider == 1:
-            xi, yi = grptoia.g1RPtoIA(x, y)
-        elif self.guider == 2:
-            xi, yi = grptoia.g2RPtoIA(x, y)
-
-        #xi, yi = grptoia.RPtoIA(self.guider,x,y) #THIS IS STILL WRONG
+        xi, yi = rptoia.rptoia(xarr, yarr, self.guider)
 
         try:
             len(xi)
@@ -213,11 +202,11 @@ class FGS(object):
         print("Successfully wrote: {}".format(filename))
 
 
-    def write_cat(self, filename, x, y):
+    def write_cat(self, filename, xarr, yarr):
         '''
         Write out star catalog in real pixs
         '''
-        coords = np.array([self.xarr, self.yarr]).T
+        coords = np.array([xarr, yarr]).T
         try:
             utils.write_to_file(filename, coords, fmt=['%d', '%d'])
         except AttributeError:
@@ -286,13 +275,12 @@ class FGS(object):
         '''
         self.bias = getbias.getbias(self.guider, x, y, self.nreads,
                                     self.nramps, self.nx, self.ny,
-                                    self.biaszeropt, self.biasktc, self.biasped,
-                                    DATA_PATH)
+                                    self.biaszeropt, self.biasktc, self.biasped)
         self.image = self.create_noisy_sky(self.bias, self.sky,
                                            self.poissonnoise, acqNum)
 
         if cds:
-            self.cds = self.create_cds_image(self.image)
+            self.cds = create_cds_image(self.image)
 
         if self.step == 'ID':
             self.strips = self.create_strips(self.image)
@@ -473,15 +461,20 @@ def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
         log.error("Observation mode not recognized. Returning.")
 
     with open(os.path.join(out_dir, outfile), 'w') as file_out:
-        for i, d in enumerate(fl.astype(np.uint16)):
+        for d in fl.astype(np.uint16):
             file_out.write(f.format(d))
 
     print("Successfully wrote: {}".format(os.path.join(out_dir, outfile)))
     return
 
 #-------------------------------------------------------------------------------
-def display(image, ind=0, vmin=None, vmax=None, cmap='Greys_r', x=None, y=None,
-            add_coords=False):
+def create_cds_image(arr):
+    '''
+    Create CDS image: Subtract the first read from the second read.
+    '''
+    return arr[1::2]-arr[:-1:2]
+
+def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
     '''
     Display an image array. If the array is a cube, specify the index to
     look at using 'ind'. If you want to add a scatter plot of PSF centers,
@@ -489,15 +482,15 @@ def display(image, ind=0, vmin=None, vmax=None, cmap='Greys_r', x=None, y=None,
     frame images for the time being).
     '''
     if image.ndim == 3:
-        im = image[ind]
+        img = image[ind]
     else:
-        im = np.copy(image)
+        img = np.copy(image)
 
     plt.clf()
-    plt.imshow(im, cmap=cmap, norm=LogNorm(), vmin=vmin, vmax=vmax)
+    plt.imshow(img, cmap='Greys_r', norm=LogNorm(), vmin=vmin, vmax=vmax)
 
-    if add_coords:
-        plt.scatter(x, y, color='white')
+    if xarr and yarr:
+        plt.scatter(xarr, yarr, color='white')
     else:
         plt.colorbar()
 
@@ -511,10 +504,10 @@ def add_jitter(cube, total_shift=3):
     VERY rudimentary. Uses np.roll so images look kind of funny.
     '''
     cube2 = np.zeros_like(cube)
-    for i, im in enumerate(cube):
+    for i, img in enumerate(cube):
         # This will generate a random integer up to the total_shift
         shift = np.random.randint(total_shift+1)
-        cube2[i] = np.roll(im, shift)
+        cube2[i] = np.roll(img, shift)
 
     return cube2
 
@@ -523,7 +516,7 @@ def create_im_subarray(image,x,y,nx,ny,show_fig=False):
     Based on the array size given by nx and ny, created a subarray around
     the guide star.
     '''
-    im = np.copy(image)
+    img = np.copy(image)
     if nx % 2 == 1:
         x1 = int(x)-(nx/2+1)
         y1 = int(y)-(ny/2+1)
@@ -534,25 +527,25 @@ def create_im_subarray(image,x,y,nx,ny,show_fig=False):
     x2 = int(x)+nx/2
     y2 = int(y)+ny/2
 
-    im = im[y1:y2, x1:x2]
+    img = img[y1:y2, x1:x2]
 
     if show_fig:
         plt.figure()
-        plt.imshow(im, cmap='Greys_r')
+        plt.imshow(img, cmap='Greys_r')
         plt.show()
 
-    return im
+    return img
 
 def correct_image(image, upper_threshold=65000, upper_limit=65000):
     '''
     Correct image for negative and saturated pixels
     '''
-    im = np.copy(image)
-    im[im < 0] = 0            # neg pixs -> 0
-    im[im >= upper_threshold] = upper_limit    # sat'd pixs -> 65K
-    im[np.isfinite(im) == 0] = 0
+    img = np.copy(image)
+    img[img < 0] = 0            # neg pixs -> 0
+    img[img >= upper_threshold] = upper_limit    # sat'd pixs -> 65K
+    img[np.isfinite(img) == 0] = 0
 
-    return im
+    return img
 
 
 def add_background(array,nx,ny,nz):
@@ -582,7 +575,7 @@ def run_id(image, guider, root, out_dir=None, interactive=False,
     id0.write_out_files(id0.xarr, id0.yarr, id0.countrate)
 
     # Make CECIL proc file
-    mkproc(guider, root, id0.xarr, id0.yarr, id0.countrate, step='ID',
+    Mkproc(guider, root, id0.xarr, id0.yarr, id0.countrate, step='ID',
            out_dir=out_dir)
 
     if interactive:
@@ -612,7 +605,7 @@ def run_acq(image, guider, root, out_dir=None, interactive=False,
                          acq2.countrategs, acqNum=2)
 
     # Make CECIL proc file
-    mkproc(guider, root, acq1.xgs, acq1.ygs, acq1.countrategs, step='ACQ',
+    Mkproc(guider, root, acq1.xgs, acq1.ygs, acq1.countrategs, step='ACQ',
            out_dir=out_dir)
 
     if interactive:
