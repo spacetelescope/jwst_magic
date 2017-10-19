@@ -32,9 +32,9 @@ class FGS(object):
     with DHAS.
     '''
     def __init__(self, im, guider, root, out_dir=None, data_path=None,
-                guide_star_coords=None, reg_file=None, overlap=0, biasZeroPt=True,
-                biasKTC=True, biasPed=True, poissonNoise=True, background=False,
-                SCdrift=False):
+                 guide_star_coords=None, reg_file=None, overlap=0, biasZeroPt=True,
+                 biasKTC=True, biasPed=True, poissonNoise=True, background=False,
+                 SCdrift=False):
 
         self.nreads = 2
 
@@ -45,14 +45,12 @@ class FGS(object):
         self.poissonnoise = poissonNoise
         self.background = background
 
-
         # Detector motion
         self.scdrift = SCdrift ## Do I want this here???
 
         # Practical things
         self.guider = guider
         self.root = root
-        self.global_alignment = global_alignment
 
         ## DEFINE ALL THINGS PATHS
         # Define output directory
