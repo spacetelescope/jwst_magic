@@ -253,12 +253,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         vBox = QVBoxLayout()
 
         self.instructions = QLabel('''Click as near to the center of the star \
-as possible. The first star that is choosen will be the <span style=\
-"background-color: #FFFF00">guide star</span>. All additional stars that are \
-clicked on are the <span style="background-color: #FFA500">reference stars\
-</span>. Star locations will appear in the list at right as they are selected; \
-the guide star can be re-selected using the radio buttons. Errors will be shown\
- in the output box below.''', self)
+        as possible. The first star that is choosen will be the <span style=\
+        "background-color: #FFFF00">guide star</span>. All additional stars that are \
+        clicked on are the <span style="background-color: #FFA500">reference stars\
+        </span>. Star locations will appear in the list at right as they are selected; \
+        the guide star can be re-selected using the radio buttons. Errors will be shown\
+        in the output box below.''', self)
         # self.instructions.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
         self.instructions.setWordWrap(True)
@@ -555,7 +555,7 @@ the guide star can be re-selected using the radio buttons. Errors will be shown\
             if self.guidestar_buttons[star_ind].isChecked():
                 redText = "<br/><span style=\" color:#ff0000;\" >"
                 redText += 'The guide star cannot be deleted. Please choose \
-another star or change the guide star.'
+                            another star or change the guide star.'
                 redText += "</span>"
                 self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
                 return
