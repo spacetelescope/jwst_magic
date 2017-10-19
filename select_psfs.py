@@ -1,3 +1,4 @@
+""" Find all the relevant PSFs in the image, be it manually or using a file."""
 # STDLIB
 import os
 import sys
@@ -30,9 +31,6 @@ rcParams['image.origin'] = 'upper'
 rcParams['font.family'] = 'serif'
 rcParams['font.weight']='light'
 rcParams['mathtext.bf'] = 'serif:normal'
-
-# rcParams['xtick.labelsize'] = 14
-# rcParams['ytick.labelsize'] = 14
 
 
 def count_psfs(smoothed_data, gauss_sigma, choose=False):
@@ -89,11 +87,13 @@ def choose_threshold(smoothed_data, gauss_sigma):
 
     # Prompt user to choose
     choice = raw_input('''
-Examine the two options presented. To use the stars selected with a 3 \
-standard deviation threshold, type "S". To use the stars selected with a mean \
-threshold, type "M". To use neither and cancel the program, press enter.
+                       Examine the two options presented. To use the stars \
+                       selected with a 3 standard deviation threshold, \
+                       type "S". To use the stars selected with a mean \
+                       threshold, type "M". To use neither and cancel the \
+                       program, press enter.
 
-Choice: ''')
+                       Choice: ''')
 
     plt.close()
 
@@ -123,10 +123,6 @@ def countrate_3x3(x, y, data):
 
 
 def plot_centroids(data, coords, root, guider, out_dir):
-    # if compact:
-    #     pad = 300
-    # else:
-    #     pad = 500
     pad = 300
 
     # Determine x and y limits that encompass all PSFS
@@ -185,9 +181,7 @@ def create_cols_for_coords_counts(x, y, counts, val, inds=None):
     Guide Star. **This method is not fool-proof, use at own risk***
     """
 
-    cols = []
-    for yy, xx, co in zip(y, x, counts):
-        cols.append([yy, xx, co])  # these coordinates are y,x
+    cols = [[yy, xx, co] for yy, xx, co in zip(y, x, counts)]# these coordinates are y,x
 
     if inds is None:
         min_ind = np.where(val == np.min(val))[0][0]  # Find most compact PSF
@@ -226,8 +220,10 @@ def parse_in_file(in_file):
             if len(fix_colnames) != len(in_table.columns):
                 # Fix didn't work
                 err_message = 'Unknown in_file format: {}. Expecting columns named \
-"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
-named {}. Please rename columns.'.format(in_file, fix_colnames)
+                               "x"/"xreal", "y"/"yreal", and \
+                               "count rate"/"countrate"/"ctot". Found columns \
+                               named {}. Please rename columns.'.format(in_file,
+                                                                        fix_colnames)
                 raise TypeError(err_message)
                 log.error(err_message)
                 return
@@ -241,8 +237,10 @@ named {}. Please rename columns.'.format(in_file, fix_colnames)
         else:
             # If not just an old regfile, it is something unfamiliar
             err_message = 'Unknown in_file format: {}. Expecting columns named \
-"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
-named {}. Please rename columns.'.format(in_file, raw_columns.split())
+                           "x"/"xreal", "y"/"yreal", and \
+                           "count rate"/"countrate"/"ctot". Found columns \
+                           named {}. Please rename columns.'.format(in_file,
+                                                                    raw_columns.split())
             raise TypeError(err_message)
             log.error(err_message)
             return
@@ -254,8 +252,9 @@ named {}. Please rename columns.'.format(in_file, raw_columns.split())
 
     if not (x_check and y_check and counts_check):
         err_message = 'Unknown in_file format: {}. Expecting columns named \
-"x"/"xreal", "y"/"yreal", and "count rate"/"countrate"/"ctot". Found columns \
-named {}. Please rename columns.'.format(in_file, colnames)
+                       "x"/"xreal", "y"/"yreal", and \
+                       "count rate"/"countrate"/"ctot". Found columns \
+                       named {}. Please rename columns.'.format(in_file, colnames)
         raise TypeError(err_message)
         log.error(err_message)
         return
@@ -305,7 +304,7 @@ def manual_star_selection(data, global_alignment):
 
     # Use labeling to map locations of objects in array
     # (Kept for possible alternate countrate calculations; see count_rate_total)
-    objects, num_objects = ndimage.measurements.label(smoothed_data > threshold)
+    objects = ndimage.measurements.label(smoothed_data > threshold)[0]
     # NOTE: num_objects might not equal num_psfs
 
     # Find the minimum distance between PSFs
@@ -333,8 +332,8 @@ def manual_star_selection(data, global_alignment):
     return cols, coords, nref
 
 
-def create_reg_file(data, root, guider, out_dir, return_nref=False,
-                    global_alignment=False, in_file=None):
+def create_reg_file(data, root, guider, out_dir, in_file=None,
+                    global_alignment=False, return_nref=True):
     if in_file:
         # Determine the kind of in_file and parse out the PSF locations and
         # countrates accordingly
@@ -354,4 +353,4 @@ def create_reg_file(data, root, guider, out_dir, return_nref=False,
                              cols=cols)
 
     if return_nref:
-        return nref
+        return cols, nref
