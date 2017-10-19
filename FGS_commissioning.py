@@ -30,10 +30,6 @@ class FGS(object):
     '''
     Creates an FGS simulation object for ID, ACQ, and/or TRK stages to be used
     with DHAS.
-
-    Expect the file with coordinates of the guide and reference stars to be in the
-    form '<root>_G<guider>_regfile.txt' with three columns: y, x, and countrate.
-    If your file is not in this form, use select_psfs to create this file.
     '''
     def __init__(self, im, guider, root, out_dir=None, guide_star_coords=None,
                  reg_file=None, biasZeroPt=False, biasKTC=False, biasPed=False,
@@ -89,38 +85,24 @@ class FGS(object):
     def get_coords_and_counts(self, reg_file=None):
         '''
         Get coordinate information of guide star and reference stars
-
-        This code will first check if the default name for regfile exists, if it
-        does it will always use that regardless of user input.
         '''
-        try:
-            default_reg_file = os.path.join(LOCAL_PATH, 'out', self.root,
-                                            '{0}_G{1}_regfile.txt'.format(self.root,
-                                                                          self.guider))
-            self.yarr, self.xarr, self.countrate = (np.loadtxt(default_reg_file,
-                                                               delimiter=' ',
-                                                               skiprows=1)).T
-        except IOError:
-            # create reg file
-            cols, self.nref = select_psfs.create_reg_file(self.input_im, self.root,
-                                                          self.guider,
-                                                          out_dir=self.out_dir,
-                                                          in_file=reg_file,
-                                                          global_alignment=self.global_alignment,
-                                                          return_all=True)
-
-            self.yarr = [col[0] for col in cols]
-            self.xarr = [col[1] for col in cols]
-            self.countrate = [col[1] for col in cols]
-
-        # try:
-        #     self.xarr[0]
-        # except IndexError:
-        #     # print('Note: only one entry in catalog.')
-        #     log.warning('Only one entry in catalog.')
-        #     self.xarr = np.array([self.xarr])
-        #     self.yarr = np.array([self.yarr])
-        #     self.countrate = np.array([self.countrate])
+        if reg_file is None:
+            reg_file = os.path.join(os.path.join(LOCAL_PATH, 'out', self.root,
+                                                 '{0}_G{1}_regfile.txt'.format(self.root,
+                                                                               self.guider)))
+        log.info("Using {} as the reg file".format(reg_file))
+        if reg_file.endswith('reg'):
+            self.xarr, self.yarr = np.loadtxt(reg_file)
+            self.countrate = []
+            for xa, ya, in zip(self.xarr, self.yarr):
+                self.countrate.append(select_psfs.countrate_3x3(xa, ya, self.input_im))
+        else:
+            self.yarr, self.xarr, self.countrate = np.loadtxt(reg_file, delimiter=' ',
+                                                              skiprows=1).T
+        # Cover cases where there is only one entry in the reg file
+        self.xarr = np.asarray(self.xarr)
+        self.yarr = np.asarray(self.yarr)
+        self.countrate = np.asarray(self.countrate)
 
 
     def get_guide_star_coords(self, gs_ind=0):
@@ -657,8 +639,8 @@ def create_lostrk(image, guider, root, nx, ny, out_dir=None,
 
 
 def run_all(im, guider, root, num_frames=None, out_dir=None,
-            jitter=True, global_alignment=False):
+            jitter=True):
     # Not interatctive!!
-    run_id(im, guider, root, out_dir, global_alignment=global_alignment)
-    run_acq(im, guider, root, out_dir, global_alignment=global_alignment)
-    run_trk(im, guider, root, num_frames, out_dir, jitter, global_alignment=global_alignment)
+    run_id(im, guider, root, out_dir, nref)
+    run_acq(im, guider, root, out_dir)
+    run_trk(im, guider, root, num_frames, out_dir, jitter)
