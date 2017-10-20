@@ -4,7 +4,7 @@ import shutil
 
 # THIRD PARTY
 import numpy as np
-import matplotlib.pyplot as plt
+from astropy.io import fits
 
 # LOCAL
 import select_psfs
@@ -23,7 +23,7 @@ TASKNAME = 'run_all'
 LOGNAME = utils.get_logname(os.path.join(LOCAL_PATH, 'logs'), TASKNAME)
 
 @log.logtofile(LOGNAME)
-def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
+def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             nircam_mod=None, nircam=True, global_alignment=False, in_file=None):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
@@ -33,12 +33,12 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
 
     Parameters
     ==========
-    im: str
+    image: str
         The path to the image.
     guider: int
         Which guider is being used: 1 or 2
     root: str
-        The root desired for output images if different than root in im
+        The root desired for output images if different than root in image
     fgs_counts: float
         If the user wants to specify the FGS counts, they do so here
     jmag: float
@@ -53,8 +53,9 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
     in_file: str
         If this image comes with an incat or reg file, the file path
     """
+
     if root is None:
-        root = os.path.basename(im).split('.')[0]
+        root = os.path.basename(image).split('.')[0]
 
     out_dir = os.path.join(LOCAL_PATH, 'out', root)
 
@@ -64,28 +65,15 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
     # convert NIRCam image to an FGS image
     if nircam:
         log.info("This is a NIRCam image")
-        fgs_im = nircam_to_fgs.convert_im(im, guider, fgs_counts=fgs_counts,
+        fgs_im = nircam_to_fgs.convert_im(image, guider, fgs_counts=fgs_counts,
                                           jmag=jmag, nircam_mod=nircam_mod,
                                           return_im=True)
     else:
         log.info("This is a FGS image")
-        fgs_im = utils.read_fits(im)[1]
-
-        # # Add bias, pedestal, noise...
-        # # (Assume ID stage)
-        # nreads = nramps = 2
-        # nx = ny = 2048
-        # poissonfactor = 1
-        # fgs_bias = getbias.getbias(guider, nreads, nramps, nx, ny, bzp=False)
-        # time_normed_im = fgs_im * 0.338
-        # fgs_bias += 0.25 * np.random.poisson(poissonfactor * time_normed_im)
-        # # plt.imshow(fgs_bias[-1])  # Just take the first frame... probs wrong
-        # # plt.show()
-        # fgs_im += fgs_bias[0]
-
+        fgs_im = fits.getdata(image)
         utils.ensure_dir_exists(os.path.join(out_dir, 'FGS_imgs'))
-        shutil.copyfile(im, os.path.join(LOCAL_PATH, 'out', root, 'FGS_imgs',
-                                         '{}.fits'.format(root)))
+        shutil.copyfile(image, os.path.join(LOCAL_PATH, 'out', root, 'FGS_imgs',
+                                            '{}.fits'.format(root)))
 
     # create reg file
     nref = select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,
@@ -94,6 +82,7 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
                                        in_file=in_file)
 
     # create all files for FSW/DHAS/FGSES/etc.
-    FGS_commissioning.run_ID(fgs_im, guider, root, nref=nref, out_dir=out_dir)
-    FGS_commissioning.run_ACQ(fgs_im, guider, root, out_dir=out_dir)
-    FGS_commissioning.create_LOSTRK(fgs_im, guider, root, nx=43, ny=43, out_dir=out_dir)
+    FGS_commissioning.run_id(fgs_im, guider, root, out_dir=out_dir)
+    FGS_commissioning.run_acq(fgs_im, guider, root, out_dir=out_dir)
+    FGS_commissioning.create_lostrk(fgs_im, guider, root, nx=43, ny=43,
+                                    out_dir=out_dir)
