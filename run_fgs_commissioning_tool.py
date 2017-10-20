@@ -71,17 +71,17 @@ def run_all(im, guider, root=None, fgs_counts=None, jmag=None,
         log.info("This is a FGS image")
         fgs_im = utils.read_fits(im)[1]
 
-        # Add bias, pedestal, noise...
-        # (Assume ID stage)
-        nreads = nramps = 2
-        nx = ny = 2048
-        poissonfactor = 1
-        fgs_bias = getbias.getbias(guider, nreads, nramps, nx, ny, bzp=False)
-        time_normed_im = fgs_im * 0.338
-        fgs_bias += 0.25 * np.random.poisson(poissonfactor * time_normed_im)
-        # plt.imshow(fgs_bias[-1])  # Just take the first frame... probs wrong
-        # plt.show()
-        fgs_im += fgs_bias[0]
+        # # Add bias, pedestal, noise...
+        # # (Assume ID stage)
+        # nreads = nramps = 2
+        # nx = ny = 2048
+        # poissonfactor = 1
+        # fgs_bias = getbias.getbias(guider, nreads, nramps, nx, ny, bzp=False)
+        # time_normed_im = fgs_im * 0.338
+        # fgs_bias += 0.25 * np.random.poisson(poissonfactor * time_normed_im)
+        # # plt.imshow(fgs_bias[-1])  # Just take the first frame... probs wrong
+        # # plt.show()
+        # fgs_im += fgs_bias[0]
 
         utils.ensure_dir_exists(os.path.join(out_dir, 'FGS_imgs'))
         shutil.copyfile(im, os.path.join(LOCAL_PATH, 'out', root, 'FGS_imgs',
