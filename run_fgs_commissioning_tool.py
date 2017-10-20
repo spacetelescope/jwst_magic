@@ -71,6 +71,11 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     else:
         log.info("This is a FGS image")
         fgs_im = fits.getdata(image)
+
+        # Correct high or low pixels
+        fgs_im[fgs_im < 0] = 0.
+        fgs_im[fgs_im > 65000] = 0.
+
         utils.ensure_dir_exists(os.path.join(out_dir, 'FGS_imgs'))
         shutil.copyfile(image, os.path.join(LOCAL_PATH, 'out', root, 'FGS_imgs',
                                             '{}.fits'.format(root)))

@@ -28,10 +28,10 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
         xhigh, yhigh = nx, ny
 
     else:
-        xlow = np.fix(xcoord) - nx / 2
-        xhigh = np.fix(xcoord) + nx / 2
-        ylow = np.fix(ycoord) - ny / 2
-        yhigh = np.fix(ycoord) + ny / 2
+        xlow = int(np.fix(xcoord) - nx / 2)
+        xhigh = int(np.fix(xcoord) + nx / 2)
+        ylow = int(np.fix(ycoord) - ny / 2)
+        yhigh = int(np.fix(ycoord) + ny / 2)
 
     bias = np.zeros((nz, ny, nx))
 
