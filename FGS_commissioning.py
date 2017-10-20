@@ -32,21 +32,21 @@ class FGS(object):
     with DHAS.
     '''
     def __init__(self, im, guider, root, out_dir=None, data_path=None,
-                 guide_star_coords=None, reg_file=None, overlap=0, biasZeroPt=True,
-                 biasKTC=True, biasPed=True, poissonNoise=True, background=False,
-                 SCdrift=False):
+                 guide_star_coords=None, reg_file=None, overlap=0, biaszeropt=True,
+                 biasktc=True, biasped=True, poissonnoise=True, background=False,
+                 scdrift=False):
 
         self.nreads = 2
 
         # Noise to add
-        self.biaszeropt = biasZeroPt
-        self.biasktc = biasKTC
-        self.biasped = biasPed
-        self.poissonnoise = poissonNoise
+        self.biaszeropt = biaszeropt
+        self.biasktc = biasktc
+        self.biasped = biasped
+        self.poissonnoise = poissonnoise
         self.background = background
 
         # Detector motion
-        self.scdrift = SCdrift ## Do I want this here???
+        self.scdrift = scdrift ## Do I want this here???
 
         # Practical things
         self.guider = guider
@@ -112,7 +112,7 @@ class FGS(object):
         self.countrategs = self.countrate[gs_ind]
         log.info('Coordinates of Guide Star: x={0}, y={1}'.format(self.xgs, self.ygs))
 
-    def create_noisy_sky(self, bias, time_normed_im, poissonNoise=True, acqNum=None):
+    def create_noisy_sky(self, bias, time_normed_im, poissonnoise=True, acqNum=None):
 
         '''
         Create a noisy sky image for ID and ACQ steps.
@@ -125,7 +125,7 @@ class FGS(object):
 
         image = np.copy(bias)
 
-        if poissonNoise:
+        if poissonnoise:
             # Add (increasing) poisson noise + data to each read in a ramp
             for ireads in range(self.nreads):
                 image[ireads::(self.nreads)] += (ireads + 1) * np.random.poisson(time_normed_im)
@@ -245,11 +245,14 @@ class FGS(object):
         NOTE: For acquisition, x,y should be the coordinates of the guide star
         '''
 
-        self.bias = getbias.getbias(self.guider, self.nreads, self.nramps,
-                                    self.nx, self.ny, bzp=self.biasZeroPt,
-                                    bktc=self.biasKTC, bp=self.biasPed)
+
+
+        self.bias = getbias.getbias(self.guider, self.xgs, self.ygs, self.nreads,
+                                    self.nramps,
+                                    self.nx, self.ny, bzp=self.biaszeropt,
+                                    bktc=self.biasktc, bp=self.biasped)
         self.image = self.create_noisy_sky(self.bias, self.time_normed_im,
-                                           self.poissonNoise, acqNum)
+                                           self.poissonnoise, acqNum)
 
         if cds:
             self.cds = create_cds_image(self.image)

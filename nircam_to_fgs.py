@@ -125,11 +125,15 @@ def pad_data(data, padding):
         print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
 
     # Add Poisson noise proportional to NIRCam data (why? seems wrong...)
-    avg_signal = np.median(noped_data)
-    padded_data = np.random.poisson(lam=avg_signal, size=background)
+    avg_signal = np.mean(noped_data)
+    padded_data = np.random.poisson(lam=avg_signal, size=background.shape)
 
     # Replace center of array with real data
     padded_data[padding:padding + size, padding:padding + size] = noped_data
+
+    # Correct high or low pixels
+    padded_data[padded_data < 0] = 0.
+    padded_data[padded_data > 65000] = 0.
 
     return padded_data
 
@@ -289,7 +293,8 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
                                 '{}_G{}_binned_pad_norm.fits'.format(root, guider))
         # Any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
-        hdr, dummy_data = fits.getdata(header_file, header=True)
+        dummy_data, hdr = fits.getdata(header_file, header=True)
+        # print hdr, dummy_data
         utils.write_fits(out_path, np.uint16(data_norm), header=hdr)
 
         print("Finished for {}, Guider = {}".format(root, guider))
