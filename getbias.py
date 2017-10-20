@@ -24,50 +24,53 @@ def getbias(guider, nreads, nramps, nx, ny, x_gs=None, y_gs=None, bzp=True,
 
     nz = nramps * nreads
     if (nx == 2048) and (ny == 2048):
-        x1, y1 = 0, 0
-        x2 = nx
-        y2 = ny
-
+        xlow, ylow = 0, 0
+        xhigh = nx
+        yhigh = ny
     else:
-        x1 = np.fix(x_gs) - nx / 2
-        x2 = np.fix(x_gs) + nx / 2
-        y1 = np.fix(y_gs) - ny / 2
-        y2 = np.fix(y_gs) + ny / 2
+        xlow = int(np.fix(x_gs) - nx / 2)
+        xhigh = int(np.fix(x_gs) + nx / 2)
+        ylow = int(np.fix(y_gs) - ny / 2)
+        yhigh = int(np.fix(y_gs) + ny / 2)
 
     bias = np.zeros((nz, ny, nx))
 
-    # 0th read bias structure
+    # 0th read bias structure (present in every read)
     if bzp:
         bias0file = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
         read0 = fits.open(bias0file)[0].data#.astype(np.uint16)
-        bias += read0[x1:x2, y1:y2]
+
+        if bias.shape[1] % 2 == 0:
+            bias += read0[xlow:xhigh, ylow:yhigh]
+        elif bias.shape[1] % 2 == 1:  # If odd, add another pixel (?!?)
+            bias += read0[xlow:xhigh + 1, ylow:yhigh + 1]
 
         bias[bias < 0] = 0.
         bias[bias > 40000] = 10000.
 
-        bias *= 0.5  # 22 may 13 sth damp 0th read structure for ernie's testing
+        # bias *= 0.5  # 22 may 13 sth damp 0th read structure for ernie's testing
 
-    # KTC imprints at reset
+    # KTC imprints at reset (uniform within each ramp)
     if bktc:
-        ktc = 10. * np.random.random_sample(size=(nramps, ny, nx)) # Changed from np.random.standard_normal
-        iz = 0
+        ktc = 10. * np.random.random_sample(size=(nramps, ny, nx))
         for iramp in range(nramps):
-            for iread in range(nreads):
-                bias[iz] += ktc[iramp]
-                iz += 1
+            bias[iramp * nramps:(iramp + 1) * nramps] += ktc[iramp]
 
-    # pedestal imprints at read
+
+    # Pedestal imprints at reset (uniform within each ramp)
     if bp:
-        nnx = 2048
-        nny = 2048
-        pedestal = np.zeros((nz, nny, nnx))
-        tmp = np.fix(25 * np.random.random_sample(size=(4, nz))) # Changed from np.random.standard_normal
-        for iz in range(nz):
-            pedestal[iz, :, 0:511] = tmp[0, iz]
-            pedestal[iz, :, 512:1023] = tmp[1, iz]
-            pedestal[iz, :, 1024:1535] = tmp[2, iz]
-            pedestal[iz, :, 1536:2047] = tmp[3, iz]
-            bias[iz] += pedestal[iz, x1:x2, y1:y2]
+        pedestal = np.zeros((nz, 2048, 2048))
+        for iramp in range(nramps):
+            ped_noise = np.fix(25 * np.random.standard_normal(size=4))
+            pedestal[iramp * nramps:(iramp + 1) * nramps, :, 0:511] = ped_noise[0]
+            pedestal[iramp * nramps:(iramp + 1) * nramps, :, 512:1023] = ped_noise[1]
+            pedestal[iramp * nramps:(iramp + 1) * nramps, :, 1024:1535] = ped_noise[2]
+            pedestal[iramp * nramps:(iramp + 1) * nramps, :, 1536:2047] = ped_noise[3]
+
+        if bias.shape[1] % 2 == 0:
+            bias += pedestal[:, xlow:xhigh, ylow:yhigh]
+        elif bias.shape[1] % 2 == 1:  # If odd, add another pixel (?!?)
+            bias += pedestal[:, xlow:xhigh + 1, ylow:yhigh + 1]
 
     # rectify bias img
     bias[bias < 0] = 0.

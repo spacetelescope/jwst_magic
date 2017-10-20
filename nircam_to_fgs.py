@@ -130,7 +130,7 @@ def pad_data(data, padding):
 
     # Remove NIRCam pedestals
     ped_size = size / 4
-    peddata = np.zeros((size, size))
+    noped_data = np.zeros(np.shape(data))
     for i in range(4):
         ped_start = i * ped_size
         ped_stop = (i + 1) * ped_size
@@ -138,25 +138,15 @@ def pad_data(data, padding):
         pedestal = np.median(ped_strip)
 
         # Subtract median from each pedestal strip
-        peddata[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
+        noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
         print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
 
-    # Add Poisson noise
-    padded_data = np.random.poisson(lam=5, size=background.shape)
+    # Add Poisson noise proportional to NIRCam data (why? seems wrong...)
+    avg_signal = np.median(noped_data)
+    padded_data = np.random.poisson(lam=avg_signal, size=background)
 
     # Replace center of array with real data
-    padded_data[padding:padding + size, padding:padding + size] = data
-
-    # Add in FGS pedestal
-    fgs_ped = np.fix(15 * np.random.random_sample(size=4)).astype(int)  # Randomly generate values
-    ped_size = padded_size / 4
-    for i in range(4):
-        ped_start = i * ped_size
-        ped_stop = (i + 1) * ped_size
-        pedestal = fgs_ped[i]
-
-        # Add randomly generated pedestal to each padded pedestal strip
-        padded_data[:, ped_start:ped_stop] += pedestal
+    padded_data[padding:padding + size, padding:padding + size] = noped_data
 
     return padded_data
 

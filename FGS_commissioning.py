@@ -25,9 +25,9 @@ class FGS(object):
     with DHAS.
     '''
     def __init__(self, im, guider, root, out_dir=None, data_path=None,
-                guide_star_coords=None, reg_file=None, overlap=0, biasZeroPt=True,
-                biasKTC=True, biasPed=True, poissonNoise=True, background=False,
-                SCdrift=False):
+                 guide_star_coords=None, reg_file=None, overlap=0, biasZeroPt=True,
+                 biasKTC=True, biasPed=True, poissonNoise=True, background=False,
+                 SCdrift=False):
 
 
         # DEFINE ALL NECESSARY CONSTANTS
@@ -113,7 +113,6 @@ class FGS(object):
             self.y = np.array([self.y])
             self.countrate = np.array([self.countrate])
 
-
     def get_guide_star_coords(self, gs_ind=0):
         '''
         From the list of coordinates, pull out the guide star coordinates using
@@ -122,8 +121,7 @@ class FGS(object):
         self.xgs=self.x[gs_ind]
         self.ygs=self.y[gs_ind]
         self.countrategs = self.countrate[gs_ind]
-        log.info('Coordinates of Guide Star: x={0}, y={1}'.format(self.xgs,self.ygs))
-
+        log.info('Coordinates of Guide Star: x={0}, y={1}'.format(self.xgs, self.ygs))
 
     def create_noisy_sky(self, bias, time_normed_im, poissonNoise=True, acqNum=None):
         '''
@@ -132,22 +130,21 @@ class FGS(object):
         PoissonNoise should always be set to True for ID.
         '''
         ### 4/24 NEED TO CHECK THIS SECTION
-        if acqNum == 2:
-            poissonfactor = 2.
-        else:
-            poissonfactor = 1.
 
         if self.step == 'ACQ':
-            time_normed_im = 2. * time_normed_im  # Is this redundant with the Poisson factor?
+            time_normed_im = 2. * time_normed_im  # Is this still necessary?
 
         im = np.copy(bias)
+
+        # Add (increasing) poisson noise + data to each read in a ramp
         if poissonNoise:
             for ireads in range(self.nreads):
-                im[ireads::(self.nreads)] += (ireads + 1) * 0.25 * \
-                                             np.random.poisson(poissonfactor * time_normed_im)
+                im[ireads::(self.nreads)] += (ireads + 1) * np.random.poisson(time_normed_im)
+
+        # Add (increasing) data to each read in a ramp
         else:
             for ireads in range(self.nreads):
-                im[ireads::(self.nreads)] += (ireads + 1) * poissonfactor * time_normed_im
+                im[ireads::(self.nreads)] += (ireads + 1) * time_normed_im
 
         im = correct_image(im)
 
@@ -159,23 +156,22 @@ class FGS(object):
         '''
         return arr[1::2] - arr[:-1:2]
 
-
     def create_strips(self, arr):
         '''
         Create the ID strips fits image to be passed into DHAS
         '''
-        strips = np.zeros((self.nstrips*self.nz, self.h, self.nx))
+        strips = np.zeros((self.nstrips * self.nz, self.h, self.nx))
         nn = 0
         for i in range(self.nstrips):
-           for iz in range(self.nz):
-               y1 = i*(self.h-self.overlap)+self.yoffset
-               y2 = y1+self.h
-               strips[nn,:,:]=arr[iz,y1:y2,:]
-               nn+=1
+            for iz in range(self.nz):
+                y1 = i * (self.h - self.overlap) + self.yoffset
+                y2 = y1 + self.h
+                strips[nn] = arr[iz, y1:y2]
+                nn += 1
 
         # Make sure the data is between 0 and 65,000 counts and are finite numbers
-        strips= correct_image(strips)
-        strips=np.uint16(strips)
+        strips = correct_image(strips)
+        strips = np.uint16(strips)
 
         return strips
 
@@ -276,11 +272,11 @@ class FGS(object):
         NOTE: Include an acquisition number ("acqNum") for acquisition
         NOTE: For acquisition, x,y should be the coordinates of the guide star
         '''
-        self.bias = getbias.getbias(self.guider, self.nreads,
-                                    self.nramps, self.nx, self.ny,
-                                    self.biasZeroPt, self.biasKTC, self.biasPed,
-                                    x_gs=x, y_gs=y,
-                                    data_path=self.data_path)
+
+        self.bias = getbias.getbias(self.guider, self.nreads, self.nramps,
+                                    self.nx, self.ny, x_gs=x, y_gs=y,
+                                    bzp=self.biasZeroPt, bktc=self.biasKTC,
+                                    bp=self.biasPed, data_path=self.data_path)
         self.image = self.create_noisy_sky(self.bias, self.time_normed_im,
                                            self.poissonNoise, acqNum)
 
@@ -586,16 +582,18 @@ def run_ACQ(im, guider, root, out_dir=None, template_path=None, interactive=Fals
     '''
     # Acquisition #1
     acq1 = FGS(im, guider, root, out_dir)
-    acq1.setup_step(nx=128, ny=128, nramps=6, tcds=acq1.tcdsACQ1,step='ACQ')
+    acq1.setup_step(nx=128, ny=128, nramps=6, tcds=acq1.tcdsACQ1, step='ACQ')
     log.info("Step: {}".format(acq1.step))
-    acq1.create_arrays(acq1.xgs,acq1.ygs,acqNum=1)
-    acq1.write_out_files(acq1.xgs-(acq1.nx/2.),acq1.ygs-(acq1.ny/2.),acq1.countrategs,acqNum=1)
+    acq1.create_arrays(acq1.xgs, acq1.ygs, acqNum=1)
+    acq1.write_out_files(acq1.xgs - (acq1.nx / 2.), acq1.ygs - (acq1.ny / 2.),
+                         acq1.countrategs, acqNum=1)
 
     # Acquistion #2
     acq2 = FGS(im, guider, root, out_dir)
-    acq2.setup_step(nx=32, ny=32, nramps=5, tcds=acq2.tcdsACQ2,step='ACQ')
-    acq2.create_arrays(acq2.xgs,acq2.ygs,acqNum=2)
-    acq2.write_out_files(acq2.xgs-(acq2.nx/2.),acq2.ygs-(acq2.ny/2.),acq2.countrategs,acqNum=2)
+    acq2.setup_step(nx=32, ny=32, nramps=5, tcds=acq2.tcdsACQ2, step='ACQ')
+    acq2.create_arrays(acq2.xgs, acq2.ygs, acqNum=2)
+    acq2.write_out_files(acq2.xgs - (acq2.nx / 2.), acq2.ygs - (acq2.ny / 2.),
+                         acq2.countrategs, acqNum=2)
 
     # Make CECIL proc file
     mkproc(guider, root, acq1.xgs, acq1.ygs, acq1.countrategs, step='ACQ', nref=None,
@@ -614,22 +612,26 @@ def run_TRK(im, guider, root, num_frames, out_dir=None, jitter=True, interactive
     trk = FGS(im, guider, root, out_dir)
     trk.setup_step(nx=32, ny=32, nramps=num_frames, tcds=trk.tcdsTRK, step='TRK')
     log.info("Step: {}".format(trk.step))
-    trk.create_arrays(trk.xgs,trk.ygs,cds=False)
+    trk.create_arrays(trk.xgs, trk.ygs, cds=False)
 
     if jitter:
-        trk.image = add_jitter(trk.image,trk.xgs,trk.ygs,trk.nx,trk.ny,total_shift=1)
+        trk.image = add_jitter(trk.image, trk.xgs, trk.ygs, trk.nx, trk.ny,
+                               total_shift=1)
 
-    filename_noisy_sky = os.path.join(trk.out_dir,'dhas','{}_G{}_{}.fits'.format(trk.root,trk.guider,trk.step))
-    utils.write_fits(filename_noisy_sky,np.uint16(trk.image))
+    filename_noisy_sky = os.path.join(trk.out_dir,
+                                      'dhas', '{}_G{}_{}.fits'.format(trk.root,
+                                                                      trk.guider,
+                                                                      trk.step))
+    utils.write_fits(filename_noisy_sky, np.uint16(trk.image))
 
     if interactive:
         return trk
 
 def create_LOSTRK(im, guider, root, nx, ny, out_dir=None, interactive=False):
     trk = FGS(im, guider, root, out_dir)
-    trk.nreads = 1 #want only single frame image
+    trk.nreads = 1  # want only single frame image
     trk.setup_step(nx, ny, nramps=1, tcds=trk.tcdsTRK, step='TRK')
-    trk.create_arrays(trk.xgs,trk.ygs,cds=False)
+    trk.create_arrays(trk.xgs, trk.ygs, cds=False)
 
     # This is a ground system file, but needs to be in .dat format
     filename_noisy_sky = os.path.join(trk.out_dir,
@@ -637,10 +639,11 @@ def create_LOSTRK(im, guider, root, nx, ny, out_dir=None, interactive=False):
                                       '{}_G{}_LOS{}.fits'.format(trk.root,
                                                                  trk.guider,
                                                                  trk.step))
-    utils.write_fits(filename_noisy_sky,trk.image)
+    utils.write_fits(filename_noisy_sky, trk.image)
 
-    ## Gound system file
-    convert_fits_to_dat(filename_noisy_sky,trk.step,os.path.join(trk.out_dir,'ground_system'))
+    # Ground system file
+    convert_fits_to_dat(filename_noisy_sky, trk.step,
+                        os.path.join(trk.out_dir, 'ground_system'))
 
 
 def run_all(im, guider, root, num_frames=None, out_dir=None, template_path=None, jitter=True,nref=10):
