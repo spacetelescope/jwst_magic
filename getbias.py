@@ -1,3 +1,6 @@
+'''
+Apply different types of bias
+'''
 # STDLIB
 import os
 
@@ -5,40 +8,37 @@ import os
 from astropy.io import fits
 import numpy as np
 
-def getbias(guider, nreads, nramps, nx, ny, x_gs=None, y_gs=None, bzp=True,
-            bktc=True, bp=True, data_path=None):
+LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+
+def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
+            bktc=True, bp=True):
     """
     For ID: nreads = 2, nramps = 2, nx = 2048, ny = 2048
     For acquisition 1: nreads = 2, nramps = 6, nx, ny = 128, 128
     For acquisition 2: nreads = 2, nramps = 5, nx, ny = 32, 32
     """
     # Establish location of 'data' directory. Includes *magicHdrImg.fits,
-    # *bias.fits, etc. If data path not given, script will assume that the
-    # 'data' directory lives in the same directory as this script
-    local_path = os.path.dirname(os.path.realpath(__file__))
-
-    if data_path is None:
-        data_path = os.path.join(local_path, 'data')
-    else:
-        data_path = data_path
+    #*bias.fits, etc. If data path not given, script will assume that the
+    #'data' directory lives in the same directory as this script
+    data_path = os.path.join(LOCAL_PATH, 'data')
 
     nz = nramps * nreads
     if (nx == 2048) and (ny == 2048):
         xlow, ylow = 0, 0
-        xhigh = nx
-        yhigh = ny
+        xhigh, yhigh = nx, ny
+
     else:
-        xlow = int(np.fix(x_gs) - nx / 2)
-        xhigh = int(np.fix(x_gs) + nx / 2)
-        ylow = int(np.fix(y_gs) - ny / 2)
-        yhigh = int(np.fix(y_gs) + ny / 2)
+        xlow = np.fix(xcoord) - nx / 2
+        xhigh = np.fix(xcoord) + nx / 2
+        ylow = np.fix(ycoord) - ny / 2
+        yhigh = np.fix(ycoord) + ny / 2
 
     bias = np.zeros((nz, ny, nx))
 
     # 0th read bias structure (present in every read)
     if bzp:
         bias0file = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
-        read0 = fits.open(bias0file)[0].data#.astype(np.uint16)
+        read0 = fits.getdata(bias0file)#.astype(np.uint16)
 
         if bias.shape[1] % 2 == 0:
             bias += read0[xlow:xhigh, ylow:yhigh]
@@ -52,10 +52,9 @@ def getbias(guider, nreads, nramps, nx, ny, x_gs=None, y_gs=None, bzp=True,
 
     # KTC imprints at reset (uniform within each ramp)
     if bktc:
-        ktc = 10. * np.random.random_sample(size=(nramps, ny, nx))
-        for iramp in range(nramps):
-            bias[iramp * nramps:(iramp + 1) * nramps] += ktc[iramp]
-
+        ktc = 10. * np.random.random_sample((nramps, ny, nx))
+        ktc_full = np.repeat(ktc, nreads, axis=0) #repeat the KTC for all reads
+        bias += ktc_full
 
     # Pedestal imprints at reset (uniform within each ramp)
     if bp:
