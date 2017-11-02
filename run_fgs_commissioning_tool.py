@@ -13,6 +13,7 @@ import log
 import nircam_to_fgs
 import utils
 import getbias
+import background_stars
 
 
 # Because Jupyter Notebook cannot open a matplotlib object, I have copied what is
@@ -24,7 +25,8 @@ LOGNAME = utils.get_logname(os.path.join(LOCAL_PATH, 'logs'), TASKNAME)
 
 @log.logtofile(LOGNAME)
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_mod=None, nircam=True, global_alignment=False, in_file=None):
+            nircam_mod=None, nircam=True, global_alignment=False, in_file=None,
+            bkgd_stars=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -79,6 +81,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         utils.ensure_dir_exists(os.path.join(out_dir, 'FGS_imgs'))
         shutil.copyfile(image, os.path.join(LOCAL_PATH, 'out', root, 'FGS_imgs',
                                             '{}.fits'.format(root)))
+    if bkgd_stars:
+        fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
 
     # create reg file
     nref = select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,

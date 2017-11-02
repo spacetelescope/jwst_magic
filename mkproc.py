@@ -9,6 +9,7 @@ import numpy as np
 
 # LOCAL
 import rptoia
+import coordinate_transforms
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 class Mkproc(object):
@@ -100,7 +101,10 @@ class Mkproc(object):
             write_from_template(self.template_a, file_out)
 
             #y,x,c = (np.loadtxt(reg_file, delimiter=' ', skiprows=1)).T  # star coords & gs counts
-            xangle, yangle = convert_pix_to_ideal(guider, xarr, yarr)
+
+            # Convert real pixel to DHAS ideal angle
+            xangle, yangle = coordinate_transforms.rptoia(xarr, yarr, guider)
+            xangle, yangle = coordinate_transforms.iatoDHAS(xangle, yangle, guider)
 
             thresh = thresh_factor * counts
 
@@ -204,15 +208,6 @@ class Mkproc(object):
         shutil.copy2(os.path.join(self.out_dir, 'dhas', '{0}_G{1}_ACQ.prc'.format(root,
                                                                                   guider)),
                      os.path.join(self.out_dir, 'ground_system'))
-
-def convert_pix_to_ideal(guider, xarr, yarr):
-    '''
-    Convert the pixel coordinates to ideal angle coordinates
-    '''
-    xangle, yangle = rptoia.rptoia(xarr, yarr, guider) #this is correct: x then y
-
-    return xangle, yangle
-
 
 def write_from_template(template, file_out):
     '''
