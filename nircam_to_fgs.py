@@ -78,8 +78,8 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_mod):
     else:
         module = header['DETECTOR'][3]
 
-    if module == 'A':
-        ## NIRCAM Module A
+    if module == 'B':
+        ## NIRCAM Module B
         if fgs_guider == 1:
             ## FGS guider = 1; Perform a Left-Right flip
             image = np.fliplr(image) # equivalent to image[:,::-1]
@@ -87,8 +87,8 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_mod):
             ## FGS guider = 2; Perform a 180 degree rotation
             image = np.rot90(image, k=20)
 
-    elif module == 'B':
-        ## NIRCAM Module B
+    elif module == 'A':
+        ## NIRCAM Module A
         if fgs_guider == 1:
             ## FGS guider = 1; Perform a Up-Down flip
             image = np.flipud(image) # equivalent to image[::-1,...]
@@ -276,7 +276,8 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
             output_path = os.path.join(local_path, 'out', root)
             utils.ensure_dir_exists(output_path)
 
-        data, header = fits.getdata(image, header=True)
+        data = fits.getdata(image, header=False)
+        header = fits.getheader(image, ext=0)
 
         # ---------------------------------------------------------------------
         # Create FGS image
