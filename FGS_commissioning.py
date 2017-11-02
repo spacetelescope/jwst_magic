@@ -9,6 +9,7 @@ import numpy as np
 
 # LOCAL
 import rptoia
+import coordinate_transforms
 import getbias
 import utils
 from mkproc import Mkproc
@@ -162,7 +163,9 @@ class FGS(object):
         """
         Write out stc files using offset, rotated catalog
         """
-        xi, yi = rptoia.rptoia(xarr, yarr, self.guider)
+        # Convert real pixel coordinates to DHAS ideal angle
+        xi, yi = coordinate_transforms.rptoia(xarr, yarr, self.guider)
+        xi, yi = coordinate_transforms.iatoDHAS(xi, yi, self.guider)
 
         try:
             len(xi)
@@ -235,7 +238,7 @@ class FGS(object):
 
         self.time_normed_im = self.input_im * tcds
 
-    def create_arrays(self, x, y, acqNum=None, cds=True):
+    def create_arrays(self, x, y, acqNum=None, cds=True, jitter=False):
         '''
         Create the necessary arrays:
         bias
@@ -253,6 +256,9 @@ class FGS(object):
                                     bktc=self.biasktc, bp=self.biasped)
         self.image = self.create_noisy_sky(self.bias, self.time_normed_im,
                                            self.poissonnoise, acqNum)
+
+        if jitter:
+            self.image = add_jitter(self.image)
 
         if cds:
             self.cds = create_cds_image(self.image)
@@ -479,8 +485,8 @@ def add_jitter(cube, total_shift=3):
     '''
     cube2 = np.zeros_like(cube)
     for i, img in enumerate(cube):
-        # This will generate a random integer up to the total_shift
-        shift = np.random.randint(total_shift+1)
+        # This will generate a random whole number from -2 to 2, for a total shift of 3
+        shift = np.random.randint(total_shift + 1) - int(total_shift / 2)
         cube2[i] = np.roll(img, shift)
 
     return cube2

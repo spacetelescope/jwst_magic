@@ -327,9 +327,10 @@ def manual_star_selection(data, global_alignment):
     nref = len(inds) - 1
     log.info('1 guide star and {} reference stars selected'.format(nref))
 
+    ALL_cols = create_cols_for_coords_counts(x, y, counts, val, inds=range(len(x)))
     cols = create_cols_for_coords_counts(x, y, counts, val, inds=inds)
 
-    return cols, coords, nref
+    return cols, coords, nref, ALL_cols
 
 
 def create_reg_file(data, root, guider, out_dir, in_file=None,
@@ -338,15 +339,25 @@ def create_reg_file(data, root, guider, out_dir, in_file=None,
         # Determine the kind of in_file and parse out the PSF locations and
         # countrates accordingly
         cols, coords, nref = parse_in_file(in_file)
+        ALL_cols = None
 
     else:
         # If no .incat or reg file provided, create reg file with manual
         # star selection using the SelectStarsGUI
-        cols, coords, nref = manual_star_selection(data, global_alignment)
+        cols, coords, nref, ALL_cols = manual_star_selection(data, global_alignment)
 
     # Save PNG of image and all PSF locations in out_dir
     plot_centroids(data, coords, root, guider, out_dir)
 
+    if ALL_cols:
+        # Write out file of ALL identified PSFs
+        utils.write_cols_to_file(out_dir,
+                                 filename='{0}_G{1}_ALLpsfs.txt'.format(root, guider),
+                                 labels=['y', 'x', 'countrate'],
+                                 cols=ALL_cols)
+
+
+    # Write out regfile of selected PSFs
     utils.write_cols_to_file(out_dir,
                              filename='{0}_G{1}_regfile.txt'.format(root, guider),
                              labels=['y', 'x', 'countrate'],
