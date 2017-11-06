@@ -477,19 +477,33 @@ def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
     plt.show()
 
 ### Arrays and array manipulation
-def add_jitter(cube, total_shift=3):
+def add_jitter(im_cube, total_shift=3):
     '''
-    Add random single pixel jitter
-
-    VERY rudimentary. Uses np.roll so images look kind of funny.
+    Add random single pixel jitter (up to 2 pixel shift in each x and y)
     '''
-    cube2 = np.zeros_like(cube)
-    for i, img in enumerate(cube):
-        # This will generate a random whole number from -2 to 2, for a total shift of 3
-        shift = np.random.randint(total_shift + 1) - int(total_shift / 2)
-        cube2[i] = np.roll(img, shift)
+    jitter_cube = np.zeros_like(im_cube)
+    for i, img in enumerate(im_cube):
+        # This will generate two random whole numbers from -sqrt(total_shift^2 / 2)
+        # to sqrt(total_shift^2 / 2), for a total shift magnitude of <= total_shift
+        max_shift_component = int(np.sqrt(total_shift ** 2 / 2))
+        x_shift, y_shift = np.random.randint(low=-max_shift_component,
+                                             high=max_shift_component+1, size=2)
 
-    return cube2
+        # Pad image so as to not roll over real pixels
+        pad_width = max(abs(x_shift), abs(y_shift))
+        temp_padded_im = np.pad(img, pad_width, mode='mean')
+
+        # Jitter image in x and y
+        temp_padded_im = np.roll(temp_padded_im, y_shift, axis=0)
+        temp_padded_im = np.roll(temp_padded_im, x_shift, axis=1)
+
+        # If jittered, re-crop image to be correct size again
+        if pad_width != 0:
+            jitter_cube[i] = temp_padded_im[pad_width:-pad_width, pad_width:-pad_width]
+        else:
+            jitter_cube[i] = temp_padded_im
+
+    return jitter_cube
 
 def create_im_subarray(image, x, y, nx, ny, show_fig=False):
     '''
@@ -604,9 +618,6 @@ def run_trk(image, guider, root, num_frames, out_dir=None, jitter=True, interact
     log.info("Step: {}".format(trk.step))
     trk.create_arrays(trk.xgs, trk.ygs, cds=False)
 
-    if jitter:
-        trk.image = add_jitter(trk.image, total_shift=1)
-
     filename_noisy_sky = os.path.join(trk.out_dir,
                                       'dhas', '{}_G{}_{}.fits'.format(trk.root,
                                                                       trk.guider,
@@ -638,6 +649,6 @@ def create_lostrk(image, guider, root, nx, ny, out_dir=None):
 def run_all(im, guider, root, num_frames=None, out_dir=None,
             jitter=True):
     # Not interatctive!!
-    run_id(im, guider, root, out_dir, nref)
+    run_id(im, guider, root, out_dir)
     run_acq(im, guider, root, out_dir)
     run_trk(im, guider, root, num_frames, out_dir, jitter)
