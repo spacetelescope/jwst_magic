@@ -12,7 +12,6 @@ import FGS_commissioning
 import log
 import nircam_to_fgs
 import utils
-import getbias
 import background_stars
 
 

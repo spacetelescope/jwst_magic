@@ -40,10 +40,7 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
         bias0file = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
         read0 = fits.getdata(bias0file)#.astype(np.uint16)
 
-        if bias.shape[1] % 2 == 0:
-            bias += read0[xlow:xhigh, ylow:yhigh]
-        elif bias.shape[1] % 2 == 1:  # If odd, add another pixel (?!?)
-            bias += read0[xlow:xhigh + 1, ylow:yhigh + 1]
+        bias += read0[xlow:xhigh, ylow:yhigh]
 
         bias[bias < 0] = 0.
         bias[bias > 40000] = 10000.
@@ -66,10 +63,8 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
             pedestal[iramp * nramps:(iramp + 1) * nramps, :, 1024:1535] = ped_noise[2]
             pedestal[iramp * nramps:(iramp + 1) * nramps, :, 1536:2047] = ped_noise[3]
 
-        if bias.shape[1] % 2 == 0:
-            bias += pedestal[:, xlow:xhigh, ylow:yhigh]
-        elif bias.shape[1] % 2 == 1:  # If odd, add another pixel (?!?)
-            bias += pedestal[:, xlow:xhigh + 1, ylow:yhigh + 1]
+        bias += pedestal[:, xlow:xhigh, ylow:yhigh]
+
 
     # rectify bias img
     bias[bias < 0] = 0.
