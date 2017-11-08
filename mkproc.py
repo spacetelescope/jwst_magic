@@ -8,7 +8,6 @@ import shutil
 import numpy as np
 
 # LOCAL
-import rptoia
 import coordinate_transforms
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
