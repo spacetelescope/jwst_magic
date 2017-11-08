@@ -8,7 +8,6 @@ from matplotlib.colors import LogNorm
 import numpy as np
 
 # LOCAL
-import rptoia
 import coordinate_transforms
 import getbias
 import utils
@@ -17,11 +16,11 @@ import log
 import select_psfs
 
 # DEFINE ALL NECESSARY CONSTANTS
-TCDSID = 0.338    # neil 18 may 12
-TCDSACQ1 = 0.3612 # 20 apr 17 keira # 1cds time = 2*(128*128*10.e-6) = 0.32768s
-TCDSACQ2 = 0.0516 # 20 apr 17 keira brooks # 2cds time = 4*(32*32*10e-6) = 0.04096s
-TCDSTRK = 0.0256  # neil 18 may 12
-TCDSFG = 0.0512   # neil 18 may 12
+TCDSID = 0.338     # neil 18 may 12
+TCDSACQ1 = 0.3612  # 20 apr 17 keira # 1cds time = 2*(128*128*10.e-6) = 0.32768s
+TCDSACQ2 = 0.0516  # 20 apr 17 keira brooks # 2cds time = 4*(32*32*10e-6) = 0.04096s
+TCDSTRK = 0.0256   # neil 18 may 12
+TCDSFG = 0.0512    # neil 18 may 12
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 # Location of all necessary *.fits files (newmagicHdrImg, bias0, etc)
@@ -47,13 +46,13 @@ class FGS(object):
         self.background = background
 
         # Detector motion
-        self.scdrift = scdrift ## Do I want this here???
+        self.scdrift = scdrift  # Do I want this here???
 
         # Practical things
         self.guider = guider
         self.root = root
 
-        ## DEFINE ALL THINGS PATHS
+        # DEFINE ALL THINGS PATHS
         # Define output directory
         if out_dir is None:
             self.out_dir = os.path.join(LOCAL_PATH, 'out', self.root)
@@ -64,9 +63,9 @@ class FGS(object):
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
 
-        ## READ IN IMAGE
+        # READ IN IMAGE
         if isinstance(im, str):
-            data = fits.getdata(im) #*_bin_norm from FGS_bin_tool
+            data = fits.getdata(im)  #*_bin_norm from FGS_bin_tool
             self.input_im = np.uint16(data)
         else:
             self.input_im = np.uint16(im)
@@ -79,8 +78,7 @@ class FGS(object):
         if guide_star_coords is None:
             self.get_guide_star_coords(gs_ind=0)
 
-
-    ### Guide star and reference star coordinates and countrates
+    # Guide star and reference star coordinates and countrates
     def get_coords_and_counts(self, reg_file=None):
         '''
         Get coordinate information of guide star and reference stars
@@ -228,7 +226,7 @@ class FGS(object):
             self.overlap = overlap
             if nstrips is None:
                 nstrips_arr = [32, 33, 34, 35, 36, 37, 39, 40, 42]
-                self.nstrips = nstrips_arr[overlap/2]
+                self.nstrips = nstrips_arr[overlap // 2]
             else:
                 self.nstrips = nstrips
 
@@ -247,8 +245,6 @@ class FGS(object):
         NOTE: Include an acquisition number ("acqNum") for acquisition
         NOTE: For acquisition, x,y should be the coordinates of the guide star
         '''
-
-
 
         self.bias = getbias.getbias(self.guider, self.xgs, self.ygs, self.nreads,
                                     self.nramps,
@@ -294,7 +290,7 @@ class FGS(object):
         <name>_G<guider><step><acqnum>.fits :   fits cube of the sky with added bias and noise
                                             to simulate the read and ramp cycle for ID
         '''
-        ## STScI only files - mostly just for quick checks of the data
+        # STScI only files - mostly just for quick checks of the data
         log.info('Baseline {}'.format(np.max(self.time_normed_im)))
 
         # Sky imge
@@ -334,7 +330,7 @@ class FGS(object):
         utils.write_fits(filename_cds, self.cds)
 
         if self.step == 'ID':
-            ## STScI only files - mostly just for quick checks of the data
+            # STScI only files - mostly just for quick checks of the data
             # Star catalog in real pixs
             filename_starcat = os.path.join(self.out_dir,
                                             'stsci',
@@ -351,7 +347,7 @@ class FGS(object):
                                                                  self.step))
             utils.write_fits(filename_ff, np.uint16(self.image))
 
-            ## DHAS file
+            # DHAS file
             # Extract strips from ff img
             filename_id_strips = os.path.join(self.out_dir,
                                               'dhas',
@@ -364,12 +360,12 @@ class FGS(object):
             dummy_data, hdr0 = fits.getdata(filename_hdr, header=True)
             utils.write_fits(filename_id_strips, self.strips, header=hdr0)
 
-            ## Gound system file
+            # Gound system file
             convert_fits_to_dat(filename_id_strips, self.step,
                                 os.path.join(self.out_dir, 'ground_system'))
 
         elif self.step == 'ACQ':
-            ## STScI only files - mostly just for quick checks of the data
+            # STScI only files - mostly just for quick checks of the data
             # star catalog in real pixs
             filename_starcat = os.path.join(self.out_dir,
                                             'stsci',
@@ -379,7 +375,7 @@ class FGS(object):
                                                                      acqNum))
             self.write_cat(filename_starcat, self.xgs, self.ygs)
 
-            ## DHAS file
+            # DHAS file
             # Noisy sky acquisition fits images
             filename_noisy_sky = os.path.join(self.out_dir,
                                               'dhas',
@@ -389,14 +385,14 @@ class FGS(object):
                                                                         acqNum))
             utils.write_fits(filename_noisy_sky, np.uint16(self.image))
 
-            ## Gound system file
+            # Ground system file
             convert_fits_to_dat(filename_noisy_sky, self.step,
                                 os.path.join(self.out_dir, 'ground_system'))
 
         else:
             pass
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
     '''
     Convert a .fits file to a .dat file for use on the ground system
@@ -447,12 +443,12 @@ def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
 
     print("Successfully wrote: {}".format(os.path.join(out_dir, outfile)))
     return
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 def create_cds_image(arr):
     '''
     Create CDS image: Subtract the first read from the second read.
     '''
-    return arr[1::2]-arr[:-1:2]
+    return arr[1::2] - arr[:-1:2]
 
 def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
     '''
@@ -476,7 +472,7 @@ def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
 
     plt.show()
 
-### Arrays and array manipulation
+# Arrays and array manipulation
 def add_jitter(im_cube, total_shift=3):
     '''
     Add random single pixel jitter (up to 2 pixel shift in each x and y)
@@ -487,7 +483,7 @@ def add_jitter(im_cube, total_shift=3):
         # to sqrt(total_shift^2 / 2), for a total shift magnitude of <= total_shift
         max_shift_component = int(np.sqrt(total_shift ** 2 / 2))
         x_shift, y_shift = np.random.randint(low=-max_shift_component,
-                                             high=max_shift_component+1, size=2)
+                                             high=max_shift_component + 1, size=2)
 
         # Pad image so as to not roll over real pixels
         pad_width = max(abs(x_shift), abs(y_shift))
@@ -513,14 +509,14 @@ def create_im_subarray(image, x, y, nx, ny, show_fig=False):
 
     img = np.copy(image)
     if (nx % 2 == 1):
-        x1 = int(x) - (nx / 2 + 1)
-        y1 = int(y) - (ny / 2 + 1)
+        x1 = int(x) - (nx // 2 + 1)
+        y1 = int(y) - (ny // 2 + 1)
     else:
-        x1 = int(x) - nx / 2
-        y1 = int(y) - ny / 2
+        x1 = int(x) - nx // 2
+        y1 = int(y) - ny // 2
 
-    x2 = int(x) + nx / 2
-    y2 = int(y) + ny / 2
+    x2 = int(x) + nx // 2
+    y2 = int(y) + ny // 2
 
     img = img[y1:y2, x1:x2]
 
@@ -554,8 +550,8 @@ def add_background(array, nx, ny, nz):
 
     return array
 
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 def run_id(image, guider, root, out_dir=None, interactive=False):
 
     '''
@@ -630,7 +626,7 @@ def run_trk(image, guider, root, num_frames, out_dir=None, jitter=True, interact
 
 def create_lostrk(image, guider, root, nx, ny, out_dir=None):
     trk = FGS(image, guider, root, out_dir)
-    trk.nreads = 1  #want only single frame image
+    trk.nreads = 1  # want only single frame image
     trk.setup_step(nx, ny, nramps=1, tcds=TCDSTRK, step='TRK')
     trk.create_arrays(trk.xgs, trk.ygs, cds=False)
 
@@ -642,7 +638,7 @@ def create_lostrk(image, guider, root, nx, ny, out_dir=None):
                                                                  trk.step))
     utils.write_fits(filename_noisy_sky, trk.image)
 
-    ## Gound system file
+    # Ground system file
     convert_fits_to_dat(filename_noisy_sky, trk.step, os.path.join(trk.out_dir,
                                                                    'ground_system'))
 

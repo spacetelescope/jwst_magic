@@ -31,35 +31,34 @@ simulating Global Alignment using the short wavelength channel
 (Sherie was told they include detector noise and bias offsets between the readout channels)
 '''
 
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 def bad_pixel_correction(data, bp_thresh):
     '''Finds and smooths out bad pixels with a median filter'''
-    #apply median filter
+    # apply median filter
     smooth = signal.medfilt(data, 3)
 
-    #set negative values to zero
+    # set negative values to zero
     j = smooth.copy()
     j[j < 0] = 0
 
-    #difference between image and smoothed image; leaves the background behind
+    # difference between image and smoothed image; leaves the background behind
     # so we can filter out the bad pixels
-    delta = data-smooth
+    delta = data - smooth
 
-    #Locating the bad pixels. If there are still bpix in masked image, fiddle
+    # Locating the bad pixels. If there are still bpix in masked image, fiddle
     # with delta threshold
     j = np.where(delta > bp_thresh)
 
-    #using location of the bad pixels, replace the bpix value with median value
+    # using location of the bad pixels, replace the bpix value with median value
     # of the smoothed image
-    #also get rid of any negative numbers
+    # also get rid of any negative numbers
     data[j] = np.median(smooth)
     data[data < 0] = 0
 
-    #recast as unsigned integers
+    # recast as unsigned integers
     data = np.int_(data)
 
-    #clip any over saturated/hot pixels left, replace with integer form of
+    # clip any over saturated/hot pixels left, replace with integer form of
     # median value of smoothed image
     data[data > 50000] = np.int_(np.median(smooth))
 
@@ -79,21 +78,21 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_mod):
         module = header['DETECTOR'][3]
 
     if module == 'B':
-        ## NIRCAM Module B
+        # NIRCAM Module B
         if fgs_guider == 1:
-            ## FGS guider = 1; Perform a Left-Right flip
-            image = np.fliplr(image) # equivalent to image[:,::-1]
+            # FGS guider = 1; Perform a Left-Right flip
+            image = np.fliplr(image)  # equivalent to image[:,::-1]
         else:
-            ## FGS guider = 2; Perform a 180 degree rotation
+            # FGS guider = 2; Perform a 180 degree rotation
             image = np.rot90(image, k=20)
 
     elif module == 'A':
-        ## NIRCAM Module A
+        # NIRCAM Module A
         if fgs_guider == 1:
-            ## FGS guider = 1; Perform a Up-Down flip
-            image = np.flipud(image) # equivalent to image[::-1,...]
+            # FGS guider = 1; Perform a Up-Down flip
+            image = np.flipud(image)  # equivalent to image[::-1,...]
         else:
-            ## FGS guider = 2; No change necessary!
+            # FGS guider = 2; No change necessary!
             pass
     else:
         log.error('Check the header keyword "DETECTOR" for the NIRCAM module, \
@@ -115,8 +114,8 @@ def pad_data(data, padding):
     ped_size = size / 4
     noped_data = np.zeros(np.shape(data))
     for i in range(4):
-        ped_start = i * ped_size
-        ped_stop = (i + 1) * ped_size
+        ped_start = int(i * ped_size)
+        ped_stop = int((i + 1) * ped_size)
         ped_strip = data[:, ped_start:ped_stop]
         pedestal = np.median(ped_strip)
 
@@ -158,12 +157,11 @@ def normalize_data(data, fgs_counts, threshold=5):
     later.*
     '''
     mask = data > threshold
-    data_norm = np.copy(mask*data.astype(np.float64))
-    data_norm *= (fgs_counts/data_norm.sum()) #renormalize by sum of non-masked data
+    data_norm = np.copy(mask * data.astype(np.float64))
+    data_norm *= (fgs_counts / data_norm.sum())  #renormalize by sum of non-masked data
     data_norm[mask == 0] = data[mask == 0] #background is not normalized
 
     return data_norm
-
 
 
 def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
@@ -197,9 +195,8 @@ def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
     return binned_pad_norm_bias
 
 
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
                return_im=True, output_path=None):
     '''
@@ -265,7 +262,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         return
 
     # ---------------------------------------------------------------------
-    ## For the images requested, convert to FGS images
+    # For the images requested, convert to FGS images
     for image in im_list:
         basename = os.path.basename(image)
 
