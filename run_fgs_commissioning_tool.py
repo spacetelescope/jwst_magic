@@ -94,3 +94,4 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     FGS_commissioning.run_acq(fgs_im, guider, root, out_dir=out_dir)
     FGS_commissioning.create_lostrk(fgs_im, guider, root, nx=43, ny=43,
                                     out_dir=out_dir)
+    FGS_commissioning.run_trk(fgs_im, guider, root, 5000, out_dir=out_dir, jitter=False)

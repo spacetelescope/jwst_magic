@@ -35,7 +35,7 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
 
     bias = np.zeros((nz, ny, nx))
 
-    # 0th read bias structure (present in every read)
+    # 0th read bias structure (present in every read) - - - - - - - - - - - - -
     if bzp:
         bias0file = os.path.join(data_path, 'g{}bias0.fits'.format(guider))
         read0 = fits.getdata(bias0file)#.astype(np.uint16)
@@ -47,24 +47,57 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
 
         # bias *= 0.5  # 22 may 13 sth damp 0th read structure for ernie's testing
 
-    # KTC imprints at reset (uniform within each ramp)
+    # KTC imprints at reset (uniform within each ramp) - - - - - - - - - - - - -
     if bktc:
         ktc = 10. * np.random.random_sample((nramps, ny, nx))
         ktc_full = np.repeat(ktc, nreads, axis=0) #repeat the KTC for all reads
         bias += ktc_full
 
-    # Pedestal imprints at reset (uniform within each ramp)
+    # Pedestal imprints at reset (uniform within each ramp) - - - - - - - - - -
     if bp:
-        pedestal = np.zeros((nz, 2048, 2048))
-        for iramp in range(nramps):
-            ped_noise = np.fix(25 * np.random.standard_normal(size=4))
-            pedestal[iramp * nramps:(iramp + 1) * nramps, :, 0:511] = ped_noise[0]
-            pedestal[iramp * nramps:(iramp + 1) * nramps, :, 512:1023] = ped_noise[1]
-            pedestal[iramp * nramps:(iramp + 1) * nramps, :, 1024:1535] = ped_noise[2]
-            pedestal[iramp * nramps:(iramp + 1) * nramps, :, 1536:2047] = ped_noise[3]
+        # For full frame images (ID)
+        if nx == 2048:
+            pedestal = np.zeros((nz, ny, nx))
+            ped_noise = np.fix(25 * np.random.standard_normal(size=(nramps, 4)))
+            for iramp, ped in zip(range(nramps), ped_noise):
+                pedestal[iramp * nreads:(iramp + 1) * nreads, :, 0:511] = ped[0]
+                pedestal[iramp * nreads:(iramp + 1) * nreads, :, 512:1023] = ped[1]
+                pedestal[iramp * nreads:(iramp + 1) * nreads, :, 1024:1535] = ped[2]
+                pedestal[iramp * nreads:(iramp + 1) * nreads, :, 1536:2047] = ped[3]
 
-        bias += pedestal[:, xlow:xhigh, ylow:yhigh]
+            pedestal = pedestal[:, xlow:xhigh, ylow:yhigh]
 
+        # For subarrays
+        else:
+            # Determine if subarray spans multiple pedestals:
+            spanning = False
+            for border in [512, 1024, 1536]:
+                if (border - nx) < xlow < border:
+                    spanning = border
+
+            # If subarray spans multiple pedestals:
+            if type(spanning) == int:
+                pedestal = np.zeros((nz, ny, nx))
+
+                # Determine transition x value
+                xborder = spanning - 1 - xlow
+
+                ped_noise = np.fix(25 * np.random.standard_normal(size=(nramps, 2)))
+                for iramp, ped in zip(range(nramps), ped_noise):
+                    pedestal[iramp * nreads:(iramp + 1) * nreads, :, :xborder] = ped[0]
+                    pedestal[iramp * nreads:(iramp + 1) * nreads, :, xborder:] = ped[1]
+
+            # Else if subarray is completely within just one pedestal:
+            elif not spanning:
+                ped_noise = np.zeros((nramps, 1, 1))
+                ped_noise[:, 0, 0] = np.fix(25 * np.random.standard_normal(size=nramps))
+
+                # Resize array to match pedestal array
+                pedestal = np.repeat(ped_noise, ny, axis=1)
+                pedestal = np.repeat(pedestal, nx, axis=2)
+                pedestal = np.repeat(pedestal, nreads, axis=0)
+
+        bias += pedestal
 
     # rectify bias img
     bias[bias < 0] = 0.

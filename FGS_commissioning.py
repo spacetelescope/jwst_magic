@@ -189,7 +189,7 @@ class FGS(object):
         print("Successfully wrote: {}".format(filename))
 
     # Put it all together
-    def setup_step(self, nx, ny, nramps, tcds, step, yoffset=0, h=64, overlap=8,
+    def setup_step(self, nx, ny, nramps, tcds, step, yoffset=12, h=64, overlap=8,
                    nstrips=None):
         '''
         Set up attributes and basic arrays for ID, acquisitions 1 or 2, and TRK:
@@ -217,11 +217,11 @@ class FGS(object):
         self.ny = ny
         self.nramps = nramps
         self.nz = self.nreads * self.nramps
+        self.yoffset = yoffset
 
         self.step = step
 
         if self.step == 'ID':
-            self.yoffset = yoffset
             self.h = h
             self.overlap = overlap
             if nstrips is None:
@@ -562,11 +562,15 @@ def run_id(image, guider, root, out_dir=None, interactive=False):
     id0 = FGS(image, guider, root, out_dir)
     id0.setup_step(2048, 2048, 2, tcds=TCDSID, step='ID')
     log.info("Step: {}".format(id0.step))
-    id0.create_arrays(id0.xarr, id0.yarr, acqNum=None)
-    id0.write_out_files(id0.xarr, id0.yarr, id0.countrate)
+    id0.create_arrays(id0.xarr, id0.yarr - id0.yoffset, acqNum=None)
+
+    # Write STSCI: sky.fits, bias.fits, cds.fits, ff.fits, .stc, .gssscat
+    # Write DHAS: strips.fits
+    # Write ground system: .dat
+    id0.write_out_files(id0.xarr, id0.yarr - id0.yoffset, id0.countrate)
 
     # Make CECIL proc file
-    Mkproc(guider, root, id0.xarr, id0.yarr, id0.countrate, step='ID',
+    Mkproc(guider, root, id0.xarr, id0.yarr - id0.yoffset, id0.countrate, step='ID',
            out_dir=out_dir)
 
     if interactive:
@@ -583,20 +587,34 @@ def run_acq(image, guider, root, out_dir=None, interactive=False):
     acq1 = FGS(image, guider, root, out_dir)
     acq1.setup_step(nx=128, ny=128, nramps=6, tcds=TCDSACQ1, step='ACQ')
     log.info("Step: {}".format(acq1.step))
-    acq1.create_arrays(acq1.xgs, acq1.ygs, acqNum=1)
-    acq1.write_out_files(acq1.xgs - (acq1.nx / 2.), acq1.ygs - (acq1.ny / 2.),
+    acq1.create_arrays(acq1.xgs, acq1.ygs - acq1.yoffset, acqNum=1)
+
+    # Write STSCI: sky.fits, bias.fits, cds.fits, .stc, .cat
+    # Write DHAS: ACQ1.fits
+    # Write ground system: ACQ1.dat
+    acq1.write_out_files(acq1.xgs - (acq1.nx / 2.), acq1.ygs - (acq1.ny / 2.) - acq1.yoffset,
                          acq1.countrategs, acqNum=1)
 
     # Acquistion #2
     acq2 = FGS(image, guider, root, out_dir)
     acq2.setup_step(nx=32, ny=32, nramps=5, tcds=TCDSACQ2, step='ACQ')
-    acq2.create_arrays(acq2.xgs, acq2.ygs, acqNum=2)
-    acq2.write_out_files(acq2.xgs - (acq2.nx / 2.), acq2.ygs - (acq2.ny / 2.),
+    acq2.create_arrays(acq2.xgs, acq2.ygs - acq2.yoffset, acqNum=2)
 
+    # Write STSCI: sky.fits, bias.fits, cds.fits, .stc, .cat
+    # Write DHAS: ACQ2.fits
+    # Write ground system: ACQ2.dat
+    acq2.write_out_files(acq2.xgs - (acq2.nx / 2.), acq2.ygs - (acq2.ny / 2.) - acq2.yoffset,
                          acq2.countrategs, acqNum=2)
 
+    # print('''
+    #     guide star: {}, {}, {}
+    #     acq1 box loc: {}, {}, {}
+    #     acq2 box loc: {}, {}, {}'''.format(acq1.xgs, acq1.ygs - acq1.yoffset, acq1.countrategs,
+    #                                     acq1.xgs - (acq1.nx / 2.), acq1.ygs - (acq1.ny / 2.) - acq1.yoffset, acq1.countrategs,
+    #                                     acq2.xgs - (acq2.nx / 2.), acq2.ygs - (acq2.ny / 2.) - acq2.yoffset, acq1.countrategs))
+
     # Make CECIL proc file
-    Mkproc(guider, root, acq1.xgs, acq1.ygs, acq1.countrategs, step='ACQ',
+    Mkproc(guider, root, acq1.xgs, acq1.ygs - acq2.yoffset, acq1.countrategs, step='ACQ',
            out_dir=out_dir)
 
     if interactive:
@@ -612,7 +630,7 @@ def run_trk(image, guider, root, num_frames, out_dir=None, jitter=True, interact
     trk = FGS(image, guider, root, out_dir)
     trk.setup_step(nx=32, ny=32, nramps=num_frames, tcds=TCDSTRK, step='TRK')
     log.info("Step: {}".format(trk.step))
-    trk.create_arrays(trk.xgs, trk.ygs, cds=False)
+    trk.create_arrays(trk.xgs, trk.ygs - trk.yoffset, cds=False)
 
     filename_noisy_sky = os.path.join(trk.out_dir,
                                       'dhas', '{}_G{}_{}.fits'.format(trk.root,
@@ -625,10 +643,24 @@ def run_trk(image, guider, root, num_frames, out_dir=None, jitter=True, interact
 
 
 def create_lostrk(image, guider, root, nx, ny, out_dir=None):
+    # Note: LOSTRK files are created to run in the FGSES at Goddard, not the DHAS
+
     trk = FGS(image, guider, root, out_dir)
     trk.nreads = 1  # want only single frame image
     trk.setup_step(nx, ny, nramps=1, tcds=TCDSTRK, step='TRK')
-    trk.create_arrays(trk.xgs, trk.ygs, cds=False)
+    log.info("Step: LOS{}".format(trk.step))
+
+    # DO NOT include bias of any kind
+    trk.biaszeropt = False
+    trk.biasktc = False
+    trk.biasped = False
+    trk.poissonnoise = False
+    trk.create_arrays(trk.xgs, trk.ygs - trk.yoffset, cds=False)
+
+    # Resize image array to oversample by 6 (from 43x43 to 256x256)
+    trk.image = trk.image.repeat(6, axis=1)
+    trk.image = trk.image.repeat(6, axis=2)
+    trk.image = trk.image[:, 1:-1, 1:-1]
 
     # This is a ground system file, but needs to be in .dat format
     filename_noisy_sky = os.path.join(trk.out_dir,
@@ -636,7 +668,7 @@ def create_lostrk(image, guider, root, nx, ny, out_dir=None):
                                       '{}_G{}_LOS{}.fits'.format(trk.root,
                                                                  trk.guider,
                                                                  trk.step))
-    utils.write_fits(filename_noisy_sky, trk.image)
+    utils.write_fits(filename_noisy_sky, np.uint16(trk.image))
 
     # Ground system file
     convert_fits_to_dat(filename_noisy_sky, trk.step, os.path.join(trk.out_dir,
