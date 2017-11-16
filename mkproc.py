@@ -54,7 +54,7 @@ class Mkproc(object):
             self.create_id_proc_file(root, guider, xarr, yarr, counts,
                                      thresh_factor=thresh_factor)
         elif step == 'ACQ':
-            self.create_acq_proc_file(root, guider)
+            self.create_acq_proc_file(root, guider, xarr, yarr, counts)
 
     def find_templates(self, guider, step, template_path):
         '''
@@ -157,21 +157,26 @@ class Mkproc(object):
                      os.path.join(self.out_dir, 'ground_system'))
 
 
-    def create_acq_proc_file(self, root, guider):
+    def create_acq_proc_file(self, root, guider, x_gs, y_gs, counts):
         '''
         Create the CECIL proc file for the acquisition phase
         '''
         eol = '\n'
 
-        #corner coords & gs counts
-        ind1, xarr1, yarr1, counts1 = np.loadtxt(os.path.join(self.out_dir, 'stsci',
+        # Convert GS location in pixels to DHAS ideal angle
+        x_gs, y_gs = coordinate_transforms.rptoia(x_gs, y_gs, guider) # SWITCH UGH
+        x_gs, y_gs = coordinate_transforms.iatoDHAS(x_gs, y_gs, guider)
+
+        # Corner coords
+        ind1, acq1_corner_x, acq1_corner_y, counts1 = np.loadtxt(os.path.join(self.out_dir, 'stsci',
                                                               '{}_G{}_ACQ1.stc'.format(root,
                                                                                        guider))).T
-        threshgs = 0.50 * counts1
 
-        ind2, xarr2, yarr2, counts2 = np.loadtxt(os.path.join(self.out_dir, 'stsci',
+        ind2, acq2_corner_x, acq2_corner_y, counts2 = np.loadtxt(os.path.join(self.out_dir, 'stsci',
                                                               '{}_G{}_ACQ2.stc'.format(root,
                                                                                        guider))).T
+        # Get threshold from countrate (not from STC file)
+        threshgs = 0.50 * counts
 
         with open(os.path.join(self.out_dir, 'dhas',
                                '{0}_G{1}_ACQ.prc'.format(root, guider)), 'w') as file_out:
@@ -182,23 +187,26 @@ class Mkproc(object):
 
             write_from_template(self.template_a, file_out)
 
-
+            # Write guide star coordinates
             file_out.write('@IFGS_GUIDESTAR {0}, 2, {1:12.4f}, {2:12.4f}, \
-                           {3:12.4f}, {4:8d}'.format(self.guider, float(xarr1),
-                                                     float(yarr1), float(counts1),
+                           {3:12.4f}, {4:8d}'.format(self.guider, float(x_gs),
+                                                     float(y_gs), float(counts),
                                                      int(threshgs)))
+
             write_from_template(self.template_b, file_out)
+
+            # Write ACQ1 box specs
             file_out.write('@IFGS_CONFIG {0}, SWADDRESS=spaceWireAddr1, SLOT=1, NINTS=1, \
             NGROUPS=groupNum1, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=128, NCOLS=128, \
-            ROWCORNER={1:12.4f},COLCORNER={2:12.4f}'.format(self.guider, xarr1, yarr1))
+            ROWCORNER={1:12.4f},COLCORNER={2:12.4f}'.format(self.guider, acq1_corner_x, acq1_corner_y))
             file_out.write(eol)
 
             write_from_template(self.template_c, file_out)
 
-
+            # Write ACQ2 box specs
             file_out.write('@IFGS_CONFIG {0}, spaceWireAddr2, SLOT=2, NINTS=1, \
             NGROUPS=groupNum2, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=32, NCOLS=32, \
-            ROWCORNER={1:12.4f}, COLCORNER={2:12.4f}'.format(self.guider, xarr2, yarr2))
+            ROWCORNER={1:12.4f}, COLCORNER={2:12.4f}'.format(self.guider, acq2_corner_x, acq2_corner_y))
             file_out.write(eol)
 
             write_from_template(self.template_d, file_out)
