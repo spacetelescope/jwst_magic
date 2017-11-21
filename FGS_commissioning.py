@@ -96,10 +96,11 @@ class FGS(object):
         else:
             self.yarr, self.xarr, self.countrate = np.loadtxt(reg_file, delimiter=' ',
                                                               skiprows=1).T
+
         # Cover cases where there is only one entry in the reg file
-        self.xarr = np.asarray(self.xarr)
-        self.yarr = np.asarray(self.yarr)
-        self.countrate = np.asarray(self.countrate)
+        self.xarr = np.asarray([self.xarr])
+        self.yarr = np.asarray([self.yarr])
+        self.countrate = np.asarray([self.countrate])
 
     def get_guide_star_coords(self, gs_ind=0):
         '''
@@ -119,8 +120,8 @@ class FGS(object):
         PoissonNoise should always be set to True for ID.
         '''
 
-        if self.step == 'ACQ':
-            time_normed_im = 2. * time_normed_im  # Is this still necessary?
+        # if self.step == 'ACQ':
+        #     time_normed_im = 2. * time_normed_im  # Is this still necessary?
 
         image = np.copy(bias)
 
@@ -660,7 +661,7 @@ def create_lostrk(image, guider, root, nx, ny, out_dir=None):
     # Resize image array to oversample by 6 (from 43x43 to 256x256)
     trk.image = trk.image.repeat(6, axis=1)
     trk.image = trk.image.repeat(6, axis=2)
-    trk.image = trk.image[:, 1:-1, 1:-1]
+    trk.image = trk.image[:, 1:-2, 1:-2]
 
     # This is a ground system file, but needs to be in .dat format
     filename_noisy_sky = os.path.join(trk.out_dir,
