@@ -13,6 +13,7 @@ import log
 import nircam_to_fgs
 import utils
 import background_stars
+import counts_to_jmag
 
 
 # Because Jupyter Notebook cannot open a matplotlib object, I have copied what is
@@ -63,15 +64,23 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     log.info("Processing request for {}. \nAll data will be saved in: {}".format(root, out_dir))
     utils.ensure_dir_exists(out_dir)
 
-    # convert NIRCam image to an FGS image
+    # Either convert provided NIRCam image to an FGS image...
     if nircam:
         log.info("This is a NIRCam image")
         fgs_im = nircam_to_fgs.convert_im(image, guider, fgs_counts=fgs_counts,
                                           jmag=jmag, nircam_mod=nircam_mod,
                                           return_im=True)
+
+    # ... or process provided FGS image
     else:
         log.info("This is a FGS image")
         fgs_im = fits.getdata(image)
+
+        # If J magnitude is provided, normalize the entire image to match that jmag
+        if jmag:
+            log.info("Normalizing to jmag = {}".format(jmag))
+            fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
+            fgs_im = fgs_im / np.sum(fgs_im) * fgs_counts
 
         # Correct high or low pixels
         fgs_im[fgs_im < 0] = 0.

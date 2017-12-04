@@ -98,9 +98,12 @@ class FGS(object):
                                                               skiprows=1).T
 
         # Cover cases where there is only one entry in the reg file
-        self.xarr = np.asarray([self.xarr])
-        self.yarr = np.asarray([self.yarr])
-        self.countrate = np.asarray([self.countrate])
+        try:
+            len(self.xarr)
+        except TypeError:
+            self.xarr = np.asarray([self.xarr])
+            self.yarr = np.asarray([self.yarr])
+            self.countrate = np.asarray([self.countrate])
 
     def get_guide_star_coords(self, gs_ind=0):
         '''
@@ -418,7 +421,14 @@ def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
         data = fits.getdata(infile)
 
         filename = infile.split('/')[-1]
-        root = filename.split('.')[0]
+        filename_split = filename.split('.')
+
+        if len(filename_split) == 2:
+            # If filename is in form ~~~.dtype
+            root = filename_split[0]
+        else:
+            # If filename is in form ~~.~~~.dtype
+            root = '.'.join(filename_split[:-1])
     else:
         root = '{}_{}'.format(root, obsmode)
 
@@ -657,6 +667,9 @@ def create_lostrk(image, guider, root, nx, ny, out_dir=None):
     trk.biasped = False
     trk.poissonnoise = False
     trk.create_arrays(trk.xgs, trk.ygs - trk.yoffset, cds=False)
+
+    # Normalize to a count sum of 1000
+    trk.image = trk.image / np.sum(trk.image) * 1000
 
     # Resize image array to oversample by 6 (from 43x43 to 256x256)
     trk.image = trk.image.repeat(6, axis=1)
