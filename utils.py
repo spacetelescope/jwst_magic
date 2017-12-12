@@ -83,7 +83,13 @@ def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
             for i in rows:
                 csvwriter.writerow(i)
     else:
-        np.savetxt(filename, rows, fmt=fmt, header=' '.join(labels))
+        try:
+            np.savetxt(filename, rows, fmt=fmt, header=' '.join(labels))
+        except TypeError:
+            f = open(filename, 'w')
+            f.write('# ' + ' '.join(labels) + '\n')
+            for row in rows:
+                f.write(' '.join(row) + '\n')
 
 
 def write_cols_to_file(output_path, filename, labels, cols):
