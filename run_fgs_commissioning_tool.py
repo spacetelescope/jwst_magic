@@ -3,8 +3,12 @@ import os
 import shutil
 
 # THIRD PARTY
+import matplotlib
+if matplotlib.get_backend() != 'Qt5Agg':
+    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 import numpy as np
 from astropy.io import fits
+import pprint
 
 # LOCAL
 import select_psfs
