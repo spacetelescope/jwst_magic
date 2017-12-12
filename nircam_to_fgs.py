@@ -263,6 +263,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
 
     # ---------------------------------------------------------------------
     # For the images requested, convert to FGS images
+    all_ims = []
     for image in im_list:
         basename = os.path.basename(image)
 
@@ -270,8 +271,10 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         log.info('Beginning to create FGS image from {}'.format(root))
 
         if output_path is None:
-            output_path = os.path.join(local_path, 'out', root)
-            utils.ensure_dir_exists(output_path)
+            output_path_save = os.path.join(local_path, 'out', root)
+            utils.ensure_dir_exists(output_path_save)
+        else:
+            output_path_save = output_path
 
         data = fits.getdata(image, header=False)
         header = fits.getheader(image, ext=0)
@@ -287,7 +290,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         # Normalize image
         data_norm = normalize_data(data_pad, fgs_counts)
 
-        out_path = os.path.join(output_path, 'FGS_imgs',
+        out_path = os.path.join(output_path_save, 'FGS_imgs',
                                 '{}_G{}_binned_pad_norm.fits'.format(root, guider))
         # Any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
@@ -297,5 +300,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
 
         print("Finished for {}, Guider = {}".format(root, guider))
 
-        if return_im:
-            return data_norm
+        all_ims.append(data_norm)
+
+    if return_im:
+        return all_ims
