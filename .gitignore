@@ -52,6 +52,9 @@ logs/*
 # Files #
 #########
 Legacy/*
-*.ipynb
-DHAStesting_prc.py
 DHAStesting_calcthresholds.py
+BackgroundStars.ipynb
+DHAStesting_analyzeGA.ipynb
+JWXML v. RPtoIA.ipynb
+Smoothing&IsolatingPSFs.ipynb
+
