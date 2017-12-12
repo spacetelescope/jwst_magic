@@ -135,12 +135,13 @@ class Logger(object):
         self.logger.removeHandler(handler)
 
 
-class FgsLogger(Logger):
-    """FGS logger."""
-    pass
+# class FgsLogger(Logger):
+#     """FGS logger."""
+#     pass
 
+# THE_LOGGER = FgsLogger("FGS")
 
-THE_LOGGER = FgsLogger("FGS")
+THE_LOGGER = Logger("FGS")
 
 info = THE_LOGGER.info
 error = THE_LOGGER.error
@@ -163,9 +164,9 @@ remove_stream_handler = THE_LOGGER.remove_stream_handler
 def set_log_file(filename, level=logging.DEBUG, mode="w+"):
     """Output log info to `filename`."""
     utils.ensure_dir_exists(os.path.dirname(filename))
-    f = open(filename, mode)
-    h = THE_LOGGER.add_stream_handler(f, level=level)
-    return f, h  # So we can close it gracefully
+    file_stream = open(filename, mode)
+    log_handler = THE_LOGGER.add_stream_handler(file_stream, level=level)
+    return file_stream, log_handler  # So we can close it gracefully
 
 
 def close_log_file(file_stream, log_handler):
@@ -226,16 +227,20 @@ def logtofile(logfile):
         def wrapper(*args, **kwargs):
             # This is not going into the file, just screen.
             THE_LOGGER.info('Started logging to {0}'.format(logfile))
+
             # Start logging.
             log_stream, log_handler = set_log_file(logfile)
+
             # Catch traceback, if any.
             try:
                 result = function(*args, **kwargs)
             except Exception as e:
                 THE_LOGGER.exception(e)
                 result = None
-            # End logging.
-            close_log_file(log_stream, log_handler)
+            finally:
+                # End logging!
+                close_log_file(log_stream, log_handler)
+
             # Original function output
             return result
         return wrapper
@@ -289,7 +294,7 @@ def handle_standard_options(args, parser=None,
 
     options, args = parser.parse_args(args)
 
-    set_verbose(int(options.verbose))
+    THE_LOGGER.set_verbose(int(options.verbose))
 
     return options, args
 
@@ -302,6 +307,6 @@ def standard_run(run_str, options, globals_dict, locals_dict):
 def standard_status():
     """Print out errors, warnings, and infos."""
     errors, warnings, infos = THE_LOGGER.status()
-    info(errors, "errors")
-    info(warnings, "warnings")
-    info(infos, "infos")
+    THE_LOGGER.info(errors, "errors")
+    THE_LOGGER.info(warnings, "warnings")
+    THE_LOGGER.info(infos, "infos")

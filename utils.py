@@ -35,11 +35,9 @@ def get_logname(logdir, taskname):
         Log filename.
 
     """
-    timestamp = time.ctime().replace(' ', '_')
-    timestamp = timestamp.replace('/', ':')
-    return os.path.join(
-        logdir,
-        '{0}_{1}.log'.format(taskname, timestamp))
+    timestamp = time.strftime('%Y_%m_%d_%a_%H%M%S')
+    logname = '{0}_{1}.log'.format(timestamp, taskname)
+    return os.path.join(logdir, logname)
 
 def write_fits(outfile, data, header=None):
     '''
