@@ -4,8 +4,16 @@ import os
 import sys
 from inspect import currentframe, getframeinfo
 import warnings
+import string
 
 # Third Party
+import matplotlib
+if matplotlib.get_backend() != 'Qt5Agg':
+    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+from matplotlib import rcParams
+
 from astropy.io import fits
 from astropy.io import ascii as asc
 from astropy.stats import sigma_clipped_stats
@@ -13,11 +21,6 @@ import numpy as np
 from photutils import find_peaks
 from scipy import ndimage, signal
 
-import matplotlib
-matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-from matplotlib import rcParams
 
 # LOCAL
 import utils
