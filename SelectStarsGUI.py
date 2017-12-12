@@ -83,7 +83,7 @@ class MyMplCanvas(FigureCanvas):
         # x_range = range(2048)
         # self.y_slices = [self.data[i] for i in range(2048)]
         # self.lines = [self.axes.plot(x_range, y, c='white') for y in self.y_slices]
-        self.axes.set_ylim(0.1, 5 * np.max(self.data))
+        self.axes.set_ylim(np.min(self.data) / 5, 5 * np.max(self.data))
         self.axes.set_yscale('log')
         self.axes.set_ylabel('Counts')
         self.axes.set_xlabel('X Pixels')
@@ -371,7 +371,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         mainGrid.addWidget(axGroupBox, 3, 2, 3, 1)
 
-        # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         starsGroupBox = QGroupBox(self)
         col2Grid = QGridLayout()
@@ -403,6 +403,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             # Create 'remove' buttons
             remove_button = QPushButton('Delete', starsGroupBox)
             remove_button.clicked.connect(self.make_removestar(remove_button))
+            remove_button.installEventFilter(self)
             remove_button.setEnabled(False)
 
             # Add to starsGroupBox grid layout
@@ -435,6 +436,38 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                            alignment=QtCore.Qt.AlignVCenter)
 
     @pyqtSlot()
+    def eventFilter(self, remove_button, event):
+        '''Parse out the cursor moving in or out of a star deletion button, and
+        updating the matplotlib axis with a red highlighted circle accordingly'''
+        if event.type() == QtCore.QEvent.Enter:
+            if remove_button.isEnabled() == True:
+                # Determine index of star corresponding to button
+                star_ind = self.remove_buttons.index(remove_button)
+                ind_of_star_ind = self.inds_of_inds.index(star_ind)
+
+                # Re-draw selected star as red
+                self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('red')
+
+                self.canvas.draw()
+            return True
+
+        if event.type() == QtCore.QEvent.Leave:
+            if remove_button.isEnabled() == True:
+                # Determine index of star corresponding to button
+                star_ind = self.remove_buttons.index(remove_button)
+                ind_of_star_ind = self.inds_of_inds.index(star_ind)
+
+                # Re-draw selected star as original color
+                if ind_of_star_ind == 0:
+                    self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('yellow')
+                else:
+                    self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('darkorange')
+
+                self.canvas.draw()
+            return True
+
+        return False
+
     def update_axes(self):
         '''Changes the axes limits of the matplotlib canvas to the current
         values of the axis limit textboxes
@@ -455,14 +488,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.canvas.draw()
 
     def update_textboxes(self):
-        '''Changes the values of the axis limit textboxes to the current axis limits of the matplotlib canvas'''
+        '''Changes the values of the axis limit textboxes to the current axis
+        limits of the matplotlib canvas'''
         self.x1_textbox.setText(str(self.canvas.axes.get_xlim()[0]))
         self.x2_textbox.setText(str(self.canvas.axes.get_xlim()[1]))
         self.y1_textbox.setText(str(self.canvas.axes.get_ylim()[1]))
         self.y2_textbox.setText(str(self.canvas.axes.get_ylim()[0]))
 
     def update_cursor_position(self, event):
-        '''Updates the cursor position textbox when the cursor moves within the matplotlib axis'''
+        '''Updates the cursor position textbox when the cursor moves within the
+        matplotlib axis'''
         if event.inaxes:
             self.cursor_textbox.setText('({:.0f}, {:.0f})'.format(event.xdata,
                                                                   event.ydata))
@@ -490,15 +525,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.profile.draw()
 
     def button_press_callback(self, event):
-        '''WHenever a mouse button is pressed, determines if a button press is within the matplotlib axis;
-        if so calls get_ind_under_point'''
-        if not event.inaxes: return
-        if event.button != 1: return
+        '''Whenever a mouse button is pressed, determines if a button press is
+        within the matplotlib axis; if so calls get_ind_under_point'''
+        if not event.inaxes:
+            return
+        if event.button != 1:
+            return
         self._ind = self.get_ind_under_point(event)
 
     def get_ind_under_point(self, event):
-        '''If user clicks within one epsilon of an identified star, appends that star's position to inds;
-        notifies user if no star is nearby or if selected star is already selected'''
+        '''If user clicks within one epsilon of an identified star, appends that
+        star's position to inds; notifies user if no star is nearby or if
+        selected star is already selected'''
 
         d = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
         # i = np.unravel_index(np.nanargmin(d), d.shape)
@@ -584,7 +622,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             guide_ind = self.guidestar_buttons.index(button)
             ind_of_guide_ind = self.inds_of_inds.index(guide_ind)
 
-
             self.inds.insert(0, self.inds.pop(ind_of_guide_ind))
             self.inds_of_inds.insert(0, self.inds_of_inds.pop(ind_of_guide_ind))
 
@@ -658,11 +695,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def fileQuit(self):
         '''Closes the application'''
+        # if self.inds == []:
+
         self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
         self.close()
 
     def cancel(self):
-        '''Closes the application and clears indicies'''
+        '''Closes the application and clears indices'''
         self.inds = []
         self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
         self.close()
