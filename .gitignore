@@ -48,6 +48,7 @@ notebooks/*
 out/*
 .ipynb_checkpoints/*
 logs/*
+comm_tool_obsolete
 
 # Files #
 #########
