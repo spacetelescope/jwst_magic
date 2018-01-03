@@ -180,3 +180,14 @@ def find_dist_between_points(coords):
         dists.append(find_resultant(c1, c2))
 
     return dists
+
+def correct_image(image, upper_threshold=65000, upper_limit=65000):
+    '''
+    Correct image for negative and saturated pixels
+    '''
+    img = np.copy(image)
+    img[img < 0] = 0.            # neg pixs -> 0
+    img[img >= upper_threshold] = upper_limit    # sat'd pixs -> 65K
+    img[np.isfinite(img) == 0] = 0.
+
+    return img
