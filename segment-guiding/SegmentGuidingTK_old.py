@@ -13,14 +13,12 @@ from tkinter import *
 import numpy as np
 from astropy.io import ascii
 import glob
-import matplotlib
-matplotlib.use("TkAgg")
 import matplotlib.pyplot as pl
 import xml.etree.cElementTree as etree
 
 # Private packages 
-import rotations
-import polynomial
+import fulltransform.rotations
+import fulltransform.polynomial
 
 class SegmentForm :
     def __init__(self) :
@@ -362,7 +360,7 @@ def Calculate():
     else: 
         gspa = float(gspa)
         sgForm.errmsg.configure(text='') # Clear error message
-        A = rotations.attitude(sgForm.V2Aim+V2B, sgForm.V3Aim+V3B, gsRA, gsDec, gspa) # The attitude matrix
+        A = fulltransform.rotations.attitude(sgForm.V2Aim + V2B, sgForm.V3Aim + V3B, gsRA, gsDec, gspa) # The attitude matrix
         
     # Get RA and Dec for each segment.
     SegRA = np.zeros(nseg)
@@ -370,7 +368,7 @@ def Calculate():
     for i in range(nseg):
         V2 = sgForm.V2Ref + V2Segs[i]
         V3 = sgForm.V3Ref + V3Segs[i]
-        (SegRA[i],SegDec[i]) = rotations.pointing(A,V2,V3)
+        (SegRA[i],SegDec[i]) = fulltransform.rotations.pointing(A, V2, V3)
         #print ('%2d %10.4f %10.4f %12.7f %12.7f' %(i+1,V2,V3,SegRA[i], SegDec[i]))
         
     sgForm.errmsg.configure(text='Calculation complete')    
@@ -428,8 +426,8 @@ def Calculate():
     #print('\nSegment x y positions')
     for p in range(nseg):
         # for OSS apertures Sci same as Det
-        xDet[p] = XSciRef + polynomial.poly(C, xIdlSegs[p], yIdlSegs[p], order)
-        yDet[p] = YSciRef + polynomial.poly(D, xIdlSegs[p], yIdlSegs[p], order)
+        xDet[p] = XSciRef + fulltransform.polynomial.poly(C, xIdlSegs[p], yIdlSegs[p], order)
+        yDet[p] = YSciRef + fulltransform.polynomial.poly(D, xIdlSegs[p], yIdlSegs[p], order)
         #print ('%8s %8.2f %8.2f' %(SegIDs[p], xDet[p], yDet[p]))
         if xDet[p] < 0.5 or xDet[p] > 2048.5: print ('%8s off detector in X direction' %SegID[p])       
         if yDet[p] < 0.5 or yDet[p] > 2048.5: print ('%8s off detector in Y direction' %SegID[p])
