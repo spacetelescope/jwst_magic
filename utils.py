@@ -184,3 +184,14 @@ def find_dist_between_points(coords):
         dists.append(find_resultant(c1, c2))
 
     return dists
+
+def countrate_3x3(x, y, data):
+    """
+    Using the coordinates of each PSF, place a 3x3 box around center pixel and sum
+    the counts of the pixels in this box.
+    """
+    x = int(x)
+    y = int(y)
+
+    counts = np.sum(data[y - 1:y + 2, x - 1:x + 2])
+    return counts
