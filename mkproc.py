@@ -102,8 +102,7 @@ class Mkproc(object):
             #y,x,c = (np.loadtxt(reg_file, delimiter=' ', skiprows=1)).T  # star coords & gs counts
 
             # Convert real pixel to DHAS ideal angle
-            xangle, yangle = coordinate_transforms.rptoia(xarr, yarr, guider)
-            xangle, yangle = coordinate_transforms.iatoDHAS(xangle, yangle, guider)
+            xangle, yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
 
             thresh = thresh_factor * counts
 
@@ -164,8 +163,7 @@ class Mkproc(object):
         eol = '\n'
 
         # Convert GS location in pixels to DHAS ideal angle
-        x_gs, y_gs = coordinate_transforms.rptoia(x_gs, y_gs, guider) # SWITCH UGH
-        x_gs, y_gs = coordinate_transforms.iatoDHAS(x_gs, y_gs, guider)
+        x_gs, y_gs = coordinate_transforms.Raw2DHAS(x_gs, y_gs, guider) # SWITCH UGH
 
         # Corner coords
         ind1, acq1_corner_x, acq1_corner_y, counts1 = np.loadtxt(os.path.join(self.out_dir, 'stsci',
