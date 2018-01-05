@@ -166,8 +166,7 @@ class FGS(object):
         Write out stc files using offset, rotated catalog
         """
         # Convert real pixel coordinates to DHAS ideal angle
-        xi, yi = coordinate_transforms.rptoia(xarr, yarr, self.guider)
-        xi, yi = coordinate_transforms.iatoDHAS(xi, yi, self.guider)
+        xi, yi = coordinate_transforms.Raw2DHAS(xarr, yarr, self.guider)
 
         try:
             len(xi)

@@ -1,14 +1,16 @@
-'''
-Convert between real pixel, ideal angle, and DHAS angle coordinates.
-'''
 import jwxml
 import glob
 
-#LOCAL
+# LOCAL
 try:
     import log
 except ImportError:
     in_tool = False
+
+'''
+Convert between FGS raw/native frame (pixels), ideal angle frame (arcsec), and
+DHAS frame (arcsec).
+'''
 
 # Find most recent SIAF .xml file
 fgs_siaf_dir = '***REMOVED***/share/SIAF_WG/Instruments/FGS/'
@@ -19,63 +21,61 @@ siaf_filename = all_xmls[-1]
 # Open with JWXML
 fgs_siaf = jwxml.SIAF(filename=siaf_filename)
 
-def rptoia(x_realpixel, y_realpixel, guider):
+def Raw2Det(x_raw, y_raw):
     '''
-    Pass in X Y in real pixels and get out X Y in ideal angle
+    Pass in X Y pixels in the raw/native frame and get out X Y pixels in the
+    SIAF detector frame
     '''
+    # Flip raw axes to get det axes
+    x_det = y_raw
+    y_det = x_raw
+    return x_det, y_det
+
+def Raw2Idl(x_raw, y_raw, guider):
+    '''
+    Pass in X Y pixels in the raw/native frame and get out X Y angles in the
+    ideal frame
+    '''
+    # Flip raw axes to get det axes
+    x_det, y_det = Raw2Det(x_raw, y_raw)
 
     if guider == 1:
         fgs_full = fgs_siaf.apertures['FGS1_FULL']
     elif guider == 2:
         fgs_full = fgs_siaf.apertures['FGS2_FULL']
+
+    # If invalid guider number provided...
     elif in_tool:
         log.error('Unrecognized guider number: {}'.format(guider))
     else:
         raise ValueError('Unrecognized guider number: {}'.format(guider))
 
-    x_idealangle, y_idealangle = fgs_full.Det2Idl(x_realpixel, y_realpixel)
+    # Convert detector frame to ideal frame
+    x_idealangle, y_idealangle = fgs_full.Det2Idl(x_det, y_det)
 
     return x_idealangle, y_idealangle
 
-def iatoDHAS(x_idealangle, y_idealangle, guider):
+
+def Idl2DHAS(x_idealangle, y_idealangle):
     '''
-    Pass in X and Y in the ideal angle frame and get out X and Y in the frame
-    DHAS requires.
+    Pass in X and Y angles in the ideal frame and get out X and Y angles in the
+    frame DHAS requires.
     '''
 
-    if guider == 1:
-        # Reverse ideal y
-        y_idealangle = -y_idealangle
-    elif guider == 2:
-        # Reverse ideal x
-        x_idealangle = -x_idealangle
-    elif in_tool:
-        log.error('Unrecognized guider number: {}'.format(guider))
-    else:
-        raise ValueError('Unrecognized guider number: {}'.format(guider))
-
-    # Flip X and Y axes
-    x_dhas, y_dhas = y_idealangle, x_idealangle
+    x_dhas = -x_idealangle
+    y_dhas = y_idealangle
 
     return x_dhas, y_dhas
 
-def iatorp(x_idealangle, y_idealangle, guider):
+def Raw2DHAS(x_raw, y_raw, guider):
     '''
-    Pass in X Y in ideal angle and get out X Y in real pixel
+    Pass in X and Y pixels in the raw/native frame and get out X and Y angles in
+    the frame DHAS requires.
     '''
+    x_idealangle, y_idealangle = Raw2Idl(x_raw, y_raw, guider)
+    x_dhas, y_dhas = Idl2DHAS(x_idealangle, y_idealangle)
 
-    if guider == 1:
-        fgs_full = fgs_siaf.apertures['FGS1_FULL']
-    elif guider == 2:
-        fgs_full = fgs_siaf.apertures['FGS2_FULL']
-    elif in_tool:
-        log.error('Unrecognized guider number: {}'.format(guider))
-    else:
-        raise ValueError('Unrecognized guider number: {}'.format(guider))
-
-    x_realpixel, y_realpixel = fgs_full.Idl2Det(x_idealangle, y_idealangle)
-
-    return x_realpixel, y_realpixel
+    return x_dhas, y_dhas
 
 def write_to_file(xangle, yangle):
     ''' Write ideal angles to file'''
