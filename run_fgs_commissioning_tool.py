@@ -27,7 +27,7 @@ LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 TASKNAME = 'run_all'
 
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_mod=None, nircam=True, global_alignment=False, in_file=None,
+            nircam_det=None, nircam=True, global_alignment=False, in_file=None,
             bkgd_stars=False):
 
     taskname = '_'.join([TASKNAME, root])
@@ -36,7 +36,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
 
     @log.logtofile(LOGNAME)
     def run_all_with_logging(image, guider, root=None, fgs_counts=None, jmag=None,
-                             nircam_mod=None, nircam=True, global_alignment=False,
+                             nircam_det=None, nircam=True, global_alignment=False,
                              in_file=None, bkgd_stars=False):
         """
         This function will take any FGS or NIRCam image and create the outputs needed
@@ -56,8 +56,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             If the user wants to specify the FGS counts, they do so here
         jmag: float
             Like fgs_counts but for the J magnitude (NOT JAB)
-        nircam_mod: str
-            The NIRCam module used for this observation. Only applicable for NIRCam
+        nircam_det: str
+            The NIRCam detector used for this observation. Only applicable for NIRCam
             images and if cannot be parsed from header.
         nircam: bool
             If this is a FGS image, set this flag to False
@@ -82,7 +82,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         if nircam:
             log.info("This is a NIRCam image")
             fgs_im = nircam_to_fgs.convert_im(image, guider, fgs_counts=fgs_counts,
-                                              jmag=jmag, nircam_mod=nircam_mod,
+                                              jmag=jmag, nircam_det=nircam_det,
                                               return_im=True)
 
         # ... or process provided FGS image
@@ -120,6 +120,6 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         FGS_commissioning.run_trk(fgs_im, guider, root, 5000, out_dir=out_dir, jitter=False)
 
     return run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
-                                jmag=jmag, nircam_mod=nircam_mod, nircam=nircam,
+                                jmag=jmag, nircam_det=nircam_det, nircam=nircam,
                                 global_alignment=global_alignment,
                                 in_file=in_file, bkgd_stars=bkgd_stars)

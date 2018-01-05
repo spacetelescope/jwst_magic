@@ -31,6 +31,15 @@ simulating Global Alignment using the short wavelength channel
 (Sherie was told they include detector noise and bias offsets between the readout channels)
 '''
 
+# Constants
+NIRCAM_SW_SCALE = 0.031  # NIRCam SW pixel scale (arcsec/pixel)
+NIRCAM_LW_SCALE = 0.063  # NIRCam LW pixel scale (arcsec/pixel)
+FGS_PIXELS = 2048  # FGS image size in pixels
+FGS_PLATE_SIZE = 2.4  # FGS image size in arcseconds
+
+# Constants to change
+BAD_PIXEL_THRESH = 2000  # Bad pixel threshold
+
 # -------------------------------------------------------------------------------
 def bad_pixel_correction(data, bp_thresh):
     '''Finds and smooths out bad pixels with a median filter'''
@@ -65,50 +74,60 @@ def bad_pixel_correction(data, bp_thresh):
     return data
 
 
-def rotate_nircam_image(image, fgs_guider, header, nircam_mod):
+def rotate_nircam_image(image, fgs_guider, header, nircam_det):
     '''
     Given NIRCAM module A or B (given by the header in your original NIRCAM image),
     rotate/flip to put in correct orientation for FGS 1 and 2.
     '''
     # The Dectector keyword retruns 'NRCA*' or 'NRCB*' so to simplify matters
     # I just pull out the 4th character in the string
-    if nircam_mod is not None:
-        module = nircam_mod
+    if nircam_det is not None:
+        detector = nircam_det
     else:
-        module = header['DETECTOR'][3]
+        detector = header['DETECTOR'][3:].strip()
 
-    if module == 'B':
-        # NIRCAM Module B
+    # Determine whether the NIRCam image is short- or long-wave to determine
+    # the pixel scale
+    if '5' in detector:
+        # Longwave
+        nircam_scale = NIRCAM_LW_SCALE
+    else:
+        # Shortwave
+        nircam_scale = NIRCAM_SW_SCALE
+
+    # Based on the specific detector frame, rotate to match the raw FGS frame
+    if detector in ['A2', 'A4', 'B1', 'B3', 'B5']:
         if fgs_guider == 1:
-            # FGS guider = 1; Perform a Left-Right flip
+            # FGS guider = 1; Perform a Left-Right flip and swap axes
             image = np.fliplr(image)  # equivalent to image[:,::-1]
-        else:
-            # FGS guider = 2; Perform a 180 degree rotation
-            image = np.rot90(image, k=20)
+            image = np.swapaxes(image, 0, 1)
+        elif fgs_guider == 2:
+            # FGS guider = 2; Perform a 180 degree rotation and swap axes
+            image = np.rot90(image, k=2)
+            image = np.swapaxes(image, 0, 1)
 
-    elif module == 'A':
-        # NIRCAM Module A
+    elif detector in ['A1', 'A3', 'A5', 'B2', 'B4']:
         if fgs_guider == 1:
-            # FGS guider = 1; Perform a Up-Down flip
+            # FGS guider = 1; Perform a Up-Down flip and swap axes
             image = np.flipud(image)  # equivalent to image[::-1,...]
-        else:
-            # FGS guider = 2; No change necessary!
-            pass
+            image = np.swapaxes(image, 0, 1)
+        elif fgs_guider == 2:
+            # FGS guider = 2; Swap axes!
+            image = np.swapaxes(image, 0, 1)
+
     else:
-        log.error('Check the header keyword "DETECTOR" for the NIRCAM module, \
-              then re-run using the "nircam_mod" keyword to bypass the header query.')
-    return image
+        log.error('Unfamiliar NIRCam detector provided. Check the header keyword' +
+                  ' "DETECTOR" for the NIRCAM module, then re-run using the ' +
+                  '"nircam_det" keyword to bypass the header query.')
+
+    return nircam_scale, image
 
 
 def pad_data(data, padding):
     """
-    Pad data with median of data with Poisson noise
+    Pad data with mean of data
     """
     size = np.shape(data)[0]
-
-    # Create an array of size binned data + 2*padding
-    padded_size = size + 2 * (padding)
-    background = np.zeros((padded_size, padded_size))
 
     # Remove NIRCam pedestals
     ped_size = size / 4
@@ -123,9 +142,10 @@ def pad_data(data, padding):
         noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
         print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
 
-    # Add Poisson noise proportional to NIRCam data (why? seems wrong...)
+    # Create an array of size (binned data + 2*padding), filled with the mean data value
+    padded_size = size + 2 * (padding)
     avg_signal = np.mean(noped_data)
-    padded_data = np.random.poisson(lam=avg_signal, size=background.shape)
+    padded_data = np.full((padded_size, padded_size), avg_signal)
 
     # Replace center of array with real data
     padded_data[padding:padding + size, padding:padding + size] = noped_data
@@ -158,8 +178,8 @@ def normalize_data(data, fgs_counts, threshold=5):
     '''
     mask = data > threshold
     data_norm = np.copy(mask * data.astype(np.float64))
-    data_norm *= (fgs_counts / data_norm.sum())  #renormalize by sum of non-masked data
-    data_norm[mask == 0] = data[mask == 0] #background is not normalized
+    data_norm *= (fgs_counts / data_norm.sum())  # renormalize by sum of non-masked data
+    data_norm[mask == 0] = data[mask == 0]  # background is not normalized
 
     return data_norm
 
@@ -197,7 +217,7 @@ def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
 
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
-def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
+def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
                return_im=True, output_path=None):
     '''
     Takes NIRCam image and turns it into an FGS-like image, gets count rate and location of
@@ -217,7 +237,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     jmag: float
         The J magnitude of the star. If set to 'None' and fgs_counts set to 'None',
         will defaul to 11.
-    nircam_mod: str
+    nircam_det: str
         The NIRCAM module, otherwise the header will be parsed
     '''
 
@@ -228,14 +248,6 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
     data_path = os.path.join(local_path, 'data')
     # Guider-dependent files
     header_file = os.path.join(data_path, 'newG{}magicHdrImg.fits'.format(guider))
-
-    # ---------------------------------------------------------------------
-    # Constants
-    nircam_scale = 0.032  # NIRCam pixel scale
-    fgs_pix = 2048  # FGS image size in pixels
-    fgs_plate_size = 2.4  # FGS image size in arcseconds
-    # Constants to change
-    bp_thresh = 2000  # Bad pixel threshold
 
     # ---------------------------------------------------------------------
     # Find FGS counts to be used for normalization
@@ -282,11 +294,11 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
         # ---------------------------------------------------------------------
         # Create FGS image
         # Mask out bad pixels
-        data_masked = bad_pixel_correction(data, bp_thresh)
+        data_masked = bad_pixel_correction(data, BAD_PIXEL_THRESH)
         # Rotate the NIRCAM image into FGS frame
-        data_rot = rotate_nircam_image(data_masked, guider, header, nircam_mod)
+        nircam_scale, data_rot = rotate_nircam_image(data_masked, guider, header, nircam_det)
         # Pad image
-        data_pad = resize_nircam_image(data_rot, nircam_scale, fgs_pix, fgs_plate_size)
+        data_pad = resize_nircam_image(data_rot, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
         # Normalize image
         data_norm = normalize_data(data_pad, fgs_counts)
 
