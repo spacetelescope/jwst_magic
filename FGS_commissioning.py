@@ -92,7 +92,7 @@ class FGS(object):
             self.xarr, self.yarr = np.loadtxt(reg_file)
             self.countrate = []
             for xa, ya, in zip(self.xarr, self.yarr):
-                self.countrate.append(select_psfs.countrate_3x3(xa, ya, self.input_im))
+                self.countrate.append(utils.countrate_3x3(xa, ya, self.input_im))
         else:
             self.yarr, self.xarr, self.countrate = np.loadtxt(reg_file, delimiter=' ',
                                                               skiprows=1).T
@@ -670,7 +670,7 @@ def create_lostrk(image, guider, root, nx, ny, out_dir=None):
     # Normalize to a count sum of 1000
     trk.image = trk.image / np.sum(trk.image) * 1000
 
-    # Resize image array to oversample by 6 (from 43x43 to 256x256)
+    # Resize image array to oversample by 6 (from 43x43 to 255x255)
     trk.image = trk.image.repeat(6, axis=1)
     trk.image = trk.image.repeat(6, axis=2)
     trk.image = trk.image[:, 1:-2, 1:-2]
