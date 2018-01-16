@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 # To install:
-#   pip install -e
-# while inside the root jwst_fgs_commissioning_tools directory
+#
+# >>>  pip install -e .
+#
+# while inside the root directory (Commissioning-tools)
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
