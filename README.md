@@ -1,7 +1,7 @@
-**These tools are currently meant to be run in Python2.**
+**These tools are currently meant to be run in Python3.**
 ---------------------------------------------------------
 
-*See Run FGS Commissioning Tool.ipynb for examples on how to run nircam_to_fgs
+*See FGS Commissioning Tool Tutorial.ipynb for examples on how to run nircam_to_fgs
 and FGS_commissioning*
 
 nircam_to_fgs.py

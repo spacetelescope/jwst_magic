@@ -25,6 +25,7 @@
 *.rar
 *.tar
 *.zip
+jwst_fgs_commissioning_tools.egg-info/*
 
 # Logs and databases #
 ######################
@@ -45,16 +46,10 @@ Thumbs.db
 # Other #
 #########
 notebooks/*
+!notebooks/FGS Commissioning Tool Tutorial.ipynb
+!notebooks/*.png
 out/*
 .ipynb_checkpoints/*
 logs/*
-
-# Files #
-#########
-Legacy/*
-DHAStesting_calcthresholds.py
-BackgroundStars.ipynb
-DHAStesting_analyzeGA.ipynb
-JWXML v. RPtoIA.ipynb
-Smoothing&IsolatingPSFs.ipynb
+legacy/*
 
