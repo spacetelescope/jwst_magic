@@ -129,29 +129,54 @@ def resize_array(arr, new_rows, new_cols):
     yscale = float(rows) / new_rows
     xscale = float(cols) / new_cols
 
-    # first average across the cols to shorten rows
+    # First average across the cols to shorten rows
     new_a = np.zeros((rows, new_cols))
     for j in range(new_cols):
-        firstx, lastx = j*xscale, (j+1)*xscale
+        # Calculate the (fractional) starting and ending columns that will be
+        # averaged into one column (e.g. averaging from column 4.3 to 7.8)
+        firstx, lastx = j * xscale, (j + 1) * xscale
+        # Calculate list of scaling factors of each column that is being averaged
+        # e.g. if avging from 4.3 to 7.8: [0.7, 1, 1, 0.8]
+        #                        column:    4   5  6   7
         scale_line = rescale_array(firstx, lastx)
-        new_a[:, j] = np.dot(arr[:, int(firstx):int(lastx)+1], scale_line)/scale_line.sum()
 
+        # Fill new array with averaged columns
+        try:
+            new_a[:, j] = np.dot(arr[:, int(firstx):int(lastx) + 1], scale_line) / scale_line.sum()
+        except ValueError:
+            # If needed, crop the scaling list to match the number of columns
+            scale_line = scale_line[:-1]
+            new_a[:, j] = np.dot(arr[:, int(firstx):int(lastx) + 1], scale_line) / scale_line.sum()
+
+    # Then average across the rows to produce the final array
     new_arr = np.zeros((new_rows, new_cols))
     for i in range(new_rows):
-        firsty, lasty = i*yscale, (i+1)*yscale
+        # Calculate the (fractional) starting and ending rows that will be
+        # averaged into one row
+        firsty, lasty = i * yscale, (i + 1) * yscale
+        # Calculate scaling factors of each row that is being averaged
         scale_line = rescale_array(firsty, lasty)
-        new_arr[i:,] = np.dot(scale_line, new_a[int(firsty):int(lasty)+1,])/scale_line.sum()
+
+        # Fill new array with averaged rows
+        try:
+            new_arr[i:,] = np.dot(scale_line, new_a[int(firsty):int(lasty) + 1,]) / scale_line.sum()
+        except ValueError:
+            # If needed, crop the scaling list to match the number of rows
+            scale_line = scale_line[:-1]
+            new_arr[i:,] = np.dot(scale_line, new_a[int(firsty):int(lasty) + 1,]) / scale_line.sum()
 
     return new_arr
+
 def rescale_array(first, last):
     '''
     Rows can be rows or columns. To be used with resize_array.
     '''
-    scale_line = np.ones((int(last)-int(first)+1))
-    scale_line[0] = 1 - (first-int(first))
-    scale_line[-1] = (last-int(last))
+    scale_line = np.ones((int(last) - int(first) + 1))
+    scale_line[0] = 1 - (first - int(first))
+    scale_line[-1] = (last - int(last))
     if last == int(last):
-        scale_line = scale_line[:-1]
+        # scale_line = scale_line[:-1]
+        scale_line[-1] = 0.  # Changed 1/16/18 to fix bug with truncating scale_line
         last = int(last) - 1
     return scale_line
 
