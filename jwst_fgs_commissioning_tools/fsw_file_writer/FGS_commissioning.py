@@ -8,12 +8,9 @@ from matplotlib.colors import LogNorm
 import numpy as np
 
 # LOCAL
-import coordinate_transforms
-import getbias
-import utils
-from mkproc import Mkproc
-import log
-import select_psfs
+from jwst_fgs_commissioning_tools.fsw_file_writer import coordinate_transforms,\
+                                                         getbias, mkproc
+from jwst_fgs_commissioning_tools import log, utils
 
 # DEFINE ALL NECESSARY CONSTANTS
 TCDSID = 0.338     # neil 18 may 12
@@ -23,8 +20,13 @@ TCDSTRK = 0.0256   # neil 18 may 12
 TCDSFG = 0.0512    # neil 18 may 12
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]
+
+# Location of out/ directory
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]
+
 # Location of all necessary *.fits files (newmagicHdrImg, bias0, etc)
-DATA_PATH = os.path.join(LOCAL_PATH, 'data')
+DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 class FGS(object):
     '''
@@ -55,7 +57,7 @@ class FGS(object):
         # DEFINE ALL THINGS PATHS
         # Define output directory
         if out_dir is None:
-            self.out_dir = os.path.join(LOCAL_PATH, 'out', self.root)
+            self.out_dir = os.path.join(OUT_PATH, 'out', self.root)
         else:
             self.out_dir = out_dir
 
@@ -84,7 +86,7 @@ class FGS(object):
         Get coordinate information of guide star and reference stars
         '''
         if reg_file is None:
-            reg_file = os.path.join(os.path.join(LOCAL_PATH, 'out', self.root,
+            reg_file = os.path.join(os.path.join(OUT_PATH, 'out', self.root,
                                                  '{0}_G{1}_regfile.txt'.format(self.root,
                                                                                self.guider)))
         log.info("Using {} as the reg file".format(reg_file))
@@ -580,8 +582,8 @@ def run_id(image, guider, root, out_dir=None, interactive=False):
     id0.write_out_files(id0.xarr, id0.yarr - id0.yoffset, id0.countrate)
 
     # Make CECIL proc file
-    Mkproc(guider, root, id0.xarr, id0.yarr - id0.yoffset, id0.countrate, step='ID',
-           out_dir=out_dir)
+    mkproc.Mkproc(guider, root, id0.xarr, id0.yarr - id0.yoffset, id0.countrate,
+                  step='ID', out_dir=out_dir)
 
     if interactive:
         return id0
@@ -624,7 +626,7 @@ def run_acq(image, guider, root, out_dir=None, interactive=False):
     #                                     acq2.xgs - (acq2.nx / 2.), acq2.ygs - (acq2.ny / 2.) - acq2.yoffset, acq1.countrategs))
 
     # Make CECIL proc file
-    Mkproc(guider, root, acq1.xgs, acq1.ygs - acq2.yoffset, acq1.countrategs, step='ACQ',
+    mkproc.Mkproc(guider, root, acq1.xgs, acq1.ygs - acq2.yoffset, acq1.countrategs, step='ACQ',
            out_dir=out_dir)
 
     if interactive:

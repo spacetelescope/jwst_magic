@@ -9,6 +9,7 @@ from astropy.io import fits
 import numpy as np
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]
 
 def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
             bktc=True, bp=True):
@@ -20,7 +21,7 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, nx, ny, bzp=True,
     # Establish location of 'data' directory. Includes *magicHdrImg.fits,
     #*bias.fits, etc. If data path not given, script will assume that the
     #'data' directory lives in the same directory as this script
-    data_path = os.path.join(LOCAL_PATH, 'data')
+    data_path = os.path.join(PACKAGE_PATH, 'data')
 
     nz = nramps * nreads
     if (nx == 2048) and (ny == 2048):
