@@ -82,10 +82,20 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                               jmag=jmag, nircam_det=nircam_det,
                                               return_im=True)
 
+            if np.shape(fgs_im)[0] == 1:
+                fgs_im = fgs_im[0]
+            else:
+                raise TypeError('Provided NIRCam image {} has dimensions {}. '
+                                'Cannot create multiple regfiles from multiple '
+                                'NIRCam frames with one call to '
+                                'run_fgs_commissioning_tool. Please input single'
+                                ' 2048 x 2048 image.'.format(image, np.shape(fgs_im)))
+
         # ... or process provided FGS image
         else:
             log.info("This is a FGS image")
             fgs_im = fits.getdata(image)
+
 
             # If J magnitude is provided, normalize the entire image to match that jmag
             if jmag:
@@ -116,7 +126,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                         out_dir=out_dir)
         FGS_commissioning.run_trk(fgs_im, guider, root, 5000, out_dir=out_dir, jitter=False)
 
-    return run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
-                                jmag=jmag, nircam_det=nircam_det, nircam=nircam,
-                                global_alignment=global_alignment,
-                                in_file=in_file, bkgd_stars=bkgd_stars)
+    run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
+                         jmag=jmag, nircam_det=nircam_det, nircam=nircam,
+                         global_alignment=global_alignment,
+                         in_file=in_file, bkgd_stars=bkgd_stars)
