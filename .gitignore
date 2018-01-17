@@ -49,6 +49,7 @@ out/*
 .ipynb_checkpoints/*
 logs/*
 comm_tool_obsolete
+.idea/*
 
 # Files #
 #########

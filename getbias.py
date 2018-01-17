@@ -38,10 +38,10 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, imgsize):
         xhigh, yhigh = imgsize, imgsize
 
     else:
-        xlow = np.fix(xcoord) - imgsize / 2
-        xhigh = np.fix(xcoord) + imgsize / 2
-        ylow = np.fix(ycoord) - imgsize / 2
-        yhigh = np.fix(ycoord) + imgsize / 2
+        xlow = int(np.fix(xcoord) - imgsize / 2)
+        xhigh = int(np.fix(xcoord) + imgsize / 2)
+        ylow = int(np.fix(ycoord) - imgsize / 2)
+        yhigh = int(np.fix(ycoord) + imgsize / 2)
 
     bias = np.zeros((nramps*nreads, imgsize, imgsize))
 

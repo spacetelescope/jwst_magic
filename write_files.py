@@ -17,7 +17,7 @@ DATA_PATH = os.path.join(LOCAL_PATH, 'data')
 def write_all(obj):
     '''
     Create **all** the files and images needs for ID & ACQ
-    Requires: time_normed_im, x,y,countrate,bias,idarr
+    Requires: time_normed_im, step, x, y, countrate, bias, idarr
 
     ID & ACQ:
     <name>_G<guider>_<step>sky.fits :   fits file of they time_normed_im array
@@ -51,7 +51,7 @@ def write_all(obj):
                                 '{}_G{}_{}{}sky.fits'.format(obj.root,
                                                              obj.guider,
                                                              obj.step,
-                                                             obj.acqNum))
+                                                             obj.acqnum))
     utils.write_fits(filename_sky, obj.time_normed_im)
 
     # STC files using offset, rotated catalog
@@ -60,8 +60,8 @@ def write_all(obj):
                                 '{}_G{}_{}{}.stc'.format(obj.root,
                                                          obj.guider,
                                                          obj.step,
-                                                         obj.acqNum))
-    obj.write_stc(filename_stc, obj.xarr, obj.yarr, obj.countrate)
+                                                         obj.acqnum))
+    write_stc(filename_stc, obj.xarr, obj.yarr, obj.countrate, obj.guider)
 
     # Bias image
     filename_bias = os.path.join(obj.out_dir,
@@ -69,7 +69,7 @@ def write_all(obj):
                                  '{}_G{}_{}{}bias.fits'.format(obj.root,
                                                                obj.guider,
                                                                obj.step,
-                                                               obj.acqNum))
+                                                               obj.acqnum))
     utils.write_fits(filename_bias, obj.bias)
 
     # Create CDS image
@@ -78,7 +78,7 @@ def write_all(obj):
                                 '{}_G{}_{}{}cds.fits'.format(obj.root,
                                                              obj.guider,
                                                              obj.step,
-                                                             obj.acqNum))
+                                                             obj.acqnum))
     utils.write_fits(filename_cds, obj.cds)
 
     if obj.step == 'ID':
@@ -89,7 +89,7 @@ def write_all(obj):
                                         '{}_G{}_{}.gssscat'.format(obj.root,
                                                                    obj.guider,
                                                                    obj.step))
-        obj.write_cat(filename_starcat, obj.xarr, obj.yarr)
+        write_cat(filename_starcat, obj.xarr, obj.yarr)
 
         # Create ff fits file
         filename_ff = os.path.join(obj.out_dir,
@@ -118,7 +118,7 @@ def write_all(obj):
         convert_fits_to_dat(filename_id_strips, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))
 
-    elif obj.step == 'ACQ':
+    elif obj.step == 'ACQ1' or obj.step == 'ACQ2':
         ## STScI only files - mostly just for quick checks of the data
         # star catalog in real pixs
         filename_starcat = os.path.join(obj.out_dir,
@@ -126,8 +126,8 @@ def write_all(obj):
                                         '{}_G{}_{}{}.cat'.format(obj.root,
                                                                  obj.guider,
                                                                  obj.step,
-                                                                 obj.acqNum))
-        obj.write_cat(filename_starcat, obj.xgs, obj.ygs)
+                                                                 obj.acqnum))
+        write_cat(filename_starcat, obj.xarr, obj.yarr)
 
         ## DHAS file
         # Noisy sky acquisition fits images
@@ -136,7 +136,7 @@ def write_all(obj):
                                           '{}_G{}_{}{}.fits'.format(obj.root,
                                                                     obj.guider,
                                                                     obj.step,
-                                                                    obj.acqNum))
+                                                                    obj.acqnum))
 
         utils.write_fits(filename_noisy_sky, np.uint16(obj.image))
         Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
@@ -205,13 +205,13 @@ def write_stc(filename, xarr, yarr, countrate, guider):
     Write out stc files using offset, rotated catalog
     """
     xia, yia = rptoia.rptoia(xarr, yarr, guider)
-
     xia = np.asarray(xia)
     yia = np.asarray(yia)
     countrate = np.asarray(countrate)
 
     inum = np.arange(len(xia))
     data = np.array([inum, xia, yia, countrate]).T
+
     utils.write_to_file(filename, data, fmt=['%d', '%f', '%f', '%e'])
     print("Successfully wrote: {}".format(filename))
 
