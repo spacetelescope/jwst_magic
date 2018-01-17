@@ -123,7 +123,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det):
     return nircam_scale, image
 
 
-def pad_data(data, padding):
+def pad_data(data, padding, fgs_pix):
     """
     Pad data with mean of data
     """
@@ -140,10 +140,19 @@ def pad_data(data, padding):
 
         # Subtract median from each pedestal strip
         noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
-        print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
+        # print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
 
     # Create an array of size (binned data + 2*padding), filled with the mean data value
     padded_size = size + 2 * (padding)
+
+    if padded_size != fgs_pix - 8:
+        # If just a +1 error from odd size of image
+        if padded_size == 2039:
+            padded_size = 2040
+        # If something else is going on....
+        else:
+            raise ValueError('Padded image not of proper size (should be 2040): {}'.format(padded_size))
+
     avg_signal = np.mean(noped_data)
     padded_data = np.full((padded_size, padded_size), avg_signal)
 
@@ -165,7 +174,7 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
     data_resized = utils.resize_array(cropped, binned_pix, binned_pix)
 
     padding = int((cropped.shape[0] - binned_pix) / 2)
-    data_pad = pad_data(data_resized, padding)
+    data_pad = pad_data(data_resized, padding, fgs_pix)
     fgs_data = np.pad(data_pad, 4, 'constant')  # Add back reference pixels
 
     return fgs_data
