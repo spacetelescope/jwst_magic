@@ -25,6 +25,7 @@
 *.rar
 *.tar
 *.zip
+jwst_fgs_commissioning_tools.egg-info/*
 
 # Logs and databases #
 ######################

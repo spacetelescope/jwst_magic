@@ -154,7 +154,7 @@ def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
         im[objects != i] = False
         im[objects == i] = True
         if counts_3x3:
-            counts.append(countrate_3x3(x[i-1], y[i-1], data))
+            counts.append(utils.countrate_3x3(x[i-1], y[i-1], data))
         else:
             counts.append(np.sum(im * data))
         val.append(np.sum(im * 1.))  # Number of pixels in object
