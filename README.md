@@ -1,8 +1,7 @@
-**These tools are currently meant to be run in Python2.**
+**These tools are currently meant to be run in Python3.**
 ---------------------------------------------------------
 
-*See Run FGS Commissioning Tool.ipynb for examples on how to run nircam_to_fgs
-and FGS_commissioning*
+*See FGS Commissioning Tool Tutorial.ipynb for examples on how to run this tool*
 
 nircam_to_fgs.py
 ---------------
@@ -26,7 +25,7 @@ select_psfs.py
 This tool will take the FGS image created with nircam_to_fgs, and allow the user
 to choose the guide and reference stars. This is a simple tool that displays the
 image, then the user clicks on the center of each star that they want to use.
-This allows for humans to choose the best PSFs without relying on software. 
+This allows for humans to choose the best PSFs without relying on software.
 
 FGS_commissioning.py
 --------------------
@@ -54,17 +53,3 @@ You can specify out_dir and template_path, but it is not necessary to do so, as
 long as you don’t mind the files going to the same ‘out' directory as where
 FGS_bin_tool.py put things, and you have a ‘templates’ directory with all the
 .prc templates in the same directory as your scripts.
-
-Now, you can run ID, ACQ, and TRK with:
-
-```
-id0 = FGS_commissioning.run_ID(im, guider, root, interactive=True)
-acq1, acq2 = FGS_commissioning.run_ACQ(im, guider, root, interactive=True)
-trk = FGS_commissioning.run_TRK(im, guider, root, num_frames=5000, interactive=True)
-```
-
-With id0, acq1, acq2, and trk being objects that have all the information needed
-to run these through DHAS as attributes. You don’t need these since these
-functions will do all the things you will need for now, it will allow you to
-play around with what you can do with that information. Note, that num_frames
-for track, can be whatever you want.
