@@ -63,12 +63,6 @@ class SegmentForm:
         # Parse the input file type
         self.parse_infile(segment_infile)
 
-        if not self.GUI:
-            # If not running through the GUI, run calculation
-            self.ChosenSeg()
-            self.Calculate()
-
-
     def initUI(self):
         self.root = Tk()
         self.root.title('Segmented Guide Stars')
@@ -584,22 +578,28 @@ def checkout(str, low, high):
         errcode = 1
     return errcode
 
-def run_tool(segment_infile, GUI=True):
+def run_tool(segment_infile, GUI=True, GS_params_dict=None):
+    if not GS_params_dict and not GUI:
+        GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
+                          'V3Boff': 0.2,  # V3 boresight offset
+                          'fgsNum': 1,  # guider number
+                          'RA': 30.,  # RA of guide star
+                          'Dec': 50.,  # Dec of guide star
+                          'PA': 2.,  # position angle of guide star
+                          'segNum': 0}  # selected segment to guide on
 
-    GS_params_dict = {'V2Boff': 0.1,
-                      'V3Boff': 0.2,
-                      'fgsNum': 1,
-                      'RA': 30.,
-                      'Dec': 50.,
-                      'PA': 2.,
-                      'segNum': 0}
-
+    # Set up segment form class
     sgForm = SegmentForm(segment_infile, GUI=GUI, GS_params_dict=GS_params_dict)
 
+    # Either run the GUI or run the calculation
     if GUI:
         sgForm.Show()
+    else:
+        sgForm.ChosenSeg()
+        sgForm.Calculate()
 
 ############################## Main Program - Actions #####################################
+
 
 if __name__ == '__main__':
     segment_infile = 'V2V3offsets.txt'
