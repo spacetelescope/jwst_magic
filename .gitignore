@@ -52,4 +52,6 @@ out/*
 .ipynb_checkpoints/*
 logs/*
 legacy/*
+jwst_fgs_commissioning_tools/segment_guiding/*.png
+jwst_fgs_commissioning_tools/segment_guiding/*.txt
 
