@@ -14,24 +14,15 @@ import glob
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
-import jwxml
+import pysiaf
+from pysiaf.utils import rotations
 from tkinter import Tk, StringVar, Radiobutton, Label, Entry, Button
 import numpy as np
 from astropy.io import ascii as asc
 from astropy.io import fits
 
-import rotations
-from jwst_fgs_commissioning_tools.star_selector import select_psfs
-
-
-# Get latest SIAF File
-fgs_siaf_dir = '***REMOVED***/share/SIAF_WG/Instruments/FGS/'
-all_xmls = glob.glob(fgs_siaf_dir + '*.xml')
-all_xmls.sort
-SIAF_FILENAME = all_xmls[-1]
-
-# Open the SIAF in JWXML
-FGS_SIAF = jwxml.SIAF(filename=SIAF_FILENAME)
+# Open the SIAF with pysiaf
+FGS_SIAF = pysiaf.Siaf('FGS')
 
 class SegmentForm:
     def __init__(self, segment_infile, GUI=True, GS_params_dict=None):
@@ -40,8 +31,16 @@ class SegmentForm:
         self.GUI = GUI
 
         if self.GUI:
+            # Check that you are using the right backend (or python will crash!)
+            if matplotlib.get_backend() != 'TkAgg':
+                errmsg = 'Cannot run GUI with current matplotlib backend (' + \
+                         matplotlib.get_backend() + '). Please restart python ' \
+                         'and load with TkAgg as matplotlib backend, or elect ' \
+                         'to run the tool without the GUI.'
+                raise EnvironmentError(errmsg)
             # Initialize the GUI
             self.initUI()
+
         else:
             # If not running through the GUI, define necessary attributes
             if not GS_params_dict:
@@ -220,7 +219,7 @@ class SegmentForm:
         self.V3Aim = self.V3Ref + dV3Aim
 
         # Convert to Ideal coordinates
-        xIdl, yIdl = self.fgs_siaf_aperture.Tel2Idl(self.V2Aim, self.V3Aim)
+        xIdl, yIdl = self.fgs_siaf_aperture.tel_to_idl(self.V2Aim, self.V3Aim)
 
         if self.GUI:
             # Update GUI labels with V2/V3 location of chosen segment (or the
@@ -268,8 +267,8 @@ class SegmentForm:
             fgsN = self.fgsNum
         det = 'FGS' + str(fgsN) + '_FULL_OSS'
 
-        # Open SIAF aperture for appropriate guider with JWXML
-        self.fgs_siaf_aperture = FGS_SIAF.apertures[det]
+        # Open SIAF aperture for appropriate guider with pysiaf
+        self.fgs_siaf_aperture = FGS_SIAF[det]
         V2Ref = self.fgs_siaf_aperture.V2Ref
         V3Ref = self.fgs_siaf_aperture.V3Ref
         V3IdlYAngle = self.fgs_siaf_aperture.V3IdlYAngle
@@ -308,7 +307,7 @@ class SegmentForm:
         nseg = len(SegIDs)
 
         # Convert V3/V3 coordinates to ideal coordinates
-        xIdlSegs, yIdlSegs = self.fgs_siaf_aperture.Tel2Idl(V2Segs + self.V2Ref, V3Segs + self.V3Ref)
+        xIdlSegs, yIdlSegs = self.fgs_siaf_aperture.tel_to_idl(V2Segs + self.V2Ref, V3Segs + self.V3Ref)
 
         # Get the guide star and boresight parameters
         V2B, V3B, gsRA, gsDec, gsPA, A = self.get_guidestar_params()
@@ -326,7 +325,7 @@ class SegmentForm:
             self.errmsg.configure(text='Calculation complete')
 
         # Convert segment coordinates to detector frame
-        xDet, yDet = self.fgs_siaf_aperture.Idl2Det(xIdlSegs, yIdlSegs)
+        xDet, yDet = self.fgs_siaf_aperture.idl_to_det(xIdlSegs, yIdlSegs)
 
         # Check to make sure no segments are off the detector
         for x, y, i_seg in zip(xDet, yDet, SegIDs):

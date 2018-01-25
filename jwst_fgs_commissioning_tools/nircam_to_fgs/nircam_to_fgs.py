@@ -311,7 +311,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
                                 '{}_G{}_binned_pad_norm.fits'.format(root, guider))
         # Any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
-        dummy_data, hdr = fits.getdata(header_file, header=True)
+        hdr = fits.getheader(header_file, ext=0)
         # print hdr, dummy_data
         utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
 
