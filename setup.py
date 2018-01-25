@@ -32,7 +32,8 @@ setup(name='jwst_fgs_commissioning_tools',
           'astropy',
           'matplotlib',
           'PyQt5',
-          'jwxml'  # should by pysiaf
+          # 'jwxml'  # should by pysiaf
+          'pysiaf',
       ],
       include_package_data=True,
       zip_safe=False)
