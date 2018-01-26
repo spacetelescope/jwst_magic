@@ -67,29 +67,29 @@ def build_default_config():
     """
     data = {}
     data['id_dict'] = build_dict(step='ID', imgsize=2048, nramps=2, tcds=TCDSID,
-                                 acqnum='', cdsimg=True, stripsimg=True)
+                                 bias=True, cdsimg=True, stripsimg=True)
     data['id_dict'] = update_id_dict(data['id_dict'], overlap=8, height=64)
 
     data['acq1_dict'] = build_dict(step='ACQ1', imgsize=128, nramps=6,
-                                   tcds=TCDSACQ1, acqnum=1, cdsimg=True,
+                                   tcds=TCDSACQ1, bias=True, cdsimg=True,
                                    stripsimg=False)
 
     data['acq2_dict'] = build_dict(step='ACQ2', imgsize=32, nramps=5,
-                                   tcds=TCDSACQ2, acqnum=2, cdsimg=True,
+                                   tcds=TCDSACQ2, bias=True, cdsimg=True,
                                    stripsimg=False)
 
     data['trk_dict'] = build_dict(step='TRK', imgsize=32, nramps=5000,
-                                  tcds=TCDSTRK, acqnum='', cdsimg=False,
+                                  tcds=TCDSTRK, bias=True, cdsimg=False,
                                   stripsimg=False)
 
     data['lostrk_dict'] = build_dict(step='LOSTRK', imgsize=43, nramps=1,
-                                     tcds=TCDSTRK, acqnum='', cdsimg=False,
+                                     tcds=TCDSTRK, bias=False, cdsimg=False,
                                      stripsimg=False)
 
     return data
 
 
-def build_dict(step, imgsize, nramps, tcds, acqnum, cdsimg=True, stripsimg=False):
+def build_dict(step, imgsize, nramps, tcds, bias=True, cdsimg=True, stripsimg=False):
     '''
     Build the dictionary for any step
     '''
@@ -101,7 +101,7 @@ def build_dict(step, imgsize, nramps, tcds, acqnum, cdsimg=True, stripsimg=False
     dictionary['imgsize'] = imgsize
     dictionary['nramps'] = nramps
 
-    dictionary['acqnum'] = acqnum
+    dictionary['bias'] = bias
     dictionary['cdsimg'] = cdsimg
     dictionary['stripsimg'] = stripsimg
 

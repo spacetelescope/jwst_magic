@@ -112,7 +112,7 @@ def pad_data(data, padding):
     background = np.zeros((padded_size, padded_size))
 
     # Remove NIRCam pedestals
-    ped_size = size / 4
+    ped_size = size // 4
     peddata = np.zeros((size, size))
     for i in range(4):
         ped_start = i * ped_size
@@ -132,7 +132,7 @@ def pad_data(data, padding):
 
     # Add in FGS pedestal
     fgs_ped = np.fix(15 * np.random.random_sample(size=4)).astype(int)  # Randomly generate values
-    ped_size = padded_size / 4
+    ped_size = padded_size // 4
     for i in range(4):
         ped_start = i * ped_size
         ped_stop = (i + 1) * ped_size
@@ -282,7 +282,8 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
             output_path = os.path.join(local_path, 'out', root)
             utils.ensure_dir_exists(output_path)
 
-        data, header = fits.getdata(image, header=True)
+        data = fits.getdata(image, header=False)
+        header = fits.getheader(image, ext=0)
 
         # ---------------------------------------------------------------------
         # Create FGS image
@@ -299,7 +300,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_mod=None,
                                 '{}_G{}_binned_pad_norm.fits'.format(root, guider))
         # Any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
-        hdr, dummy_data = fits.getdata(header_file, header=True)
+        hdr = fits.getheader(header_file, ext=0)
         utils.write_fits(out_path, np.uint16(data_norm), header=hdr)
 
         print("Finished for {}, Guider = {}".format(root, guider))
