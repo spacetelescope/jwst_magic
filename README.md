@@ -1,12 +1,13 @@
 FGS Commissioning Tools
 =======================
 
-**These tools are currently meant to be run in Python3.**
----------------------------------------------------------
+*Python 3*
+
 These tools comprise of four main components that can be run individually
 or together.
 
 1. NIRCam to FGS image conversion
+
 This tool can take in a simulated (or real) NIRCam image and will convert
 it to an FGS, guider 1 or guider 2 image. In addition to rotating the image, adjusting the pixel scale and
 image size, this tool corrects bad pixels and normalizes the image to
@@ -14,12 +15,14 @@ a specific magnitude of star.
 
 
 2. Star Selection Tool
+
 This tool will take the FGS image either created with the first tool, or
 an FGS image that it is passed by the user, and allow the user to choose
 the guide star and reference stars using a simple GUI.
 
 
 3. File creation
+
 This part requires an FGS image and a file that includes a list of the
 coordinates of the guid star and reference stars along with their count
 rates. This tool will create all files necessary to test this image different
@@ -28,6 +31,7 @@ files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
 
 
 4. Segment Guiding Tool
+
 *In progress*
 
 
