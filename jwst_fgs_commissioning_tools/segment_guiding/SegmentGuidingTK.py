@@ -3,13 +3,13 @@
 """
 SegmentGuidingTK.py
 
-Segment Guiding tool using tkinter
+Segment Guiding tool, optionally using tkinter GUI
 
 Created by Colin Cox on 2017-05-01.
 Modified by Lauren Chambers January 2018
 """
 
-import glob
+import os
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -19,13 +19,23 @@ from pysiaf.utils import rotations
 from tkinter import Tk, StringVar, Radiobutton, Label, Entry, Button
 import numpy as np
 from astropy.io import ascii as asc
-from astropy.io import fits
+
+# Establish segment guiding files directory
+LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]
+SGT_FILES_PATH = os.path.join(os.path.split(PACKAGE_PATH)[0], 'segment_guiding_files')
 
 # Open the SIAF with pysiaf
 FGS_SIAF = pysiaf.Siaf('FGS')
 
 class SegmentForm:
-    def __init__(self, segment_infile, GUI=True, GS_params_dict=None):
+    def __init__(self, segment_infile, root=None, GUI=True, GS_params_dict=None):
+
+        # If no root provided, name the output the same as the input
+        if not root:
+            self.root = os.path.basename(segment_infile).split('.')[0]
+        else:
+            self.root = root
 
         # Will the tool be run through the GUI?
         self.GUI = GUI
@@ -63,67 +73,67 @@ class SegmentForm:
         self.parse_infile(segment_infile)
 
     def initUI(self):
-        self.root = Tk()
-        self.root.title('Segmented Guide Stars')
-        self.root['bg'] = 'Snow2'
+        self.root_window = Tk()
+        self.root_window.title('Segmented Guide Stars')
+        self.root_window['bg'] = 'Snow2'
 
         # Choose FGS using Radio Buttons
         self.fgsNum = StringVar()
-        r1 = Radiobutton(self.root, text='FGS1', variable=self.fgsNum,
+        r1 = Radiobutton(self.root_window, text='FGS1', variable=self.fgsNum,
                          value='1', command=self.FGSsetup)
         r1.grid(row=1)
-        r2 = Radiobutton(self.root, text='FGS2', variable=self.fgsNum,
+        r2 = Radiobutton(self.root_window, text='FGS2', variable=self.fgsNum,
                          value='2', command=self.FGSsetup)
         r2.grid(row=1, column=1)
         r1.select()  # Default to FGS1
 
         # Boxes to receive FGS lookup
-        Label(self.root, text='V2Ref').grid(row=2, column=1)
-        Label(self.root, text='V3Ref').grid(row=2, column=2)
-        Label(self.root, text='Angle').grid(row=2, column=3)
+        Label(self.root_window, text='V2Ref').grid(row=2, column=1)
+        Label(self.root_window, text='V3Ref').grid(row=2, column=2)
+        Label(self.root_window, text='Angle').grid(row=2, column=3)
         self.fgsV2 = StringVar()
         self.fgsV3 = StringVar()
         self.fgsAngle = StringVar()
         self.fgsParity = StringVar()
-        self.fgstitle = Label(self.root, text='FGS' + self.fgsNum.get())
+        self.fgstitle = Label(self.root_window, text='FGS' + self.fgsNum.get())
         self.fgstitle.grid(row=3)
-        self.LfgsV2 = Label(self.root, text=self.fgsV2.get())
+        self.LfgsV2 = Label(self.root_window, text=self.fgsV2.get())
         self.LfgsV2.grid(row=3, column=1)
-        self.LfgsV3 = Label(self.root, text=self.fgsV3.get())
+        self.LfgsV3 = Label(self.root_window, text=self.fgsV3.get())
         self.LfgsV3.grid(row=3, column=2)
-        self.LfgsA = Label(self.root, text=self.fgsAngle.get())
+        self.LfgsA = Label(self.root_window, text=self.fgsAngle.get())
         self.LfgsA.grid(row=3, column=3)
 
         # Choose segment
-        Label(self.root, text='Segment number').grid(row=4)
+        Label(self.root_window, text='Segment number').grid(row=4)
         self.segNum = StringVar()
-        self.seg = Entry(self.root, textvariable=self.segNum)
+        self.seg = Entry(self.root_window, textvariable=self.segNum)
         self.seg.grid(row=4, column=1)
-        Label(self.root, text='  Segment 0 means use segment centroid').grid(row=4, column=2)
+        Label(self.root_window, text='  Segment 0 means use segment centroid').grid(row=4, column=2)
         self.segNum.trace('w', self.ChosenSeg)
 
         self.chSegdV2 = StringVar()
         self.chSegdV3 = StringVar()
-        Label(self.root, text='Segment Offset').grid(row=5)
-        self.chsegdv2 = Label(self.root, text='TBD') # Chosen segment
+        Label(self.root_window, text='Segment Offset').grid(row=5)
+        self.chsegdv2 = Label(self.root_window, text='TBD')  # Chosen segment
         self.chsegdv2.grid(row=5, column=1)
-        self.chsegdv3 = Label(self.root, text='TBD')
+        self.chsegdv3 = Label(self.root_window, text='TBD')
         self.chsegdv3.grid(row=5, column=2)
 
         # Ideal
-        Label.idl = Label(self.root, text='Ideal Coordinates').grid(row=6)
-        self.segxidl = Label(self.root, text='')
+        Label.idl = Label(self.root_window, text='Ideal Coordinates').grid(row=6)
+        self.segxidl = Label(self.root_window, text='')
         self.segxidl.grid(row=6, column=1)
-        self.segyidl = Label(self.root, text='')
+        self.segyidl = Label(self.root_window, text='')
         self.segyidl.grid(row=6, column=2)
 
         # Boresight Offset
         self.V2Boff = StringVar()
         self.V3Boff = StringVar()
-        Label(self.root, text='Boresight Offset').grid(row=7)
-        self.EV2Boff = Entry(self.root, textvariable=self.V2Boff)
+        Label(self.root_window, text='Boresight Offset').grid(row=7)
+        self.EV2Boff = Entry(self.root_window, textvariable=self.V2Boff)
         self.EV2Boff.grid(row=7, column=1)
-        self.EV3Boff = Entry(self.root, textvariable=self.V3Boff)
+        self.EV3Boff = Entry(self.root_window, textvariable=self.V3Boff)
         self.EV3Boff.grid(row=7, column=2)
         self.V2Boff.set('0.1')
         self.V3Boff.set('0.2')
@@ -131,25 +141,25 @@ class SegmentForm:
         self.V3Boff.trace('w', self.Ready)
 
         # V2V3 aiming point
-        Label(self.root, text='Aiming V2V3').grid(row=8)
-        self.V2Aim_label = Label(self.root, text='V2')
+        Label(self.root_window, text='Aiming V2V3').grid(row=8)
+        self.V2Aim_label = Label(self.root_window, text='V2')
         self.V2Aim_label.grid(row=8, column=1)
-        self.V3Aim_label = Label(self.root, text='V3')
+        self.V3Aim_label = Label(self.root_window, text='V3')
         self.V3Aim_label.grid(row=8, column=2)
 
         # widgets for guide star calculation
-        Label(self.root, text='RA').grid(row=9, column=1)
-        Label(self.root, text='Dec').grid(row=9, column=2)
-        Label(self.root, text='PA').grid(row=9, column=3)
-        Label(self.root, text='Guide Star').grid(row=10)
+        Label(self.root_window, text='RA').grid(row=9, column=1)
+        Label(self.root_window, text='Dec').grid(row=9, column=2)
+        Label(self.root_window, text='PA').grid(row=9, column=3)
+        Label(self.root_window, text='Guide Star').grid(row=10)
         self.RA = StringVar()
         self.Dec = StringVar()
         self.PA = StringVar()
-        self.egs1 = Entry(self.root, textvariable=self.RA)
+        self.egs1 = Entry(self.root_window, textvariable=self.RA)
         self.egs1.grid(row=10, column=1)
-        self.egs2 = Entry(self.root, textvariable=self.Dec)
+        self.egs2 = Entry(self.root_window, textvariable=self.Dec)
         self.egs2.grid(row=10, column=2)
-        self.egs3 = Entry(self.root, textvariable=self.PA)
+        self.egs3 = Entry(self.root_window, textvariable=self.PA)
         self.egs3.grid(row=10, column=3)
 
         self.RA.trace('w', self.Ready)
@@ -157,12 +167,12 @@ class SegmentForm:
         self.PA.trace('w', self.Ready)
 
         # Bottom row - Calculate, error message and Finish
-        self.go = Button(self.root, text='Calculate', command=self.Calculate,
+        self.go = Button(self.root_window, text='Calculate', command=self.Calculate,
                          fg='green', state='disabled')
         self.go.grid(row=11)
-        self.errmsg = Label(self.root, text='')
+        self.errmsg = Label(self.root_window, text='')
         self.errmsg.grid(row=11, column=1, columnspan=2)
-        Button(self.root, text='Finish', command=self.Finish, fg='red').grid(row=11, column=3)
+        Button(self.root_window, text='Finish', command=self.Finish, fg='red').grid(row=11, column=3)
 
     def ChosenSeg(self, *args):
         '''
@@ -224,12 +234,12 @@ class SegmentForm:
         if self.GUI:
             # Update GUI labels with V2/V3 location of chosen segment (or the
             # segment location mean, if 0 was input)
-            self.chsegdv2.configure(text='%8.4f' %V2SegN)
-            self.chsegdv3.configure(text='%8.4f' %V3SegN)
-            self.V2Aim_label.configure(text='%8.4f' %self.V2Aim)
-            self.V3Aim_label.configure(text='%8.4f' %self.V3Aim)
-            self.segxidl.configure(text='%8.4f' %xIdl)
-            self.segyidl.configure(text='%8.4f' %yIdl)
+            self.chsegdv2.configure(text='%8.4f' % V2SegN)
+            self.chsegdv3.configure(text='%8.4f' % V3SegN)
+            self.V2Aim_label.configure(text='%8.4f' % self.V2Aim)
+            self.V3Aim_label.configure(text='%8.4f' % self.V3Aim)
+            self.segxidl.configure(text='%8.4f' % xIdl)
+            self.segyidl.configure(text='%8.4f' % yIdl)
 
     def Ready(self, *args):
         if self.RA.get() == '' or self.Dec.get() == '' or self.PA.get() == '' or \
@@ -265,6 +275,11 @@ class SegmentForm:
             fgsN = self.fgsNum.get()
         else:
             fgsN = self.fgsNum
+
+        # Ensure the guider number is valid
+        if fgsN not in ['1', '2', 1, 2]:
+            raise ValueError('Invalid guider number: "{}"'.format(fgsN))
+
         det = 'FGS' + str(fgsN) + '_FULL_OSS'
 
         # Open SIAF aperture for appropriate guider with pysiaf
@@ -274,10 +289,10 @@ class SegmentForm:
         V3IdlYAngle = self.fgs_siaf_aperture.V3IdlYAngle
         VIdlParity = self.fgs_siaf_aperture.VIdlParity
 
-        fgsV2 = '%10.4f' %V2Ref
-        fgsV3 = '%10.4f' %V3Ref
-        fgsAngle = '%10.4f' %V3IdlYAngle
-        fgsParity = '%3d' %VIdlParity
+        fgsV2 = '%10.4f' % V2Ref
+        fgsV3 = '%10.4f' % V3Ref
+        fgsAngle = '%10.4f' % V3IdlYAngle
+        fgsParity = '%3d' % VIdlParity
 
         if self.GUI:
             # Update GUI and clear all calculations to force new calculation
@@ -300,14 +315,15 @@ class SegmentForm:
         self.fgsParity = fgsParity
 
     def Calculate(self):
-        # recall data read from V2V3offsets.txt
+        # recall data read from infile
         SegIDs = self.SegIDArray
         V2Segs = self.V2SegArray
         V3Segs = self.V3SegArray
         nseg = len(SegIDs)
 
         # Convert V3/V3 coordinates to ideal coordinates
-        xIdlSegs, yIdlSegs = self.fgs_siaf_aperture.tel_to_idl(V2Segs + self.V2Ref, V3Segs + self.V3Ref)
+        xIdlSegs, yIdlSegs = self.fgs_siaf_aperture.tel_to_idl(V2Segs + self.V2Ref,
+                                                               V3Segs + self.V3Ref)
 
         # Get the guide star and boresight parameters
         V2B, V3B, gsRA, gsDec, gsPA, A = self.get_guidestar_params()
@@ -330,9 +346,9 @@ class SegmentForm:
         # Check to make sure no segments are off the detector
         for x, y, i_seg in zip(xDet, yDet, SegIDs):
             if x < 0.5 or x > 2048.5:
-                print('WARNING: %8s off detector in X direction' %i_seg)
+                print('WARNING: %8s off detector in X direction' % i_seg)
             if y < 0.5 or y > 2048.5:
-                print('WARNING: %8s off detector in Y direction' %i_seg)
+                print('WARNING: %8s off detector in Y direction' % i_seg)
 
         # Retrieve FGS parameters obtained in FGSsetup
         if self.GUI:
@@ -343,25 +359,28 @@ class SegmentForm:
         # Summary output
         print('\nSummary')
         print('Aperture FGS', fgsN)
-        print('V2Ref %s V3Ref %s arc-sec IdlAngle %s degrees' %(self.fgsV2, self.fgsV3, self.fgsAngle))
+        print('V2Ref %s V3Ref %s arc-sec IdlAngle %s degrees' % (self.fgsV2,
+                                                                 self.fgsV3,
+                                                                 self.fgsAngle))
         print('Used segment', self.segNum)
         print('Boresight offset', V2B, V3B, 'arc-sec')
-        print('Guide star at RA %s  Dec %s degrees' %(gsRA, gsDec))
-        print('Position angle %s degrees' %gsPA)
+        print('Guide star at RA %s  Dec %s degrees' % (gsRA, gsDec))
+        print('Position angle %s degrees' % gsPA)
         print('\nSegment     dV2    dV3    xIdl   yIdl     RA         Dec         xDet     yDet')
 
         for p in range(nseg):
             print('%5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f' \
-            %(SegIDs[p], V2Segs[p], V3Segs[p], xIdlSegs[p], yIdlSegs[p],
-              self.SegRA[p], self.SegDec[p], xDet[p], yDet[p]))
+                  % (SegIDs[p], V2Segs[p], V3Segs[p], xIdlSegs[p], yIdlSegs[p],
+                     self.SegRA[p], self.SegDec[p], xDet[p], yDet[p]))
 
-        # Final output
-        print('\nFinal Output')
-        with open('SegmentGuiding.txt', 'w') as sg:
+        # Print and save final output
+        out_file = os.path.join(SGT_FILES_PATH, self.root + '_segmentguiding_visit.txt')
+        with open(out_file, 'w') as sg:
+            print('\nFinal Output:')
             rate = 0.0  # placeholder for count rate
             for p in range(nseg):
-                part1 = '-star%02d = %12.6f %12.6f %8.2f  ' %(p + 1, self.SegRA[p],
-                                                              self.SegDec[p], rate)
+                part1 = '-star%02d = %12.6f %12.6f %8.2f  ' % (p + 1, self.SegRA[p],
+                                                               self.SegDec[p], rate)
                 print(part1, end='')
                 sg.write(part1)
                 onDet = []  # List of other segments on detector
@@ -373,7 +392,7 @@ class SegmentForm:
                     part2 = '%2d, ' % onDet[q]
                     print(part2, end=' ')
                     sg.write(part2)
-                part3 = '%2d' %onDet[ns - 1]
+                part3 = '%2d' % onDet[ns - 1]
                 print(part3)
                 sg.write(part3 + '\n')
 
@@ -402,28 +421,8 @@ class SegmentForm:
 
                 segment_coords = v2v3_table
 
-        # if it is a FITS file...
-        elif segment_infile[-5:] == '.fits':
-            print('Input file = FITS image')
-
-            fits_data = fits.getdata(segment_infile)
-            fits_data[fits_data < 0] = 0.1
-
-            # Run the tool!
-            root = None
-            guider = 1
-            GA = True
-            select_psfs.create_reg_file(fits_data, root, guider,
-                                        '/Users/lchambers/TEL/FGS/Commissioning-tools/jwst_fgs_commissioning_tools/segment_guiding/',
-                                        global_alignment=GA)
-            all_psfs_file = '{0}_G{1}_ALLpsfs.txt'.format(segment_infile[:-5], guider)
-
-            read_table = asc.read(all_psfs_file)
-
-            # now translate the x/y cols into V2/V3
-            v2v3_table = np.copy(read_table)
-
-            segment_coords = v2v3_table
+        else:
+            raise TypeError('Incompatible file type: ', segment_infile)
 
         # Determine the IDs and coordinates of all segments
         self.SegIDArray = segment_coords['SegID']
@@ -444,7 +443,7 @@ class SegmentForm:
         plt.ylabel('Delta V3 -->')
         for s in range(len(self.V2SegArray)):
             plt.text(self.V2SegArray[s], self.V3SegArray[s], self.SegIDArray[s])
-        plt.savefig('Segments.png')
+        plt.savefig(os.path.join(SGT_FILES_PATH, self.root + '_V2V3segments.png'))
 
         # Plot calculate segments' RA and Dec
         plt.figure(2)
@@ -467,7 +466,7 @@ class SegmentForm:
             plt.text(self.SegRA[i], self.SegDec[i], str(i + 1))
         plt.gca().invert_xaxis()
         plt.gca().ticklabel_format(useOffset=False)
-        plt.savefig('SegmentSky.png')
+        plt.savefig(os.path.join(SGT_FILES_PATH, self.root + '_RADecsegments.png'))
 
     def get_guidestar_params(self):
 
@@ -490,7 +489,7 @@ class SegmentForm:
         msg = ["OK", "Boresight parameter conversion error",
                "Boresight parameter out of range"]
 
-        errcode = checkout(V2B, -10.0, 10.0)
+        errcode = self.checkout(V2B, -10.0, 10.0)
         if errcode != 0:
             error = msg[errcode]
             print(error)
@@ -500,7 +499,7 @@ class SegmentForm:
         else:
             V2B = float(V2B)
 
-        errcode = checkout(V3B, -10.0, 10.0)
+        errcode = self.checkout(V3B, -10.0, 10.0)
         if errcode != 0:
             error = msg[errcode]
             print(error)
@@ -515,7 +514,7 @@ class SegmentForm:
         msg = ["OK", "Guide Star parameter conversion error",
                "Guide Star parameter out of range"]
 
-        errcode = checkout(gsRA, 0.0, 360.0)
+        errcode = self.checkout(gsRA, 0.0, 360.0)
         if errcode != 0:
             error = msg[errcode]
             print(error)
@@ -525,7 +524,7 @@ class SegmentForm:
         else:
             gsRA = float(gsRA)
 
-        errcode = checkout(gsDec, -90.0, 90.0)
+        errcode = self.checkout(gsDec, -90.0, 90.0)
         error = msg[errcode]
         if errcode != 0:
             error = msg[errcode]
@@ -536,7 +535,7 @@ class SegmentForm:
         else:
             gsDec = float(gsDec)
 
-        errcode = checkout(gsPA, -180.0, 180.0)
+        errcode = self.checkout(gsPA, -180.0, 180.0)
         error = msg[errcode]
         if errcode != 0:
             print(error)
@@ -552,32 +551,34 @@ class SegmentForm:
 
         return V2B, V3B, gsRA, gsDec, gsPA, A
 
+    def checkout(self, str, low, high):
+        """Test conversion from string to float.
+        if float conversion works, test range
+        return errcode 0 for OK, 1 for conversion error, 2 for range error"""
+
+        try:
+            x = float(str)
+            if low <= x <= high:
+                errcode = 0
+            else:
+                errcode = 2
+        except ValueError:
+            errcode = 1
+        return errcode
+
     def Show(self):
-        self.root.mainloop()
+        self.root_window.mainloop()
 
     def Finish(self):
         print('Stopping')
-        self.root.quit()  # frees up iPython window
-        self.root.destroy()  # closes GUI
+        self.root_window.quit()  # frees up iPython window
+        self.root_window.destroy()  # closes GUI
 
 ############################## End Class SegmentForm ###############################
 
-def checkout(str, low, high):
-    """Test conversion from string to float.
-    if float conversion works, test range
-    return errcode 0 for OK, 1 for conversion error, 2 for range error"""
 
-    try:
-        x = float(str)
-        if low <= x <= high:
-            errcode = 0
-        else:
-            errcode = 2
-    except ValueError:
-        errcode = 1
-    return errcode
+def run_tool(segment_infile, root=None, GUI=True, GS_params_dict=None):
 
-def run_tool(segment_infile, GUI=True, GS_params_dict=None):
     if not GS_params_dict and not GUI:
         GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
                           'V3Boff': 0.2,  # V3 boresight offset
@@ -588,7 +589,7 @@ def run_tool(segment_infile, GUI=True, GS_params_dict=None):
                           'segNum': 0}  # selected segment to guide on
 
     # Set up segment form class
-    sgForm = SegmentForm(segment_infile, GUI=GUI, GS_params_dict=GS_params_dict)
+    sgForm = SegmentForm(segment_infile, root=root, GUI=GUI, GS_params_dict=GS_params_dict)
 
     # Either run the GUI or run the calculation
     if GUI:
@@ -597,9 +598,10 @@ def run_tool(segment_infile, GUI=True, GS_params_dict=None):
         sgForm.ChosenSeg()
         sgForm.Calculate()
 
+
 ############################## Main Program - Actions #####################################
 
 
 if __name__ == '__main__':
-    segment_infile = 'V2V3offsets.txt'
+    segment_infile = os.path.join(SGT_FILES_PATH, 'SGTintegrationexample.txt')
     run_tool(segment_infile)
