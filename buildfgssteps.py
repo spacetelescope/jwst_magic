@@ -99,7 +99,6 @@ class BuildFGSSteps(object):
 
         if self.step == 'ID':
             step_dict = parameters['id_dict']
-            self.acqnum = step_dict['acqNum']
 
         else:
             step_dict = parameters['{}_dict'.format(self.step.lower())]
@@ -109,7 +108,11 @@ class BuildFGSSteps(object):
             self.countrate = np.asarray([self.countrate[0]])
             self.input_im = create_im_subarray(self.input_im, self.xarr,
                                                self.yarr, step_dict['imgsize'])
-            self.acqnum = step_dict['acqNum']
+
+            if self.step == 'ACQ1' or self.step == 'ACQ2':
+                self.imgsize = step_dict['imgsize']
+                self.acq1_imgsize = parameters['acq1_dict']['imgsize']
+                self.acq2_imgsize = parameters['acq2_dict']['imgsize']
 
         return step_dict
 
@@ -124,22 +127,27 @@ class BuildFGSSteps(object):
         self.time_normed_im = self.input_im * step_dict['tcds']
 
         ## Grab the expected bias
-        self.bias = getbias(self.guider, self.xarr, self.yarr, self.nreads,
-                            step_dict['nramps'], step_dict['imgsize'])
+        if step_dict['bias']:
+            self.bias = getbias(self.guider, self.xarr, self.yarr, self.nreads,
+                                step_dict['nramps'], step_dict['imgsize'])
 
-        ## Take the bias and add a noisy version of the input image, adding signal
-        ## over each read
-        image = np.copy(self.bias)
-        for ireads in range(self.nreads):
-            image[ireads::(self.nreads)] += (ireads + 1) * \
-                                         np.random.poisson(self.time_normed_im)
+            ## Take the bias and add a noisy version of the input image, adding signal
+            ## over each read
+            image = np.copy(self.bias)
+            for ireads in range(self.nreads):
+                image[ireads::(self.nreads)] += (ireads + 1) * \
+                                                np.random.poisson(self.time_normed_im)
+        else:
+            self.bias = None
+            image = self.time_normed_im
         ## Cut any pixels over saturation or under zero
         image = utils.correct_image(image)
 
         if step_dict['cdsimg']:
             self.cds = create_cds(image)
         else:
-            self.cds = False
+            self.cds = None
+            
         if step_dict['stripsimg']:
             self.strips = create_strips(image, step_dict['imgsize'],
                                         step_dict['nstrips'],
@@ -148,6 +156,14 @@ class BuildFGSSteps(object):
                                         step_dict['height'],
                                         self.yoffset,
                                         step_dict['overlap'])
+        if step_dict['step'] =='LOSTRK':
+            # Normalize to a count sum of 1000
+            image = image / np.sum(image) * 1000
+            # Resize image array to oversample by 6 (from 43x43 to 255x255)
+            image = image.repeat(6, axis=0)
+            image = image.repeat(6, axis=1)
+            image = image[1:-2, 1:-2]
+
         return image
 
     def write(self):

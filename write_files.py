@@ -37,9 +37,9 @@ def write_all(obj):
                                          from arr
 
     ACQ Only:
-    <name>_G<guider>_<step><acqnum>.cat :   list of x and y coordinates of the guide
+    <name>_G<guider>_<step>.cat :   list of x and y coordinates of the guide
                                         and reference stars
-    <name>_G<guider><step><acqnum>.fits :   fits cube of the sky with added bias and noise
+    <name>_G<guider><step>.fits :   fits cube of the sky with added bias and noise
                                         to simulate the read and ramp cycle for ID
     '''
     ## STScI only files - mostly just for quick checks of the data
@@ -48,38 +48,42 @@ def write_all(obj):
     # Sky imge
     filename_sky = os.path.join(obj.out_dir,
                                 'stsci',
-                                '{}_G{}_{}{}sky.fits'.format(obj.root,
-                                                             obj.guider,
-                                                             obj.step,
-                                                             obj.acqnum))
+                                '{}_G{}_{}sky.fits'.format(obj.root,
+                                                           obj.guider,
+                                                           obj.step))
     utils.write_fits(filename_sky, obj.time_normed_im)
 
     # STC files using offset, rotated catalog
     filename_stc = os.path.join(obj.out_dir,
                                 'stsci',
-                                '{}_G{}_{}{}.stc'.format(obj.root,
-                                                         obj.guider,
-                                                         obj.step,
-                                                         obj.acqnum))
-    write_stc(filename_stc, obj.xarr, obj.yarr, obj.countrate, obj.guider)
+                                '{}_G{}_{}.stc'.format(obj.root,
+                                                       obj.guider,
+                                                       obj.step))
+    if obj.step == 'ACQ1' or obj.step == 'ACQ2':
+        write_stc(filename_stc, obj.xarr-obj.imgsize//2,
+                  obj.yarr-obj.imgsize//2, obj.countrate,
+                  obj.guider)
+    else:
+        write_stc(filename_stc, obj.xarr, obj.yarr,
+                  obj.countrate, obj.guider)
 
     # Bias image
-    filename_bias = os.path.join(obj.out_dir,
-                                 'stsci',
-                                 '{}_G{}_{}{}bias.fits'.format(obj.root,
-                                                               obj.guider,
-                                                               obj.step,
-                                                               obj.acqnum))
-    utils.write_fits(filename_bias, obj.bias)
+    if obj.bias is not None:
+        filename_bias = os.path.join(obj.out_dir,
+                                     'stsci',
+                                     '{}_G{}_{}bias.fits'.format(obj.root,
+                                                                 obj.guider,
+                                                                 obj.step))
+        utils.write_fits(filename_bias, obj.bias)
 
     # Create CDS image
-    filename_cds = os.path.join(obj.out_dir,
-                                'stsci',
-                                '{}_G{}_{}{}cds.fits'.format(obj.root,
-                                                             obj.guider,
-                                                             obj.step,
-                                                             obj.acqnum))
-    utils.write_fits(filename_cds, obj.cds)
+    if obj.cds is not None:
+        filename_cds = os.path.join(obj.out_dir,
+                                    'stsci',
+                                    '{}_G{}_{}cds.fits'.format(obj.root,
+                                                               obj.guider,
+                                                               obj.step))
+        utils.write_fits(filename_cds, obj.cds)
 
     if obj.step == 'ID':
         ## STScI only files - mostly just for quick checks of the data
@@ -123,24 +127,24 @@ def write_all(obj):
         # star catalog in real pixs
         filename_starcat = os.path.join(obj.out_dir,
                                         'stsci',
-                                        '{}_G{}_{}{}.cat'.format(obj.root,
-                                                                 obj.guider,
-                                                                 obj.step,
-                                                                 obj.acqnum))
+                                        '{}_G{}_{}.cat'.format(obj.root,
+                                                               obj.guider,
+                                                               obj.step))
         write_cat(filename_starcat, obj.xarr, obj.yarr)
 
         ## DHAS file
         # Noisy sky acquisition fits images
         filename_noisy_sky = os.path.join(obj.out_dir,
                                           'dhas',
-                                          '{}_G{}_{}{}.fits'.format(obj.root,
-                                                                    obj.guider,
-                                                                    obj.step,
-                                                                    obj.acqnum))
+                                          '{}_G{}_{}.fits'.format(obj.root,
+                                                                  obj.guider,
+                                                                  obj.step))
 
         utils.write_fits(filename_noisy_sky, np.uint16(obj.image))
-        Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
-               step='ACQ', out_dir=obj.out_dir)
+        if obj.step == 'ACQ1':
+            Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
+                   step='ACQ', out_dir=obj.out_dir, acq1_imgsize=obj.acq1_imgsize,
+                   acq2_imgsize=obj.acq2_imgsize)
         ## Gound system file
         convert_fits_to_dat(filename_noisy_sky, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))

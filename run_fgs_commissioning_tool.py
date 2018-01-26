@@ -30,6 +30,9 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             nircam_mod=None, nircam=True, global_alignment=False, in_file=None,
             bkgd_stars=False):
 
+    if root is None:
+        root = os.path.basename(image).split('.')[0]
+
     taskname = '_'.join([TASKNAME, root])
     LOGNAME = utils.get_logname(os.path.join(LOCAL_PATH, 'logs'), taskname)
     print(LOGNAME)
@@ -68,10 +71,6 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         """
 
         # print('log: ', pprint.pprint(dir(log)))
-
-        if root is None:
-            root = os.path.basename(image).split('.')[0]
-
         out_dir = os.path.join(LOCAL_PATH, 'out', root)
 
         log.info("Processing request for {}. \nAll data will be saved in: {}".format(root, out_dir))
@@ -84,6 +83,16 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             fgs_im = nircam_to_fgs.convert_im(image, guider, fgs_counts=fgs_counts,
                                               jmag=jmag, nircam_mod=nircam_mod,
                                               return_im=True)
+            # Account for output of convert_im being a list
+            print(np.shape(fgs_im))
+            # if np.shape(fgs_im)[0] == 1:
+            #     fgs_im = fgs_im[0]
+            # else:
+            #     raise TypeError('Provided NIRCam image {} has dimensions {}. '
+            #                     'Cannot create multiple regfiles from multiple '
+            #                     'NIRCam frames with one call to '
+            #                     'run_fgs_commissioning_tool. Please input single'
+            #                     ' 2048 x 2048 image.'.format(image, np.shape(fgs_im)))
 
         # ... or process provided FGS image
         else:
