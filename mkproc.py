@@ -16,7 +16,7 @@ class Mkproc(object):
     Makes CECIL proc files for FGS guider 1 and 2
     '''
     def __init__(self, guider, root, xarr, yarr, counts, step, thresh_factor=0.5,
-                 out_dir=None):
+                 out_dir=None, acq1_imgsize=None, acq2_imgsize=None):
         '''
         Parameters
         ==========
@@ -54,7 +54,9 @@ class Mkproc(object):
             self.create_id_proc_file(root, guider, xarr, yarr, counts,
                                      thresh_factor=thresh_factor)
         elif step == 'ACQ':
-            self.create_acq_proc_file(root, guider)
+            print(acq1_imgsize, acq2_imgsize)
+            self.create_acq_proc_file(root, guider, xarr, yarr, counts,
+                                      acq1_imgsize, acq2_imgsize)
 
     def find_templates(self, guider, step, template_path):
         '''
@@ -154,21 +156,24 @@ class Mkproc(object):
                      os.path.join(self.out_dir, 'ground_system'))
 
 
-    def create_acq_proc_file(self, root, guider):
+    def create_acq_proc_file(self, root, guider, xarr, yarr, counts,
+                             acq1_imgsize, acq2_imgsize):
         '''
         Create the CECIL proc file for the acquisition phase
         '''
         eol = '\n'
 
+        ### THIS IS BAD -- CHANGE THIS --- KJB 1/25/2018
         #corner coords & gs counts
-        ind1, xarr1, yarr1, counts1 = np.loadtxt(os.path.join(self.out_dir, 'stsci',
-                                                              '{}_G{}_ACQ1.stc'.format(root,
-                                                                                       guider))).T
-        threshgs = 0.50 * counts1
+        xarr1, yarr1 = rptoia.rptoia(xarr - acq1_imgsize//2,
+                                     yarr - acq1_imgsize//2,
+                                     guider)
+        xarr2, yarr2 = rptoia.rptoia(xarr - acq2_imgsize//2,
+                                     yarr - acq2_imgsize//2,
+                                     guider)
 
-        ind2, xarr2, yarr2, counts2 = np.loadtxt(os.path.join(self.out_dir, 'stsci',
-                                                              '{}_G{}_ACQ2.stc'.format(root,
-                                                                                       guider))).T
+
+        threshgs = 0.50 * counts
 
         with open(os.path.join(self.out_dir, 'dhas',
                                '{0}_G{1}_ACQ.prc'.format(root, guider)), 'w') as file_out:
@@ -182,12 +187,14 @@ class Mkproc(object):
 
             file_out.write('@IFGS_GUIDESTAR {0}, 2, {1:12.4f}, {2:12.4f}, \
                            {3:12.4f}, {4:8d}'.format(self.guider, float(xarr1),
-                                                     float(yarr1), float(counts1),
+                                                     float(yarr1), float(counts),
                                                      int(threshgs)))
             write_from_template(self.template_b, file_out)
             file_out.write('@IFGS_CONFIG {0}, SWADDRESS=spaceWireAddr1, SLOT=1, NINTS=1, \
             NGROUPS=groupNum1, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=128, NCOLS=128, \
-            ROWCORNER={1:12.4f},COLCORNER={2:12.4f}'.format(self.guider, xarr1, yarr1))
+            ROWCORNER={1:12.4f},COLCORNER={2:12.4f}'.format(self.guider,
+                                                            float(xarr1),
+                                                            float(yarr1)))
             file_out.write(eol)
 
             write_from_template(self.template_c, file_out)
@@ -195,7 +202,9 @@ class Mkproc(object):
 
             file_out.write('@IFGS_CONFIG {0}, spaceWireAddr2, SLOT=2, NINTS=1, \
             NGROUPS=groupNum2, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=32, NCOLS=32, \
-            ROWCORNER={1:12.4f}, COLCORNER={2:12.4f}'.format(self.guider, xarr2, yarr2))
+            ROWCORNER={1:12.4f}, COLCORNER={2:12.4f}'.format(self.guider,
+                                                             float(xarr2),
+                                                             float(yarr2)))
             file_out.write(eol)
 
             write_from_template(self.template_d, file_out)
