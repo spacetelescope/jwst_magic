@@ -8,6 +8,7 @@ height = 64
 overlap = 8
 (nstrips = [32,33,34,35,36,37,39,40,42] for overlap = [0,2,4,6,8,10,12,14,16,18])
 tcds = 0.338
+bias = True
 cds image = True
 strips image = True
 
@@ -15,6 +16,7 @@ ACQ1 (acquisition 1):
 nx, ny = 128
 nramps = 6
 tcds = 0.3612
+bias = True
 cds image = True
 strips image = False
 
@@ -22,6 +24,7 @@ ACQ2 (acquisition 2):
 nx, ny = 32
 nramps = 5
 tcds = 0.0516
+bias = True
 cds image = True
 strips image = False
 
@@ -29,6 +32,7 @@ TRK (track):
 nx, ny = 32
 nramps = 5000
 tcds = 0.0256
+bias = True
 cds image = False
 strips image = False
 
@@ -36,6 +40,7 @@ LOSTRK (line of sight track):
 nx, ny = 43
 nramps = 1
 tcds = 0.0256
+bias = False
 cds image = False
 strips image = False
 '''
