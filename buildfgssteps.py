@@ -1,14 +1,13 @@
 # STDLIB
+import configparser
 import os
 
 # Third Party
 from astropy.io import fits
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 import numpy as np
-import pickle
 
 # LOCAL
+import config
 from getbias import getbias
 import utils
 import log
@@ -24,7 +23,7 @@ class BuildFGSSteps(object):
     Creates an FGS simulation object for ID, ACQ, and/or TRK stages to be used
     with DHAS.
     '''
-    def __init__(self, im, guider, root, step, reg_file=None, nramps=None):
+    def __init__(self, im, guider, root, step, reg_file=None, configfile=None):
         # Practical things
         self.guider = guider
         self.root = root
@@ -50,8 +49,9 @@ class BuildFGSSteps(object):
 
         self.get_coords_and_counts(reg_file=reg_file)
 
-        step_dict = self.build_step(nramps)
-        self.image = self.create_img_arrays(step_dict)
+        section = '{}_dict'.format(self.step.lower())
+        config_ini = self.build_step(section, configfile)
+        self.image = self.create_img_arrays(section, config_ini)
         self.write()
 
 
@@ -84,52 +84,46 @@ class BuildFGSSteps(object):
             self.yarr = np.asarray([self.yarr])
             self.countrate = np.asarray([self.countrate])
 
-    def build_step(self, configfile=None):
+    def build_step(self, section, configfile=None):
         '''
-        Build the step of commissioning and return the step dictionary if step
-        is known
+        Build the step of commissioning based on the parameters in the config.ini
+        and return the step section if step is known
         '''
         self.nreads = 2
 
-        if not configfile:
-            parameters = pickle.load(open(os.path.join(DATA_PATH,
-                                                       'master_config.p'), "rb"))
-        else:
-            parameters = pickle.load(open(configfile), "rb")
+        if configfile is None:
+            configfile = os.path.join('data', 'config.ini')
+        config_ini = config.load_config_ini(configfile)
 
-        if self.step == 'ID':
-            step_dict = parameters['id_dict']
-
-        else:
-            step_dict = parameters['{}_dict'.format(self.step.lower())]
-
+        if self.step != 'ID':
             self.xarr = np.asarray([self.xarr[0]])
             self.yarr = np.asarray([self.yarr[0]])
             self.countrate = np.asarray([self.countrate[0]])
             self.input_im = create_im_subarray(self.input_im, self.xarr,
-                                               self.yarr, step_dict['imgsize'])
+                                               self.yarr, config_ini.getint(section, 'imgsize'))
 
             if self.step == 'ACQ1' or self.step == 'ACQ2':
-                self.imgsize = step_dict['imgsize']
-                self.acq1_imgsize = parameters['acq1_dict']['imgsize']
-                self.acq2_imgsize = parameters['acq2_dict']['imgsize']
+                self.imgsize = config_ini.getint(section, 'imgsize')
+                self.acq1_imgsize = config_ini.getint('acq1_dict', 'imgsize')
+                self.acq2_imgsize = config_ini.getint('acq2_dict', 'imgsize')
 
-        return step_dict
+        return config_ini
 
 
-    def create_img_arrays(self, step_dict):
+    def create_img_arrays(self, section, config_ini):
         '''
         Create a noisy sky image for ID and ACQ steps.
         There is only an added poissonfactor for ACQ2.
         PoissonNoise should always be set to True for ID.
         '''
         #Create the time-normalized image
-        self.time_normed_im = self.input_im * step_dict['tcds']
+        self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tcds')
 
         ## Grab the expected bias
-        if step_dict['bias']:
+        if config_ini.get(section, 'bias'):
             self.bias = getbias(self.guider, self.xarr, self.yarr, self.nreads,
-                                step_dict['nramps'], step_dict['imgsize'])
+                                config_ini.getint(section, 'nramps'),
+                                config_ini.getint(section, 'imgsize'))
 
             ## Take the bias and add a noisy version of the input image, adding signal
             ## over each read
@@ -143,20 +137,21 @@ class BuildFGSSteps(object):
         ## Cut any pixels over saturation or under zero
         image = utils.correct_image(image)
 
-        if step_dict['cdsimg']:
+        if config_ini.getboolean(section, 'cdsimg'):
             self.cds = create_cds(image)
         else:
             self.cds = None
-            
-        if step_dict['stripsimg']:
-            self.strips = create_strips(image, step_dict['imgsize'],
-                                        step_dict['nstrips'],
-                                        step_dict['nramps'],
+
+        if config_ini.getboolean(section, 'stripsimg'):
+            self.strips = create_strips(image,
+                                        config_ini.getint(section, 'imgsize'),
+                                        config_ini.getint(section, 'nstrips'),
+                                        config_ini.getint(section, 'nramps'),
                                         self.nreads,
-                                        step_dict['height'],
+                                        config_ini.getint(section, 'height'),
                                         self.yoffset,
-                                        step_dict['overlap'])
-        if step_dict['step'] =='LOSTRK':
+                                        config_ini.getint(section, 'overlap'))
+        if config_ini.get(section, 'step') =='LOSTRK':
             # Normalize to a count sum of 1000
             image = image / np.sum(image) * 1000
             # Resize image array to oversample by 6 (from 43x43 to 255x255)

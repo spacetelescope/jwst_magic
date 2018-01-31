@@ -84,7 +84,6 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                               jmag=jmag, nircam_mod=nircam_mod,
                                               return_im=True)
             # Account for output of convert_im being a list
-            print(np.shape(fgs_im))
             # if np.shape(fgs_im)[0] == 1:
             #     fgs_im = fgs_im[0]
             # else:
