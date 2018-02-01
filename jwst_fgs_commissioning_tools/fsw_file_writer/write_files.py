@@ -11,8 +11,10 @@ from jwst_fgs_commissioning_tools import utils
 from jwst_fgs_commissioning_tools.fsw_file_writer import coordinate_transforms
 from jwst_fgs_commissioning_tools.fsw_file_writer import mkproc
 
-LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
-DATA_PATH = os.path.join(LOCAL_PATH, 'data')
+FSW_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(FSW_PATH)[0]
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
+DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 def write_all(obj):
     '''
@@ -113,7 +115,7 @@ def write_all(obj):
         # Write to strips to fits file
         filename_hdr = os.path.join(DATA_PATH,
                                     'newG{}magicHdrImg.fits'.format(obj.guider))
-        dummy_data, hdr0 = fits.getdata(filename_hdr, header=True)
+        hdr0 = fits.getheader(filename_hdr, ext=0)
         utils.write_fits(filename_id_strips, obj.strips, header=hdr0)
         mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
                       step='ID', out_dir=obj.out_dir)
