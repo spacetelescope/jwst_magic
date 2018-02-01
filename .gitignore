@@ -46,19 +46,13 @@ Thumbs.db
 # Other #
 #########
 notebooks/*
-segment_guiding_files/*
+!notebooks/FGS Commissioning Tool Tutorial.ipynb
+!notebooks/*.png
 out/*
 .ipynb_checkpoints/*
 logs/*
-comm_tool_obsolete
-.idea/*
-
-# Files #
-#########
-Legacy/*
-DHAStesting_calcthresholds.py
-BackgroundStars.ipynb
-DHAStesting_analyzeGA.ipynb
-JWXML v. RPtoIA.ipynb
-Smoothing&IsolatingPSFs.ipynb
+legacy/*
+segment_guiding_files/*
+jwst_fgs_commissioning_tools/segment_guiding/*.png
+jwst_fgs_commissioning_tools/segment_guiding/*.txt
 
