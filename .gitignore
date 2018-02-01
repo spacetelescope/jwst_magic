@@ -46,6 +46,7 @@ Thumbs.db
 # Other #
 #########
 notebooks/*
+segment_guiding_files/*
 out/*
 .ipynb_checkpoints/*
 logs/*
