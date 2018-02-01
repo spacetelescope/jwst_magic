@@ -12,8 +12,9 @@ from astropy.io import fits
 from jwst_fgs_commissioning_tools import utils
 from jwst_fgs_commissioning_tools import log
 
-LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
-DATA_PATH = os.path.join(LOCAL_PATH, 'data')
+FSW_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(FSW_PATH)[0]
+DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 BIASZERO_G1 = fits.getdata(os.path.join(DATA_PATH,
                                         'g1bias0.fits'))
 BIASZERO_G2 = fits.getdata(os.path.join(DATA_PATH,
