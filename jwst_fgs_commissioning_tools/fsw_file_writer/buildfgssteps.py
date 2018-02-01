@@ -14,8 +14,10 @@ from jwst_fgs_commissioning_tools.star_selector import select_psfs
 from jwst_fgs_commissioning_tools.fsw_file_writer import config, getbias, write_files
 
 # DEFINE ALL NECESSARY CONSTANTS
-LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
-DATA_PATH = os.path.join(LOCAL_PATH, 'data')
+FSW_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(FSW_PATH)[0]
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
+DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 class BuildFGSSteps(object):
     '''
@@ -30,7 +32,7 @@ class BuildFGSSteps(object):
         self.yoffset = 12
 
         ## DEFINE ALL THINGS PATHS
-        self.out_dir = os.path.join(LOCAL_PATH, 'out', root)
+        self.out_dir = os.path.join(OUT_PATH, 'out', root)
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
@@ -60,7 +62,7 @@ class BuildFGSSteps(object):
         Get coordinate information of guide star and reference stars
         '''
         if reg_file is None:
-            reg_file = os.path.join(os.path.join(LOCAL_PATH, 'out', self.root,
+            reg_file = os.path.join(os.path.join(OUT_PATH, 'out', self.root,
                                                  '{0}_G{1}_regfile.txt'.format(self.root,
                                                                                self.guider)))
         log.info("Using {} as the reg file".format(reg_file))
