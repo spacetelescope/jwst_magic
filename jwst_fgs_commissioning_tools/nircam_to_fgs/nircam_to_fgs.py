@@ -157,7 +157,7 @@ def pad_data(data, padding, fgs_pix):
     padded_data[padding:padding + size, padding:padding + size] = noped_data
 
     # Correct high or low pixels
-    padded_data = utils.correct_image(padded_image, 65000, 0)
+    padded_data = utils.correct_image(padded_data, 65000, 0)
 
     return padded_data
 
