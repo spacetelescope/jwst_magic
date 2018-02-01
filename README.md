@@ -30,6 +30,22 @@ files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
 4. Segment Guiding Tool -
 *In progress*
 
+Installation notes
+------------------
+
+This package was developed in a python 3.5 environment. Python 2.7 is not yet supported.
+
+Clone the repository
+
+``git clone git@grit.stsci.edu:JWST-FGS/Commissioning-tools.git``
+
+Install the JWST FGS Commissioning Tools:
+
+``cd Commissioning_tools/``
+
+``python setup.py install --user``
+
+
 
 Running the Tools
 -----------------

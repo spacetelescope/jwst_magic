@@ -13,7 +13,7 @@ from jwst_fgs_commissioning_tools import utils, log
 from jwst_fgs_commissioning_tools.star_selector import select_psfs
 from jwst_fgs_commissioning_tools.fsw_file_writer import config, getbias, write_files
 
-# DEFINE ALL NECESSARY CONSTANTS
+# DEFINE ALL PATHS
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(FSW_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
@@ -93,7 +93,7 @@ class BuildFGSSteps(object):
         self.nreads = 2
 
         if configfile is None:
-            configfile = os.path.join('data', 'config.ini')
+            configfile = os.path.join(DATA_PATH, 'config.ini')
         config_ini = config.load_config_ini(configfile)
 
         if self.step != 'ID':

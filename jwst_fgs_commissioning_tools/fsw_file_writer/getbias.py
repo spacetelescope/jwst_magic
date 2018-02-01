@@ -95,7 +95,7 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, imgsize):
             pedestal = np.repeat(pedestal, imgsize, axis=2)
             pedestal = np.repeat(pedestal, nreads, axis=0)
 
-    bias += pedestal[:, xlow:xhigh, ylow:yhigh]
+    bias += pedestal
 
     ## rectify bias img
     bias = utils.correct_image(bias, upper_limit=0) #set any saturated pixels to zero
