@@ -27,7 +27,7 @@ other systems'''
 
 def find_conversion(guider):
     '''Guider 1 and 2 have different gains that are used as conversion factors
-    from e-/sec to ADU/sec
+    from ADU/sec to e-/sec
     '''
     if guider == 1:
         conversion = 1.55

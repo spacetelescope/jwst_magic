@@ -25,6 +25,7 @@
 *.rar
 *.tar
 *.zip
+jwst_fgs_commissioning_tools.egg-info/*
 
 # Logs and databases #
 ######################
@@ -53,7 +54,10 @@ comm_tool_obsolete
 
 # Files #
 #########
-Smoothing&IsolatingPSFs.ipynb
-select_psfs_OLD.py
-select_psfs_OLD2.py
+Legacy/*
+DHAStesting_calcthresholds.py
 BackgroundStars.ipynb
+DHAStesting_analyzeGA.ipynb
+JWXML v. RPtoIA.ipynb
+Smoothing&IsolatingPSFs.ipynb
+

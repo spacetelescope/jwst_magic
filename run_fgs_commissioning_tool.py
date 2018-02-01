@@ -9,6 +9,7 @@ if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 import numpy as np
 from astropy.io import fits
+import pprint
 
 # LOCAL
 import select_psfs
@@ -16,7 +17,7 @@ from buildfgssteps import BuildFGSSteps
 import log
 import nircam_to_fgs
 import utils
-#import background_stars
+import background_stars
 import counts_to_jmag
 
 
@@ -39,7 +40,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
 
     @log.logtofile(LOGNAME)
     def run_all_with_logging(image, guider, root=None, fgs_counts=None, jmag=None,
-                             nircam_mod=None, nircam=True, global_alignment=False,
+                             nircam_det=None, nircam=True, global_alignment=False,
                              in_file=None, bkgd_stars=False):
         """
         This function will take any FGS or NIRCam image and create the outputs needed
@@ -59,8 +60,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             If the user wants to specify the FGS counts, they do so here
         jmag: float
             Like fgs_counts but for the J magnitude (NOT JAB)
-        nircam_mod: str
-            The NIRCam module used for this observation. Only applicable for NIRCam
+        nircam_det: str
+            The NIRCam detector used for this observation. Only applicable for NIRCam
             images and if cannot be parsed from header.
         nircam: bool
             If this is a FGS image, set this flag to False
@@ -81,17 +82,18 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         if nircam:
             log.info("This is a NIRCam image")
             fgs_im = nircam_to_fgs.convert_im(image, guider, fgs_counts=fgs_counts,
-                                              jmag=jmag, nircam_mod=nircam_mod,
+                                              jmag=jmag, nircam_det=nircam_det,
                                               return_im=True)
+
             # Account for output of convert_im being a list
-            # if np.shape(fgs_im)[0] == 1:
-            #     fgs_im = fgs_im[0]
-            # else:
-            #     raise TypeError('Provided NIRCam image {} has dimensions {}. '
-            #                     'Cannot create multiple regfiles from multiple '
-            #                     'NIRCam frames with one call to '
-            #                     'run_fgs_commissioning_tool. Please input single'
-            #                     ' 2048 x 2048 image.'.format(image, np.shape(fgs_im)))
+            if np.shape(fgs_im)[0] == 1:
+                fgs_im = fgs_im[0]
+            else:
+                raise TypeError('Provided NIRCam image {} has dimensions {}. '
+                                'Cannot create multiple regfiles from multiple '
+                                'NIRCam frames with one call to '
+                                'run_fgs_commissioning_tool. Please input single'
+                                ' 2048 x 2048 image.'.format(image, np.shape(fgs_im)))
 
         # ... or process provided FGS image
         else:
@@ -111,8 +113,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             shutil.copyfile(image, os.path.join(LOCAL_PATH, 'out', root, 'FGS_imgs',
                                                 '{}.fits'.format(root)))
         if bkgd_stars:
-            pass
-            #fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
+            fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
 
         # create reg file
         nref = select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,
@@ -126,7 +127,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         BuildFGSSteps(fgs_im, guider, root, 'ACQ2')
         BuildFGSSteps(fgs_im, guider, root, 'LOSTRK')
 
-    return run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
-                                jmag=jmag, nircam_mod=nircam_mod, nircam=nircam,
+    run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
+                                jmag=jmag, nircam_det=nircam_det, nircam=nircam,
                                 global_alignment=global_alignment,
                                 in_file=in_file, bkgd_stars=bkgd_stars)
+
