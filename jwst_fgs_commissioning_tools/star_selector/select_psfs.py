@@ -23,9 +23,8 @@ from scipy import ndimage, signal
 
 
 # LOCAL
-import utils
-import log
-import SelectStarsGUI
+from jwst_fgs_commissioning_tools import log, utils
+from jwst_fgs_commissioning_tools.star_selector import SelectStarsGUI
 
 # Adjust matplotlib origin
 rcParams['image.origin'] = 'upper'
@@ -49,6 +48,7 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
 
         # Find PSFs
         threshold = median + (3 * std)  # Used to be median + 3 * std
+
         sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
         num_psfs = len(sources)
         coords = sources['x_peak', 'y_peak']
@@ -153,8 +153,9 @@ def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
         im = np.copy(objects)
         im[objects != i] = False
         im[objects == i] = True
+
         if counts_3x3:
-            counts.append(utils.countrate_3x3(x[i-1], y[i-1], data))
+            counts.append(utils.countrate_3x3(x[i - 1], y[i - 1], np.array(data)))
         else:
             counts.append(np.sum(im * data))
         val.append(np.sum(im * 1.))  # Number of pixels in object

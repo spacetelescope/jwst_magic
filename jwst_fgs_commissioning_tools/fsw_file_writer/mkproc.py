@@ -8,9 +8,12 @@ import shutil
 import numpy as np
 
 # LOCAL
-import coordinate_transforms
+from jwst_fgs_commissioning_tools.fsw_file_writer import coordinate_transforms
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]
+OUT_PATH = os.path.split(PACKAGE_PATH)[0] # Location of out/ directory
+
 class Mkproc(object):
     '''
     Makes CECIL proc files for FGS guider 1 and 2
@@ -36,7 +39,7 @@ class Mkproc(object):
 
         # Create output directory if does not exist
         if out_dir is None:
-            self.out_dir = os.path.join(LOCAL_PATH, 'out', root)
+            self.out_dir = os.path.join(OUT_PATH, 'out', root)
         else:
             self.out_dir = out_dir
         if not os.path.exists(self.out_dir):
@@ -45,7 +48,7 @@ class Mkproc(object):
         # Find templates. If template path not given, script will assume that a
         #'templates' directory that includes are necessary prc templates lives
         #in the same directory as this script
-        template_path = os.path.join(LOCAL_PATH, 'templates')
+        template_path = os.path.join(PACKAGE_PATH, 'templates')
 
         self.find_templates(guider, step=step, template_path=template_path)
 

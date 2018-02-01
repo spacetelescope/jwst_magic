@@ -12,31 +12,28 @@ from astropy.io import fits
 import pprint
 
 # LOCAL
-import select_psfs
-from buildfgssteps import BuildFGSSteps
-import log
-import nircam_to_fgs
-import utils
-import background_stars
-import counts_to_jmag
-
+from jwst_fgs_commissioning_tools.nircam_to_fgs import nircam_to_fgs, counts_to_jmag
+from jwst_fgs_commissioning_tools.star_selector import select_psfs
+from jwst_fgs_commissioning_tools.fsw_file_writer import buildfgssteps
+from jwst_fgs_commissioning_tools import log, utils, background_stars
 
 # Because Jupyter Notebook cannot open a matplotlib object, I have copied what is
 # done in Run FGS Commissioning Tool.ipynb into this script that should be run in
 # IPython
-LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 TASKNAME = 'run_all'
 
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_mod=None, nircam=True, global_alignment=False, in_file=None,
+            nircam_det=None, nircam=True, global_alignment=False, in_file=None,
             bkgd_stars=False):
 
     if root is None:
         root = os.path.basename(image).split('.')[0]
 
     taskname = '_'.join([TASKNAME, root])
-    LOGNAME = utils.get_logname(os.path.join(LOCAL_PATH, 'logs'), taskname)
-    print(LOGNAME)
+    LOG_PATH = os.path.join(OUT_PATH, 'logs')
+    LOGNAME = utils.get_logname(LOG_PATH, taskname)
 
     @log.logtofile(LOGNAME)
     def run_all_with_logging(image, guider, root=None, fgs_counts=None, jmag=None,
@@ -72,7 +69,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         """
 
         # print('log: ', pprint.pprint(dir(log)))
-        out_dir = os.path.join(LOCAL_PATH, 'out', root)
+        out_dir = os.path.join(OUT_PATH, 'out', root)
 
         log.info("Processing request for {}. \nAll data will be saved in: {}".format(root, out_dir))
         log.info("Input image: {}".format(os.path.abspath(image)))
@@ -100,6 +97,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             log.info("This is a FGS image")
             fgs_im = fits.getdata(image)
 
+
             # If J magnitude is provided, normalize the entire image to match that jmag
             if jmag:
                 log.info("Normalizing to jmag = {}".format(jmag))
@@ -110,7 +108,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             fgs_im = utils.correct_image(fgs_im, upper_limit=0.)
 
             utils.ensure_dir_exists(os.path.join(out_dir, 'FGS_imgs'))
-            shutil.copyfile(image, os.path.join(LOCAL_PATH, 'out', root, 'FGS_imgs',
+            shutil.copyfile(image, os.path.join(OUT_PATH, 'out', root, 'FGS_imgs',
                                                 '{}.fits'.format(root)))
         if bkgd_stars:
             fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
@@ -122,13 +120,12 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                            in_file=in_file)
 
         # create all files for FSW/DHAS/FGSES/etc.
-        BuildFGSSteps(fgs_im, guider, root, 'ID')
-        BuildFGSSteps(fgs_im, guider, root, 'ACQ1')
-        BuildFGSSteps(fgs_im, guider, root, 'ACQ2')
-        BuildFGSSteps(fgs_im, guider, root, 'LOSTRK')
+        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ID')
+        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ACQ1')
+        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ACQ2')
+        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'LOSTRK')
 
     run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
-                                jmag=jmag, nircam_det=nircam_det, nircam=nircam,
-                                global_alignment=global_alignment,
-                                in_file=in_file, bkgd_stars=bkgd_stars)
-
+                         jmag=jmag, nircam_det=nircam_det, nircam=nircam,
+                         global_alignment=global_alignment,
+                         in_file=in_file, bkgd_stars=bkgd_stars)
