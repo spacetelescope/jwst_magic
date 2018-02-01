@@ -4,8 +4,16 @@ import os
 import sys
 from inspect import currentframe, getframeinfo
 import warnings
+import string
 
 # Third Party
+import matplotlib
+if matplotlib.get_backend() != 'Qt5Agg':
+    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+from matplotlib import rcParams
+
 from astropy.io import fits
 from astropy.io import ascii as asc
 from astropy.stats import sigma_clipped_stats
@@ -13,11 +21,6 @@ import numpy as np
 from photutils import find_peaks
 from scipy import ndimage, signal
 
-import matplotlib
-matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-from matplotlib import rcParams
 
 # LOCAL
 import utils
@@ -109,19 +112,6 @@ def choose_threshold(smoothed_data, gauss_sigma):
         log.error('User rejection of identified PSFs.')
         raise StandardError('User rejection of identified PSFs.')
 
-
-def countrate_3x3(x, y, data):
-    """
-    Using the coordinates of each PSF, place a 3x3 box around center pixel and sum
-    the counts of the pixels in this box.
-    """
-    x = int(x)
-    y = int(y)
-
-    counts = np.sum(data[y - 1:y + 2, x - 1:x + 2])
-    return counts
-
-
 def plot_centroids(data, coords, root, guider, out_dir):
     pad = 300
 
@@ -164,7 +154,7 @@ def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
         im[objects != i] = False
         im[objects == i] = True
         if counts_3x3:
-            counts.append(countrate_3x3(x[i-1], y[i-1], data))
+            counts.append(utils.countrate_3x3(x[i-1], y[i-1], data))
         else:
             counts.append(np.sum(im * data))
         val.append(np.sum(im * 1.))  # Number of pixels in object
@@ -172,7 +162,7 @@ def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
     return counts, val
 
 
-def create_cols_for_coords_counts(x, y, counts, val, inds=None):
+def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
     """
     Create an array of columns of y, x, and counts of each PSF to be written out.
     Use the inds returned from pick_stars based on user input.
@@ -180,8 +170,11 @@ def create_cols_for_coords_counts(x, y, counts, val, inds=None):
     If no inds are given, put the PSF with the most compact PSF first in the list to make it the
     Guide Star. **This method is not fool-proof, use at own risk***
     """
-
-    cols = [[yy, xx, co] for yy, xx, co in zip(y, x, counts)]# these coordinates are y,x
+    if labels:
+        cols = [[ll, '{:.4f}'.format(yy),
+                 '{:.4f}'.format(xx), '{:.4f}'.format(co)] for ll, yy, xx, co in zip(labels, y, x, counts)]# these coordinates are y,x
+    else:
+        cols = [[yy, xx, co] for yy, xx, co in zip(y, x, counts)]# these coordinates are y,x
 
     if inds is None:
         min_ind = np.where(val == np.min(val))[0][0]  # Find most compact PSF
@@ -190,6 +183,38 @@ def create_cols_for_coords_counts(x, y, counts, val, inds=None):
         cols = [cols[i] for i in inds]
 
     return cols
+
+def match_psfs_to_segments(x, y):
+    labels = string.ascii_uppercase[:18]
+    x_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
+    y_list = [9, 8, 8, 7, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 1]
+
+    # Determine boundaries of array
+    x_min = min(x)
+    x_max = max(y)
+    y_min = min(y)
+    y_max = max(y)
+
+    x_coords = np.linspace(x_min, x_max, 5)
+    y_coords = np.linspace(y_min, y_max, 9)[::-1]
+
+    seg_coords = np.array([[x_coords[i_x - 1],
+                            y_coords[i_y - 1]] for i_x, i_y in zip(x_list, y_list)])
+
+    # Match actual blob coordinates to segment name
+    matched_labels = []
+    for x_pos, y_pos in zip(x, y):
+        seg_distance = 2048
+        for i_sc, sc in enumerate(seg_coords):
+            x_distance = x_pos - sc[0]
+            y_distance = y_pos - sc[1]
+            distance = (x_distance**2 + y_distance**2)**0.5
+            if distance < seg_distance:
+                seg_distance = distance
+                i_seg = i_sc
+        matched_labels.append(labels[i_seg])
+
+    return matched_labels
 
 def parse_in_file(in_file):
     '''Determines if the input file contains x, y, and countrate data. If so,
@@ -327,9 +352,13 @@ def manual_star_selection(data, global_alignment):
     nref = len(inds) - 1
     log.info('1 guide star and {} reference stars selected'.format(nref))
 
+    segment_labels = match_psfs_to_segments(x, y)
+    ALL_cols = create_cols_for_coords_counts(x, y, counts, val,
+                                             labels=segment_labels,
+                                             inds=range(len(x)))
     cols = create_cols_for_coords_counts(x, y, counts, val, inds=inds)
 
-    return cols, coords, nref
+    return cols, coords, nref, ALL_cols
 
 
 def create_reg_file(data, root, guider, out_dir, in_file=None,
@@ -338,15 +367,25 @@ def create_reg_file(data, root, guider, out_dir, in_file=None,
         # Determine the kind of in_file and parse out the PSF locations and
         # countrates accordingly
         cols, coords, nref = parse_in_file(in_file)
+        ALL_cols = None
 
     else:
         # If no .incat or reg file provided, create reg file with manual
         # star selection using the SelectStarsGUI
-        cols, coords, nref = manual_star_selection(data, global_alignment)
+        cols, coords, nref, ALL_cols = manual_star_selection(data, global_alignment)
 
     # Save PNG of image and all PSF locations in out_dir
     plot_centroids(data, coords, root, guider, out_dir)
 
+    if ALL_cols:
+        # Write out file of ALL identified PSFs
+        utils.write_cols_to_file(out_dir,
+                                 filename='{0}_G{1}_ALLpsfs.txt'.format(root, guider),
+                                 labels=['label', 'y', 'x', 'countrate'],
+                                 cols=ALL_cols)
+
+
+    # Write out regfile of selected PSFs
     utils.write_cols_to_file(out_dir,
                              filename='{0}_G{1}_regfile.txt'.format(root, guider),
                              labels=['y', 'x', 'countrate'],
