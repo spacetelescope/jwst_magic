@@ -6,10 +6,10 @@ from astropy.io import fits
 import numpy as np
 
 #LOCAL
-import log
-import utils
-import rptoia
-from mkproc import Mkproc
+from jwst_fgs_commissioning_tools import log
+from jwst_fgs_commissioning_tools import utils
+from jwst_fgs_commissioning_tools.fsw_file_writer import coordinate_transforms
+from jwst_fgs_commissioning_tools.fsw_file_writer import mkproc
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(LOCAL_PATH, 'data')
@@ -60,8 +60,8 @@ def write_all(obj):
                                                        obj.guider,
                                                        obj.step))
     if obj.step == 'ACQ1' or obj.step == 'ACQ2':
-        write_stc(filename_stc, obj.xarr-obj.imgsize//2,
-                  obj.yarr-obj.imgsize//2, obj.countrate,
+        write_stc(filename_stc, obj.xarr - obj.imgsize // 2,
+                  obj.yarr - obj.imgsize // 2, obj.countrate,
                   obj.guider)
     else:
         write_stc(filename_stc, obj.xarr, obj.yarr,
@@ -115,8 +115,8 @@ def write_all(obj):
                                     'newG{}magicHdrImg.fits'.format(obj.guider))
         dummy_data, hdr0 = fits.getdata(filename_hdr, header=True)
         utils.write_fits(filename_id_strips, obj.strips, header=hdr0)
-        Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
-               step='ID', out_dir=obj.out_dir)
+        mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
+                      step='ID', out_dir=obj.out_dir)
         ## Gound system file
         ## Gound system file
         convert_fits_to_dat(filename_id_strips, obj.step,
@@ -142,9 +142,10 @@ def write_all(obj):
 
         utils.write_fits(filename_noisy_sky, np.uint16(obj.image))
         if obj.step == 'ACQ1':
-            Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
-                   step='ACQ', out_dir=obj.out_dir, acq1_imgsize=obj.acq1_imgsize,
-                   acq2_imgsize=obj.acq2_imgsize)
+            mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
+                          step='ACQ', out_dir=obj.out_dir,
+                          acq1_imgsize=obj.acq1_imgsize,
+                          acq2_imgsize=obj.acq2_imgsize)
         ## Gound system file
         convert_fits_to_dat(filename_noisy_sky, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))
@@ -208,7 +209,7 @@ def write_stc(filename, xarr, yarr, countrate, guider):
     """
     Write out stc files using offset, rotated catalog
     """
-    xia, yia = rptoia.rptoia(xarr, yarr, guider)
+    xia, yia = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
     xia = np.asarray(xia)
     yia = np.asarray(yia)
     countrate = np.asarray(countrate)

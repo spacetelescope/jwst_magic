@@ -9,8 +9,8 @@ import numpy as np
 from astropy.io import fits
 
 #LOCAL
-import utils
-import log
+from jwst_fgs_commissioning_tools import utils
+from jwst_fgs_commissioning_tools import log
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(LOCAL_PATH, 'data')
@@ -43,7 +43,7 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, imgsize):
         ylow = int(np.fix(ycoord) - imgsize / 2)
         yhigh = int(np.fix(ycoord) + imgsize / 2)
 
-    bias = np.zeros((nramps*nreads, imgsize, imgsize))
+    bias = np.zeros((nramps * nreads, imgsize, imgsize))
 
     ## 0th read bias structure
     bias += bias0[xlow:xhigh, ylow:yhigh]
@@ -57,8 +57,8 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, imgsize):
 
     # Pedestal imprints at reset (uniform within each ramp) - - - - - - - - - -
     if imgsize == 2048: #for full frame images - ID
-        pedestal = np.zeros((nramps*nreads, 2048, 2048)) #Create the full frame pedestal image
-        for i in range(nramps*nreads):
+        pedestal = np.zeros((nramps * nreads, 2048, 2048)) #Create the full frame pedestal image
+        for i in range(nramps * nreads):
             pedestal[i, :, 0:511] = np.fix(np.round(25 * np.random.random_sample()))
             pedestal[i, :, 512:1023] = np.fix(np.round(25 * np.random.random_sample()))
             pedestal[i, :, 1024:1535] = np.fix(np.round(25 * np.random.random_sample()))
@@ -74,7 +74,7 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, imgsize):
 
         # If subarray spans multiple pedestals:
         if type(spanning) == int:
-            pedestal = np.zeros((nramps*nreads, imgsize, imgsize))
+            pedestal = np.zeros((nramps * nreads, imgsize, imgsize))
 
             # Determine transition x value
             xborder = spanning - 1 - xlow
