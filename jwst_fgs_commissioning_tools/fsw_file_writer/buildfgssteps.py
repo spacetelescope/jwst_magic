@@ -5,14 +5,13 @@ import os
 # Third Party
 from astropy.io import fits
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
 # LOCAL
-import config
-from getbias import getbias
-import utils
-import log
-import select_psfs
-import write_files
+from jwst_fgs_commissioning_tools import utils, log
+from jwst_fgs_commissioning_tools.star_selector import select_psfs
+from jwst_fgs_commissioning_tools.fsw_file_writer import config, getbias, write_files
 
 # DEFINE ALL NECESSARY CONSTANTS
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -109,7 +108,6 @@ class BuildFGSSteps(object):
 
         return config_ini
 
-
     def create_img_arrays(self, section, config_ini):
         '''
         Create a noisy sky image for ID and ACQ steps.
@@ -121,9 +119,9 @@ class BuildFGSSteps(object):
 
         ## Grab the expected bias
         if config_ini.get(section, 'bias'):
-            self.bias = getbias(self.guider, self.xarr, self.yarr, self.nreads,
-                                config_ini.getint(section, 'nramps'),
-                                config_ini.getint(section, 'imgsize'))
+            self.bias = getbias.getbias(self.guider, self.xarr, self.yarr,
+                                        self.nreads, config_ini.getint(section, 'nramps'),
+                                        config_ini.getint(section, 'imgsize'))
 
             ## Take the bias and add a noisy version of the input image, adding signal
             ## over each read
@@ -151,7 +149,7 @@ class BuildFGSSteps(object):
                                         config_ini.getint(section, 'height'),
                                         self.yoffset,
                                         config_ini.getint(section, 'overlap'))
-        if config_ini.get(section, 'step') =='LOSTRK':
+        if config_ini.get(section, 'step') == 'LOSTRK':
             # Normalize to a count sum of 1000
             image = image / np.sum(image) * 1000
             # Resize image array to oversample by 6 (from 43x43 to 255x255)
@@ -164,14 +162,13 @@ class BuildFGSSteps(object):
     def write(self):
         write_files.write_all(self)
 
-
 #-------------------------------------------------------------------------------
 def create_strips(image, imgsize, nstrips, nramps, nreads, h, yoffset, overlap):
     '''
     Create the ID strips fits image to be passed into DHAS
     '''
     nz = nramps * nreads
-    strips = np.zeros((nstrips*nz, h, imgsize))
+    strips = np.zeros((nstrips * nz, h, imgsize))
     nn = 0
     for i in range(nstrips):
         for iz in range(nz):
@@ -191,7 +188,7 @@ def create_cds(arr):
     '''
     Create CDS image: Subtract the first read from the second read.
     '''
-    return arr[1::2]-arr[:-1:2]
+    return arr[1::2] - arr[:-1:2]
 
 def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
     '''
@@ -225,7 +222,7 @@ def add_jitter(cube, total_shift=3):
     cube2 = np.zeros_like(cube)
     for i, img in enumerate(cube):
         # This will generate a random integer up to the total_shift
-        shift = np.random.randint(total_shift+1)
+        shift = np.random.randint(total_shift + 1)
         cube2[i] = np.roll(img, shift)
 
     return cube2
