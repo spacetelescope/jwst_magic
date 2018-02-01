@@ -35,11 +35,9 @@ def get_logname(logdir, taskname):
         Log filename.
 
     """
-    timestamp = time.ctime().replace(' ', '_')
-    timestamp = timestamp.replace('/', ':')
-    return os.path.join(
-        logdir,
-        '{0}_{1}.log'.format(taskname, timestamp))
+    timestamp = time.strftime('%Y_%m_%d_%a_%H%M%S')
+    logname = '{0}_{1}.log'.format(timestamp, taskname)
+    return os.path.join(logdir, logname)
 
 def write_fits(outfile, data, header=None):
     '''
@@ -85,7 +83,13 @@ def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
             for i in rows:
                 csvwriter.writerow(i)
     else:
-        np.savetxt(filename, rows, fmt=fmt, header=' '.join(labels))
+        try:
+            np.savetxt(filename, rows, fmt=fmt, header=' '.join(labels))
+        except TypeError:
+            f = open(filename, 'w')
+            f.write('# ' + ' '.join(labels) + '\n')
+            for row in rows:
+                f.write(' '.join(row) + '\n')
 
 
 def write_cols_to_file(output_path, filename, labels, cols):
@@ -125,20 +129,44 @@ def resize_array(arr, new_rows, new_cols):
     yscale = float(rows) / new_rows
     xscale = float(cols) / new_cols
 
-    # first average across the cols to shorten rows
+    # First average across the cols to shorten rows
     new_a = np.zeros((rows, new_cols))
     for j in range(new_cols):
-        firstx, lastx = j*xscale, (j+1)*xscale
+        # Calculate the (fractional) starting and ending columns that will be
+        # averaged into one column (e.g. averaging from column 4.3 to 7.8)
+        firstx, lastx = j * xscale, (j + 1) * xscale
+        # Calculate list of scaling factors of each column that is being averaged
+        # e.g. if avging from 4.3 to 7.8: [0.7, 1, 1, 0.8]
+        #                        column:    4   5  6   7
         scale_line = rescale_array(firstx, lastx)
-        new_a[:, j] = np.dot(arr[:, int(firstx):int(lastx)+1], scale_line)/scale_line.sum()
 
+        # Fill new array with averaged columns
+        try:
+            new_a[:, j] = np.dot(arr[:, int(firstx):int(lastx) + 1], scale_line) / scale_line.sum()
+        except ValueError:
+            # If needed, crop the scaling list to match the number of columns
+            scale_line = scale_line[:-1]
+            new_a[:, j] = np.dot(arr[:, int(firstx):int(lastx) + 1], scale_line) / scale_line.sum()
+
+    # Then average across the rows to produce the final array
     new_arr = np.zeros((new_rows, new_cols))
     for i in range(new_rows):
-        firsty, lasty = i*yscale, (i+1)*yscale
+        # Calculate the (fractional) starting and ending rows that will be
+        # averaged into one row
+        firsty, lasty = i * yscale, (i + 1) * yscale
+        # Calculate scaling factors of each row that is being averaged
         scale_line = rescale_array(firsty, lasty)
-        new_arr[i:,] = np.dot(scale_line, new_a[int(firsty):int(lasty)+1,])/scale_line.sum()
+
+        # Fill new array with averaged rows
+        try:
+            new_arr[i:,] = np.dot(scale_line, new_a[int(firsty):int(lasty) + 1,]) / scale_line.sum()
+        except ValueError:
+            # If needed, crop the scaling list to match the number of rows
+            scale_line = scale_line[:-1]
+            new_arr[i:,] = np.dot(scale_line, new_a[int(firsty):int(lasty) + 1,]) / scale_line.sum()
 
     return new_arr
+
 def rescale_array(first, last):
     '''
     Rows can be rows or columns. To be used with resize_array.
@@ -147,7 +175,8 @@ def rescale_array(first, last):
     scale_line[0] = 1 - (first-int(first))
     scale_line[-1] = (last-int(last))
     if last == int(last):
-        scale_line = scale_line[:-1]
+        # scale_line = scale_line[:-1]
+        scale_line[-1] = 0.  # Changed 1/16/18 to fix bug with truncating scale_line
         last = int(last) - 1
     return scale_line
 
@@ -181,6 +210,7 @@ def find_dist_between_points(coords):
 
     return dists
 
+
 def correct_image(image, upper_threshold=65000, upper_limit=65000):
     '''
     Correct image for negative and saturated pixels
@@ -191,3 +221,15 @@ def correct_image(image, upper_threshold=65000, upper_limit=65000):
     img[np.isfinite(img) == 0] = 0.
 
     return img
+
+def countrate_3x3(x, y, data):
+    """
+    Using the coordinates of each PSF, place a 3x3 box around center pixel and sum
+    the counts of the pixels in this box.
+    """
+    x = int(x)
+    y = int(y)
+
+    counts = np.sum(data[y - 1:y + 2, x - 1:x + 2])
+    return counts
+

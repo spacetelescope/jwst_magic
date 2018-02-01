@@ -73,17 +73,17 @@ class MyMplCanvas(FigureCanvas):
         # FigureCanvas.updateGeometry(self)
 
     def compute_initial_figure(self, fig, data, x, y):
-        fitsplot = self.axes.imshow(data, cmap='bone', interpolation='nearest',
-                                    clim=(0.1, 1e5), norm=LogNorm())
+        self.fitsplot = self.axes.imshow(data, cmap='bone', interpolation='nearest',
+                                         clim=(0.1, 1e3), norm=LogNorm())
         self.axes.scatter(x, y, c='r', marker='+')
-        self.fig.colorbar(fitsplot, ax=self.axes, fraction=0.046, pad=0.04)
+        self.fig.colorbar(self.fitsplot, ax=self.axes, fraction=0.046, pad=0.04)
         self.draw()
 
     def init_profile(self):
         # x_range = range(2048)
         # self.y_slices = [self.data[i] for i in range(2048)]
         # self.lines = [self.axes.plot(x_range, y, c='white') for y in self.y_slices]
-        self.axes.set_ylim(0.1, 5 * np.max(self.data))
+        self.axes.set_ylim(np.min(self.data) / 5, 5 * np.max(self.data))
         self.axes.set_yscale('log')
         self.axes.set_ylabel('Counts')
         self.axes.set_xlabel('X Pixels')
@@ -242,6 +242,20 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.canvas.mpl_connect('motion_notify_event',
                                 self.update_cursor_position)
 
+        # Show value under cursor
+        self.pixel_label = QLabel('Pixel Value:', self,
+                                   alignment=QtCore.Qt.AlignRight)
+        mainGrid.addWidget(self.pixel_label, 5, 0)
+
+        self.pixel_textbox = QLineEdit(self)
+        self.pixel_textbox.setPlaceholderText('Move cursor into axes')
+        self.pixel_textbox.setMinimumSize(200, 20)
+        mainGrid.addWidget(self.pixel_textbox, 5, 1)
+
+        # Update cursor position and pixel value under cursor
+        self.canvas.mpl_connect('motion_notify_event',
+                                self.update_cursor_position)
+
         # Star selection!
         self.canvas.mpl_connect('button_press_event',
                                 self.button_press_callback)
@@ -267,7 +281,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         instructionsGroupBox.setLayout(vBox)
         instructionsGroupBox.setSizePolicy(QSizePolicy.Preferred,
                                            QSizePolicy.Maximum)
-        mainGrid.addWidget(instructionsGroupBox, 0, 2, 1, 2,
+        mainGrid.addWidget(instructionsGroupBox, 0, 2, 1, 3,
                            alignment=QtCore.Qt.AlignTop)
 
         # Log to update
@@ -275,8 +289,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.log_textbox.setPlaceholderText('No stars selected.')
         # self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
         self.log_textbox.setMinimumSize(10, 300)
-        mainGrid.setRowMinimumHeight(1, 350)
-        mainGrid.addWidget(self.log_textbox, 1, 2, alignment=QtCore.Qt.AlignTop)
+        mainGrid.setRowMinimumHeight(1, 320)
+        mainGrid.addWidget(self.log_textbox, 1, 2, 1, 2,
+                           alignment=QtCore.Qt.AlignTop)
 
         # mainGrid.setRowMinimumHeight(1, self.image_dim*.2)
 
@@ -286,9 +301,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         prof.init_profile()
         self.profile = prof
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
-        mainGrid.addWidget(self.profile, 2, 2)
         mainGrid.setRowMinimumHeight(2, self.image_dim * .25)
-        mainGrid.setColumnMinimumWidth(2, self.image_dim * .5)
+        # mainGrid.setColumnMinimumWidth(2, self.image_dim * .5)
+        mainGrid.addWidget(self.profile, 2, 2, 1, 2,
+                           alignment=QtCore.Qt.AlignVCenter)
+
+        # Create colorbar-updating section
+        cbarGroupBox = QGroupBox('Colorbar Limits', self)
+        cbarGrid = QGridLayout()
+        cbarGroupBox.setLayout(cbarGrid)
+
+        cbarGrid.addWidget(QLabel('Min Value:  ', self), 0, 0)
+        cbarGrid.addWidget(QLabel('Max Value:  ', self), 1, 0)
+
+        self.vmin_textbox = QLineEdit(str(sc.fitsplot.get_clim()[0]), self)
+        cbarGrid.addWidget(self.vmin_textbox, 0, 1)
+
+        self.vmax_textbox = QLineEdit(str(sc.fitsplot.get_clim()[1]), self)
+        cbarGrid.addWidget(self.vmax_textbox, 1, 1)
+
+        self.cbarlims_button = QPushButton('Update colorbar limits', self)
+        self.cbarlims_button.clicked.connect(self.update_cbar)   # connect button to function on_click
+        cbarGrid.addWidget(self.cbarlims_button, 2, 0, 1, 2)
+
+        mainGrid.addWidget(cbarGroupBox, 3, 3, 3, 1)
 
         # Create axis-updating section
         axGroupBox = QGroupBox('Axes Limits', self)
@@ -333,9 +369,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.crop_button.clicked.connect(self.update_textboxes)
         axGrid.addWidget(self.crop_button, 5, 0, 1, 5)
 
-        mainGrid.addWidget(axGroupBox, 3, 2, 2, 1)
+        mainGrid.addWidget(axGroupBox, 3, 2, 3, 1)
 
-        # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         starsGroupBox = QGroupBox(self)
         col2Grid = QGridLayout()
@@ -367,6 +403,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             # Create 'remove' buttons
             remove_button = QPushButton('Delete', starsGroupBox)
             remove_button.clicked.connect(self.make_removestar(remove_button))
+            remove_button.installEventFilter(self)
             remove_button.setEnabled(False)
 
             # Add to starsGroupBox grid layout
@@ -380,19 +417,60 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         starsGroupBox.setLayout(col2Grid)
         starsGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        mainGrid.addWidget(starsGroupBox, 1, 3, 2, 1)
+        mainGrid.addWidget(starsGroupBox, 1, 4, 2, 1)
 
         # Add "Done" button
         self.done_button = QPushButton('Done', self)
         self.done_button.setToolTip('Close the window')
         self.done_button.clicked.connect(self.fileQuit)
         self.done_button.setMinimumSize(150, 50)
-        mainGrid.addWidget(self.done_button, 3, 3, 2, 1,
+        mainGrid.addWidget(self.done_button, 3, 4, 1, 1,
+                           alignment=QtCore.Qt.AlignBottom)
+
+        # Add "Cancel" button
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.setToolTip('Close the window and discard changes')
+        self.cancel_button.clicked.connect(self.cancel)
+        self.cancel_button.setMinimumSize(150, 50)
+        mainGrid.addWidget(self.cancel_button, 4, 4, 2, 1,
                            alignment=QtCore.Qt.AlignVCenter)
 
     @pyqtSlot()
+    def eventFilter(self, remove_button, event):
+        '''Parse out the cursor moving in or out of a star deletion button, and
+        updating the matplotlib axis with a red highlighted circle accordingly'''
+        if event.type() == QtCore.QEvent.Enter:
+            if remove_button.isEnabled() == True:
+                # Determine index of star corresponding to button
+                star_ind = self.remove_buttons.index(remove_button)
+                ind_of_star_ind = self.inds_of_inds.index(star_ind)
+
+                # Re-draw selected star as red
+                self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('red')
+
+                self.canvas.draw()
+            return True
+
+        if event.type() == QtCore.QEvent.Leave:
+            if remove_button.isEnabled() == True:
+                # Determine index of star corresponding to button
+                star_ind = self.remove_buttons.index(remove_button)
+                ind_of_star_ind = self.inds_of_inds.index(star_ind)
+
+                # Re-draw selected star as original color
+                if ind_of_star_ind == 0:
+                    self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('yellow')
+                else:
+                    self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('darkorange')
+
+                self.canvas.draw()
+            return True
+
+        return False
+
     def update_axes(self):
-        '''Changes the axes limits of the matplotlib canvas to the current values of the axis limit textboxes
+        '''Changes the axes limits of the matplotlib canvas to the current
+        values of the axis limit textboxes
         '''
         self.canvas.axes.set_xlim(float(self.x1_textbox.text()),
                                   float(self.x2_textbox.text()))
@@ -401,18 +479,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.canvas.fig.subplots_adjust(top=.95, left=.07)
         self.canvas.draw()
 
+    def update_cbar(self):
+        '''Changes the limits of the colorbar to the current values of the
+        colorbar limit textboxes
+        '''
+        self.canvas.fitsplot.set_clim(float(self.vmin_textbox.text()),
+                                      float(self.vmax_textbox.text()))
+        self.canvas.draw()
+
     def update_textboxes(self):
-        '''Changes the values of the axis limit textboxes to the current axis limits of the matplotlib canvas'''
+        '''Changes the values of the axis limit textboxes to the current axis
+        limits of the matplotlib canvas'''
         self.x1_textbox.setText(str(self.canvas.axes.get_xlim()[0]))
         self.x2_textbox.setText(str(self.canvas.axes.get_xlim()[1]))
         self.y1_textbox.setText(str(self.canvas.axes.get_ylim()[1]))
         self.y2_textbox.setText(str(self.canvas.axes.get_ylim()[0]))
 
     def update_cursor_position(self, event):
-        '''Updates the cursor position textbox when the cursor moves within the matplotlib axis'''
+        '''Updates the cursor position textbox when the cursor moves within the
+        matplotlib axis'''
         if event.inaxes:
             self.cursor_textbox.setText('({:.0f}, {:.0f})'.format(event.xdata,
                                                                   event.ydata))
+            self.pixel_textbox.setText('{:.2f}'.format(self.data[int(event.ydata),
+                                                                 int(event.xdata)]))
 
     def update_profile(self, event):
         '''Updates the profile plot when the cursor moves within the matplotlib axis'''
@@ -435,15 +525,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.profile.draw()
 
     def button_press_callback(self, event):
-        '''WHenever a mouse button is pressed, determines if a button press is within the matplotlib axis;
-        if so calls get_ind_under_point'''
-        if not event.inaxes: return
-        if event.button != 1: return
+        '''Whenever a mouse button is pressed, determines if a button press is
+        within the matplotlib axis; if so calls get_ind_under_point'''
+        if not event.inaxes:
+            return
+        if event.button != 1:
+            return
         self._ind = self.get_ind_under_point(event)
 
     def get_ind_under_point(self, event):
-        '''If user clicks within one epsilon of an identified star, appends that star's position to inds;
-        notifies user if no star is nearby or if selected star is already selected'''
+        '''If user clicks within one epsilon of an identified star, appends that
+        star's position to inds; notifies user if no star is nearby or if
+        selected star is already selected'''
 
         d = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
         # i = np.unravel_index(np.nanargmin(d), d.shape)
@@ -529,7 +622,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             guide_ind = self.guidestar_buttons.index(button)
             ind_of_guide_ind = self.inds_of_inds.index(guide_ind)
 
-
             self.inds.insert(0, self.inds.pop(ind_of_guide_ind))
             self.inds_of_inds.insert(0, self.inds_of_inds.pop(ind_of_guide_ind))
 
@@ -603,6 +695,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def fileQuit(self):
         '''Closes the application'''
+        # if self.inds == []:
+
+        self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+        self.close()
+
+    def cancel(self):
+        '''Closes the application and clears indices'''
+        self.inds = []
         self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
         self.close()
 
@@ -637,7 +737,12 @@ def run_SelectStars(data, x, y, dist, print_output=False):
     aw = ApplicationWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
                            print_output=print_output)
     aw.show()
-    plt.get_current_fig_manager().window.raise_()  # Bring window to front
+
+    try:
+        plt.get_current_fig_manager().window.raise_()  # Bring window to front
+    except AttributeError:
+        pass
+
     inds = aw.inds
     qApp.exec_()  # Begin interactive session; pauses until qApp.exit() is called
 
