@@ -1,5 +1,4 @@
-import jwxml
-import glob
+import pysiaf
 
 # LOCAL
 try:
@@ -12,14 +11,8 @@ Convert between FGS raw/native frame (pixels), ideal angle frame (arcsec), and
 DHAS frame (arcsec).
 '''
 
-# Find most recent SIAF .xml file
-fgs_siaf_dir = '/itar/jwst/tel/share/SIAF_WG/Instruments/FGS/'
-all_xmls = glob.glob(fgs_siaf_dir + '*.xml')
-all_xmls.sort
-siaf_filename = all_xmls[-1]
-
-# Open with JWXML
-fgs_siaf = jwxml.SIAF(filename=siaf_filename)
+# Open SIAF with pysiaf
+fgs_siaf = pysiaf.Siaf('FGS')
 
 def Raw2Det(x_raw, y_raw):
     '''
@@ -40,9 +33,9 @@ def Raw2Idl(x_raw, y_raw, guider):
     x_det, y_det = Raw2Det(x_raw, y_raw)
 
     if guider == 1:
-        fgs_full = fgs_siaf.apertures['FGS1_FULL']
+        fgs_full = fgs_siaf['FGS1_FULL']
     elif guider == 2:
-        fgs_full = fgs_siaf.apertures['FGS2_FULL']
+        fgs_full = fgs_siaf['FGS2_FULL']
 
     # If invalid guider number provided...
     elif in_tool:
@@ -51,7 +44,7 @@ def Raw2Idl(x_raw, y_raw, guider):
         raise ValueError('Unrecognized guider number: {}'.format(guider))
 
     # Convert detector frame to ideal frame
-    x_idealangle, y_idealangle = fgs_full.Det2Idl(x_det, y_det)
+    x_idealangle, y_idealangle = fgs_full.det_to_idl(x_det, y_det)
 
     return x_idealangle, y_idealangle
 

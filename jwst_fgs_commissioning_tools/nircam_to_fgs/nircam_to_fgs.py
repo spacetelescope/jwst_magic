@@ -8,9 +8,8 @@ from astropy.io import fits
 from scipy import signal
 
 # LOCAL
-import counts_to_jmag
-import log
-import utils
+from jwst_fgs_commissioning_tools.nircam_to_fgs import counts_to_jmag
+from jwst_fgs_commissioning_tools import log, utils
 
 
 '''
@@ -144,7 +143,6 @@ def pad_data(data, padding, fgs_pix):
 
     # Create an array of size (binned data + 2*padding), filled with the mean data value
     padded_size = size + 2 * (padding)
-
     if padded_size != fgs_pix - 8:
         # If just a +1 error from odd size of image
         if padded_size == 2039:
@@ -152,7 +150,6 @@ def pad_data(data, padding, fgs_pix):
         # If something else is going on....
         else:
             raise ValueError('Padded image not of proper size (should be 2040): {}'.format(padded_size))
-
     avg_signal = np.mean(noped_data)
     padded_data = np.full((padded_size, padded_size), avg_signal)
 
@@ -216,9 +213,9 @@ def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
 
         if guider is None:
             guider = bias_data_path.split('/')[-1].split('.')[0][-6:]
-        out_path = os.path.join(output_path, 'bin_norm_bias_imgs',
+        biasout_path = os.path.join(output_path, 'bin_norm_bias_imgs',
                                 '{}_G{}_binned_pad_norm.fits'.format(root, guider))
-        utils.write_fits(out_path, binned_pad_norm_bias)
+        utils.write_fits(biasout_path, binned_pad_norm_bias)
 
     return binned_pad_norm_bias
 
@@ -250,12 +247,11 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
     '''
 
     # Establish paths and necessary files
-    # 'local_path' is the path where this script exists
-    local_path = os.path.dirname(os.path.realpath(__file__))
-    # Data path is the directory that includes *.fits files (ie newmagicHdrImg,bias0, etc)
-    data_path = os.path.join(local_path, 'data')
-    # Guider-dependent files
-    header_file = os.path.join(data_path, 'newG{}magicHdrImg.fits'.format(guider))
+    local_path = os.path.dirname(os.path.realpath(__file__))  # where this script exists
+    package_path = os.path.split(local_path)[0]  # where the package exists
+    out_path = os.path.split(package_path)[0]  # where the out/ dir goes
+    data_path = os.path.join(package_path, 'data')  # Includes data/*.fits files (ie newmagicHdrImg,bias0, etc)
+    header_file = os.path.join(data_path, 'newG{}magicHdrImg.fits'.format(guider))  # Guider-dependent files
 
     # ---------------------------------------------------------------------
     # Find FGS counts to be used for normalization
@@ -291,7 +287,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
         log.info('Beginning to create FGS image from {}'.format(root))
 
         if output_path is None:
-            output_path_save = os.path.join(local_path, 'out', root)
+            output_path_save = os.path.join(out_path, 'out', root)
             utils.ensure_dir_exists(output_path_save)
         else:
             output_path_save = output_path
@@ -310,12 +306,12 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
         # Normalize image
         data_norm = normalize_data(data_pad, fgs_counts)
 
-        out_path = os.path.join(output_path_save, 'FGS_imgs',
+        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
                                 '{}_G{}_binned_pad_norm.fits'.format(root, guider))
         # Any value about 65535 will wrap when converted to uint16
         data_norm[data_norm >= 65535] = 65535
         hdr = fits.getheader(header_file, ext=0)
-        utils.write_fits(out_path, np.uint16(data_norm), header=hdr)
+        utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
 
         print("Finished for {}, Guider = {}".format(root, guider))
 

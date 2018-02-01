@@ -171,9 +171,9 @@ def rescale_array(first, last):
     '''
     Rows can be rows or columns. To be used with resize_array.
     '''
-    scale_line = np.ones((int(last)-int(first)+1))
-    scale_line[0] = 1 - (first-int(first))
-    scale_line[-1] = (last-int(last))
+    scale_line = np.ones((int(last) - int(first) + 1))
+    scale_line[0] = 1 - (first - int(first))
+    scale_line[-1] = (last - int(last))
     if last == int(last):
         # scale_line = scale_line[:-1]
         scale_line[-1] = 0.  # Changed 1/16/18 to fix bug with truncating scale_line
