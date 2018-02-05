@@ -45,14 +45,12 @@ Thumbs.db
 
 # Other #
 #########
-notebooks/*
-!notebooks/FGS Commissioning Tool Tutorial.ipynb
-!notebooks/*.png
-out/*
+fgs-commissioning/notebooks/*
+fgs-commissioning/!notebooks/FGS Commissioning Tool Tutorial.ipynb
+fgs-commissioning/!notebooks/*.png
+fgs-commissioning/out/*
 .ipynb_checkpoints/*
-logs/*
-legacy/*
-segment_guiding_files/*
-jwst_fgs_commissioning_tools/segment_guiding/*.png
-jwst_fgs_commissioning_tools/segment_guiding/*.txt
+fgs-commissioning/logs/*
+fgs-commissioning/comm_tool_obsolete/*
+fgs-commissioning/segment_guiding_files/*
 
