@@ -8,7 +8,7 @@ import shutil
 import numpy as np
 
 # LOCAL
-from jwst_fgs_commissioning_tools.fsw_file_writer import coordinate_transforms
+from jwst_fgs_commissioning_tools import coordinate_transforms
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]
@@ -166,7 +166,7 @@ class Mkproc(object):
         Create the CECIL proc file for the acquisition phase
         '''
         eol = '\n'
-        
+
         ### THIS IS BAD -- CHANGE THIS --- KJB 1/25/2018
         #corner coords & gs counts
         xarr1, yarr1 = coordinate_transforms.Raw2DHAS(xarr - acq1_imgsize//2,
