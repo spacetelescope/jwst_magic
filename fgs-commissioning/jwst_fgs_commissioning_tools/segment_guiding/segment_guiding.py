@@ -19,6 +19,7 @@ from pysiaf.utils import rotations
 from tkinter import Tk, StringVar, Radiobutton, Label, Entry, Button
 import numpy as np
 from astropy.io import ascii as asc
+from astropy.table import Table
 from functools import partial
 
 from jwst_fgs_commissioning_tools import coordinate_transforms
@@ -32,7 +33,8 @@ SGT_FILES_PATH = os.path.join(os.path.split(PACKAGE_PATH)[0], 'segment_guiding_f
 FGS_SIAF = pysiaf.Siaf('FGS')
 
 class SegmentGuidingCalculator:
-    def __init__(self, segment_infile, root=None, GUI=True, GS_params_dict=None):
+    def __init__(self, segment_infile, root=None, GUI=True, GS_params_dict=None,
+                 selected_segs=None):
 
         # If no root provided, name the output the same as the input
         if not root:
@@ -60,7 +62,7 @@ class SegmentGuidingCalculator:
         self.FGSsetup()
 
         # Parse the input file type
-        self.parse_infile(segment_infile)
+        self.parse_infile(segment_infile, selected_segs)
 
     def ChosenSeg(self, *args):
         '''
@@ -151,105 +153,144 @@ class SegmentGuidingCalculator:
             self.SegmentGuidingGUI.redefine_vars('FGSsetup')
 
     def Calculate(self):
-        # recall data read from infile
-        SegIDs = self.SegIDArray
-        V2Segs = self.V2SegArray
-        V3Segs = self.V3SegArray
-        nseg = len(SegIDs)
+        nseg = len(self.SegIDArray)
 
-        # Convert V3/V3 coordinates to ideal coordinates
-        xIdlSegs, yIdlSegs = self.fgs_siaf_aperture.tel_to_idl(V2Segs + self.V2Ref,
-                                                               V3Segs + self.V3Ref)
+        # Convert V2/V3 coordinates to ideal coordinates
+        self.xIdlSegs, self.yIdlSegs = self.fgs_siaf_aperture.tel_to_idl(self.V2SegArray + self.V2Ref,
+                                                                         self.V3SegArray + self.V3Ref)
 
-        # Get the guide star and boresight parameters
-        V2B, V3B, gsRA, gsDec, gsPA, A = self.get_guidestar_params()
+        # Get the attitude matrix
+        A = self.get_guidestar_params()[-1]
 
         # Get RA and Dec for each segment.
         self.SegRA = np.zeros(nseg)
         self.SegDec = np.zeros(nseg)
         for i in range(nseg):
-            V2 = self.V2Ref + V2Segs[i]
-            V3 = self.V3Ref + V3Segs[i]
+            V2 = self.V2Ref + self.V2SegArray[i]
+            V3 = self.V3Ref + self.V3SegArray[i]
             (self.SegRA[i], self.SegDec[i]) = rotations.pointing(A, V2, V3)
-            #print('%2d %10.4f %10.4f %12.7f %12.7f' %(i+1, V2, V3, self.SegRA[i], self.SegDec[i]))
 
         if self.GUI:
             self.SegmentGuidingGUI.errmsg.configure(text='Calculation complete')
 
         # Convert segment coordinates to detector frame
-        xDet, yDet = self.fgs_siaf_aperture.idl_to_det(xIdlSegs, yIdlSegs)
+        self.xDet, self.yDet = self.fgs_siaf_aperture.idl_to_det(self.xIdlSegs, self.yIdlSegs)
 
         # Check to make sure no segments are off the detector
-        for x, y, i_seg in zip(xDet, yDet, SegIDs):
+        for x, y, i_seg in zip(self.xDet, self.yDet, self.SegIDArray):
             if x < 0.5 or x > 2048.5:
                 print('WARNING: %8s off detector in X direction' % i_seg)
             if y < 0.5 or y > 2048.5:
                 print('WARNING: %8s off detector in Y direction' % i_seg)
 
-        # Summary output
-        print('\nSummary')
-        print('Aperture FGS', self.fgsNum)
-        print('V2Ref %s V3Ref %s arc-sec IdlAngle %s degrees' % (self.fgsV2,
-                                                                 self.fgsV3,
-                                                                 self.fgsAngle))
-        print('Used segment', self.segNum)
-        print('Boresight offset', V2B, V3B, 'arc-sec')
-        print('Guide star at RA %s  Dec %s degrees' % (gsRA, gsDec))
-        print('Position angle %s degrees' % gsPA)
-        print('\nSegment     dV2    dV3    xIdl   yIdl     RA         Dec         xDet     yDet')
-
-        for p in range(nseg):
-            print('%5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f' \
-                  % (SegIDs[p], V2Segs[p], V3Segs[p], xIdlSegs[p], yIdlSegs[p],
-                     self.SegRA[p], self.SegDec[p], xDet[p], yDet[p]))
-
         # Print and save final output
-        out_file = os.path.join(SGT_FILES_PATH, self.root + '_segmentguiding_visit.txt')
-        with open(out_file, 'w') as sg:
-            print('\nFinal Output:')
-            rate = 0.0  # placeholder for count rate
-            for p in range(nseg):
-                part1 = '-star%02d = %12.6f %12.6f %8.2f  ' % (p + 1, self.SegRA[p],
-                                                               self.SegDec[p], rate)
-                print(part1, end='')
-                sg.write(part1)
-                onDet = []  # List of other segments on detector
-                for q in range(nseg):
-                    if (q != p) and (1 <= xDet[q] <= 2048) and (1 <= yDet[q] <= 2048):
-                        onDet.append(q + 1)
-                ns = len(onDet)
-                for q in range(ns - 1):
-                    part2 = '%2d, ' % onDet[q]
-                    print(part2, end=' ')
-                    sg.write(part2)
-                part3 = '%2d' % onDet[ns - 1]
-                print(part3)
-                sg.write(part3 + '\n')
+        self.write_visit_file(nseg)
 
+        # Save .pngs of plots
         self.plot_segments()
 
-    def parse_infile(self, segment_infile):
+    def write_visit_file(self, nseg, verbose=True):
 
-        print('Segment data read from {}'.format(segment_infile))
+        # Get proposal/visit metadata
+        APT_num = 999  # placeholder for APT proposal number
+        visit_num = 2  # placeholder for visit number
+        tile_num = 1  # placeholder for ???
+
+        # Define path and name of output visit file
+        out_file = self.root + '_gs-override-{}_{}_{}.txt'.format(APT_num, visit_num, tile_num)
+        out_file = os.path.join(SGT_FILES_PATH, out_file)
+
+        # Print summary of input data (guide star RA, Dec, and PA, etc...)
+        if verbose:
+            # Get the guide star and boresight parameters
+            V2B, V3B, gsRA, gsDec, gsPA, A = self.get_guidestar_params()
+
+            # Summary output
+            print('\nSummary')
+            print('Aperture FGS', self.fgsNum)
+            print('V2Ref %s V3Ref %s arc-sec IdlAngle %s degrees' % (self.fgsV2,
+                                                                     self.fgsV3,
+                                                                     self.fgsAngle))
+            print('Used segment', self.segNum)
+            print('Boresight offset', V2B, V3B, 'arc-sec')
+            print('Guide star at RA %s  Dec %s degrees' % (gsRA, gsDec))
+            print('Position angle %s degrees' % gsPA)
+            print('\nSegment     dV2    dV3    xIdl   yIdl     RA         Dec         xDet     yDet')
+
+            for p in range(nseg):
+                print('%5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f' \
+                      % (self.SegIDArray[p], self.V2SegArray[p], self.V3SegArray[p],
+                         self.xIdlSegs[p], self.yIdlSegs[p], self.SegRA[p],
+                         self.SegDec[p], self.xDet[p], self.yDet[p]))
+
+        # Write out visit file with RA/Decs of selected segments
+        with open(out_file, 'w') as f:
+            if verbose:
+                print('\nFinal Output:')
+
+            out_string = 'sts -gs_select {:4d}:{}:{}'.format(APT_num, visit_num, tile_num)
+
+            # If a regfile has been provided, only use the selected segments
+            try:
+                seg_ids = self.selected_segs['SegID']
+            except AttributeError:
+                seg_ids = np.linspace(1, nseg, nseg).astype(int)
+
+            # If countrates were included in the input file, use them!
+            try:
+                rate = self.counts_array
+            except AttributeError:
+                rate = [0.0] * len(seg_ids)
+
+            for i_seg, seg_id in enumerate(seg_ids):
+                # Format segment properties (ID, RA, Dec, countrate)
+                star_string = ' -star%d = %d, %.6f, %.6f, %.1f' % (i_seg + 1, seg_id,
+                                                                   self.SegRA[seg_id - 1],
+                                                                   self.SegDec[seg_id - 1],
+                                                                   rate[seg_id - 1])
+
+                # Add list of segment IDs for reference stars
+                # Before: checking that all the segments are on the detector. Still necessary?
+                for ref_seg_id in seg_ids:
+                    if ref_seg_id != seg_id:
+                        star_string += ', %d' % (ref_seg_id)
+
+                if verbose:
+                    print(star_string)
+
+                out_string += star_string
+
+            f.write(out_string)
+            print('\nSaved {} segment commands to {}'.format(len(seg_ids), out_file))
+
+    def parse_infile(self, segment_infile, selected_segs):
+
+        print('Segment coordinates read from {}'.format(segment_infile))
 
         # If the input file is a .txt file, parse the file
         if segment_infile[-4:] == '.txt':
             read_table = asc.read(segment_infile)
             column_names = read_table.colnames
+            n_segs = len(read_table)
 
-            if (any(['V2' in c for c in column_names])) and \
-               (any(['V3' in c for c in column_names])):
-                print('Input file = V2/V3 coordinates')
+            if (any(['V2Seg' == c for c in column_names])) and \
+               (any(['V3Seg' == c for c in column_names])):
+
                 segment_coords = read_table
 
-            elif (any(['x' in c for c in column_names])) and \
-                 (any(['y' in c for c in column_names])):
-                print('Input file = pixel coordinates')
-                # I need to convert from pixels to V2/V3 here??
+            elif (any(['x' == c for c in column_names])) and \
+                 (any(['y' == c for c in column_names])):
 
-                v2v3_table = np.copy(read_table)
+                segment_coords = Table()
+                segment_coords['SegID'] = np.linspace(1, n_segs, n_segs).astype(int)
+                v2, v3 = coordinate_transforms.Raw2Tel(read_table['x'], read_table['y'], self.fgsNum)
+                segment_coords['V2Seg'], segment_coords['V3Seg'] = v2, v3
 
-                segment_coords = v2v3_table
+            else:
+                raise TypeError('Incompatible file type: ', segment_infile)
+
+            if (any(['countrate' == c for c in column_names])):
+                self.counts_array = read_table['countrate']
 
         else:
             raise TypeError('Incompatible file type: ', segment_infile)
@@ -259,6 +300,45 @@ class SegmentGuidingCalculator:
         self.V2SegArray = segment_coords['V2Seg']
         self.V3SegArray = segment_coords['V3Seg']
         print('{} Segments in input file.'.format(len(self.SegIDArray)))
+
+        # If there is a regfile provided, figure that out, too
+        if selected_segs:
+            try:
+                read_selected_segs = asc.read(selected_segs)
+                column_names = read_selected_segs.colnames
+                print('Selected segment coordinates read from {}'.format(selected_segs))
+            except:
+                raise TypeError('Incompatible regfile type: ', selected_segs)
+
+            if (any(['V2Seg' == c for c in column_names])) and \
+               (any(['V3Seg' == c for c in column_names])):
+
+                selected_segment_coords = read_selected_segs
+
+            elif (any(['x' == c for c in column_names])) and \
+                 (any(['y' == c for c in column_names])):
+
+                selected_segment_coords = Table()
+                v2, v3 = coordinate_transforms.Raw2Tel(read_selected_segs['x'],
+                                                       read_selected_segs['y'],
+                                                       self.fgsNum)
+                selected_segment_coords['V2Seg'], selected_segment_coords['V3Seg'] = v2, v3
+
+            else:
+                raise TypeError('Incompatible regfile type: ', selected_segs)
+
+            selected_segs_ids = []
+            for coords in zip(selected_segment_coords['V2Seg', 'V3Seg']):
+                for i_seg in range(n_segs):
+                    if coords[0]['V2Seg'] == self.V2SegArray[i_seg] and \
+                       coords[0]['V3Seg'] == self.V3SegArray[i_seg]:
+                        selected_segs_ids.append(i_seg + 1)
+
+            if len(selected_segs_ids) == 0:
+                raise TypeError('Coordinates of selected segments file do not match those of the provided input file.')
+
+            selected_segment_coords['SegID'] = selected_segs_ids
+            self.selected_segs = selected_segment_coords
 
     def plot_segments(self):
         # Plot segments in V2/V3 frame
@@ -467,12 +547,12 @@ class SegmentGuidingGUI(SegmentGuidingCalculator):
         self.EV2Boff.grid(row=7, column=1)
         self.EV3Boff = Entry(self.root_window, textvariable=self.V3Boff)
         self.EV3Boff.grid(row=7, column=2)
+        self.V2Boff.trace('w', partial(self.callback, 'V2Boff'))
+        self.V3Boff.trace('w', partial(self.callback, 'V3Boff'))
         self.V2Boff.set('0.1')
         self.V3Boff.set('0.2')
         self.V2Boff.trace('w', self.Ready)
-        self.V2Boff.trace('w', partial(self.callback, 'V2Boff'))
         self.V3Boff.trace('w', self.Ready)
-        self.V3Boff.trace('w', partial(self.callback, 'V3Boff'))
 
         # V2V3 aiming point
         Label(self.root_window, text='Aiming V2V3').grid(row=8)
@@ -575,7 +655,8 @@ class SegmentGuidingGUI(SegmentGuidingCalculator):
 ############################## End Class SegmentForm ###############################
 
 
-def run_tool(segment_infile, root=None, GUI=True, GS_params_dict=None):
+def run_tool(segment_infile, root=None, GUI=True, GS_params_dict=None,
+             selected_segs=None):
 
     if not GS_params_dict and not GUI:
         GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
@@ -588,7 +669,8 @@ def run_tool(segment_infile, root=None, GUI=True, GS_params_dict=None):
 
     # Set up guiding calculator object
     sg = SegmentGuidingCalculator(segment_infile, root=root, GUI=GUI,
-                                  GS_params_dict=GS_params_dict)
+                                  GS_params_dict=GS_params_dict,
+                                  selected_segs=selected_segs)
 
     # Either run the GUI or run the calculation
     if GUI:
