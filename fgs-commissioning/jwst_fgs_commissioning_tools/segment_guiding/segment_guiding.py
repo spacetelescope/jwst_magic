@@ -21,6 +21,8 @@ import numpy as np
 from astropy.io import ascii as asc
 from functools import partial
 
+from jwst_fgs_commissioning_tools import coordinate_transforms
+
 # Establish segment guiding files directory
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]
