@@ -48,6 +48,35 @@ def Raw2Idl(x_raw, y_raw, guider):
 
     return x_idealangle, y_idealangle
 
+def Raw2Tel(x_raw, y_raw, guider):
+    '''
+    Pass in X Y pixels in the raw/native frame and get out X Y angles in the
+    V2/V3 frame
+    '''
+    # Flip raw axes to get det axes
+    x_det, y_det = Raw2Det(x_raw, y_raw)
+
+    if int(guider) == 1:
+        fgs_full = fgs_siaf['FGS1_FULL']
+    elif int(guider) == 2:
+        fgs_full = fgs_siaf['FGS2_FULL']
+
+    # If invalid guider number provided...
+    elif in_tool:
+        log.error('Unrecognized guider number: {}'.format(guider))
+    else:
+        raise ValueError('Unrecognized guider number: {}'.format(guider))
+
+    # Convert detector frame to V2/V3 frame
+    v2, v3 = fgs_full.det_to_tel(x_det, y_det)
+
+    # Subtract V2 and V3 references
+    v2ref = fgs_full.V2Ref
+    v3ref = fgs_full.V3Ref
+    v2 -= v2ref
+    v3 -= v3ref
+
+    return v2, v3
 
 def Idl2DHAS(x_idealangle, y_idealangle):
     '''
