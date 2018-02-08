@@ -34,7 +34,7 @@ FGS_SIAF = pysiaf.Siaf('FGS')
 
 class SegmentGuidingCalculator:
     def __init__(self, segment_infile, root=None, GUI=True, GS_params_dict=None,
-                 selected_segs=None):
+                 selected_segs=None, vss_infile=None):
 
         # If no root provided, name the output the same as the input
         if not root:
@@ -47,22 +47,12 @@ class SegmentGuidingCalculator:
         if self.GUI:
             # If so, initialize the GUI object
             self.SegmentGuidingGUI = SegmentGuidingGUI(self)
-        else:
-            # If not running through the GUI, define necessary attributes
-            if not GS_params_dict:
-                raise ValueError('If running the tool outside of the GUI, must '
-                                 'supply a dictionary of the required parameters '
-                                 'to the GS_params_dict argument.')
 
-            # Map GS_params_dict keys to attributes
-            for attr_name in GS_params_dict.keys():
-                setattr(self, attr_name, GS_params_dict[attr_name])
+        # Parse the input file type (ALLpsfs.txt, regfile.txt, and VSS infile)
+        self.parse_infile(segment_infile, selected_segs, vss_infile, GS_params_dict)
 
         # Get aperture parameters from FGS SIAF
         self.FGSsetup()
-
-        # Parse the input file type
-        self.parse_infile(segment_infile, selected_segs)
 
     def ChosenSeg(self, *args):
         '''
@@ -159,8 +149,12 @@ class SegmentGuidingCalculator:
         self.xIdlSegs, self.yIdlSegs = self.fgs_siaf_aperture.tel_to_idl(self.V2SegArray + self.V2Ref,
                                                                          self.V3SegArray + self.V3Ref)
 
+        # Verify all guidestar parameters are valid
+        self.check_guidestar_params()
+
         # Get the attitude matrix
-        A = self.get_guidestar_params()[-1]
+        A = rotations.attitude(self.V2Aim + self.V2Boff, self.V3Aim + self.V3Boff,
+                               self.RA, self.Dec, float(self.PA))
 
         # Get RA and Dec for each segment.
         self.SegRA = np.zeros(nseg)
@@ -203,7 +197,7 @@ class SegmentGuidingCalculator:
         # Print summary of input data (guide star RA, Dec, and PA, etc...)
         if verbose:
             # Get the guide star and boresight parameters
-            V2B, V3B, gsRA, gsDec, gsPA, A = self.get_guidestar_params()
+            V2B, V3B, gsRA, gsDec, gsPA = self.check_guidestar_params()
 
             # Summary output
             print('\nSummary')
@@ -263,7 +257,37 @@ class SegmentGuidingCalculator:
             f.write(out_string)
             print('\nSaved {} segment commands to {}'.format(len(seg_ids), out_file))
 
-    def parse_infile(self, segment_infile, selected_segs):
+    def parse_infile(self, segment_infile, selected_segs, vss_infile, GS_params_dict):
+
+        # If not running through the GUI, get GS parameters from dictionary or VSS file
+        if not self.GUI:
+            if vss_infile and GS_params_dict:
+                print('Reading RA, Dec, and PA from vss file; reading boresight '
+                      'offset and segment number from user-provided dictionary.')
+                self.get_guidestar_params_from_visit_file(vss_infile)
+                self.V2Boff = GS_params_dict['V2Boff']
+                self.V3Boff = GS_params_dict['V3Boff']
+                self.segNum = GS_params_dict['segNum']
+
+            elif vss_infile:
+                print('Reading RA, Dec, and PA from vss file; setting boresight '
+                      'offset = 0 and segment number = 0.')
+                self.get_guidestar_params_from_visit_file(vss_infile)
+                self.V2Boff = 0
+                self.V3Boff = 0
+                self.segNum = 0
+
+            elif GS_params_dict:
+                print('Reading all GS parameters from user-provided dictionary.')
+                # Map GS_params_dict keys to attributes
+                for attr_name in GS_params_dict.keys():
+                    setattr(self, attr_name, GS_params_dict[attr_name])
+
+            else:
+                raise ValueError('If running the tool outside of the GUI, must '
+                                 'supply a dictionary of the required parameters '
+                                 'to the GS_params_dict argument and/or supply a '
+                                 'VSS file to the vss_infile argument.')
 
         print('Segment coordinates read from {}'.format(segment_infile))
 
@@ -340,6 +364,45 @@ class SegmentGuidingCalculator:
             selected_segment_coords['SegID'] = selected_segs_ids
             self.selected_segs = selected_segment_coords
 
+    def get_guidestar_params_from_visit_file(self, visit_file):
+        # Open provided visit file, verify formatting, and get index of data start
+        with open(visit_file) as vf:
+            lines = vf.readlines()
+
+            i_start = 0
+            for i_line, line in enumerate(lines):
+                if 'Corrected RA' in line:
+                    i_start = i_line
+                    break
+
+            if ('Short Term Schedule Display' not in lines[0]) or \
+               (i_start == 0):
+                raise ValueError('Provided visit file {} has unknown formatting; cannot parse.'.format(visit_file))
+
+        # Read in as astropy table
+        names = ['Order', 'Star IDs', 'FGS', 'Corrected RA', 'Corrected Dec',
+                 'Probability', 'ID V2', 'ID V3', 'ID X', 'ID Y', 'ID PA @ star',
+                 'FGS Magnitude' ,'FGS Mag Uncert', 'Count Rate', 'Count Rate Uncert']
+        selected_guide_stars = asc.read(visit_file, data_start=i_start - 1, names=names)
+
+        # Verify only one set of GS parameters are provided and extract them
+        GS_params = []
+        for col in ['Corrected RA', 'Corrected Dec', 'ID PA @ star', 'FGS']:
+            values = set(selected_guide_stars[col])
+            if len(values) > 1:
+                raise ValueError('Cannot parse {} from input visit file; too many values provided: {}'.format(col, list(values)))
+            param = list(values)[0]
+            GS_params.append(param)
+        RA, Dec, PA, fgsNum = GS_params
+
+        # Update class attributes
+        self.RA = RA
+        self.Dec = Dec
+        self.PA = PA
+        self.fgsNum = fgsNum
+
+        return RA, Dec, PA, fgsNum
+
     def plot_segments(self):
         # Plot segments in V2/V3 frame
         plt.figure(1)
@@ -376,7 +439,11 @@ class SegmentGuidingCalculator:
         plt.gca().ticklabel_format(useOffset=False)
         plt.savefig(os.path.join(SGT_FILES_PATH, self.root + '_RADecsegments.png'))
 
-    def get_guidestar_params(self):
+    def check_guidestar_params(self):
+        """
+        Ensure all guidestar parameters (RA, Dec, PA, and boresight offset) fall
+        within appropriate ranges.
+        """
         V2B = self.V2Boff
         V3B = self.V3Boff
         gsRA = self.RA
@@ -443,13 +510,9 @@ class SegmentGuidingCalculator:
                 self.SegmentGuidingGUI.errmsg.configure(text=error)
             return
         else:
-            if self.GUI:
-                self.SegmentGuidingGUI.errmsg.configure(text='')  # Clear error message
-            # Determine the attitude matrix
-            A = rotations.attitude(self.V2Aim + V2B, self.V3Aim + V3B, gsRA,
-                                   gsDec, float(gsPA))
+            gsPA = float(gsPA)
 
-        return V2B, V3B, gsRA, gsDec, gsPA, A
+        return V2B, V3B, gsRA, gsDec, gsPA
 
     def checkout(self, str, low, high):
         """Test conversion from string to float.
@@ -656,7 +719,7 @@ class SegmentGuidingGUI(SegmentGuidingCalculator):
 
 
 def run_tool(segment_infile, root=None, GUI=True, GS_params_dict=None,
-             selected_segs=None):
+             selected_segs=None, vss_infile=None):
 
     if not GS_params_dict and not GUI:
         GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
@@ -670,7 +733,7 @@ def run_tool(segment_infile, root=None, GUI=True, GS_params_dict=None,
     # Set up guiding calculator object
     sg = SegmentGuidingCalculator(segment_infile, root=root, GUI=GUI,
                                   GS_params_dict=GS_params_dict,
-                                  selected_segs=selected_segs)
+                                  selected_segs=selected_segs, vss_infile=vss_infile)
 
     # Either run the GUI or run the calculation
     if GUI:
