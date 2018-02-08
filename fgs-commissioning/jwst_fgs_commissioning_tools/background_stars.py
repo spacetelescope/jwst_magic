@@ -2,7 +2,7 @@
 import random
 import numpy as np
 
-from jwst_fgs_commissioning_tools.nircam_to_fgs import counts_to_jmag
+from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
 from jwst_fgs_commissioning_tools import log
 
 def add_background_stars(image, jmag, fgs_counts, guider, nstars=5):

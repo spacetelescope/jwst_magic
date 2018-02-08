@@ -8,7 +8,7 @@ from astropy.io import fits
 from scipy import signal
 
 # LOCAL
-from jwst_fgs_commissioning_tools.nircam_to_fgs import counts_to_jmag
+from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
 from jwst_fgs_commissioning_tools import log, utils
 
 
@@ -72,11 +72,96 @@ def bad_pixel_correction(data, bp_thresh):
 
     return data
 
+def fgs_dms_raw_to_raw(image):
+    '''
+    Convert between an FGS image in the DMS raw frame and the real raw frame
+    '''
+    return np.swapaxes(image, 0, 1)
 
-def rotate_nircam_image(image, fgs_guider, header, nircam_det):
+def fgs_dms_sci_to_raw(image, guider):
+    '''
+    Convert between an FGS in the DMS science frame and the real raw frame
+    '''
+    if guider == 1:
+        pass
+    elif guider == 2:
+        pass
+    return image
+
+def nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
+    '''
+    rotate image from NIRCam detector (raw) coordinate frame to FGS raw
+    '''
+    # Based on the specific detector frame, rotate to match the raw FGS frame
+    if nircam_detector in ['A2', 'A4', 'B1', 'B3', 'B5']:
+        if fgs_guider == 1:
+            # FGS guider = 1; Perform a Left-Right flip and swap axes
+            image = np.fliplr(image)  # equivalent to image[:,::-1]
+            image = np.swapaxes(image, 0, 1)
+        elif fgs_guider == 2:
+            # FGS guider = 2; Perform a 180 degree rotation and swap axes
+            image = np.rot90(image, k=2)
+            image = np.swapaxes(image, 0, 1)
+
+    elif nircam_detector in ['A1', 'A3', 'A5', 'B2', 'B4']:
+        if fgs_guider == 1:
+            # FGS guider = 1; Perform a Up-Down flip and swap axes
+            image = np.flipud(image)  # equivalent to image[::-1,...]
+            image = np.swapaxes(image, 0, 1)
+        elif fgs_guider == 2:
+            # FGS guider = 2; Swap axes!
+            image = np.swapaxes(image, 0, 1)
+
+    else:
+        log.error('Unfamiliar NIRCam detector provided. Check the header keyword' +
+                  ' "DETECTOR" for the NIRCAM module, then re-run using the ' +
+                  '"nircam_det" keyword to bypass the header query.')
+
+    return image
+
+def nircam_sci_to_fgs_raw(image, fgs_guider):
+    '''
+    Rotate image from NIRCam science coordinate frame to FGS raw
+    ** This is the expected frame for output DMS images **
+    '''
+    if fgs_guider == 1:
+        # FGS guider = 1; wap axes
+        image = np.swapaxes(image, 0, 1)
+    elif fgs_guider == 2:
+        # FGS guider = 2; Perform a 180 degree rotation and swap axes
+        image = np.rot90(image, k=1)
+
+    return image
+
+def rotate_nircam_image(image, fgs_guider, header, nircam_det,
+                        nircam_coord_frame='sci'):
     '''
     Given NIRCAM module A or B (given by the header in your original NIRCAM image),
     rotate/flip to put in correct orientation for FGS 1 and 2.
+
+    Parameters:
+    -----------
+    image: array-like
+        NIRCam image to be rotated into correct FGS frame
+    fgs_guider: int
+        Guider 1 or 2
+    header: .fits header object
+        The header of the input NIRCam image
+    nircam_det: str
+        The NIRCam detector with which the image was taken.
+        Expects: A1, A2, A3, A4, A5, B1, B2, B3, B4, or B5
+    nircam_coord_frame: str
+        The coordinate frame that the input image is in.
+        Expects: 'sci' for the science frame, or 'raw' or 'det' for the raw
+        detector frame
+
+    Returns:
+    --------
+    nircam_scale: float
+        Detector scale factor depending on if the input image is from a long- or
+        shortwave detector
+    image: array-like
+        The rotated NIRCam image
     '''
     # The Dectector keyword retruns 'NRCA*' or 'NRCB*' so to simplify matters
     # I just pull out the 4th character in the string
@@ -94,30 +179,12 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det):
         # Shortwave
         nircam_scale = NIRCAM_SW_SCALE
 
-    # Based on the specific detector frame, rotate to match the raw FGS frame
-    if detector in ['A2', 'A4', 'B1', 'B3', 'B5']:
-        if fgs_guider == 1:
-            # FGS guider = 1; Perform a Left-Right flip and swap axes
-            image = np.fliplr(image)  # equivalent to image[:,::-1]
-            image = np.swapaxes(image, 0, 1)
-        elif fgs_guider == 2:
-            # FGS guider = 2; Perform a 180 degree rotation and swap axes
-            image = np.rot90(image, k=2)
-            image = np.swapaxes(image, 0, 1)
-
-    elif detector in ['A1', 'A3', 'A5', 'B2', 'B4']:
-        if fgs_guider == 1:
-            # FGS guider = 1; Perform a Up-Down flip and swap axes
-            image = np.flipud(image)  # equivalent to image[::-1,...]
-            image = np.swapaxes(image, 0, 1)
-        elif fgs_guider == 2:
-            # FGS guider = 2; Swap axes!
-            image = np.swapaxes(image, 0, 1)
-
+    if nircam_coord_frame == 'sci':
+        image = nircam_sci_to_fgs_raw(image, fgs_guider)
+    elif nircam_coord_frame == 'raw' or nircam_coord_frame == 'det':
+        image = nircam_raw_to_fgs_raw(image, detector, fgs_guider)
     else:
-        log.error('Unfamiliar NIRCam detector provided. Check the header keyword' +
-                  ' "DETECTOR" for the NIRCAM module, then re-run using the ' +
-                  '"nircam_det" keyword to bypass the header query.')
+        raise ValueError('Unrecognized coordinate frame name.')
 
     return nircam_scale, image
 
@@ -214,7 +281,7 @@ def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
         if guider is None:
             guider = bias_data_path.split('/')[-1].split('.')[0][-6:]
         biasout_path = os.path.join(output_path, 'bin_norm_bias_imgs',
-                                '{}_G{}_binned_pad_norm.fits'.format(root, guider))
+                                    '{}_G{}_binned_pad_norm.fits'.format(root, guider))
         utils.write_fits(biasout_path, binned_pad_norm_bias)
 
     return binned_pad_norm_bias
@@ -222,7 +289,7 @@ def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
 
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
-def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
+def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam_det=None,
                return_im=True, output_path=None):
     '''
     Takes NIRCam image and turns it into an FGS-like image, gets count rate and location of
@@ -230,11 +297,8 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
 
     Parameters
     ==========
-    input_im: str,list of strings
-        This can be the path to a file, the path to a directory where all .fits
-        files are images you want to convert, or a list of paths (i.e. use glob to
-        get this list)
-        input_path = '/user/kbrooks/itar/FGS/ga/subset_060617'
+    input_im: str
+        The path to the input image
     guider: int
         1 or 2
     fgs_counts: int
@@ -250,7 +314,7 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
     local_path = os.path.dirname(os.path.realpath(__file__))  # where this script exists
     package_path = os.path.split(local_path)[0]  # where the package exists
     out_path = os.path.split(package_path)[0]  # where the out/ dir goes
-    data_path = os.path.join(package_path, 'data')  # Includes data/*.fits files (ie newmagicHdrImg,bias0, etc)
+    data_path = os.path.join(package_path, 'data')  # Includes data/*.fits files
     header_file = os.path.join(data_path, 'newG{}magicHdrImg.fits'.format(guider))  # Guider-dependent files
 
     # ---------------------------------------------------------------------
@@ -266,56 +330,49 @@ def convert_im(input_im, guider, fgs_counts=None, jmag=None, nircam_det=None,
     log.info('J magnitude = {:.1f}'.format(jmag))
 
     # ---------------------------------------------------------------------
-    # Get list of images from input path: can take file,list,dir
-    if isinstance(input_im, list):
-        im_list = input_im
-    elif os.path.isfile(input_im):
-        im_list = [input_im]
-    elif os.path.isdir(input_im):
-        im_list = (glob(os.path.join(input_im, '*.fits')))
+    # For the images requested, convert to FGS images
+    basename = os.path.basename(input_im)
+
+    root = basename.split('.')[0]
+    log.info('Beginning to create FGS image from {}'.format(root))
+
+    if output_path is None:
+        output_path_save = os.path.join(out_path, 'out', root)
+        utils.ensure_dir_exists(output_path_save)
     else:
-        log.error("Input format not recognized. Exiting.")
-        return
+        output_path_save = output_path
+
+    data = fits.getdata(input_im, header=False)
+    header = fits.getheader(input_im, ext=0)
 
     # ---------------------------------------------------------------------
-    # For the images requested, convert to FGS images
-    all_ims = []
-    for image in im_list:
-        basename = os.path.basename(image)
+    # Create FGS image
+    # Mask out bad pixels
+    data = bad_pixel_correction(data, BAD_PIXEL_THRESH)
 
-        root = basename.split('.')[0]
-        log.info('Beginning to create FGS image from {}'.format(root))
-
-        if output_path is None:
-            output_path_save = os.path.join(out_path, 'out', root)
-            utils.ensure_dir_exists(output_path_save)
-        else:
-            output_path_save = output_path
-
-        data = fits.getdata(image, header=False)
-        header = fits.getheader(image, ext=0)
-
-        # ---------------------------------------------------------------------
-        # Create FGS image
-        # Mask out bad pixels
-        data_masked = bad_pixel_correction(data, BAD_PIXEL_THRESH)
+    if nircam:
+        log.info("This is a NIRCam image")
         # Rotate the NIRCAM image into FGS frame
-        nircam_scale, data_rot = rotate_nircam_image(data_masked, guider, header, nircam_det)
+        nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
         # Pad image
-        data_pad = resize_nircam_image(data_rot, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
-        # Normalize image
-        data_norm = normalize_data(data_pad, fgs_counts)
+        data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
-        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                                '{}_G{}_binned_pad_norm.fits'.format(root, guider))
-        # Any value about 65535 will wrap when converted to uint16
-        data_norm[data_norm >= 65535] = 65535
-        hdr = fits.getheader(header_file, ext=0)
-        utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
+    else:
+        log.info("This is an FGS image")
+        data = fgs_dms_raw_to_raw(data)
+        data = fgs_dms_sci_to_raw(data, guider)
 
-        print("Finished for {}, Guider = {}".format(root, guider))
+    # Normalize image
+    data_norm = normalize_data(data, fgs_counts)
 
-        all_ims.append(data_norm)
+    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                               '{}_G{}.fits'.format(root, guider))
 
-    if return_im:
-        return all_ims
+    # Any value above 65535 will wrap when converted to uint16
+    utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
+    hdr = fits.getheader(header_file, ext=0)
+    utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
+
+    print("Finished for {}, Guider = {}".format(root, guider))
+
+    return data_norm
