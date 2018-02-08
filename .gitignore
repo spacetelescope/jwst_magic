@@ -25,7 +25,7 @@
 *.rar
 *.tar
 *.zip
-jwst_fgs_commissioning_tools.egg-info/*
+fgs-commissioning/jwst_fgs_commissioning_tools.egg-info/*
 
 # Logs and databases #
 ######################
@@ -46,8 +46,8 @@ Thumbs.db
 # Other #
 #########
 fgs-commissioning/notebooks/*
-fgs-commissioning/!notebooks/FGS Commissioning Tool Tutorial.ipynb
-fgs-commissioning/!notebooks/*.png
+!fgs-commissioning/notebooks/FGS Commissioning Tool Tutorial.ipynb
+!fgs-commissioning/notebooks/*.png
 fgs-commissioning/out/*
 .ipynb_checkpoints/*
 fgs-commissioning/logs/*
