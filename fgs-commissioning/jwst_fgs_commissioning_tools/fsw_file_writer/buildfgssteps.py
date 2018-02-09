@@ -1,5 +1,4 @@
 # STDLIB
-import configparser
 import os
 
 # Third Party
