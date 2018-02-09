@@ -23,8 +23,8 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 TASKNAME = 'run_all'
 
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_det=None, nircam=True, global_alignment=False, in_file=None,
-            bkgd_stars=False):
+            nircam_det=None, nircam=True, global_alignment=False, steps=None,
+            in_file=None, bkgd_stars=False):
 
     if root is None:
         root = os.path.basename(image).split('.')[0]
@@ -36,7 +36,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     @log.logtofile(logname)
     def run_all_with_logging(image, guider, root=None, fgs_counts=None, jmag=None,
                              nircam_det=None, nircam=True, global_alignment=False,
-                             in_file=None, bkgd_stars=False):
+                             steps=None, in_file=None, bkgd_stars=False):
         """
         This function will take any FGS or NIRCam image and create the outputs needed
         to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -62,6 +62,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             If this is a FGS image, set this flag to False
         global_alignment: bool
             If this is not a global_alignment image, set this flag to False
+        steps: list of strings
+            List of the steps to be completed
         in_file: str
             If this image comes with an incat or reg file, the file path
         """
@@ -78,6 +80,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                                      fgs_counts=fgs_counts,
                                                      jmag=jmag,
                                                      nircam_det=nircam_det)
+        if steps is None:
+            steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
 
         if bkgd_stars:
             fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
@@ -89,12 +93,10 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                     in_file=in_file)
 
         # create all files for FSW/DHAS/FGSES/etc.
-        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ID')
-        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ACQ1')
-        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ACQ2')
-        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'LOSTRK')
+        for step in steps:
+            buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step)
 
     run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
                          jmag=jmag, nircam_det=nircam_det, nircam=nircam,
                          global_alignment=global_alignment,
-                         in_file=in_file, bkgd_stars=bkgd_stars)
+                         steps=steps, in_file=in_file, bkgd_stars=bkgd_stars)
