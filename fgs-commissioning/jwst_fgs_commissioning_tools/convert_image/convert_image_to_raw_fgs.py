@@ -29,6 +29,11 @@ simulating Global Alignment using the short wavelength channel
 
 (Sherie was told they include detector noise and bias offsets between the readout channels)
 '''
+# Paths
+FSW_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(FSW_PATH)[0]
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
+DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 # Constants
 NIRCAM_SW_SCALE = 0.031  # NIRCam SW pixel scale (arcsec/pixel)
@@ -50,33 +55,53 @@ def bad_pixel_correction(data, bp_thresh):
     j[j < 0] = 0
 
     # difference between image and smoothed image; leaves the background behind
-    # so we can filter out the bad pixels
     delta = data - smooth
 
-    # Locating the bad pixels. If there are still bpix in masked image, fiddle
-    # with delta threshold
+    # Locating the bad pixels.
     j = np.where(delta > bp_thresh)
 
     # using location of the bad pixels, replace the bpix value with median value
     # of the smoothed image
-    # also get rid of any negative numbers
     data[j] = np.median(smooth)
-    data[data < 0] = 0
-
-    # recast as unsigned integers
-    data = np.int_(data)
 
     # clip any over saturated/hot pixels left, replace with integer form of
     # median value of smoothed image
-    data[data > 50000] = np.int_(np.median(smooth))
+    data = utils.correct_image(data, upper_threshold=50000, upper_limit=np.median(smooth))
+    # recast as unsigned integers
+    data = np.uint16(data)
 
     return data
 
-def fgs_dms_raw_to_raw(image):
+def correct_nircam_dq(image, dq_array):
     '''
-    Convert between an FGS image in the DMS raw frame and the real raw frame
+    Based on a conversation with Alicia Canipe on the NIRCam team on 02/09/2018,
+    try focusing on these flags
+    Bit Value Name      Description
+    0	1	    DO_NOT_USE	 Bad pixel. Do not use.
+    9	512	    NON_SCIENCE	 Pixel not on science portion of detector
+    10	1024	DEAD	     Dead pixel
+    13	8192	LOW_QE	     Low quantum efficiency
+    16	65536	NONLINEAR	 Pixel highly nonlinear
+    19	524288	NO_GAIN_VALUE	Gain cannot be measured
+    20	1048576	NO_LIN_CORR	 Linearity correction not available
+    21	2097152	NO_SAT_CHECK Saturation check not available
     '''
-    return np.swapaxes(image, 0, 1)
+    # Has to include these values or some addition combination therein
+    arr = np.copy(dq_array)
+
+
+    return image
+
+def fgs_add_dq(image, guider):
+    if guider == 1:
+        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_bad_pixel_mask_G1.fits'))
+    elif guider == 2:
+        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_bad_pixel_mask_G2.fits'))
+
+    # Apply dq_arr to image
+
+    return image
+
 
 def fgs_dms_sci_to_raw(image, guider):
     '''
@@ -255,42 +280,10 @@ def normalize_data(data, fgs_counts, threshold=5):
 
     return data_norm
 
-
-def add_bias_to_data(bias_data_path, fgs_data, root, guider='', output_path='',
-                     save_to_fits=True):
-    """
-    OUT OF DATE - 6/21/17
-    Adds in the bias from the guider (two seperate files) to FGS
-    (or simulated FGS image that has been padded and normalized)
-
-    This assumes that the format of the guider bias filename is
-       job<ID>_g<guider_number>bias.fits.
-    If you have a different filename format, pass in the guider_name.
-
-    Default guider bias files are found in the following location:
-       guider1: "g1bias.fits"
-       guider2: "g2bias.fits"
-    """
-    bias_data = fits.getdata(bias_data_path)
-
-    binned_pad_norm_bias = fgs_data + bias_data
-
-    if save_to_fits:
-        utils.ensure_dir_exists(os.path.join(output_path, 'bin_norm_bias_imgs'))
-
-        if guider is None:
-            guider = bias_data_path.split('/')[-1].split('.')[0][-6:]
-        biasout_path = os.path.join(output_path, 'bin_norm_bias_imgs',
-                                    '{}_G{}_binned_pad_norm.fits'.format(root, guider))
-        utils.write_fits(biasout_path, binned_pad_norm_bias)
-
-    return binned_pad_norm_bias
-
-
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam_det=None,
-               return_im=True, output_path=None):
+               output_path=None):
     '''
     Takes NIRCam image and turns it into an FGS-like image, gets count rate and location of
     each guide star in each image
@@ -310,12 +303,8 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
         The NIRCAM module, otherwise the header will be parsed
     '''
 
-    # Establish paths and necessary files
-    local_path = os.path.dirname(os.path.realpath(__file__))  # where this script exists
-    package_path = os.path.split(local_path)[0]  # where the package exists
-    out_path = os.path.split(package_path)[0]  # where the out/ dir goes
-    data_path = os.path.join(package_path, 'data')  # Includes data/*.fits files
-    header_file = os.path.join(data_path, 'newG{}magicHdrImg.fits'.format(guider))  # Guider-dependent files
+    # Load necessary files
+    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))  # Guider-dependent files
 
     # ---------------------------------------------------------------------
     # Find FGS counts to be used for normalization
@@ -337,13 +326,17 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
     log.info('Beginning to create FGS image from {}'.format(root))
 
     if output_path is None:
-        output_path_save = os.path.join(out_path, 'out', root)
+        output_path_save = os.path.join(OUT_PATH, 'out', root)
         utils.ensure_dir_exists(output_path_save)
     else:
         output_path_save = output_path
 
     data = fits.getdata(input_im, header=False)
     header = fits.getheader(input_im, ext=0)
+
+    if len(data.shape) > 2:
+        print(data.shape)
+        raise TypeError('Expecting a single frame or slope image.')
 
     # ---------------------------------------------------------------------
     # Create FGS image
@@ -352,6 +345,11 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
 
     if nircam:
         log.info("This is a NIRCam image")
+
+        # Pull out DQ array for this image
+        dq_arr = fits.getdata(input_im, extname='DQ')
+        data = correct_nircam_dq(data, dq_arr)
+
         # Rotate the NIRCAM image into FGS frame
         nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
         # Pad image
@@ -359,7 +357,6 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
 
     else:
         log.info("This is an FGS image")
-        data = fgs_dms_raw_to_raw(data)
         data = fgs_dms_sci_to_raw(data, guider)
 
     # Normalize image

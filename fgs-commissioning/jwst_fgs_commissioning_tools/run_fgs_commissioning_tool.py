@@ -77,8 +77,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, nircam=nircam,
                                                      fgs_counts=fgs_counts,
                                                      jmag=jmag,
-                                                     nircam_det=nircam_det,
-                                                     return_im=True)
+                                                     nircam_det=nircam_det)
 
         if bkgd_stars:
             fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
