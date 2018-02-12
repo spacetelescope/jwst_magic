@@ -150,7 +150,19 @@ def write_all(obj):
         convert_fits_to_dat(filename_noisy_sky, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))
 
+    else:
+        ## DHAS file
+        # Noisy sky acquisition fits images
+        filename_image = os.path.join(obj.out_dir,
+                                      'dhas',
+                                      '{}_G{}_{}.fits'.format(obj.root,
+                                                              obj.guider,
+                                                              obj.step))
 
+        utils.write_fits(filename_image, np.uint16(obj.image))
+        ## Gound system file
+        convert_fits_to_dat(filename_image, obj.step,
+                            os.path.join(obj.out_dir, 'ground_system'))
 
 #-------------------------------------------------------------------------------
 def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
@@ -185,7 +197,7 @@ def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
     #data = swap_if_little_endian(data)
     flat = data.flatten()
 
-    if (obsmode == 'PSF') or (obsmode == 'TRK'):
+    if (obsmode == 'PSF') or (obsmode == 'TRK') or (obsmode == 'LOSTRK'):
         # ascii float format
         fmt = '{:16.7e} '
 
