@@ -1,7 +1,6 @@
 # STDLIB
 import os
 import shutil
-import pprint
 
 # THIRD PARTY
 import matplotlib
@@ -9,10 +8,9 @@ if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 import numpy as np
 from astropy.io import fits
-import pprint
 
 # LOCAL
-from jwst_fgs_commissioning_tools.nircam_to_fgs import nircam_to_fgs, counts_to_jmag
+from jwst_fgs_commissioning_tools.convert_image import convert_image_to_raw_fgs
 from jwst_fgs_commissioning_tools.star_selector import select_psfs
 from jwst_fgs_commissioning_tools.fsw_file_writer import buildfgssteps
 from jwst_fgs_commissioning_tools import log, utils, background_stars
@@ -25,20 +23,20 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 TASKNAME = 'run_all'
 
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
-            nircam_det=None, nircam=True, global_alignment=False, in_file=None,
-            bkgd_stars=False):
+            nircam_det=None, nircam=True, global_alignment=False, steps=None,
+            in_file=None, bkgd_stars=False):
 
     if root is None:
         root = os.path.basename(image).split('.')[0]
 
     taskname = '_'.join([TASKNAME, root])
-    LOG_PATH = os.path.join(OUT_PATH, 'logs')
-    LOGNAME = utils.get_logname(LOG_PATH, taskname)
+    log_path = os.path.join(OUT_PATH, 'logs')
+    logname = utils.get_logname(log_path, taskname)
 
-    @log.logtofile(LOGNAME)
+    @log.logtofile(logname)
     def run_all_with_logging(image, guider, root=None, fgs_counts=None, jmag=None,
                              nircam_det=None, nircam=True, global_alignment=False,
-                             in_file=None, bkgd_stars=False):
+                             steps=None, in_file=None, bkgd_stars=False):
         """
         This function will take any FGS or NIRCam image and create the outputs needed
         to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -64,6 +62,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             If this is a FGS image, set this flag to False
         global_alignment: bool
             If this is not a global_alignment image, set this flag to False
+        steps: list of strings
+            List of the steps to be completed
         in_file: str
             If this image comes with an incat or reg file, the file path
         """
@@ -76,56 +76,27 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         utils.ensure_dir_exists(out_dir)
 
         # Either convert provided NIRCam image to an FGS image...
-        if nircam:
-            log.info("This is a NIRCam image")
-            fgs_im = nircam_to_fgs.convert_im(image, guider, fgs_counts=fgs_counts,
-                                              jmag=jmag, nircam_det=nircam_det,
-                                              return_im=True)
+        fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, nircam=nircam,
+                                                     fgs_counts=fgs_counts,
+                                                     jmag=jmag,
+                                                     nircam_det=nircam_det)
+        if steps is None:
+            steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
 
-            # Account for output of convert_im being a list
-            if np.shape(fgs_im)[0] == 1:
-                fgs_im = fgs_im[0]
-            else:
-                raise TypeError('Provided NIRCam image {} has dimensions {}. '
-                                'Cannot create multiple regfiles from multiple '
-                                'NIRCam frames with one call to '
-                                'run_fgs_commissioning_tool. Please input single'
-                                ' 2048 x 2048 image.'.format(image, np.shape(fgs_im)))
-
-        # ... or process provided FGS image
-        else:
-            log.info("This is a FGS image")
-            fgs_im = fits.getdata(image)
-
-
-            # If J magnitude is provided, normalize the entire image to match that jmag
-            if jmag:
-                log.info("Normalizing to jmag = {}".format(jmag))
-                fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-                fgs_im = fgs_im / np.sum(fgs_im) * fgs_counts
-
-            # Correct high or low pixels
-            fgs_im = utils.correct_image(fgs_im, upper_limit=0.)
-
-            utils.ensure_dir_exists(os.path.join(out_dir, 'FGS_imgs'))
-            shutil.copyfile(image, os.path.join(OUT_PATH, 'out', root, 'FGS_imgs',
-                                                '{}.fits'.format(root)))
         if bkgd_stars:
             fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
 
         # create reg file
-        nref = select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,
-                                           return_nref=True,
-                                           global_alignment=global_alignment,
-                                           in_file=in_file)
+        select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,
+                                    return_nref=False,
+                                    global_alignment=global_alignment,
+                                    in_file=in_file)
 
         # create all files for FSW/DHAS/FGSES/etc.
-        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ID')
-        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ACQ1')
-        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'ACQ2')
-        buildfgssteps.BuildFGSSteps(fgs_im, guider, root, 'LOSTRK')
+        for step in steps:
+            buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step)
 
     run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
                          jmag=jmag, nircam_det=nircam_det, nircam=nircam,
                          global_alignment=global_alignment,
-                         in_file=in_file, bkgd_stars=bkgd_stars)
+                         steps=steps, in_file=in_file, bkgd_stars=bkgd_stars)
