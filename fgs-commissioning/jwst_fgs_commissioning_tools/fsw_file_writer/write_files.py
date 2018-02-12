@@ -117,8 +117,8 @@ def write_all(obj):
         utils.write_fits(filename_id_strips, obj.strips, header=hdr0)
         mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
                       step='ID', out_dir=obj.out_dir)
-        ## Gound system file
-        ## Gound system file
+
+        ## Ground system file
         convert_fits_to_dat(filename_id_strips, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))
 
@@ -141,12 +141,14 @@ def write_all(obj):
                                                                   obj.step))
 
         utils.write_fits(filename_noisy_sky, np.uint16(obj.image))
+
         if obj.step == 'ACQ1':
             mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
                           step='ACQ', out_dir=obj.out_dir,
                           acq1_imgsize=obj.acq1_imgsize,
                           acq2_imgsize=obj.acq2_imgsize)
-        ## Gound system file
+
+        ## Ground system file
         convert_fits_to_dat(filename_noisy_sky, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))
 
