@@ -56,46 +56,46 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, imgsize):
     bias += ktc_full
 
 
-    # Pedestal imprints at reset (uniform within each ramp) - - - - - - - - - -
-    if imgsize == 2048: #for full frame images - ID
-        pedestal = np.zeros((nramps * nreads, 2048, 2048)) #Create the full frame pedestal image
-        for i in range(nramps * nreads):
-            pedestal[i, :, 0:511] = np.fix(np.round(25 * np.random.random_sample()))
-            pedestal[i, :, 512:1023] = np.fix(np.round(25 * np.random.random_sample()))
-            pedestal[i, :, 1024:1535] = np.fix(np.round(25 * np.random.random_sample()))
-            pedestal[i, :, 1536:2047] = np.fix(np.round(25 * np.random.random_sample()))
+    # # Pedestal imprints at reset (uniform within each ramp) - - - - - - - - - -
+    # if imgsize == 2048: #for full frame images - ID
+    #     pedestal = np.zeros((nramps * nreads, 2048, 2048)) #Create the full frame pedestal image
+    #     for i in range(nramps * nreads):
+    #         pedestal[i, :, 0:511] = np.fix(np.round(25 * np.random.random_sample()))
+    #         pedestal[i, :, 512:1023] = np.fix(np.round(25 * np.random.random_sample()))
+    #         pedestal[i, :, 1024:1535] = np.fix(np.round(25 * np.random.random_sample()))
+    #         pedestal[i, :, 1536:2047] = np.fix(np.round(25 * np.random.random_sample()))
 
-    # For subarrays
-    else:
-        # Determine if subarray spans multiple pedestals:
-        spanning = False
-        for border in [512, 1024, 1536]:
-            if (border - imgsize) < xlow < border:
-                spanning = border
+    # # For subarrays
+    # else:
+    #     # Determine if subarray spans multiple pedestals:
+    #     spanning = False
+    #     for border in [512, 1024, 1536]:
+    #         if (border - imgsize) < xlow < border:
+    #             spanning = border
 
-        # If subarray spans multiple pedestals:
-        if type(spanning) == int:
-            pedestal = np.zeros((nramps * nreads, imgsize, imgsize))
+    #     # If subarray spans multiple pedestals:
+    #     if type(spanning) == int:
+    #         pedestal = np.zeros((nramps * nreads, imgsize, imgsize))
 
-            # Determine transition x value
-            xborder = spanning - 1 - xlow
+    #         # Determine transition x value
+    #         xborder = spanning - 1 - xlow
 
-            ped_noise = np.fix(25 * np.random.standard_normal(size=(nramps, 2)))
-            for iramp, ped in zip(range(nramps), ped_noise):
-                pedestal[iramp * nreads:(iramp + 1) * nreads, :, :xborder] = ped[0]
-                pedestal[iramp * nreads:(iramp + 1) * nreads, :, xborder:] = ped[1]
+    #         ped_noise = np.fix(25 * np.random.standard_normal(size=(nramps, 2)))
+    #         for iramp, ped in zip(range(nramps), ped_noise):
+    #             pedestal[iramp * nreads:(iramp + 1) * nreads, :, :xborder] = ped[0]
+    #             pedestal[iramp * nreads:(iramp + 1) * nreads, :, xborder:] = ped[1]
 
-        # Else if subarray is completely within just one pedestal:
-        elif not spanning:
-            ped_noise = np.zeros((nramps, 1, 1))
-            ped_noise[:, 0, 0] = np.fix(25 * np.random.standard_normal(size=nramps))
+    #     # Else if subarray is completely within just one pedestal:
+    #     elif not spanning:
+    #         ped_noise = np.zeros((nramps, 1, 1))
+    #         ped_noise[:, 0, 0] = np.fix(25 * np.random.standard_normal(size=nramps))
 
-            # Resize array to match pedestal array
-            pedestal = np.repeat(ped_noise, imgsize, axis=1)
-            pedestal = np.repeat(pedestal, imgsize, axis=2)
-            pedestal = np.repeat(pedestal, nreads, axis=0)
+    #         # Resize array to match pedestal array
+    #         pedestal = np.repeat(ped_noise, imgsize, axis=1)
+    #         pedestal = np.repeat(pedestal, imgsize, axis=2)
+    #         pedestal = np.repeat(pedestal, nreads, axis=0)
 
-    bias += pedestal
+    # bias += pedestal
 
     ## rectify bias img
     bias = utils.correct_image(bias, upper_limit=0) #set any saturated pixels to zero
