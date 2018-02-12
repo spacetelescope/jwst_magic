@@ -1,5 +1,4 @@
 # STDLIB
-import configparser
 import os
 
 # Third Party
@@ -70,12 +69,12 @@ class BuildFGSSteps(object):
             self.xarr, self.yarr = np.loadtxt(reg_file)
             self.countrate = []
             for xa, ya, in zip(self.xarr, self.yarr):
-                self.countrate.append(select_psfs.countrate_3x3(xa, ya, self.input_im))
+                self.countrate.append(utils.countrate_3x3(xa, ya, self.input_im))
         else:
             self.yarr, self.xarr, self.countrate = np.loadtxt(reg_file, delimiter=' ',
                                                               skiprows=1).T
         # Add y offset to all coordinates
-        self.yarr = self.yarr - self.yoffset
+        # self.yarr = self.yarr - self.yoffset
 
         # Cover cases where there is only one entry in the reg file
         try:
@@ -121,7 +120,7 @@ class BuildFGSSteps(object):
         self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tcds')
 
         ## Grab the expected bias
-        if config_ini.get(section, 'bias'):
+        if config_ini.getboolean(section, 'bias'):
             self.bias = getbias.getbias(self.guider, self.xarr, self.yarr,
                                         self.nreads, config_ini.getint(section, 'nramps'),
                                         config_ini.getint(section, 'imgsize'))
@@ -153,7 +152,7 @@ class BuildFGSSteps(object):
                                         config_ini.getint(section, 'height'),
                                         self.yoffset,
                                         config_ini.getint(section, 'overlap'))
-        if config_ini.get(section, 'step') == 'LOSTRK':
+        if self.step == 'LOSTRK':
             # Normalize to a count sum of 1000
             image = image / np.sum(image) * 1000
             # Resize image array to oversample by 6 (from 43x43 to 255x255)
