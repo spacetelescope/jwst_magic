@@ -99,6 +99,7 @@ class BuildFGSSteps(object):
         if self.step != 'ID':
             self.xarr = np.asarray([self.xarr[0]])
             self.yarr = np.asarray([self.yarr[0]])
+
             self.countrate = np.asarray([self.countrate[0]])
             self.input_im = create_im_subarray(self.input_im, self.xarr,
                                                self.yarr, config_ini.getint(section, 'imgsize'))
@@ -134,6 +135,7 @@ class BuildFGSSteps(object):
         else:
             self.bias = None
             image = self.time_normed_im
+
         ## Cut any pixels over saturation or under zero
         image = utils.correct_image(image)
 
