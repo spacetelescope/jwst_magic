@@ -1,5 +1,6 @@
 # STDLIB
 from glob import glob
+import itertools
 import os
 
 # THIRD PARTY
@@ -72,7 +73,7 @@ def bad_pixel_correction(data, bp_thresh):
 
     return data
 
-def correct_nircam_dq(image, dq_array):
+def correct_nircam_dq(image, dq_array, bit_arr=None):
     '''
     Based on a conversation with Alicia Canipe on the NIRCam team on 02/09/2018,
     try focusing on these flags
@@ -86,43 +87,59 @@ def correct_nircam_dq(image, dq_array):
     20	1048576	NO_LIN_CORR	 Linearity correction not available
     21	2097152	NO_SAT_CHECK Saturation check not available
     '''
-    # Has to include these values or some addition combination therein
-    arr = np.copy(dq_array)
+    # Convert bits into values
+    if bit_arr is None:
+        bit_arr = [0, 9, 13, 16, 19, 20, 21]
 
+    flags = [2**x for x in bit_arr]
+    # Find all combinations of bits
+    flag_combinations = [seq for i in range(len(flags), 0, -1) for seq in itertools.combinations(flags, i)]
 
-    return image
+    inds = []
+    for flag_comb in flag_combinations:
+        # Add all combinations together to find all values we care about
+        flag = (np.sum(flag_comb))
+        # Now create DQ array that just flags the pixels with values that we care about
+        ind = list(zip(*np.where(dq_array == flag)))
+        if ind:
+            inds.extend(ind)
+
+    # Fix bad pixel by taking median value in 3x3 box
+    im_copy = np.copy(image)
+    for ind in inds:
+        im_copy[ind] = np.median(image[ind[0]-2:ind[0]+2, ind[1]-2:ind[1]+2])
+
+    return im_copy
 
 def fgs_add_dq(image, guider):
+    '''
+    Add FGS bad pixels to image
+    Currently, we only have a map of all flagged pixels but no indication as to
+    why they are flagged. For now, we set all flagged pixels to saturation.
+    '''
     if guider == 1:
-        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_bad_pixel_mask_G1.fits'))
+        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G1.fits'))
     elif guider == 2:
-        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_bad_pixel_mask_G2.fits'))
+        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G2.fits'))
 
     # Apply dq_arr to image
+    # FIXME for now, set all flagged pixels to saturation
+    image[dq_arr == 1] = 65535
 
     return image
 
-
-def fgs_dms_sci_to_raw(image, guider):
-    '''
-    Convert between an FGS in the DMS science frame and the real raw frame
-    '''
-    if guider == 1:
-        pass
-    elif guider == 2:
-        pass
-    return image
 
 def nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
     '''
     rotate image from NIRCam detector (raw) coordinate frame to FGS raw
+
+    (See 'notebooks/Convert from NIRCam to FGS coordinate frames.ipynb')
     '''
     # Based on the specific detector frame, rotate to match the raw FGS frame
     if nircam_detector in ['A2', 'A4', 'B1', 'B3', 'B5']:
         if fgs_guider == 1:
-            # FGS guider = 1; Perform a Left-Right flip and swap axes
-            image = np.fliplr(image)  # equivalent to image[:,::-1]
-            image = np.swapaxes(image, 0, 1)
+            # FGS guider = 1; Perform 270 degree rotation
+            image = np.rot90(image, k=3)
         elif fgs_guider == 2:
             # FGS guider = 2; Perform a 180 degree rotation and swap axes
             image = np.rot90(image, k=2)
@@ -130,9 +147,8 @@ def nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
 
     elif nircam_detector in ['A1', 'A3', 'A5', 'B2', 'B4']:
         if fgs_guider == 1:
-            # FGS guider = 1; Perform a Up-Down flip and swap axes
-            image = np.flipud(image)  # equivalent to image[::-1,...]
-            image = np.swapaxes(image, 0, 1)
+            # FGS guider = 1; One 90 degree rotation
+            image = np.rot90(image, k=1)
         elif fgs_guider == 2:
             # FGS guider = 2; Swap axes!
             image = np.swapaxes(image, 0, 1)
@@ -144,16 +160,19 @@ def nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
 
     return image
 
-def nircam_sci_to_fgs_raw(image, fgs_guider):
+def sci_to_fgs_raw(image, fgs_guider):
     '''
-    Rotate image from NIRCam science coordinate frame to FGS raw
+    Rotate image from DMS science coordinate (same for NIRCam and FGS) frame to FGS raw
     ** This is the expected frame for output DMS images **
+
+    (See 'notebooks/Convert from NIRCam to FGS coordinate frames.ipynb' and
+    'notebooks/Convert FGS coordinate frames.ipynb')
     '''
     if fgs_guider == 1:
-        # FGS guider = 1; wap axes
+        # FGS guider = 1; Swap axes
         image = np.swapaxes(image, 0, 1)
     elif fgs_guider == 2:
-        # FGS guider = 2; Perform a 180 degree rotation and swap axes
+        # FGS guider = 2; Perform 90 degree rotation
         image = np.rot90(image, k=1)
 
     return image
@@ -205,7 +224,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
         nircam_scale = NIRCAM_SW_SCALE
 
     if nircam_coord_frame == 'sci':
-        image = nircam_sci_to_fgs_raw(image, fgs_guider)
+        image = sci_to_fgs_raw(image, fgs_guider)
     elif nircam_coord_frame == 'raw' or nircam_coord_frame == 'det':
         image = nircam_raw_to_fgs_raw(image, detector, fgs_guider)
     else:
@@ -348,7 +367,8 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
 
         # Pull out DQ array for this image
         dq_arr = fits.getdata(input_im, extname='DQ')
-        data = correct_nircam_dq(data, dq_arr)
+        if not dq_arr.min() == 1 and not dq_arr.max() == 1:
+            data = correct_nircam_dq(data, dq_arr)
 
         # Rotate the NIRCAM image into FGS frame
         nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
@@ -357,7 +377,16 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
 
     else:
         log.info("This is an FGS image")
-        data = fgs_dms_sci_to_raw(data, guider)
+        hdr_guider = int(header['DETECTOR'][-1]) # Override just in case the human gets it wrong
+        if hdr_guider != guider:
+            log.warning("The header indicates that this is a guider " +
+                        "{0} image. Processing as a guider {0} image.".format(hdr_guider))
+        try:
+            origin = header['ORIGIN'].strip()
+            if origin == 'ITM':
+                data = sci_to_fgs_raw(data, guider)
+        except KeyError:
+            pass
 
     # Normalize image
     data_norm = normalize_data(data, fgs_counts)

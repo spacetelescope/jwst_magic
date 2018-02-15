@@ -46,10 +46,14 @@ Thumbs.db
 # Other #
 #########
 fgs-commissioning/notebooks/*
-!fgs-commissioning/notebooks/FGS Commissioning Tool Tutorial.ipynb
-!fgs-commissioning/notebooks/*.png
+fgs-commissioning/!notebooks/FGS Commissioning Tool Tutorial.ipynb
+fgs-commissioning/!notebooks/Convert FGS coordinate frames.ipynb
+fgs-commissioning/!notebooks/Convert from NIRCam to FGS coordinate frames.ipynb
+fgs-commissioning/!notebooks/*.png
+
 fgs-commissioning/out/*
 .ipynb_checkpoints/*
 fgs-commissioning/logs/*
 fgs-commissioning/comm_tool_obsolete/*
 fgs-commissioning/segment_guiding_files/*
+
