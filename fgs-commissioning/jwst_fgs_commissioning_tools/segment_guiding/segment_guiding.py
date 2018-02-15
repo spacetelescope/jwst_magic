@@ -33,7 +33,7 @@ SGT_FILES_PATH = os.path.join(os.path.split(PACKAGE_PATH)[0], 'segment_guiding_f
 FGS_SIAF = pysiaf.Siaf('FGS')
 
 class SegmentGuidingCalculator:
-    def __init__(self, segment_infile, root=None, GUI=True, GS_params_dict=None,
+    def __init__(self, segment_infile, root=None, GUI=False, GS_params_dict=None,
                  selected_segs=None, vss_infile=None):
 
         # If no root provided, name the output the same as the input
@@ -408,7 +408,7 @@ class SegmentGuidingCalculator:
         plt.figure(1)
         plt.clf()
         plt.plot(self.V2SegArray, self.V3SegArray, 'b*')
-        plt.plot(self.V2SegArray.mean(), self.V2SegArray.mean(), 'ro')
+        plt.plot(self.V2SegArray.mean(), self.V3SegArray.mean(), 'ro')
         plt.grid(True)
         plt.axis([40.0, -40.0, -40.0, 40.0])  # V2 to the left
         plt.title('Segments')
@@ -660,19 +660,19 @@ class SegmentGuidingGUI(SegmentGuidingCalculator):
             self.calculator.fgsNum = self.fgsNum.get()
 
         elif var_name == 'V2Boff':
-            self.calculator.V2Boff = self.V2Boff.get()
+            self.calculator.V2Boff = float(self.V2Boff.get())
 
         elif var_name == 'V3Boff':
-            self.calculator.V3Boff = self.V3Boff.get()
+            self.calculator.V3Boff = float(self.V3Boff.get())
 
         elif var_name == 'RA':
-            self.calculator.RA = self.RA.get()
+            self.calculator.RA = float(self.RA.get())
 
         elif var_name == 'Dec':
-            self.calculator.Dec = self.Dec.get()
+            self.calculator.Dec = float(self.Dec.get())
 
         elif var_name == 'PA':
-            self.calculator.PA = self.PA.get()
+            self.calculator.PA = float(self.PA.get())
 
         elif var_name == 'segNum':
             self.calculator.segNum = self.segNum.get()
@@ -718,17 +718,17 @@ class SegmentGuidingGUI(SegmentGuidingCalculator):
 ############################## End Class SegmentForm ###############################
 
 
-def run_tool(segment_infile, root=None, GUI=True, GS_params_dict=None,
+def run_tool(segment_infile, root=None, GUI=False, GS_params_dict=None,
              selected_segs=None, vss_infile=None):
 
-    if not GS_params_dict and not GUI:
-        GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
-                          'V3Boff': 0.2,  # V3 boresight offset
-                          'fgsNum': 1,  # guider number
-                          'RA': 30.,  # RA of guide star
-                          'Dec': 50.,  # Dec of guide star
-                          'PA': 2.,  # position angle of guide star
-                          'segNum': 0}  # selected segment to guide on
+    # if not GS_params_dict and not GUI:
+    #     GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
+    #                       'V3Boff': 0.2,  # V3 boresight offset
+    #                       'fgsNum': 1,  # guider number
+    #                       'RA': 30.,  # RA of guide star
+    #                       'Dec': 50.,  # Dec of guide star
+    #                       'PA': 2.,  # position angle of guide star
+    #                       'segNum': 0}  # selected segment to guide on
 
     # Set up guiding calculator object
     sg = SegmentGuidingCalculator(segment_infile, root=root, GUI=GUI,
