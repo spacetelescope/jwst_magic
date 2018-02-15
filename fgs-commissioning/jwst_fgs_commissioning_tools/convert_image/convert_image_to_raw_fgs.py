@@ -1,5 +1,6 @@
 # STDLIB
 from glob import glob
+import itertools
 import os
 
 # THIRD PARTY
@@ -72,7 +73,7 @@ def bad_pixel_correction(data, bp_thresh):
 
     return data
 
-def correct_nircam_dq(image, dq_array):
+def correct_nircam_dq(image, dq_array, bit_arr=None):
     '''
     Based on a conversation with Alicia Canipe on the NIRCam team on 02/09/2018,
     try focusing on these flags
@@ -86,19 +87,44 @@ def correct_nircam_dq(image, dq_array):
     20	1048576	NO_LIN_CORR	 Linearity correction not available
     21	2097152	NO_SAT_CHECK Saturation check not available
     '''
-    # Has to include these values or some addition combination therein
-    arr = np.copy(dq_array)
+    # Convert bits into values
+    if bit_arr is None:
+        bit_arr = [0, 9, 13, 16, 19, 20, 21]
 
+    flags = [2**x for x in bit_arr]
+    # Find all combinations of bits
+    flag_combinations = [seq for i in range(len(flags), 0, -1) for seq in itertools.combinations(flags, i)]
 
-    return image
+    inds = []
+    for flag_comb in flag_combinations:
+        # Add all combinations together to find all values we care about
+        flag = (np.sum(flag_comb))
+        # Now create DQ array that just flags the pixels with values that we care about
+        ind = list(zip(*np.where(dq_array == flag)))
+        if ind:
+            inds.extend(ind)
+
+    # Fix bad pixel by taking median value in 3x3 box
+    im_copy = np.copy(image)
+    for ind in inds:
+        im_copy[ind] = np.median(image[ind[0]-2:ind[0]+2, ind[1]-2:ind[1]+2])
+
+    return im_copy
 
 def fgs_add_dq(image, guider):
+    '''
+    Add FGS bad pixels to image
+    Currently, we only have a map of all flagged pixels but no indication as to
+    why they are flagged. For now, we set all flagged pixels to saturation.
+    '''
     if guider == 1:
-        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_bad_pixel_mask_G1.fits'))
+        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G1.fits'))
     elif guider == 2:
-        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_bad_pixel_mask_G2.fits'))
+        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G2.fits'))
 
     # Apply dq_arr to image
+    # FIXME for now, set all flagged pixels to saturation
+    image[dq_arr == 1] = 65535
 
     return image
 
@@ -341,7 +367,8 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
 
         # Pull out DQ array for this image
         dq_arr = fits.getdata(input_im, extname='DQ')
-        data = correct_nircam_dq(data, dq_arr)
+        if not dq_arr.min() == 1 and not dq_arr.max() == 1:
+            data = correct_nircam_dq(data, dq_arr)
 
         # Rotate the NIRCAM image into FGS frame
         nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
