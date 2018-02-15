@@ -8,7 +8,7 @@ The FGS Commissioning Tools package provides convenient access to  numerous anci
 These tools comprise of four main components that can be run individually
 or together:
 
-### 1. NIRCam to FGS image conversion (``nircam_to_fgs``)
+### 1. NIRCam to FGS image conversion (``convert_image``)
 This tool can take in a simulated (or real) NIRCam image and will convert
 it to an FGS (guider 1 or guider 2) image. In addition to rotating the image,
 adjusting the pixel scale and image size, this tool corrects bad pixels and
@@ -50,11 +50,11 @@ To install:
 
 1) Clone the gitlab repository to your local machine
 
-	``git clone git@grit.stsci.edu:JWST-FGS/Commissioning-tools.git``
+	``git clone git@grit.stsci.edu:wfsc/tools.git``
 
 2) Install the jwst_fgs_commissioning_tools package:
 
-	``cd Commissioning_tools/``
+	``cd tools/fgs-commissioning``
 
 	``python setup.py install --user``
 
