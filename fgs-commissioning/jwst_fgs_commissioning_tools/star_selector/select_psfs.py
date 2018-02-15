@@ -34,6 +34,9 @@ rcParams['font.family'] = 'serif'
 rcParams['font.weight']='light'
 rcParams['mathtext.bf'] = 'serif:normal'
 
+SS_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(SS_PATH)[0]
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
 def count_psfs(smoothed_data, gauss_sigma, choose=False):
     """Use photutils.find_peaks to count how many PSFS are present in the data
@@ -362,8 +365,12 @@ def manual_star_selection(data, global_alignment):
     return cols, coords, nref, ALL_cols
 
 
-def create_reg_file(data, root, guider, out_dir, in_file=None,
+def create_reg_file(data, root, guider, in_file=None,
                     global_alignment=False, return_nref=True):
+
+    out_dir = os.path.join(OUT_PATH, 'out', root)
+    utils.ensure_dir_exists(out_dir)
+
     if in_file:
         # Determine the kind of in_file and parse out the PSF locations and
         # countrates accordingly

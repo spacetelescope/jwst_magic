@@ -341,7 +341,7 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
     # ---------------------------------------------------------------------
     # Create FGS image
     # Mask out bad pixels
-    data = bad_pixel_correction(data, BAD_PIXEL_THRESH)
+    # data = bad_pixel_correction(data, BAD_PIXEL_THRESH)
 
     if nircam:
         log.info("This is a NIRCam image")

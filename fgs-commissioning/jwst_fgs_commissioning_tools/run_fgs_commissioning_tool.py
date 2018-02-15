@@ -87,7 +87,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
 
         # create reg file
-        select_psfs.create_reg_file(fgs_im, root, guider, out_dir=out_dir,
+        select_psfs.create_reg_file(fgs_im, root, guider,
                                     return_nref=False,
                                     global_alignment=global_alignment,
                                     in_file=in_file)

@@ -98,6 +98,7 @@ def write_cols_to_file(output_path, filename, labels, cols):
     '''
     filename = os.path.join(output_path, filename)
     write_to_file(filename, cols, labels=labels)
+    print("Successfully wrote: {}".format(filename))
 
 
 def swap_if_little_endian(data):
