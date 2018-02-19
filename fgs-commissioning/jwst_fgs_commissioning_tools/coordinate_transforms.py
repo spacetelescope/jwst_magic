@@ -99,6 +99,37 @@ def Raw2DHAS(x_raw, y_raw, guider):
 
     return x_dhas, y_dhas
 
+def DHAS2Raw(x_dhas, y_dhas, guider):
+
+    if int(guider) == 1:
+        fgs_full = fgs_siaf['FGS1_FULL']
+    elif int(guider) == 2:
+        fgs_full = fgs_siaf['FGS2_FULL']
+
+    # If invalid guider number provided...
+    elif in_tool:
+        log.error('Unrecognized guider number: {}'.format(guider))
+    else:
+        raise ValueError('Unrecognized guider number: {}'.format(guider))
+
+
+    # DHAS to ideal
+    x_idealangle = -x_dhas
+    y_idealangle = y_dhas
+
+    # Ideal to detector
+    x_det, y_det = fgs_full.idl_to_det(x_idealangle, y_idealangle)
+
+    # Detector to raw
+    try:
+        x_raw = y_det.astype(int)
+        y_raw = x_det.astype(int)
+    except AttributeError:
+        x_raw = int(y_det)
+        y_raw = int(x_det)
+
+    return x_raw, y_raw
+
 def write_to_file(xangle, yangle):
     ''' Write ideal angles to file'''
     with open('ideal.tmp', 'w') as f:
