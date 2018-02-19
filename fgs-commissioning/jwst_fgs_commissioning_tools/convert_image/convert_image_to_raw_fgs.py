@@ -302,7 +302,7 @@ def normalize_data(data, fgs_counts, threshold=5):
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam_det=None,
-               output_path=None):
+               out_dir=None):
     '''
     Takes NIRCam image and turns it into an FGS-like image, gets count rate and location of
     each guide star in each image
@@ -344,11 +344,8 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
     root = basename.split('.')[0]
     log.info('Beginning to create FGS image from {}'.format(root))
 
-    if output_path is None:
-        output_path_save = os.path.join(OUT_PATH, 'out', root)
-        utils.ensure_dir_exists(output_path_save)
-    else:
-        output_path_save = output_path
+    output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
+    utils.ensure_dir_exists(output_path_save)
 
     data = fits.getdata(input_im, header=False)
     header = fits.getheader(input_im, ext=0)
@@ -377,13 +374,11 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
 
     else:
         log.info("This is an FGS image")
-        hdr_guider = int(header['DETECTOR'][-1]) # Override just in case the human gets it wrong
-        if hdr_guider != guider:
-            log.warning("The header indicates that this is a guider " +
-                        "{0} image. Processing as a guider {0} image.".format(hdr_guider))
+        guider = utils.get_guider(header)
         try:
             origin = header['ORIGIN'].strip()
             if origin == 'ITM':
+                log.info("Data provided in science/DMS frame; rotating to raw FGS frame.")
                 data = sci_to_fgs_raw(data, guider)
         except KeyError:
             pass
