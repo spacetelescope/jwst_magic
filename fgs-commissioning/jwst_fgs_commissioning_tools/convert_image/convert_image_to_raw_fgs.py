@@ -322,9 +322,6 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
         The NIRCAM module, otherwise the header will be parsed
     '''
 
-    # Load necessary files
-    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))  # Guider-dependent files
-
     # ---------------------------------------------------------------------
     # Find FGS counts to be used for normalization
     if fgs_counts is None:
@@ -386,11 +383,14 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
     # Normalize image
     data_norm = normalize_data(data, fgs_counts)
 
+    # Any value above 65535 or below 0 will wrap when converted to uint16
+    data_norm = utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
+
+    # Load header file
+    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
     fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
                                '{}_G{}.fits'.format(root, guider))
 
-    # Any value above 65535 will wrap when converted to uint16
-    utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
     hdr = fits.getheader(header_file, ext=0)
     utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
 
