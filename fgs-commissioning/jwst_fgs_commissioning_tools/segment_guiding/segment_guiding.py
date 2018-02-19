@@ -22,25 +22,24 @@ from astropy.io import ascii as asc
 from astropy.table import Table
 from functools import partial
 
-from jwst_fgs_commissioning_tools import coordinate_transforms
+from jwst_fgs_commissioning_tools import coordinate_transforms, utils
 
 # Establish segment guiding files directory
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]
-SGT_FILES_PATH = os.path.join(os.path.split(PACKAGE_PATH)[0], 'segment_guiding_files')
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
+# SGT_FILES_PATH = os.path.join(os.path.split(PACKAGE_PATH)[0], 'segment_guiding_files')
 
 # Open the SIAF with pysiaf
 FGS_SIAF = pysiaf.Siaf('FGS')
 
 class SegmentGuidingCalculator:
     def __init__(self, segment_infile, root=None, GUI=False, GS_params_dict=None,
-                 selected_segs=None, vss_infile=None):
+                 selected_segs=None, vss_infile=None, out_dir=None):
 
-        # If no root provided, name the output the same as the input
-        if not root:
-            self.root = os.path.basename(segment_infile).split('.')[0]
-        else:
-            self.root = root
+        self.root = utils.make_root(root, segment_infile)
+        self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, self.root)
+        utils.ensure_dir_exists(self.out_dir)
 
         # Will the tool be run through the GUI?
         self.GUI = GUI
@@ -192,7 +191,7 @@ class SegmentGuidingCalculator:
 
         # Define path and name of output visit file
         out_file = self.root + '_gs-override-{}_{}_{}.txt'.format(APT_num, visit_num, tile_num)
-        out_file = os.path.join(SGT_FILES_PATH, out_file)
+        out_file = os.path.join(self.out_dir, out_file)
 
         # Print summary of input data (guide star RA, Dec, and PA, etc...)
         if verbose:
@@ -416,7 +415,7 @@ class SegmentGuidingCalculator:
         plt.ylabel('Delta V3 -->')
         for s in range(len(self.V2SegArray)):
             plt.text(self.V2SegArray[s], self.V3SegArray[s], self.SegIDArray[s])
-        plt.savefig(os.path.join(SGT_FILES_PATH, self.root + '_V2V3segments.png'))
+        plt.savefig(os.path.join(self.out_dir, self.root + '_V2V3segments.png'))
 
         # Plot calculate segments' RA and Dec
         plt.figure(2)
@@ -437,7 +436,7 @@ class SegmentGuidingCalculator:
             plt.text(self.SegRA[i], self.SegDec[i], str(i + 1))
         plt.gca().invert_xaxis()
         plt.gca().ticklabel_format(useOffset=False)
-        plt.savefig(os.path.join(SGT_FILES_PATH, self.root + '_RADecsegments.png'))
+        plt.savefig(os.path.join(self.out_dir, self.root + '_RADecsegments.png'))
 
     def check_guidestar_params(self):
         """

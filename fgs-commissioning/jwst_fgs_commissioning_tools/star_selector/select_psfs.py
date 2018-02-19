@@ -366,9 +366,10 @@ def manual_star_selection(data, global_alignment):
 
 
 def create_reg_file(data, root, guider, in_file=None,
-                    global_alignment=False, return_nref=True):
+                    global_alignment=False, return_nref=False, testing=False,
+                    out_dir=None):
 
-    out_dir = os.path.join(OUT_PATH, 'out', root)
+    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir)
 
     if in_file:

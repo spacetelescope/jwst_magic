@@ -24,11 +24,12 @@ TASKNAME = 'run_all'
 
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
-            in_file=None, bkgd_stars=False):
+            in_file=None, bkgd_stars=False, out_dir=None):
 
-    if root is None:
-        root = os.path.basename(image).split('.')[0]
+    # Determine filename root
+    root = utils.make_root(root, image)
 
+    # Set up logging
     taskname = '_'.join([TASKNAME, root])
     log_path = os.path.join(OUT_PATH, 'logs')
     logname = utils.get_logname(log_path, taskname)
@@ -36,7 +37,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     @log.logtofile(logname)
     def run_all_with_logging(image, guider, root=None, fgs_counts=None, jmag=None,
                              nircam_det=None, nircam=True, global_alignment=False,
-                             steps=None, in_file=None, bkgd_stars=False):
+                             steps=None, in_file=None, bkgd_stars=False,
+                             out_dir=None):
         """
         This function will take any FGS or NIRCam image and create the outputs needed
         to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -68,18 +70,19 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             If this image comes with an incat or reg file, the file path
         """
 
-        # print('log: ', pprint.pprint(dir(log)))
-        out_dir = os.path.join(OUT_PATH, 'out', root)
+        # Determine output directory
+        out_dir_root = utils.make_out_dir(out_dir, OUT_PATH, root)
 
-        log.info("Processing request for {}. \nAll data will be saved in: {}".format(root, out_dir))
+        log.info("Processing request for {}. \nAll data will be saved in: {}".format(root, out_dir_root))
         log.info("Input image: {}".format(os.path.abspath(image)))
-        utils.ensure_dir_exists(out_dir)
+        utils.ensure_dir_exists(out_dir_root)
 
         # Either convert provided NIRCam image to an FGS image...
         fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, nircam=nircam,
                                                      fgs_counts=fgs_counts,
                                                      jmag=jmag,
-                                                     nircam_det=nircam_det)
+                                                     nircam_det=nircam_det,
+                                                     out_dir=out_dir)
         if steps is None:
             steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
 
@@ -90,13 +93,14 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         select_psfs.create_reg_file(fgs_im, root, guider,
                                     return_nref=False,
                                     global_alignment=global_alignment,
-                                    in_file=in_file)
+                                    in_file=in_file, out_dir=out_dir)
 
         # create all files for FSW/DHAS/FGSES/etc.
         for step in steps:
-            buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step)
+            buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step, out_dir=out_dir)
 
     run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
                          jmag=jmag, nircam_det=nircam_det, nircam=nircam,
                          global_alignment=global_alignment,
-                         steps=steps, in_file=in_file, bkgd_stars=bkgd_stars)
+                         steps=steps, in_file=in_file, bkgd_stars=bkgd_stars,
+                         out_dir=out_dir)

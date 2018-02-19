@@ -234,3 +234,37 @@ def countrate_3x3(x, y, data):
     counts = np.sum(data[y - 1:y + 2, x - 1:x + 2])
     return counts
 
+def get_guider(header, guider=None, log=None):
+    '''Read the guider information from the FITS header'''
+    hdr_guider = int(header['DETECTOR'][-1])
+
+    # Can compare with human-commanded guider number
+    if guider:
+        # Override just in case the human gets it wrong
+        if hdr_guider != guider:
+            try:
+                log.warning("The header indicates that this is a guider " +
+                            "{0} image. Processing as a guider {0} image.".format(hdr_guider))
+            except:
+                print("The header indicates that this is a guider " +
+                      "{0} image. Processing as a guider {0} image.".format(hdr_guider))
+    return hdr_guider
+
+def make_root(root, filename):
+    '''If no root has been provided, extract from base filename'''
+    if root is None:
+        if filename[-11:] == 'ALLpsfs.txt':
+            root = os.path.basename(filename).split('.')[0][:-11]
+        else:
+            root = os.path.basename(filename).split('.')[0]
+
+    return root
+
+def make_out_dir(out_dir, default_out_path, root):
+    # Determine output directory
+    if out_dir is None:
+        out_dir = os.path.join(default_out_path, 'out', root)
+    else:
+        out_dir = os.path.join(out_dir, 'out', root)
+
+    return out_dir
