@@ -115,7 +115,7 @@ def write_all(obj):
                                     'newG{}magicHdrImg.fits'.format(obj.guider))
         hdr0 = fits.getheader(filename_hdr, ext=0)
         utils.write_fits(filename_id_strips, obj.strips, header=hdr0)
-        mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
+        mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr - obj.yoffset, obj.countrate,
                       step='ID', out_dir=obj.out_dir)
 
         ## Ground system file

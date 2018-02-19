@@ -40,12 +40,16 @@ class BuildFGSSteps(object):
         ## READ IN IMAGE
         if isinstance(im, str):
             data = fits.getdata(im) #*_bin_norm from FGS_bin_tool
-            self.input_im = np.uint16(data)
+            self.input_im = data
         else:
-            self.input_im = np.uint16(im)
+            self.input_im = im
 
         # Correct for negative, saturated pixels and other nonsense
         self.input_im = utils.correct_image(self.input_im)
+
+        # THEN convert to uint16
+        self.input_im = np.uint16(self.input_im)
+
         log.info('Max of input image: {}'.format(np.max(self.input_im)))
 
         self.get_coords_and_counts(reg_file=reg_file)
