@@ -23,7 +23,8 @@ class BuildFGSSteps(object):
     Creates an FGS simulation object for ID, ACQ, and/or TRK stages to be used
     with DHAS.
     '''
-    def __init__(self, im, guider, root, step, reg_file=None, configfile=None):
+    def __init__(self, im, guider, root, step, reg_file=None, configfile=None,
+                 out_dir=None):
         # Practical things
         self.guider = guider
         self.root = root
@@ -31,7 +32,7 @@ class BuildFGSSteps(object):
         self.yoffset = 12
 
         ## DEFINE ALL THINGS PATHS
-        self.out_dir = os.path.join(OUT_PATH, 'out', root)
+        self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
@@ -61,9 +62,9 @@ class BuildFGSSteps(object):
         Get coordinate information of guide star and reference stars
         '''
         if reg_file is None:
-            reg_file = os.path.join(os.path.join(OUT_PATH, 'out', self.root,
-                                                 '{0}_G{1}_regfile.txt'.format(self.root,
-                                                                               self.guider)))
+            reg_file = os.path.join(self.out_dir,
+                                    '{0}_G{1}_regfile.txt'.format(self.root,
+                                                                  self.guider))
         log.info("Using {} as the reg file".format(reg_file))
         if reg_file.endswith('reg'):
             self.xarr, self.yarr = np.loadtxt(reg_file)
