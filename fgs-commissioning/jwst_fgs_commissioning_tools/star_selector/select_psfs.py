@@ -5,6 +5,7 @@ import sys
 from inspect import currentframe, getframeinfo
 import warnings
 import string
+import random
 
 # Third Party
 import matplotlib
@@ -315,7 +316,7 @@ def parse_in_file(in_file):
 
     return out_cols, coords, nref
 
-def manual_star_selection(data, global_alignment):
+def manual_star_selection(data, global_alignment, testing=False):
     '''Algorithmically find and locate all PSFs in image using
     photutils.find_peaks; prompt user to select guide and reference stars
     using GUI.'''
@@ -349,10 +350,18 @@ def manual_star_selection(data, global_alignment):
     counts, val = count_rate_total(data, objects, num_psfs, x, y, counts_3x3=True)
 
     # Call the GUI to pick PSF indices
-    gui_data = data.copy()
-    gui_data[data == 0] = 0.1  # Alter null pixel values for LogNorm imshow
-    inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
-                                          print_output=False)
+    if not testing:
+        gui_data = data.copy()
+        gui_data[data == 0] = 0.1  # Alter null pixel values for LogNorm imshow
+        inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
+                                              print_output=False)
+    # If in testing mode, just make a random list of indices
+    else:
+        # Make random list of inds
+        n_select = min(11, num_psfs)
+        log.info('Testing mode; selecting {} PSFs at random.'.format(n_select))
+        inds = random.sample(range(num_psfs), n_select)
+
     nref = len(inds) - 1
     log.info('1 guide star and {} reference stars selected'.format(nref))
 
@@ -384,7 +393,7 @@ def create_reg_file(data, root, guider, in_file=None,
     else:
         # If no .incat or reg file provided, create reg file with manual
         # star selection using the SelectStarsGUI
-        cols, coords, nref, ALL_cols = manual_star_selection(data, global_alignment)
+        cols, coords, nref, ALL_cols = manual_star_selection(data, global_alignment, testing)
 
     # Save PNG of image and all PSF locations in out_dir
     plot_centroids(data, coords, root, guider, out_dir)
