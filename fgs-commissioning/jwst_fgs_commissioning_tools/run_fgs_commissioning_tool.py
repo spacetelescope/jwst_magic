@@ -71,6 +71,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         # print('log: ', pprint.pprint(dir(log)))
         out_dir = os.path.join(OUT_PATH, 'out', root)
 
+        log.info("Package directory: {}".format(PACKAGE_PATH))
         log.info("Processing request for {}. \nAll data will be saved in: {}".format(root, out_dir))
         log.info("Input image: {}".format(os.path.abspath(image)))
         utils.ensure_dir_exists(out_dir)
@@ -80,6 +81,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                                      fgs_counts=fgs_counts,
                                                      jmag=jmag,
                                                      nircam_det=nircam_det)
+        log.info("*** Image Conversion COMPLETE ***")
+
         if steps is None:
             steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
 
@@ -91,10 +94,12 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                     return_nref=False,
                                     global_alignment=global_alignment,
                                     in_file=in_file)
+        log.info("*** Star Selection: COMPLETE ***")
 
         # create all files for FSW/DHAS/FGSES/etc.
         for step in steps:
             buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step)
+        log.info("*** FSW File Writing: COMPLETE ***")
 
     run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
                          jmag=jmag, nircam_det=nircam_det, nircam=nircam,
