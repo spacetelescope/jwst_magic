@@ -214,6 +214,8 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
     else:
         detector = header['DETECTOR'][3:].strip()
 
+    log.info("Image Conversion: NIRCAM Detector = {}".format(detector))
+
     # Determine whether the NIRCam image is short- or long-wave to determine
     # the pixel scale
     if '5' in detector:
@@ -329,20 +331,21 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
     # Find FGS counts to be used for normalization
     if fgs_counts is None:
         if jmag is None:
-            log.warning('No counts or J magnitude given, setting to default')
+            log.warning("Image Conversion: No counts or J magnitude given, setting to default")
             jmag = 11
         fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
     else:
         jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
 
-    log.info('J magnitude = {:.1f}'.format(jmag))
+    log.info("Image Conversion: J magnitude = {:.1f}".format(jmag))
 
     # ---------------------------------------------------------------------
     # For the images requested, convert to FGS images
     basename = os.path.basename(input_im)
 
     root = basename.split('.')[0]
-    log.info('Beginning to create FGS image from {}'.format(root))
+    log.info("Image Conversion: " +
+             "Beginning image conversion to guider {} FGS image".format(guider))
 
     if output_path is None:
         output_path_save = os.path.join(OUT_PATH, 'out', root)
@@ -358,12 +361,9 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
         raise TypeError('Expecting a single frame or slope image.')
 
     # ---------------------------------------------------------------------
-    # Create FGS image
-    # Mask out bad pixels
-    # data = bad_pixel_correction(data, BAD_PIXEL_THRESH)
-
+    # Create raw FGS image
     if nircam:
-        log.info("This is a NIRCam image")
+        log.info("Image Conversion: This is a NIRCam image")
 
         # Pull out DQ array for this image
         dq_arr = fits.getdata(input_im, extname='DQ')
@@ -376,11 +376,11 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
         data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
     else:
-        log.info("This is an FGS image")
+        log.info("Image Conversion: This is an FGS image")
         hdr_guider = int(header['DETECTOR'][-1]) # Override just in case the human gets it wrong
         if hdr_guider != guider:
-            log.warning("The header indicates that this is a guider " +
-                        "{0} image. Processing as a guider {0} image.".format(hdr_guider))
+            log.warning("Image Conversion: The header indicates that this is a " +
+                        "guider {0} image. Processing as a guider {0} image.".format(hdr_guider))
         try:
             origin = header['ORIGIN'].strip()
             if origin == 'ITM':
@@ -399,6 +399,6 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
     hdr = fits.getheader(header_file, ext=0)
     utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
 
-    print("Finished for {}, Guider = {}".format(root, guider))
+    log.info("Image Conversion complete for {}, guider = {}".format(root, guider))
 
     return data_norm
