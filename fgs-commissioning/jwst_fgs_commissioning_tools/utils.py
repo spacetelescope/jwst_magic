@@ -238,16 +238,39 @@ def get_guider(header, guider=None, log=None):
     '''Read the guider information from the FITS header'''
     hdr_guider = int(header['DETECTOR'][-1])
 
+    # Handle NIRCam images being passed if the guider hasn't been commanded
+    if not guider and not header['DETECTOR'].startswith('GUIDER'):
+        try:
+            log.warning("The header indicates that this is a NIRCam image; the " +
+                        "guider number cannot be parsed from the header. Setting " +
+                        " to default value of guider = 1.")
+        except AttributeError:
+            print("The header indicates that this is a NIRCam image; the " +
+                  "guider number cannot be parsed from the header. Setting " +
+                   " to default value of guider = 1.")
+        hdr_guider = 1
+
     # Can compare with human-commanded guider number
     if guider:
-        # Override just in case the human gets it wrong
-        if hdr_guider != guider:
+        # Override just in case the human gets it wrong for an FGS image
+        if hdr_guider != guider and header['DETECTOR'].startswith('GUIDER'):
             try:
                 log.warning("The header indicates that this is a guider " +
                             "{0} image. Processing as a guider {0} image.".format(hdr_guider))
             except:
                 print("The header indicates that this is a guider " +
                       "{0} image. Processing as a guider {0} image.".format(hdr_guider))
+        # Otherwise, if it is a NIRCam image, just take what the user commands
+        else:
+            hdr_guider = guider
+
+    # Make sure it's a real guider!
+    if hdr_guider not in [1, 2]:
+        try:
+            log.warning("Invalid guider number provided/found: {}".format(hdr_guider))
+        except AttributeError:
+            print("Invalid guider number provided/found: {}".format(hdr_guider))
+
     return hdr_guider
 
 def make_root(root, filename):

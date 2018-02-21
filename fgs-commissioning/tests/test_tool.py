@@ -1,3 +1,5 @@
+'''Collection of unit tests to verify the correct function of the FGS
+Commissioning Tools'''
 import glob
 import os
 
@@ -12,12 +14,13 @@ from jwst_fgs_commissioning_tools.fsw_file_writer import buildfgssteps
 
 FGS_DATA = glob.glob('fgs_data*.fits')
 NIRCAM_DATA = glob.glob('nircam_data*.fits')
+TEST_DATA = glob.glob('*data*.fits')
 
 OUT_PATH = os.path.join(os.getcwd())
 
 class RunningTheTool():
     def __init__(self, input_im):
-        print(input_im)
+        print('\n', input_im)
 
         # Get parameters to run through functions
         if 'ga' in input_im.lower():
@@ -27,24 +30,33 @@ class RunningTheTool():
 
         self.root = utils.make_root(None, input_im)
 
-        data = fits.getdata(input_im, header=False)
         header = fits.getheader(input_im, ext=0)
         self.guider = utils.get_guider(header)
 
         print('* * * GENERATING DATA * * *')
+        # If provided a NIRCam image, convert it to FGS
+        if 'nircam' in input_im:
+            nircam = True
+        else:
+            nircam = False
+
+        data = convert_image_to_raw_fgs.convert_im(input_im, self.guider,
+                                                   nircam=nircam, out_dir=OUT_PATH)
+
         # Find peaks in data and create a reg file with randomly selected PSFs
         select_psfs.create_reg_file(data, self.root, self.guider,
                                     global_alignment=self.global_alignment,
                                     testing=True, out_dir=OUT_PATH)
 
-        # Write a prc and strips.fits accordingly
-        buildfgssteps.BuildFGSSteps(data, self.guider, self.root, 'ID',
-                                    out_dir=OUT_PATH)
-
+        # Write all steps accordingly
+        steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
+        for step in steps:
+            buildfgssteps.BuildFGSSteps(data, self.guider, self.root, step,
+                                        out_dir=OUT_PATH)
 
     def prc_coordinates_matches_peak_locations(self):
         """
-        Create a strips image and an ID prc file from one data set. Test to ensure
+        Compares the strips image and the ID prc file from one data set. Test to ensure
         that the location of the peaks in the strips image match the commanded
         locations in the prc.
         """
@@ -87,10 +99,11 @@ class RunningTheTool():
                     y_dhas = float(line.split(',')[3])
                     x_raw, y_raw = coordinate_transforms.DHAS2Raw(x_dhas, y_dhas,
                                                                   self.guider)
-                    prc_coords.append((x_raw, y_raw))
+                    # Incorporate the 12-pixel offset of the strips (DHAS default param)
+                    prc_coords.append((x_raw, y_raw - 12))
 
-        print(strips_coords)
-        print(prc_coords)
+        print('Coordinates from strips.fits: ', strips_coords)
+        print('Coordinates from ID.prc: ', prc_coords)
 
         # Make sure that each commanded prc coordinate is within ~5 pixels
         # of a peak from the strips image
@@ -104,15 +117,16 @@ class RunningTheTool():
                         break
             assert found, 'Commanded coordinate in ID.prc, ({}, {}), does not fall within {} pixels of a PSF in the strips image.'.format(x_prc, y_prc, test_radius)
 
-
     def images_dont_have_unit_problems(self):
         '''For now, just test of the mean of a CDS image is above 1000 counts.
+        (cases with unsigned int problems have many pixels > 1e5.)
         In the future this should probably be more sophisticated.'''
 
         assert np.mean(self.strips_data_cds.flatten()) < 1e3, 'The average value of pixels is sufficiently high to suggest that there is a unsigned integer problem happening (negative values becoming arbitrarily high values).'
 
 def test_tool():
-    for input_im in FGS_DATA:
+    '''Run the whole tool for each test .fits in the tests/ directory'''
+    for input_im in TEST_DATA:
         print(input_im)
         run = RunningTheTool(input_im)
         run.prc_coordinates_matches_peak_locations()
