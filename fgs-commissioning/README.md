@@ -50,13 +50,13 @@ To install:
 
 1) Clone the gitlab repository to your local machine
 
-	``git clone git@grit.stsci.edu:wfsc/tools.git``
+	`git clone git@grit.stsci.edu:wfsc/tools.git`
 
 2) Install the jwst_fgs_commissioning_tools package:
 
-	``cd tools/fgs-commissioning``
+	`cd tools/fgs-commissioning`
 
-	``python setup.py install --user``
+	`pip install -e .`
 
 
 

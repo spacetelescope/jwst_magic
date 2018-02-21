@@ -57,7 +57,7 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
         coords = sources['x_peak', 'y_peak']
         coords = [(x, y) for [x, y] in coords]
 
-        log.info('{} PSFs detected in Gaussian-smoothed data \
+        log.info('Star Selection: {} PSFs detected in Gaussian-smoothed data \
             (threshold = {}; sigma = {})'.format(num_psfs, threshold, gauss_sigma))
 
     return num_psfs, coords, threshold
@@ -112,7 +112,7 @@ def choose_threshold(smoothed_data, gauss_sigma):
         coords = [(x, y) for [x, y] in sources_mean['x_peak', 'y_peak']]
         return num_psfs, coords, thresholds[1]
     else:
-        log.error('User rejection of identified PSFs.')
+        log.error('Star Selection: User rejection of identified PSFs.')
         raise StandardError('User rejection of identified PSFs.')
 
 def plot_centroids(data, coords, root, guider, out_dir):
@@ -289,7 +289,7 @@ def parse_in_file(in_file):
         return
 
     # Passed all the checkpoints! Move on to process the file.
-    log.info('Selecting stars from input file {}'.format(in_file))
+    log.info('Star Selection: Selecting stars from input file {}'.format(in_file))
 
     # Rename relevant old columns, if necessary:
     for col in colnames:
@@ -354,7 +354,7 @@ def manual_star_selection(data, global_alignment):
     inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
                                           print_output=False)
     nref = len(inds) - 1
-    log.info('1 guide star and {} reference stars selected'.format(nref))
+    log.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
 
     segment_labels = match_psfs_to_segments(x, y)
     ALL_cols = create_cols_for_coords_counts(x, y, counts, val,
