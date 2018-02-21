@@ -1,11 +1,11 @@
-#STDLIB
+# STDLIB
 import os
 
-#THIRD PARTY
+# THIRD PARTY
 from astropy.io import fits
 import numpy as np
 
-#LOCAL
+# LOCAL
 from jwst_fgs_commissioning_tools import log, utils, coordinate_transforms
 from jwst_fgs_commissioning_tools.fsw_file_writer import mkproc
 
@@ -42,7 +42,7 @@ def write_all(obj):
     <name>_G<guider><step>.fits :   fits cube of the sky with added bias and noise
                                         to simulate the read and ramp cycle for ID
     '''
-    ## STScI only files - mostly just for quick checks of the data
+    # STScI only files - mostly just for quick checks of the data
     log.info('Baseline {}'.format(np.max(obj.time_normed_im)))
 
     # Sky imge
@@ -86,7 +86,7 @@ def write_all(obj):
         utils.write_fits(filename_cds, obj.cds)
 
     if obj.step == 'ID':
-        ## STScI only files - mostly just for quick checks of the data
+        # STScI only files - mostly just for quick checks of the data
         # Star catalog in real pixs
         filename_starcat = os.path.join(obj.out_dir,
                                         'stsci',
@@ -103,7 +103,7 @@ def write_all(obj):
                                                              obj.step))
         utils.write_fits(filename_ff, np.uint16(obj.image))
 
-        ## DHAS file
+        # DHAS file
         # Extract strips from ff img
         filename_id_strips = os.path.join(obj.out_dir,
                                           'dhas',
@@ -115,15 +115,17 @@ def write_all(obj):
                                     'newG{}magicHdrImg.fits'.format(obj.guider))
         hdr0 = fits.getheader(filename_hdr, ext=0)
         utils.write_fits(filename_id_strips, obj.strips, header=hdr0)
-        mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr - obj.yoffset, obj.countrate,
+        # Don't need to include the yoffset in the .prc IF the strips offset
+        # parameter in DHAS is set to 12
+        mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
                       step='ID', out_dir=obj.out_dir)
 
-        ## Ground system file
+        # Ground system file
         convert_fits_to_dat(filename_id_strips, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))
 
     elif obj.step == 'ACQ1' or obj.step == 'ACQ2':
-        ## STScI only files - mostly just for quick checks of the data
+        # STScI only files - mostly just for quick checks of the data
         # star catalog in real pixs
         filename_starcat = os.path.join(obj.out_dir,
                                         'stsci',
@@ -132,7 +134,7 @@ def write_all(obj):
                                                                obj.step))
         write_cat(filename_starcat, obj.xarr, obj.yarr)
 
-        ## DHAS file
+        # DHAS file
         # Noisy sky acquisition fits images
         filename_noisy_sky = os.path.join(obj.out_dir,
                                           'dhas',
@@ -148,12 +150,12 @@ def write_all(obj):
                           acq1_imgsize=obj.acq1_imgsize,
                           acq2_imgsize=obj.acq2_imgsize)
 
-        ## Ground system file
+        # Ground system file
         convert_fits_to_dat(filename_noisy_sky, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))
 
     else:
-        ## DHAS file
+        # DHAS file
         # Noisy sky acquisition fits images
         filename_image = os.path.join(obj.out_dir,
                                       'dhas',
@@ -162,11 +164,11 @@ def write_all(obj):
                                                               obj.step))
 
         utils.write_fits(filename_image, np.uint16(obj.image))
-        ## Gound system file
+        # Ground system file
         convert_fits_to_dat(filename_image, obj.step,
                             os.path.join(obj.out_dir, 'ground_system'))
 
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
     '''
     Convert a .fits file to a .dat file for use on the ground system
@@ -218,7 +220,7 @@ def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
     print("Successfully wrote: {}".format(os.path.join(out_dir, outfile)))
     return
 
-### Write out files
+# Write out files
 def write_stc(filename, xarr, yarr, countrate, guider):
     """
     Write out stc files using offset, rotated catalog

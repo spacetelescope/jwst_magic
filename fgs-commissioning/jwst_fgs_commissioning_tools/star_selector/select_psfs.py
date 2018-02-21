@@ -363,7 +363,10 @@ def manual_star_selection(data, global_alignment, testing=False):
         inds = random.sample(range(num_psfs), n_select)
 
     nref = len(inds) - 1
-    log.info('1 guide star and {} reference stars selected'.format(nref))
+    if len(inds) == 0:
+        log.info('No guide star and no reference stars selected')
+    else:
+        log.info('1 guide star and {} reference stars selected'.format(nref))
 
     segment_labels = match_psfs_to_segments(x, y)
     ALL_cols = create_cols_for_coords_counts(x, y, counts, val,
