@@ -49,6 +49,7 @@ fgs-commissioning/notebooks/*
 fgs-commissioning/!notebooks/FGS Commissioning Tool Tutorial.ipynb
 fgs-commissioning/!notebooks/Convert FGS coordinate frames.ipynb
 fgs-commissioning/!notebooks/Convert from NIRCam to FGS coordinate frames.ipynb
+fgs-commissioning/!notebooks/WFR Testing Notebook.ipynb
 fgs-commissioning/!notebooks/*.png
 fgs-commissioning/tests/out/*
 fgs-commissioning/out/*
@@ -57,4 +58,3 @@ fgs-commissioning/.cache/*
 fgs-commissioning/logs/*
 fgs-commissioning/comm_tool_obsolete/*
 fgs-commissioning/segment_guiding_files/*
-
