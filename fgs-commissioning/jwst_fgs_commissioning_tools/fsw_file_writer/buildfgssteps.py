@@ -50,7 +50,7 @@ class BuildFGSSteps(object):
         # THEN convert to uint16
         self.input_im = np.uint16(self.input_im)
 
-        log.info('Max of input image: {}'.format(np.max(self.input_im)))
+        log.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
 
         self.get_coords_and_counts(reg_file=reg_file)
 
@@ -69,7 +69,8 @@ class BuildFGSSteps(object):
             reg_file = os.path.join(self.out_dir,
                                     '{0}_G{1}_regfile.txt'.format(self.root,
                                                                   self.guider))
-        log.info("Using {} as the reg file".format(reg_file))
+        log.info("FSW File Writing: Using {} as the reg file".format(reg_file))
+
         if reg_file.endswith('reg'):
             self.xarr, self.yarr = np.loadtxt(reg_file)
             self.countrate = []
