@@ -79,7 +79,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         utils.ensure_dir_exists(out_dir_root)
 
         # Either convert provided NIRCam image to an FGS image...
-        fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, nircam=nircam,
+        fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
+                                                     nircam=nircam,
                                                      fgs_counts=fgs_counts,
                                                      jmag=jmag,
                                                      nircam_det=nircam_det,

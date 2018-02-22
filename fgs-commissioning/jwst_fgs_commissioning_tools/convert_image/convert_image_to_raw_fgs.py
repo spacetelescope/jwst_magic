@@ -303,8 +303,8 @@ def normalize_data(data, fgs_counts, threshold=5):
 
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
-def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam_det=None,
-               out_dir=None):
+def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
+               nircam_det=None, out_dir=None):
     '''
     Takes NIRCam image and turns it into an FGS-like image, gets count rate and location of
     each guide star in each image
@@ -340,7 +340,6 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
     # Determine output path and open file
     basename = os.path.basename(input_im)
 
-    root = basename.split('.')[0]
     log.info("Image Conversion: " +
              "Beginning image conversion to guider {} FGS image".format(guider))
 
