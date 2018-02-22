@@ -334,10 +334,10 @@ def convert_im(input_im, guider, nircam=True, fgs_counts=None, jmag=None, nircam
     else:
         jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
 
-    log.info("Image Conversion: J magnitude = {:.1f}".format(jmag))
+    log.info("Image Conversion: J magnitude = {:.1f}, FGS counts = {:.1f}".format(jmag, fgs_counts))
 
     # ---------------------------------------------------------------------
-    # For the images requested, convert to FGS images
+    # Determine output path and open file
     basename = os.path.basename(input_im)
 
     root = basename.split('.')[0]

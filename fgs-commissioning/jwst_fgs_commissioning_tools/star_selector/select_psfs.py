@@ -191,8 +191,6 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
 
 def match_psfs_to_segments(x, y):
     labels = string.ascii_uppercase[:18]
-    x_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
-    y_list = [9, 8, 8, 7, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 1]
 
     # Determine boundaries of array
     x_min = min(x)
@@ -200,8 +198,20 @@ def match_psfs_to_segments(x, y):
     y_min = min(y)
     y_max = max(y)
 
-    x_coords = np.linspace(x_min, x_max, 5)
-    y_coords = np.linspace(y_min, y_max, 9)[::-1]
+    if (x_max - x_min) > (y_max - y_min):
+        # Horizontal orientation
+        x_list = [1, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 9]
+        y_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
+
+        x_coords = np.linspace(x_min, x_max, 9)
+        y_coords = np.linspace(y_min, y_max, 5)
+    else:
+        # Vertical orientation
+        x_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
+        y_list = [9, 8, 8, 7, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 1]
+
+        x_coords = np.linspace(x_min, x_max, 5)
+        y_coords = np.linspace(y_min, y_max, 9)[::-1]
 
     seg_coords = np.array([[x_coords[i_x - 1],
                             y_coords[i_y - 1]] for i_x, i_y in zip(x_list, y_list)])
@@ -218,6 +228,9 @@ def match_psfs_to_segments(x, y):
                 seg_distance = distance
                 i_seg = i_sc
         matched_labels.append(labels[i_seg])
+
+    if len(set(matched_labels)) != len(matched_labels):
+        raise ValueError('Could not accurately map labels to segments.')
 
     return matched_labels
 
@@ -325,6 +338,8 @@ def manual_star_selection(data, global_alignment, testing=False):
     else:
         gauss_sigma = 5
 
+    data = data.astype(float)
+
     smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
 
     # Use photutils.find_peaks to locate all PSFs in image
@@ -359,12 +374,12 @@ def manual_star_selection(data, global_alignment, testing=False):
     else:
         # Make random list of inds
         n_select = min(11, num_psfs)
-        log.info('Testing mode; selecting {} PSFs at random.'.format(n_select))
+        log.info('Star Selection: Testing mode; selecting {} PSFs at random.'.format(n_select))
         inds = random.sample(range(num_psfs), n_select)
 
     nref = len(inds) - 1
     if len(inds) == 0:
-        log.info('Star Selection: No guide star and no reference stars selected')
+        raise ValueError('Star Selection: No guide star and no reference stars selected')
     else:
         log.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
 
