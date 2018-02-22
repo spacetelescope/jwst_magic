@@ -255,11 +255,11 @@ def get_guider(header, guider=None, log=None):
         # Override just in case the human gets it wrong for an FGS image
         if hdr_guider != guider and header['DETECTOR'].startswith('GUIDER'):
             try:
-                log.warning("The header indicates that this is a guider " +
-                            "{0} image. Processing as a guider {0} image.".format(hdr_guider))
+                log.warning("Image Conversion: The header indicates that this is a " +
+                            "guider {0} image. Processing as a guider {0} image.".format(hdr_guider))
             except:
-                print("The header indicates that this is a guider " +
-                      "{0} image. Processing as a guider {0} image.".format(hdr_guider))
+                print("Image Conversion: The header indicates that this is a " +
+                      "guider {0} image. Processing as a guider {0} image.".format(hdr_guider))
         # Otherwise, if it is a NIRCam image, just take what the user commands
         else:
             hdr_guider = guider

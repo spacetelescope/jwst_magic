@@ -42,10 +42,9 @@ def write_all(obj):
     <name>_G<guider><step>.fits :   fits cube of the sky with added bias and noise
                                         to simulate the read and ramp cycle for ID
     '''
-    # STScI only files - mostly just for quick checks of the data
-    log.info('Baseline {}'.format(np.max(obj.time_normed_im)))
 
-    # Sky imge
+    # STScI only files - mostly just for quick checks of the data
+    # Sky image
     filename_sky = os.path.join(obj.out_dir,
                                 'stsci',
                                 '{}_G{}_{}sky.fits'.format(obj.root,
@@ -211,7 +210,7 @@ def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
         fmt = '{:04X} '
 
     else:
-        log.error("Observation mode not recognized. Returning.")
+        log.error("FSW File Writing: Observation mode not recognized. Returning.")
 
     with open(os.path.join(out_dir, outfile), 'w') as file_out:
         for dat in flat.astype(np.uint16):
