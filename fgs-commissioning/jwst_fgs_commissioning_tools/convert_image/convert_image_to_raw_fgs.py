@@ -375,7 +375,7 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
         try:
             origin = header['ORIGIN'].strip()
             if origin == 'ITM':
-                log.info("Data provided in science/DMS frame; rotating to raw FGS frame.")
+                log.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
                 data = sci_to_fgs_raw(data, guider)
         except KeyError:
             pass

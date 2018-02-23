@@ -6,6 +6,7 @@ import shutil
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
+print('Using backend: ', matplotlib.get_backend())
 import numpy as np
 from astropy.io import fits
 
