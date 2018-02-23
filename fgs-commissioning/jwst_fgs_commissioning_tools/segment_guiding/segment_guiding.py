@@ -718,7 +718,7 @@ class SegmentGuidingGUI(SegmentGuidingCalculator):
 
 
 def run_tool(segment_infile, root=None, GUI=False, GS_params_dict=None,
-             selected_segs=None, vss_infile=None):
+             selected_segs=None, vss_infile=None, out_dir=None):
 
     # if not GS_params_dict and not GUI:
     #     GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
@@ -732,7 +732,8 @@ def run_tool(segment_infile, root=None, GUI=False, GS_params_dict=None,
     # Set up guiding calculator object
     sg = SegmentGuidingCalculator(segment_infile, root=root, GUI=GUI,
                                   GS_params_dict=GS_params_dict,
-                                  selected_segs=selected_segs, vss_infile=vss_infile)
+                                  selected_segs=selected_segs,
+                                  vss_infile=vss_infile, out_dir=out_dir)
 
     # Either run the GUI or run the calculation
     if GUI:
