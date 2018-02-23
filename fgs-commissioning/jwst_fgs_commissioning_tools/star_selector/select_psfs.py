@@ -189,7 +189,7 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
 
     return cols
 
-def match_psfs_to_segments(x, y):
+def match_psfs_to_segments(x, y, global_alignment):
     labels = string.ascii_uppercase[:18]
 
     # Determine boundaries of array
@@ -229,7 +229,7 @@ def match_psfs_to_segments(x, y):
                 i_seg = i_sc
         matched_labels.append(labels[i_seg])
 
-    if len(set(matched_labels)) != len(matched_labels):
+    if len(set(matched_labels)) != len(matched_labels) and global_alignment:
         raise ValueError('Could not accurately map labels to segments.')
 
     return matched_labels
@@ -383,7 +383,7 @@ def manual_star_selection(data, global_alignment, testing=False):
     else:
         log.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
 
-    segment_labels = match_psfs_to_segments(x, y)
+    segment_labels = match_psfs_to_segments(x, y, global_alignment)
     ALL_cols = create_cols_for_coords_counts(x, y, counts, val,
                                              labels=segment_labels,
                                              inds=range(len(x)))
