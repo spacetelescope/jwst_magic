@@ -43,18 +43,18 @@ fgs-commissioning/jwst_fgs_commissioning_tools.egg-info/*
 ehthumbs.db
 Thumbs.db
 
+# Notebooks #
+#############
+fgs-commissioning/notebooks/playground_*
+fgs-commissioning/notebooks/WFR Testing/*
+fgs-commissioning/notebooks/.ipynb_checkpoints/*
+.ipynb_checkpoints/*
+
 # Other #
 #########
-fgs-commissioning/notebooks/*
-fgs-commissioning/!notebooks/FGS Commissioning Tool Tutorial.ipynb
-!fgs-commissioning/notebooks/Convert FGS coordinate frames.ipynb
-!fgs-commissioning/notebooks/Convert from NIRCam to FGS coordinate frames.ipynb
-!fgs-commissioning/notebooks/WFR Testing Notebook.ipynb
-fgs-commissioning/notebooks/*.png
 fgs-commissioning/tests/out/*
 fgs-commissioning/out/*
 fgs-commissioning/.cache/*
-.ipynb_checkpoints/*
 fgs-commissioning/logs/*
 fgs-commissioning/comm_tool_obsolete/*
 fgs-commissioning/segment_guiding_files/*
