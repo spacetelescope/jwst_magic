@@ -193,22 +193,21 @@ class MasterGui(QWidget):
         # Write the files out
         self.cb_file_writer = QCheckBox('FSW File Writer', self)
         self.cb_file_writer.setCheckable(True)
-        self.cb_file_writer.toggle()
+        if self.file_writer:
+            self.cb_file_writer.toggle()
         self.cb_file_writer.setFont(title_font)
         filewriterGrid.addWidget(self.cb_file_writer, 1, 0)
         # Which steps to write out
         self.cb_id = QCheckBox('ID', self)
-        self.cb_id.setCheckable(True)
         self.cb_id.toggle()
         filewriterGrid.addWidget(self.cb_id, 2, 1)
-
         self.cb_acq1 = QCheckBox('ACQ1', self)
-        self.cb_acq1.setCheckable(True)
+
         self.cb_acq1.toggle()
         filewriterGrid.addWidget(self.cb_acq1, 2, 2)
 
         self.cb_acq2 = QCheckBox('ACQ2', self)
-        self.cb_acq2.setCheckable(True)
+
         self.cb_acq2.toggle()
         filewriterGrid.addWidget(self.cb_acq2, 2, 3)
 
@@ -220,6 +219,30 @@ class MasterGui(QWidget):
         self.cb_fg = QCheckBox('FG', self)
         self.cb_fg.setCheckable(True)
         filewriterGrid.addWidget(self.cb_fg, 2, 5)
+
+        # Tether toggles together
+        if not self.cb_file_writer.isChecked():
+            self.cb_id.setEnabled(False)
+            self.cb_id.setCheckable(False)
+            self.cb_acq1.setEnabled(False)
+            self.cb_acq1.setCheckable(False)
+            self.cb_acq2.setEnabled(False)
+            self.cb_acq2.setCheckable(False)
+            self.cb_trk.setEnabled(False)
+            self.cb_trk.setCheckable(False)
+            self.cb_fg.setEnabled(False)
+            self.cb_fg.setCheckable(False)
+        else:
+            self.cb_id.setEnabled(True)
+            self.cb_id.setCheckable(True)
+            self.cb_acq1.setEnabled(True)
+            self.cb_acq1.setCheckable(True)
+            self.cb_acq2.setEnabled(True)
+            self.cb_acq2.setCheckable(True)
+            self.cb_trk.setEnabled(True)
+            self.cb_trk.setCheckable(True)
+            self.cb_fg.setEnabled(True)
+            self.cb_fg.setCheckable(True)
 
         mainGrid.addWidget(filewriterGroupBox, 17, 0, 5, 3)
 
@@ -237,7 +260,7 @@ class MasterGui(QWidget):
 
         mainGrid.addWidget(segmentGroupBox, 22, 0, 5, 3)
 
-        #self.guisave()
+        # ###  Save out inputs and run tool ------------------------------------
         button_run = QPushButton("Run", self)
         button_run.resize(button_run.minimumSizeHint())
         button_run.move(self.image_dim*.6, self.image_dim*.75)
