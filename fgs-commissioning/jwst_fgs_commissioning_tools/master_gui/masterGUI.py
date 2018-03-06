@@ -15,6 +15,7 @@ if matplotlib.get_backend() != 'Qt5Agg':
 
 
 from jwst_fgs_commissioning_tools import run_fgs_commissioning_tool
+from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
 
 
 class MasterGui(QWidget):
@@ -37,6 +38,8 @@ class MasterGui(QWidget):
 
     def initUI(self, root, fgs_counts, jmag, nircam_det, nircam, global_alignment,
                steps, in_file, bkgd_stars, out_dir, parent):
+        # Set default values
+        self.jmag_default = 11.0
 
         # Set the font format for titles
         title_font = QFont()
@@ -101,10 +104,10 @@ class MasterGui(QWidget):
         # # If we want to convert image
         self.cb_convert_im = QCheckBox('Convert Image', self)
         self.cb_convert_im.setCheckable(True)
-        if self.convert_im:
-            self.cb_convert_im.toggle()
         self.cb_convert_im.setFont(title_font)
         convertGrid.addWidget(self.cb_convert_im, 1, 0)
+        if self.convert_im:
+            self.cb_convert_im.toggle()
 
         # Set to be a NIRCam or FGS image
         self.cb_nircam = QCheckBox('NIRCam Image', self)
@@ -125,33 +128,37 @@ class MasterGui(QWidget):
         convertGrid.addWidget(self.textbox_nircam_det, 3, 2)
 
         #Normalize by FGS counts or JMAG
+        # Add checkbox
         self.cb_fgs_counts = QCheckBox('FGS Counts', self)
-        self.cb_fgs_counts.setCheckable(True)
-        if fgs_counts:
-            self.cb_fgs_counts.toggle()
         convertGrid.addWidget(self.cb_fgs_counts, 4, 0)
-
+        # Add checkbox
         self.cb_jmag = QCheckBox('J mag', self)
-        self.cb_jmag.setCheckable(True)
-        if not fgs_counts:
-            self.cb_jmag.toggle()
         convertGrid.addWidget(self.cb_jmag, 4, 2)
-
+        # Add textbox
         convertGrid.addWidget(QLabel('Value:', self), 4, 3)
         self.textbox_value = QLineEdit(self)
         if jmag:
             self.textbox_value.setText(str(jmag))
         elif not fgs_counts:
-            self.textbox_value.setText('11.0')
+            self.textbox_value.setText(str(self.jmag_default))
         convertGrid.addWidget(self.textbox_value, 4, 4)
+        # Set toggling for FGS counts and Jmag
+        self.cb_fgs_counts.toggled.connect(self.on_check_fgscounts)
+        self.cb_jmag.toggled.connect(self.on_check_jmag)
+        if fgs_counts:
+            self.cb_fgs_counts.toggle()
+        else:
+            self.cb_jmag.toggle()
 
-        # Global Alighment flat
+        ## Global Alighment flat
         self.cb_ga = QCheckBox('Global Alignment', self)
         self.cb_ga.setCheckable(True)
         if global_alignment:
             self.cb_ga.toggle()
         convertGrid.addWidget(self.cb_ga, 5, 0)
 
+        # Set toggling
+        self.cb_convert_im.toggled.connect(self.on_check_convertimage)
         mainGrid.addWidget(convertGroupBox, 7, 0, 3, 3)
 
         # ### Build the STAR SELECTION section ---------------------------------
@@ -160,26 +167,33 @@ class MasterGui(QWidget):
         starGrid = QGridLayout()
         starGroupBox.setLayout(starGrid)
 
-        # Run the star selection GUI
+        ## Run the star selection GUI
+        # Add checkbox
         self.cb_star_selection = QCheckBox('Star Selection GUI', self)
         self.cb_star_selection.setCheckable(True)
-        if not in_file:
-            self.cb_star_selection.toggle()
+        self.cb_star_selection.toggled.connect(self.on_check_starselect)
         starGrid.addWidget(self.cb_star_selection, 1, 0)
 
-        # Pass in an in or reg file
+        ## Pass in an in or reg file
+        # Add checkbox
         self.cb_infile = QCheckBox('In/Reg file', self)
         self.cb_infile.setCheckable(True)
-        if in_file:
-            self.cb_infile.toggle()
+        self.cb_infile.toggled.connect(self.on_check_infile)
         starGrid.addWidget(self.cb_infile, 2, 0)
+        # Add textbox
         self.textbox_infile = QLineEdit(self)
         self.textbox_infile.setMinimumSize(200, 20)
         starGrid.addWidget(self.textbox_infile, 2, 2)
+        # Add 'Open' button
         self.button_input_infile = QPushButton('Open', self)
         self.button_input_infile.setToolTip('Open the in_file directory')
         self.button_input_infile.clicked.connect(self.on_click_infile)
         starGrid.addWidget(self.button_input_infile, 2, 5)
+        # Check the box that is set to default
+        if in_file:
+            self.cb_infile.toggle()
+        else:
+            self.cb_star_selection.toggle()
 
         mainGrid.addWidget(starGroupBox, 12, 0, 5, 3)
 
@@ -193,56 +207,24 @@ class MasterGui(QWidget):
         # Write the files out
         self.cb_file_writer = QCheckBox('FSW File Writer', self)
         self.cb_file_writer.setCheckable(True)
-        if self.file_writer:
-            self.cb_file_writer.toggle()
+        self.cb_file_writer.toggled.connect(self.on_check_filewriter)
+
         self.cb_file_writer.setFont(title_font)
         filewriterGrid.addWidget(self.cb_file_writer, 1, 0)
         # Which steps to write out
         self.cb_id = QCheckBox('ID', self)
-        self.cb_id.toggle()
         filewriterGrid.addWidget(self.cb_id, 2, 1)
         self.cb_acq1 = QCheckBox('ACQ1', self)
-
-        self.cb_acq1.toggle()
         filewriterGrid.addWidget(self.cb_acq1, 2, 2)
-
         self.cb_acq2 = QCheckBox('ACQ2', self)
-
-        self.cb_acq2.toggle()
         filewriterGrid.addWidget(self.cb_acq2, 2, 3)
-
         self.cb_trk = QCheckBox('TRK', self)
-        self.cb_trk.setCheckable(True)
-        self.cb_trk.toggle()
         filewriterGrid.addWidget(self.cb_trk, 2, 4)
-
         self.cb_fg = QCheckBox('FG', self)
-        self.cb_fg.setCheckable(True)
         filewriterGrid.addWidget(self.cb_fg, 2, 5)
 
-        # Tether toggles together
-        if not self.cb_file_writer.isChecked():
-            self.cb_id.setEnabled(False)
-            self.cb_id.setCheckable(False)
-            self.cb_acq1.setEnabled(False)
-            self.cb_acq1.setCheckable(False)
-            self.cb_acq2.setEnabled(False)
-            self.cb_acq2.setCheckable(False)
-            self.cb_trk.setEnabled(False)
-            self.cb_trk.setCheckable(False)
-            self.cb_fg.setEnabled(False)
-            self.cb_fg.setCheckable(False)
-        else:
-            self.cb_id.setEnabled(True)
-            self.cb_id.setCheckable(True)
-            self.cb_acq1.setEnabled(True)
-            self.cb_acq1.setCheckable(True)
-            self.cb_acq2.setEnabled(True)
-            self.cb_acq2.setCheckable(True)
-            self.cb_trk.setEnabled(True)
-            self.cb_trk.setCheckable(True)
-            self.cb_fg.setEnabled(True)
-            self.cb_fg.setCheckable(True)
+        if self.file_writer:
+            self.cb_file_writer.toggle()
 
         mainGrid.addWidget(filewriterGroupBox, 17, 0, 5, 3)
 
@@ -338,21 +320,121 @@ class MasterGui(QWidget):
 
     @pyqtSlot()
     def on_click_input(self):
+        ''' Using the Input Image Open button (open file) '''
         filename = self.openFileNameDialog()
         self.textbox_input_im.setText(filename)
         return filename
 
     @pyqtSlot()
     def on_click_out(self):
+        ''' Using the Out Dir Open button (open directory) '''
         dirname = self.openDirNameDialog()
         self.textbox_outdir.setText(dirname)
         return dirname
 
     @pyqtSlot()
     def on_click_infile(self):
+        ''' Using the Infile Open button (open file) '''
         filename = self.openFileNameDialog()
         self.textbox_infile.setText(filename)
         return filename
+
+    def on_check_convertimage(self, is_toggle):
+        ''' Checking the convert image box - defaults set here'''
+        if is_toggle:
+            self.cb_nircam.setEnabled(True)
+            self.cb_fgs.setEnabled(True)
+            self.textbox_nircam_det.setEnabled(True)
+            self.cb_fgs_counts.setEnabled(True)
+            self.cb_jmag.setEnabled(True)
+            self.textbox_value.setEnabled(True)
+            self.cb_ga.setEnabled(True)
+
+        else:
+            self.cb_nircam.setEnabled(False)
+            self.cb_fgs.setEnabled(False)
+            self.textbox_nircam_det.setEnabled(False)
+            self.cb_fgs_counts.setEnabled(False)
+            self.cb_jmag.setEnabled(False)
+            self.textbox_value.setEnabled(False)
+            self.cb_ga.setEnabled(False)
+
+        if not self.cb_nircam.isChecked():
+            self.cb_nircam.toggle()
+        if not self.cb_jmag.isChecked():
+            self.cb_jmag.toggle()
+
+    def on_check_nircam(self, is_toggle):
+        ''' Checking the NIRCam box in Convert Image - turn off FGS'''
+        if is_toggle:
+            if self.cb_fgs.isChecked():
+                self.cb_fgs.toggle()
+
+    def on_check_fgs(self, is_toggle):
+        ''' Checking the FGS box in Convert Image - turn off NIRCam'''
+        if is_toggle:
+            if self.cb_nircam.isChecked():
+                self.cb_nircam.toggle()    
+
+    def on_check_fgscounts(self, is_toggle):
+        ''' Checking the FGS counts box in Convert Image - turn off J mag box'''
+        if is_toggle:
+            if self.cb_jmag.isChecked():
+                self.cb_jmag.toggle()
+            fgs_counts_default = counts_to_jmag.jmag_to_fgs_counts(self.jmag_default,
+                                                                   self.textbox_guider.text())
+            self.textbox_value.setText(str(int(fgs_counts_default)))
+
+    def on_check_jmag(self, is_toggle):
+        ''' Checking the J mag box in Convert Image - turn off FGS Counts box'''
+        if is_toggle:
+            if self.cb_fgs_counts.isChecked():
+                self.cb_fgs_counts.toggle()
+            # Set Value back to default
+            self.textbox_value.setText(str(self.jmag_default))
+
+    def on_check_starselect(self, is_toggle):
+        ''' Checking the star selection GUI box '''
+        if is_toggle:
+            self.textbox_infile.setEnabled(False)
+            self.button_input_infile.setEnabled(False)
+            if self.cb_infile.isChecked():
+                self.cb_infile.toggle()
+        else:
+            self.textbox_infile.setEnabled(True)
+            self.button_input_infile.setEnabled(True)
+
+    def on_check_infile(self, is_toggle):
+        ''' Checking the star selection infile box '''
+        if is_toggle:
+            self.textbox_infile.setEnabled(False)
+            self.button_input_infile.setEnabled(False)
+            if self.cb_star_selection.isChecked():
+                self.cb_star_selection.toggle()
+
+    def on_check_filewriter(self, is_toggle):
+        ''' Checking the filewriter box - defaults set here'''
+        if is_toggle:
+            self.cb_id.setEnabled(True)
+            self.cb_acq1.setEnabled(True)
+            self.cb_acq2.setEnabled(True)
+            self.cb_trk.setEnabled(True)
+            self.cb_fg.setEnabled(True)
+            #Set defaults
+            if not self.cb_id.isChecked():
+                self.cb_id.toggle()
+            if not self.cb_acq1.isChecked():
+                self.cb_acq1.toggle()
+            if not self.cb_acq2.isChecked():
+                self.cb_acq2.toggle()
+            if not self.cb_trk.isChecked():
+                self.cb_trk.toggle()
+        else:
+            self.cb_id.setEnabled(False)
+            self.cb_acq1.setEnabled(False)
+            self.cb_acq2.setEnabled(False)
+            self.cb_trk.setEnabled(False)
+            self.cb_fg.setEnabled(False)
 
     def openFileNameDialog(self):
         options = QFileDialog.Options()

@@ -230,7 +230,9 @@ def match_psfs_to_segments(x, y, global_alignment):
         matched_labels.append(labels[i_seg])
 
     if len(set(matched_labels)) != len(matched_labels) and global_alignment:
-        raise ValueError('Could not accurately map labels to segments.')
+        log.warning('Could not accurately map labels to segments. This is an'+
+                     " issue only for the .prc re-writer.")
+        #raise ValueError('Could not accurately map labels to segments.')
 
     return matched_labels
 
