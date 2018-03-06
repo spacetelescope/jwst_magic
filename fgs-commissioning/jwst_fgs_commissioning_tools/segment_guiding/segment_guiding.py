@@ -39,6 +39,9 @@ class SegmentGuidingCalculator:
 
         self.root = utils.make_root(root, segment_infile)
         self.out_dir = out_dir
+        if self.out_dir is None:
+            self.out_dir = utils.make_out_dir(self.out_dir, OUT_PATH, root)
+
         utils.ensure_dir_exists(self.out_dir)
 
         # Will the tool be run through the GUI?
