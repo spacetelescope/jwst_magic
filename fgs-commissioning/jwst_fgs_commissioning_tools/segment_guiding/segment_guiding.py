@@ -34,7 +34,8 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 FGS_SIAF = pysiaf.Siaf('FGS')
 
 class SegmentGuidingCalculator:
-    def __init__(self, segment_infile, root=None, GUI=False, GS_params_dict=None,
+    def __init__(self, segment_infile, program_id, observation_num, visit_num,
+                 root=None, GUI=False, GS_params_dict=None,
                  selected_segs=None, vss_infile=None, out_dir=None):
 
         self.root = utils.make_root(root, segment_infile)
@@ -43,6 +44,10 @@ class SegmentGuidingCalculator:
             self.out_dir = utils.make_out_dir(self.out_dir, OUT_PATH, self.root)
 
         utils.ensure_dir_exists(self.out_dir)
+
+        self.program_id = program_id
+        self.observation_num = observation_num
+        self.visit_num = visit_num
 
         # Will the tool be run through the GUI?
         self.GUI = GUI
@@ -187,13 +192,9 @@ class SegmentGuidingCalculator:
 
     def write_visit_file(self, nseg, verbose=True):
 
-        # Get proposal/visit metadata
-        APT_num = 999  # placeholder for APT proposal number
-        visit_num = 2  # placeholder for visit number
-        tile_num = 1  # placeholder for ???
-
         # Define path and name of output visit file
-        out_file = self.root + '_gs-override-{}_{}_{}.txt'.format(APT_num, visit_num, tile_num)
+        out_file = 'gs-override-{}_{}_{}.txt'.format(self.program_id, self.observation_num,
+                                                     self.visit_num)
         out_file = os.path.join(self.out_dir, out_file)
 
         # Print summary of input data (guide star RA, Dec, and PA, etc...)
@@ -224,7 +225,9 @@ class SegmentGuidingCalculator:
             if verbose:
                 print('\nFinal Output:')
 
-            out_string = 'sts -gs_select {:4d}:{}:{}'.format(APT_num, visit_num, tile_num)
+            out_string = 'sts -gs_select {:4d}:{}:{}'.format(self.program_id,
+                                                             self.observation_num,
+                                                             self.visit_num)
 
             # If a regfile has been provided, only use the selected segments
             try:
@@ -720,8 +723,9 @@ class SegmentGuidingGUI(SegmentGuidingCalculator):
 ############################## End Class SegmentForm ###############################
 
 
-def run_tool(segment_infile, root=None, GUI=False, GS_params_dict=None,
-             selected_segs=None, vss_infile=None, out_dir=None):
+def run_tool(segment_infile, program_id, observation_num, visit_num, root=None,
+             GUI=False, GS_params_dict=None, selected_segs=None, vss_infile=None,
+             out_dir=None):
 
     # if not GS_params_dict and not GUI:
     #     GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
@@ -733,7 +737,8 @@ def run_tool(segment_infile, root=None, GUI=False, GS_params_dict=None,
     #                       'segNum': 0}  # selected segment to guide on
 
     # Set up guiding calculator object
-    sg = SegmentGuidingCalculator(segment_infile, root=root, GUI=GUI,
+    sg = SegmentGuidingCalculator(segment_infile, program_id, observation_num,
+                                  visit_num, root=root, GUI=GUI,
                                   GS_params_dict=GS_params_dict,
                                   selected_segs=selected_segs,
                                   vss_infile=vss_infile, out_dir=out_dir)
@@ -751,4 +756,7 @@ def run_tool(segment_infile, root=None, GUI=False, GS_params_dict=None,
 
 if __name__ == '__main__':
     segment_infile = os.path.join(SGT_FILES_PATH, 'SGTintegrationexample.txt')
-    run_tool(segment_infile)
+    program_id = 999
+    observation_num = 1
+    visit_num = 1
+    run_tool(segment_infile, program_id, observation_num, visit_num)
