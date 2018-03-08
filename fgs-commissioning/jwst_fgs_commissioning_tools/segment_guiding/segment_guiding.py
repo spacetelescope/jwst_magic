@@ -225,7 +225,7 @@ class SegmentGuidingCalculator:
             if verbose:
                 print('\nFinal Output:')
 
-            out_string = 'sts -gs_select {:4d}:{}:{}'.format(self.program_id,
+            out_string = 'sts -gs_select {:4d}:{}:{}'.format(int(self.program_id),
                                                              self.observation_num,
                                                              self.visit_num)
 
