@@ -184,6 +184,9 @@ class SegmentGuidingCalculator:
             if y < 0.5 or y > 2048.5:
                 print('WARNING: %8s off detector in Y direction' % i_seg)
 
+        # Check to make sure that RA is between 0 and 360 and Dec is between -90 and 90
+        self.check_coords()
+
         # Print and save final output
         self.write_visit_file(nseg)
 
@@ -261,6 +264,26 @@ class SegmentGuidingCalculator:
 
             f.write(out_string)
             print('\nSaved {} segment commands to {}'.format(len(seg_ids), out_file))
+
+    def check_coords(self):
+        ''' Check to make sure that RA is between 0 and 360 and Dec between -90 and 90
+        '''
+        for i, ra in enumerate(self.SegRA):
+            if ra > 360.0:
+                self.SegRA -= self.SegRA
+            elif ra < 0.0:
+                self.SegRA += 360.0
+            else:
+                continue
+
+        for i, dec in enumerate(self.SegDec):
+            if dec > 90.0:
+                self.SegDec -= 180.0
+            elif dec < -90.0:
+                self.SegDec += 180.0
+            else:
+                continue
+
 
     def parse_infile(self, segment_infile, selected_segs, vss_infile, GS_params_dict):
 
