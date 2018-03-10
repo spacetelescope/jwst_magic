@@ -58,3 +58,4 @@ fgs-commissioning/.cache/*
 fgs-commissioning/logs/*
 fgs-commissioning/comm_tool_obsolete/*
 fgs-commissioning/segment_guiding_files/*
+test_gui.py
