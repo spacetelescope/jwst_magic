@@ -169,7 +169,7 @@ class SegmentGuidingCalculator:
         for i in range(nseg):
             V2 = self.V2Ref + self.V2SegArray[i]
             V3 = self.V3Ref + self.V3SegArray[i]
-            (self.SegRA[i], self.SegDec[i]) = rotations.pointing(A, V2, V3)
+            (self.SegRA[i], self.SegDec[i]) = rotations.pointing(A, V2, V3, positive_ra=True)
 
         if self.GUI:
             self.SegmentGuidingGUI.errmsg.configure(text='Calculation complete')
@@ -270,16 +270,20 @@ class SegmentGuidingCalculator:
         '''
         for i, ra in enumerate(self.SegRA):
             if ra > 360.0:
+                print('WARNING: RA = {}'.format(ra))
                 self.SegRA -= self.SegRA
             elif ra < 0.0:
+                print('WARNING: RA = {}'.format(ra))
                 self.SegRA += 360.0
             else:
                 continue
 
         for i, dec in enumerate(self.SegDec):
             if dec > 90.0:
+                print('WARNING: Dec = {}'.format(dec))
                 self.SegDec -= 180.0
             elif dec < -90.0:
+                print('WARNING: Dec = {}'.format(dec))
                 self.SegDec += 180.0
             else:
                 continue
