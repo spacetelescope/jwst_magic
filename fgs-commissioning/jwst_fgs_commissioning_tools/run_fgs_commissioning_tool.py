@@ -92,7 +92,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
 
         if bkgd_stars:
-            fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
+            fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, jmag, fgs_counts, guider)
 
         # create reg file
         select_psfs.create_reg_file(fgs_im, root, guider,
