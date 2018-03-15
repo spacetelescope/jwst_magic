@@ -56,20 +56,18 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QApplication, \
-                            QSizePolicy, QFormLayout, QPushButton, QLineEdit, \
-                            QLabel, QTextEdit, QRadioButton, QGroupBox, \
-                            QGridLayout
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
+                             QLabel, QTextEdit, QRadioButton, QGroupBox,
+                             QSizePolicy, QGridLayout, QDialog)
 from PyQt5.QtCore import pyqtSlot
-from astropy.io import fits
 
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['font.weight'] = 'light'
 matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
 
-class MyMplCanvas(FigureCanvas):
+class StarClickerMatplotlibCanvas(FigureCanvas):
     """Creates a matplotlib canvas as a PyQt widget to plot an FGS image.
 
     Initializes and draws a matplotlib canvas which plots the following:
@@ -233,7 +231,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.qApp = qApp
         self.print_output = print_output
 
-        self.title = 'PyQt5 matplotlib example - pythonspot.com'
         self.image_dim = 800
 
         self.data = data
@@ -263,7 +260,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.main_widget)
 
         # Add plot - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        sc = MyMplCanvas(self.main_widget, width=5, height=4, dpi=100,
+        sc = StarClickerMatplotlibCanvas(self, width=5, height=4, dpi=100,
                          data=self.data, x=self.x, y=self.y, left=0.1, right=0.9)
         self.canvas = sc
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
@@ -340,8 +337,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # mainGrid.setRowMinimumHeight(1, self.image_dim*.2)
 
         # Plot slice of profile under cursor
-        prof = MyMplCanvas(self.main_widget, width=4, height=3, dpi=100,
-                           data=self.data, left=0.2, right=0.95, bottom=0.2)
+        prof = StarClickerMatplotlibCanvas(self, width=4, height=3, dpi=100,
+                                           data=self.data, left=0.2, right=0.95,
+                                           bottom=0.2)
         prof.init_profile()
         self.profile = prof
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
@@ -365,7 +363,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         cbarGrid.addWidget(self.vmax_textbox, 1, 1)
 
         self.cbarlims_button = QPushButton('Update colorbar limits', self)
-        self.cbarlims_button.clicked.connect(self.update_cbar)   # connect button to function on_click
+        self.cbarlims_button.clicked.connect(self.update_cbar)
         cbarGrid.addWidget(self.cbarlims_button, 2, 0, 1, 2)
 
         mainGrid.addWidget(cbarGroupBox, 3, 3, 3, 1)
@@ -396,7 +394,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         axGrid.addWidget(self.y2_textbox, 2, 3)
 
         self.axlims_button = QPushButton('Update axis limits', self)
-        self.axlims_button.clicked.connect(self.update_axes)   # connect button to function on_click
+        self.axlims_button.clicked.connect(self.update_axes)
         axGrid.addWidget(self.axlims_button, 3, 0, 1, 5)
 
         # Add "Zoom Fit" button
@@ -484,7 +482,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         '''Parse out the cursor moving in or out of a star deletion button, and
         updating the matplotlib axis with a red highlighted circle accordingly'''
         if event.type() == QtCore.QEvent.Enter:
-            if remove_button.isEnabled() == True:
+            if remove_button.isEnabled():
                 # Determine index of star corresponding to button
                 star_ind = self.remove_buttons.index(remove_button)
                 ind_of_star_ind = self.inds_of_inds.index(star_ind)
@@ -496,7 +494,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             return True
 
         if event.type() == QtCore.QEvent.Leave:
-            if remove_button.isEnabled() == True:
+            if remove_button.isEnabled():
                 # Determine index of star corresponding to button
                 star_ind = self.remove_buttons.index(remove_button)
                 ind_of_star_ind = self.inds_of_inds.index(star_ind)
@@ -738,16 +736,22 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
     def fileQuit(self):
-        '''Closes the application'''
+        '''Closes the star selector window'''
         # if self.inds == []:
 
         self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+
+        # Close the star selector dialog window
         self.close()
 
     def cancel(self):
-        '''Closes the application and clears indices'''
+        '''Closes the star selector window and clears indices'''
+
+        # Clear the indices (i.e. don't save user selections)
         self.inds = []
         self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+
+        # Close the star selector dialog window
         self.close()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -791,14 +795,3 @@ def run_SelectStars(data, x, y, dist, print_output=False):
     qApp.exec_()  # Begin interactive session; pauses until qApp.exit() is called
 
     return inds
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-if __name__ == '__main__':
-    data = fits.open('../data/LMCfootprint_80/LMCfootprint_80.31512449419834_-70.45278790693078.fits')[0].data
-    data[data == 0] = 0.1  # Adjust so 0 shows up as such with a logNorm colorbar
-    gauss_sigma = 5
-    dist = 16
-
-    inds = run_SelectStars(data, gauss_sigma, dist)
