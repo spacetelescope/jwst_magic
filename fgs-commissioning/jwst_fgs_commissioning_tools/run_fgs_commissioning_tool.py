@@ -26,7 +26,7 @@ TASKNAME = 'run_all'
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
             in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
-            star_selection=True, file_writer=True):
+            star_selection=True, file_writer=True, masterGUIapp=None):
 
     # Determine filename root
     root = utils.make_root(root, image)
@@ -41,7 +41,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                              nircam_det=None, nircam=True, global_alignment=False,
                              steps=None, in_file=None, bkgd_stars=False,
                              out_dir=None, convert_im=True, star_selection=True,
-                             file_writer=True):
+                             file_writer=True, masterGUIapp=None):
         """
         This function will take any FGS or NIRCam image and create the outputs needed
         to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -99,7 +99,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             select_psfs.create_reg_file(fgs_im, root, guider,
                                         return_nref=False,
                                         global_alignment=global_alignment,
-                                        in_file=in_file, out_dir=out_dir)
+                                        in_file=in_file, out_dir=out_dir,
+                                        masterGUIapp=masterGUIapp)
             log.info("*** Star Selection: COMPLETE ***")
 
         # create all files for FSW/DHAS/FGSES/etc.
@@ -115,4 +116,5 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                          global_alignment=global_alignment,
                          steps=steps, in_file=in_file, bkgd_stars=bkgd_stars,
                          out_dir=out_dir, convert_im=convert_im,
-                         star_selection=star_selection, file_writer=file_writer)
+                         star_selection=star_selection, file_writer=file_writer,
+                         masterGUIapp=masterGUIapp)
