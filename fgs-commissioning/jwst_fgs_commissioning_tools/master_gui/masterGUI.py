@@ -41,26 +41,28 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QInputDialog,
                              QHBoxLayout, QSplitter, QTextEdit, QStyleFactory,
                              QSpinBox, QComboBox, QRadioButton, QGridLayout,
                              QGroupBox, qApp)
-from PyQt5 import QtGui
+from PyQt5 import QtGui, QtCore
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import pyqtSlot, Qt, QSettings, QTimer
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 
-
 from jwst_fgs_commissioning_tools import run_fgs_commissioning_tool
 from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
 
 
-class MasterGui(QWidget):
+class MasterGui(QMainWindow):
 
     def __init__(self, root=None, fgs_counts=None, jmag=None,
                  nircam_det=None, nircam=True, global_alignment=False, steps=None,
                  in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
                  star_selection_gui=True, file_writer=True, segment_guiding=False,
-                 parent=None, app=None):
-        super().__init__()
+                 app=None):
+
+        # Initialize main window object (?!?!)
+        QMainWindow.__init__(self)
+
         self.title = 'Master GUI - FGS Commissioning Tools'
         self.image_dim = 1000
         self.convert_im = convert_im
@@ -68,25 +70,27 @@ class MasterGui(QWidget):
         self.file_writer = file_writer
         self.segment_guiding = segment_guiding
         self.app = app
+
         self.initUI(root, fgs_counts, jmag, nircam_det, nircam, global_alignment,
-                    steps, in_file, bkgd_stars, out_dir, parent)
+                    steps, in_file, bkgd_stars, out_dir)
 
     def initUI(self, root, fgs_counts, jmag, nircam_det, nircam, global_alignment,
-               steps, in_file, bkgd_stars, out_dir, parent):
-        # Set default values
-        self.jmag_default = 11.0
+               steps, in_file, bkgd_stars, out_dir):
 
-        # Set the font format for titles
-        title_font = QFont()
-        title_font.setBold(True)
-
-        # Set window attributes
-        QMainWindow.__init__(self, parent)
+        # Set up GUI window
         self.setWindowTitle(self.title)
         self.main_widget = QWidget(self)
         mainGrid = QGridLayout()  # set grid layout
         self.main_widget.setLayout(mainGrid)
         self.main_widget.setFocus()
+        self.setCentralWidget(self.main_widget)
+
+         # Set default values
+        self.jmag_default = 11.0
+
+        # Set the font format for titles
+        title_font = QFont()
+        title_font.setBold(True)
 
         ### Build the MAIN section ---------------------------------------------
         inputGroupBox = QGroupBox('', self)
@@ -293,8 +297,8 @@ class MasterGui(QWidget):
 
 
     def close_application(self):
-        sys.exit()
-
+        self.close()
+        self.app.quit()
 
     def run_tool(self):
         # Required
@@ -339,7 +343,6 @@ class MasterGui(QWidget):
             in_file = None
         else:
             in_file = self.textbox_infile.text()
-
 
         segment_guiding = self.cb_segment_guiding.isChecked()
 
@@ -411,7 +414,7 @@ class MasterGui(QWidget):
         ''' Checking the FGS box in Convert Image - turn off NIRCam'''
         if is_toggle:
             if self.cb_nircam.isChecked():
-                self.cb_nircam.toggle()    
+                self.cb_nircam.toggle()
 
     def on_check_fgscounts(self, is_toggle):
         ''' Checking the FGS counts box in Convert Image - turn off J mag box'''
@@ -495,15 +498,20 @@ def run_MasterGui(root=None, fgs_counts=None, jmag=None, nircam_det=None,
                   nircam=True, global_alignment=False, steps=None, in_file=None,
                   bkgd_stars=False, out_dir=None, convert_im=True,
                   star_selection_gui=True, file_writer=True, segment_guiding=False):
-    app = QApplication(sys.argv)
+    # RUN GUI
+    app = QtCore.QCoreApplication.instance()  # Use existing instance, if there is one
+    if app is None:
+        app = QApplication(sys.argv)
+
     ex = MasterGui(root, fgs_counts, jmag, nircam_det, nircam, global_alignment, steps,
-              in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
-              file_writer, segment_guiding, app=app)
-    sys.exit(app.exec_())
-    #return ex.settings
+                   in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
+                   file_writer, segment_guiding, app=app)
+    # #return ex.settings
+    out = app.exec()
+
+    return out
+
 
 if __name__ == '__main__':
-    run_MasterGui()
-    # app = QApplication(sys.argv)
-    # ex = MasterGui()
-    # sys.exit(app.exec_())
+    out = run_MasterGui()
+    sys.exit(out)

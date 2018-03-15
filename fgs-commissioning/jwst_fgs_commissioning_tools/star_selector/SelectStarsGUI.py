@@ -146,14 +146,14 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         ax_range = max(x_range, y_range)  # Choose the larger of the dimensions
         ax_range += 100  # Make sure not to clip off the edge of border PSFS
 
-        self.axes.set_ylim(min(2048, x_mid + ax_range/2),
-                           max(0, x_mid - ax_range/2))
-        self.axes.set_xlim(max(0, y_mid - ax_range/2),
-                           min(2048, y_mid + ax_range/2))
+        self.axes.set_ylim(min(2048, x_mid + ax_range / 2),
+                           max(0, x_mid - ax_range / 2))
+        self.axes.set_xlim(max(0, y_mid - ax_range / 2),
+                           min(2048, y_mid + ax_range / 2))
         self.draw()
 
 
-class ApplicationWindow(QtWidgets.QMainWindow):
+class StarSelectorWindow(QDialog):
     """Interactive PyQt GUI window used to select stars from an FGS image.
 
 
@@ -225,7 +225,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     fileQuit
         Closes the application
     """
-    def __init__(self, data=None, x=None, y=None, dist=None, qApp=None,
+    def __init__(self, data, x, y, dist, qApp, in_master_GUI,
                  print_output=False):
         '''Defines attributes; calls initUI() method to set up user interface.'''
         self.qApp = qApp
@@ -242,6 +242,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.inds_of_inds = []
         self.epsilon = dist
 
+        self.in_master_GUI = in_master_GUI
+
+        # Initialize dialog object
+        QDialog.__init__(self, modal=True)
+
         # Initialize user interface
         self.initUI()
 
@@ -249,15 +254,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         '''Sets up interactive graphical user interface.
         '''
 
-        # Set window attributes
-        QMainWindow.__init__(self)
-        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        # Set up star selector dialog window
         self.setWindowTitle("FGS Guide & Reference Star Selector")
-        self.main_widget = QWidget(self)
         mainGrid = QGridLayout()  # set grid layout
-        self.main_widget.setLayout(mainGrid)
-        self.main_widget.setFocus()
-        self.setCentralWidget(self.main_widget)
+        self.setLayout(mainGrid)
+        self.setFocus()
 
         # Add plot - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         sc = StarClickerMatplotlibCanvas(self, width=5, height=4, dpi=100,
@@ -285,7 +286,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # Show value under cursor
         self.pixel_label = QLabel('Pixel Value:', self,
-                                   alignment=QtCore.Qt.AlignRight)
+                                  alignment=QtCore.Qt.AlignRight)
         mainGrid.addWidget(self.pixel_label, 5, 0)
 
         self.pixel_textbox = QLineEdit(self)
@@ -476,6 +477,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.cancel_button.setMinimumSize(150, 50)
         mainGrid.addWidget(self.cancel_button, 4, 4, 2, 1,
                            alignment=QtCore.Qt.AlignVCenter)
+
+        # Show GUI - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        self.show()
 
     @pyqtSlot()
     def eventFilter(self, remove_button, event):
@@ -734,12 +738,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         return removestar
 
-
     def fileQuit(self):
         '''Closes the star selector window'''
         # if self.inds == []:
 
-        self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+        # If not being called from the master GUI, exit the whole application
+        if not self.in_master_GUI:
+            self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
 
         # Close the star selector dialog window
         self.close()
@@ -749,14 +754,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # Clear the indices (i.e. don't save user selections)
         self.inds = []
-        self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+
+        # If not being called from the master GUI, exit the whole application
+        if not self.in_master_GUI:
+            self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
 
         # Close the star selector dialog window
         self.close()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def run_SelectStars(data, x, y, dist, print_output=False):
+def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
     '''Calls a PyQt GUI to allow interactive user selection of guide and reference stars.
 
     Params
@@ -780,18 +788,28 @@ def run_SelectStars(data, x, y, dist, print_output=False):
     '''
 
     # RUN GUI
-    # plt.close()
-    qApp = QApplication(sys.argv)
-    aw = ApplicationWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
-                           print_output=print_output)
-    aw.show()
+    if masterGUIapp:
+        qApp = masterGUIapp
+        in_master_GUI = True
+    else:
+        qApp = QtCore.QCoreApplication.instance()
+        if qApp is None:
+            qApp = QApplication(sys.argv)
+        in_master_GUI = False
+
+    window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
+                                in_master_GUI=in_master_GUI,
+                                print_output=print_output)
 
     try:
         plt.get_current_fig_manager().window.raise_()  # Bring window to front
     except AttributeError:
         pass
 
-    inds = aw.inds
-    qApp.exec_()  # Begin interactive session; pauses until qApp.exit() is called
+    if masterGUIapp:
+        window.exec_()  # Begin interactive session; pauses until window.exit() is called
+    else:
+        qApp.exec_()
+    inds = window.inds
 
     return inds
