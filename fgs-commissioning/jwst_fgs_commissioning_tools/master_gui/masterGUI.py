@@ -1,3 +1,38 @@
+"""GUI interface to FGS Commissioning Tools
+
+~Description goes here~
+
+Authors
+-------
+    - Keira Brooks
+
+Use
+---
+This GUI can be run in the python shell as such:
+    ::
+    from jwst_fgs_commissioning_tools.master_gui import masterGUI
+    masterGUI.run_MasterGui()
+
+Notes
+-----
+1. For the GUI to run successfully, the QtAgg matplotlib backend should
+be used. This can be set by declaring:
+    ::
+    import matplotlib
+    matplotlib.use('Qt5Agg')
+
+Note that this declaration must occur before pyplot or any other
+matplotlib-dependent packages are imported.
+
+2. Because this code is run in a suite that also uses pyplot, there
+will already by instances of the QApplication object floating around
+when this GUI is called. However, only one instance of QApplication can
+be run at once without things crashing terribly. In all GUIs within the
+FGS Commissioning Tools package, be sure to use the existing instance
+of QApplication (access it at QtCore.QCoreApplication.instance()) when
+calling the QApplication instance to run a window/dialog/GUI.
+"""
+
 import sys
 import inspect
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QInputDialog,

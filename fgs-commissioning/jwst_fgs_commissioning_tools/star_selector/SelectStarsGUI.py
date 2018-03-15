@@ -1,5 +1,49 @@
-# Built using template at:
-# https://matplotlib.org/examples/user_interfaces/embedding_in_qt5.html
+"""Interactive star selector GUI.
+
+Builds a GUI with PyQt5 that prompts the user to click on a data image
+to select guide and/or reference stars, which are then saved as output.
+To help the user select desirable stars, the GUI includes a dynamic
+matplotlib plot that displays the shape of the signal under the cursor.
+The user can also adjust the image boundaries and stretch. Once
+multiple stars have been selected, the user can choose to delete a
+selected star, or convert a reference star into the guide star.
+Built using template found at matplotlib.org (see references).
+
+Authors
+-------
+    - Lauren Chambers
+
+Use
+---
+This GUI can be run in the python shell or as a module, as such:
+    ::
+    from jwst_fgs_commissioning_tools.star_selector import SelectStarsGUI
+    inds = SelectStarsGUI.run_SelectStars(data_array, x_list, y_list, dist)
+
+References
+----------
+For matplotlib canvas example, see:
+    https://matplotlib.org/examples/user_interfaces/embedding_in_qt5.html
+
+Notes
+-----
+1. For the GUI to run successfully, the QtAgg matplotlib backend should
+be used. This can be set by declaring:
+    ::
+    import matplotlib
+    matplotlib.use('Qt5Agg')
+
+Note that this declaration must occur before pyplot or any other
+matplotlib-dependent packages are imported.
+
+2. Because this code is run in a suite that also uses pyplot, there
+will already by instances of the QApplication object floating around
+when this GUI is called. However, only one instance of QApplication can
+be run at once without things crashing terribly. In all GUIs within the
+FGS Commissioning Tools package, be sure to use the existing instance
+of QApplication (access it at QtCore.QCoreApplication.instance()) when
+calling the QApplication instance to run a window/dialog/GUI.
+"""
 
 # Standard Library
 from __future__ import unicode_literals
