@@ -129,7 +129,7 @@ class MasterGui(QWidget):
             self.cb_bkgd_stars.toggle()
         inputGrid.addWidget(self.cb_bkgd_stars, 5, 0)
 
-        mainGrid.addWidget(inputGroupBox, 1, 0, 5, 3)
+        mainGrid.addWidget(inputGroupBox, 0, 0, 1, 2)
 
         # ### Build the CONVERT IMAGE section ----------------------------------
         convertGroupBox = QGroupBox('Convert Input Image to an FGS Raw Image', self)
@@ -194,7 +194,7 @@ class MasterGui(QWidget):
 
         # Set toggling
         self.cb_convert_im.toggled.connect(self.on_check_convertimage)
-        mainGrid.addWidget(convertGroupBox, 7, 0, 3, 3)
+        mainGrid.addWidget(convertGroupBox, 1, 0, 1, 2)
 
         # ### Build the STAR SELECTION section ---------------------------------
         # If we want to use the star slection GUI
@@ -230,7 +230,7 @@ class MasterGui(QWidget):
         else:
             self.cb_star_selection.toggle()
 
-        mainGrid.addWidget(starGroupBox, 12, 0, 5, 3)
+        mainGrid.addWidget(starGroupBox, 2, 0, 1, 2)
 
 
         # ### Build the FSW FILE WRITER section --------------------------------
@@ -261,7 +261,7 @@ class MasterGui(QWidget):
         if self.file_writer:
             self.cb_file_writer.toggle()
 
-        mainGrid.addWidget(filewriterGroupBox, 17, 0, 5, 3)
+        mainGrid.addWidget(filewriterGroupBox, 3, 0, 1, 2)
 
         # ###  Build the SEGMENT GUIDING section -------------------------------
         # Do segment guiding
@@ -275,19 +275,20 @@ class MasterGui(QWidget):
         self.cb_segment_guiding.setFont(title_font)
         segmentGrid.addWidget(self.cb_segment_guiding, 1, 0)
 
-        mainGrid.addWidget(segmentGroupBox, 22, 0, 5, 3)
+        mainGrid.addWidget(segmentGroupBox, 5, 0, 1, 2)
 
         # ###  Save out inputs and run tool ------------------------------------
         button_run = QPushButton("Run", self)
         button_run.resize(button_run.minimumSizeHint())
-        button_run.move(self.image_dim*.6, self.image_dim*.75)
+        button_run.clicked.connect(self.run_tool)
+        mainGrid.addWidget(button_run, 6, 0, 1, 1)
 
         button_done = QPushButton("Done", self)
         button_done.resize(button_done.minimumSizeHint())
-        button_done.move(self.image_dim*.75, self.image_dim*.75)
-
-        button_run.clicked.connect(self.run_tool)
         button_done.clicked.connect(self.close_application)
+        mainGrid.addWidget(button_done, 6, 1, 1, 1)
+
+        # Show the GUI ---------------------------------------------------------
         self.show()
 
 
@@ -325,13 +326,13 @@ class MasterGui(QWidget):
         steps = []
         if self.cb_id.isChecked():
             steps.append('ID')
-        elif self.cb_acq1.isChecked():
+        if self.cb_acq1.isChecked():
             steps.append('ACQ1')
-        elif self.cb_acq2.isChecked():
+        if self.cb_acq2.isChecked():
             steps.append('ACQ2')
-        elif self.cb_trk.isChecked():
+        if self.cb_trk.isChecked():
             steps.append('LOSTRK')
-        elif self.cb_fg.isChecked():
+        if self.cb_fg.isChecked():
             steps.append('FG')
 
         if not self.cb_infile.isChecked():
@@ -348,7 +349,8 @@ class MasterGui(QWidget):
                                                nircam, global_alignment,
                                                steps, in_file, bkgd_stars,
                                                out_dir, convert_im, star_selection,
-                                               self.app)
+                                               file_writer, self.app)
+            print("** Run Complete **")
         if segment_guiding:
             pass
 
