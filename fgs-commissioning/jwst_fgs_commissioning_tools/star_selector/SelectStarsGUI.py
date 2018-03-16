@@ -59,7 +59,7 @@ import matplotlib.pyplot as plt
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
                              QLabel, QTextEdit, QRadioButton, QGroupBox,
-                             QSizePolicy, QGridLayout, QDialog)
+                             QSizePolicy, QGridLayout, QDialog, QMessageBox)
 from PyQt5.QtCore import pyqtSlot
 
 matplotlib.rcParams['font.family'] = 'serif'
@@ -122,13 +122,14 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.draw()
 
     def init_profile(self):
-        # x_range = range(2048)
-        # self.y_slices = [self.data[i] for i in range(2048)]
-        # self.lines = [self.axes.plot(x_range, y, c='white') for y in self.y_slices]
-        self.axes.set_ylim(np.min(self.data) / 5, 5 * np.max(self.data))
+        profile_min = max(np.min(self.data) / 5, 1e-1)
+        self.axes.set_ylim(profile_min, 5 * np.max(self.data))
         self.axes.set_yscale('log')
         self.axes.set_ylabel('Counts')
         self.axes.set_xlabel('X Pixels')
+
+        self.countrate_label = self.axes.text(0.02, 0.9, '3 x 3 countrate:',
+                                              transform=self.axes.transAxes)
         self.draw()
 
     def zoom_to_fit(self):
@@ -547,7 +548,7 @@ class StarSelectorWindow(QDialog):
         if event.inaxes:
             self.cursor_textbox.setText('({:.0f}, {:.0f})'.format(event.xdata,
                                                                   event.ydata))
-            self.pixel_textbox.setText('{:.2f}'.format(self.data[int(event.ydata),
+            self.pixel_textbox.setText('{:.0f}'.format(self.data[int(event.ydata),
                                                                  int(event.xdata)]))
 
     def update_profile(self, event):
@@ -568,6 +569,15 @@ class StarSelectorWindow(QDialog):
             self.profile.axes.plot(x, y, c='cornflowerblue')
             self.profile.axes.set_xlim(int(np.floor(event.xdata - self.epsilon)),
                                        int(np.ceil(event.xdata + self.epsilon)))
+
+            countrate = np.sum(self.data[int(event.ydata) - 1:int(event.ydata) + 2,
+                                         int(event.xdata) - 1:int(event.xdata) + 2])
+            # self.profile.axes.text(0.02, 0.9, '3 x 3 countrate: {:.1f}'.format(countrate),
+            #                        transform=self.profile.axes.transAxes)
+
+            # print(dir(self.profile.countrate_label))
+            self.profile.countrate_label.set_text('3 x 3 countrate: {:.0f}'.format(countrate))
+
             self.profile.draw()
 
     def button_press_callback(self, event):
@@ -740,14 +750,30 @@ class StarSelectorWindow(QDialog):
 
     def fileQuit(self):
         '''Closes the star selector window'''
-        # if self.inds == []:
 
-        # If not being called from the master GUI, exit the whole application
-        if not self.in_master_GUI:
-            self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+        # If the user didn't choose any stars, ask if they really want to quit.
+        if self.inds == []:
+            no_stars_selected_dialog = QMessageBox()
+            no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
+            no_stars_selected_dialog.setInformativeText('The tool will not be able to continue. Do you want to quit anyway?')
+            no_stars_selected_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            no_stars_selected_dialog.buttonClicked.connect(self.nostars_dialog)
+            no_stars_selected_dialog.exec()
 
-        # Close the star selector dialog window
-        self.close()
+        # If they do, then quit.
+        if self.answer:
+            # If not being called from the master GUI, exit the whole application
+            if not self.in_master_GUI:
+                self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+
+            # Close the star selector dialog window
+            self.close()
+
+    def nostars_dialog(self, button):
+        if 'No' in button.text():
+            self.answer = False
+        elif 'Yes' in button.text():
+            self.answer = True
 
     def cancel(self):
         '''Closes the star selector window and clears indices'''
