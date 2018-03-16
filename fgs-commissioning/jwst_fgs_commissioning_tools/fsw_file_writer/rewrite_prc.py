@@ -18,6 +18,10 @@ def rewrite_prc(order, guider, root, out_dir, thresh_factor=0.9,
     all_rows = asc.read(all_psfs)
     labels = all_rows['label'].data
 
+    if len(set(labels)) != len(labels):
+        raise ValueError('Could not accurately map labels to segments. This is '
+                         'most likely due to incorrect labelling in the ALLpsfs.txt file.')
+
     if not order.isalpha():
         raise TypeError('Must enter only letters as PSF labels.')
 
