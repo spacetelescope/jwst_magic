@@ -194,7 +194,7 @@ def match_psfs_to_segments(x, y, global_alignment):
 
     # Determine boundaries of array
     x_min = min(x)
-    x_max = max(y)
+    x_max = max(x)
     y_min = min(y)
     y_max = max(y)
 
@@ -204,7 +204,7 @@ def match_psfs_to_segments(x, y, global_alignment):
         y_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
 
         x_coords = np.linspace(x_min, x_max, 9)
-        y_coords = np.linspace(y_min, y_max, 5)
+        y_coords = np.linspace(y_min, y_max, 5)[::-1]
     else:
         # Vertical orientation
         x_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
@@ -230,9 +230,9 @@ def match_psfs_to_segments(x, y, global_alignment):
         matched_labels.append(labels[i_seg])
 
     if len(set(matched_labels)) != len(matched_labels) and global_alignment:
-        log.warning('Could not accurately map labels to segments. This is an'+
-                     " issue only for the .prc re-writer.")
-        #raise ValueError('Could not accurately map labels to segments.')
+        log.warning('Could not accurately map labels to segments. It will not '
+                    'be possible to run fsw_file_writer.rewrite_prc using the '
+                    'ALLpsfs.txt file generated here.')
 
     return matched_labels
 
