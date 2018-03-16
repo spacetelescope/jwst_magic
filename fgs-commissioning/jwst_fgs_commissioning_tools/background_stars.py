@@ -1,11 +1,38 @@
 # Add background stars to an FGS image by copying current image
 import random
 import numpy as np
+from astropy.stats import sigma_clipped_stats
 
 from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
 from jwst_fgs_commissioning_tools import log
 
 def add_background_stars(image, stars, jmag, fgs_counts, guider):
+    """Add artificial copies of the input PSF to the image to mimic
+    background stars.
+
+    Arguments
+    ---------
+    image: numpy array
+        The input data with the original star
+    stars
+        Either a boolean or a dictionary that defines how to add the
+        additional stars to the image
+    jmag: float
+        The desired J magnitude of the original star
+    fgs_counts: float
+        The desired FGS counts in the original star
+    guider: int
+        The number of the guider used to take the data
+
+    Returns
+    -------
+    add_data: numpy array
+        Image array with original star and additional stars
+    """
+    # (Try to) only use the data, not the noise
+    mean, median, std = sigma_clipped_stats(image, sigma=0, iters=0)
+    image[image < mean] = 0
+
     # Randomly create 5 locations on the image
     size = 2048
     nstars_random = 5
