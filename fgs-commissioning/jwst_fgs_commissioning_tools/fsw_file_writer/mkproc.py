@@ -8,7 +8,7 @@ import shutil
 import numpy as np
 
 # LOCAL
-from jwst_fgs_commissioning_tools import coordinate_transforms
+from .. import coordinate_transforms
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]

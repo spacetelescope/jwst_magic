@@ -11,10 +11,10 @@ import numpy as np
 from astropy.io import fits
 
 # LOCAL
-from jwst_fgs_commissioning_tools.convert_image import convert_image_to_raw_fgs
-from jwst_fgs_commissioning_tools.star_selector import select_psfs
-from jwst_fgs_commissioning_tools.fsw_file_writer import buildfgssteps
-from jwst_fgs_commissioning_tools import log, utils, background_stars
+from . import log, utils, background_stars
+from .convert_image import convert_image_to_raw_fgs
+from .star_selector import select_psfs
+from .fsw_file_writer import buildfgssteps
 
 # Because Jupyter Notebook cannot open a matplotlib object, I have copied what is
 # done in Run FGS Commissioning Tool.ipynb into this script that should be run in

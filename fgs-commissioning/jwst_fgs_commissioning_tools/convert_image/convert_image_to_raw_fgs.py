@@ -68,9 +68,8 @@ from astropy.io import fits
 from scipy import signal
 
 # LOCAL
-from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
-from jwst_fgs_commissioning_tools import log, utils
-
+from .. import log, utils
+from ..convert_image import counts_to_jmag
 
 # Paths
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))

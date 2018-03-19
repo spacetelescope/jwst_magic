@@ -6,8 +6,8 @@ from astropy.io import fits
 import numpy as np
 
 # LOCAL
-from jwst_fgs_commissioning_tools import log, utils, coordinate_transforms
-from jwst_fgs_commissioning_tools.fsw_file_writer import mkproc
+from .. import log, utils, coordinate_transforms
+from ..fsw_file_writer import mkproc
 
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(FSW_PATH)[0]

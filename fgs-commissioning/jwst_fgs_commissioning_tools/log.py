@@ -17,7 +17,7 @@ import sys
 from functools import wraps
 
 # LOCAL
-from jwst_fgs_commissioning_tools import utils
+from . import utils
 
 
 DEFAULT_VERBOSITY_LEVEL = 50
