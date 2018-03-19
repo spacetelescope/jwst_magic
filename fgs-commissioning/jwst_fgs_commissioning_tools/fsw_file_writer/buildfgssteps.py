@@ -1,3 +1,63 @@
+'''Writes all flight software files for ID, ACQ, and/or TRK steps
+
+This module creates an FGS simulation object for ID, ACQ, and/or TRK
+steps, which it uses to create the necessary flight software files for
+use with the DHAS, the FGSES/CertLab, or just for user inspection. The
+files created for each step are as follows:
+
+    ID:
+        sky.fits (the input file after being time-normalized (converted
+            from counts/s to counts)
+        bias.fits (bias file used to create noisy FGS image)
+        cds.fits (correlated double sample)
+        ff.fits (full frame; image before CDS)
+        strips.fits (strips to run in DHAS)
+        strips.dat (strips to run in FGSES)
+        .gssscat
+        .stc
+        .prc (to run in DHAS or FGSES)
+    ACQ1 or ACQ2:
+        sky.fits (the input file after being time-normalized (converted
+            from counts/s to counts)
+        bias.fits (bias file used to create noisy FGS image)
+        cds.fits (correlated double sample)
+        .fits (to run in DHAS)
+        .dat (to run in FGSES)
+        .cat
+        .stc
+        .prc (to run in DHAS or FGSES)
+    LOSTRK:
+        .fits
+        .dat (to run in FGSES)
+    TRK:
+        .fits (to run in DHAS)
+
+Authors
+-------
+    - Keira Brooks
+    - Lauren Chambers
+
+Use
+---
+    This module can be executed in a Python shell as such:
+    ::
+        from jwst_fgs_commissioning_tools.fsw_file_writer import buildfgssteps
+        buildfgssteps.BuildFGSSteps(im, guider, root, step, out_dir)
+
+    Required arguments:
+        ``im`` - image array or filepath for the input FGS image
+        ``guider`` - number for guider 1 or guider 2
+        ``root`` - will be used to create the output directory, ./out/{root}
+        ``step`` - name of guiding step for which to create images
+            (expecting 'ID', 'ACQ1', 'ACQ2', 'TRK', or 'LOSTRK')
+    Optional arguments:
+        ``reg_file`` - file containing X/Y positions and countrates for
+            all stars in an image
+        ``configfile`` - file definiing parameters for each guider step
+        ``out_dir`` - where output FGS image(s) will be saved. If not
+            provided, the image(s) will be saved to ../out/{root}.
+'''
+
 # STDLIB
 import os
 
@@ -9,7 +69,6 @@ from matplotlib.colors import LogNorm
 
 # LOCAL
 from jwst_fgs_commissioning_tools import utils, log
-from jwst_fgs_commissioning_tools.star_selector import select_psfs
 from jwst_fgs_commissioning_tools.fsw_file_writer import config, getbias, write_files
 
 # DEFINE ALL PATHS
