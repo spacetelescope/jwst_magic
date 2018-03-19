@@ -2,8 +2,8 @@
 import random
 import numpy as np
 
-from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
-from jwst_fgs_commissioning_tools import log
+from . import log
+from .convert_image import counts_to_jmag
 
 def add_background_stars(image, jmag, fgs_counts, guider, nstars=5):
     # Randomly create 5 locations on the image

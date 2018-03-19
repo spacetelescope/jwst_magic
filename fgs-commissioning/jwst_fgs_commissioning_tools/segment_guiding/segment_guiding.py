@@ -22,7 +22,7 @@ from astropy.io import ascii as asc
 from astropy.table import Table
 from functools import partial
 
-from jwst_fgs_commissioning_tools import coordinate_transforms, utils
+from .. import coordinate_transforms, utils
 
 # Establish segment guiding files directory
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))

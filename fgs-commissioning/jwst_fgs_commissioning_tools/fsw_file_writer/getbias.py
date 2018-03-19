@@ -9,8 +9,7 @@ import numpy as np
 from astropy.io import fits
 
 #LOCAL
-from jwst_fgs_commissioning_tools import utils
-from jwst_fgs_commissioning_tools import log
+from .. import utils, log
 
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(FSW_PATH)[0]
