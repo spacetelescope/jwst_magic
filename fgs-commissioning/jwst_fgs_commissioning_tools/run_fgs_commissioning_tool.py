@@ -35,7 +35,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     log_path = os.path.join(OUT_PATH, 'logs')
     logname = utils.get_logname(log_path, taskname)
 
-    @log.logtofile(logname)
+    @log.logtofile(logname, 'debug')
     def run_all_with_logging(image, guider, root=None, fgs_counts=None, jmag=None,
                              nircam_det=None, nircam=True, global_alignment=False,
                              steps=None, in_file=None, bkgd_stars=False,
