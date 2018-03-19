@@ -15,13 +15,12 @@ import os
 import pprint
 import sys
 from functools import wraps
+import gc
 
 # LOCAL
 from . import utils
 
-
 DEFAULT_VERBOSITY_LEVEL = 50
-
 
 class Logger(object):
     """Base class for logging."""
@@ -135,14 +134,10 @@ class Logger(object):
         self.logger.removeHandler(handler)
 
 
-# class FgsLogger(Logger):
-#     """FGS logger."""
-#     pass
-
-# THE_LOGGER = FgsLogger("FGS")
-
+# Define FGS-specific logger object
 THE_LOGGER = Logger("FGS")
 
+# Define module attributes that can be called from anywhere in the package
 info = THE_LOGGER.info
 error = THE_LOGGER.error
 exception = THE_LOGGER.exception
@@ -161,13 +156,33 @@ add_stream_handler = THE_LOGGER.add_stream_handler
 remove_stream_handler = THE_LOGGER.remove_stream_handler
 
 
+# Define module methods that can be called from anywhere in the package
 def set_log_file(filename, level=logging.DEBUG, mode="w+"):
     """Output log info to `filename`."""
     utils.ensure_dir_exists(os.path.dirname(filename))
     file_stream = open(filename, mode)
+
     log_handler = THE_LOGGER.add_stream_handler(file_stream, level=level)
+    THE_LOGGER.logger.setLevel(level)
+
     return file_stream, log_handler  # So we can close it gracefully
 
+def parse_level(level):
+    if type(level) != int:
+        if level.upper() == 'DEBUG':
+            level = logging.DEBUG
+        elif level.upper() == 'INFO':
+            level = logging.INFO
+        elif level.upper() == 'WARNING':
+            level = logging.WARNING
+        elif level.upper() == 'ERROR':
+            level = logging.ERROR
+        elif level.upper() == 'CRITICAL':
+            level = logging.CRITICAL
+        else:
+            raise ValueError('Unknown log level {}'.format(level))
+
+    return level
 
 def close_log_file(file_stream, log_handler):
     """See :func:`set_log_file`."""
@@ -175,7 +190,7 @@ def close_log_file(file_stream, log_handler):
     file_stream.close()
 
 
-def logtofile(logfile):
+def logtofile(logfile, level=logging.DEBUG):
     """Decorator to log everything to a given file.
     Log is also displayed on screen.
 
@@ -226,16 +241,36 @@ def logtofile(logfile):
         @wraps(function)
         def wrapper(*args, **kwargs):
             # This is not going into the file, just screen.
-            THE_LOGGER.info('Started logging to {0}'.format(logfile))
+            level_int = parse_level(level)
+
+            # Deal with old open log files....
+            stream_handlers = []
+            for obj in gc.get_objects():
+                if type(obj) == logging.StreamHandler:
+                    stream_handlers.append(obj)
+            # for i, s in enumerate(stream_handlers):
+            #     print(i + 1, s.stream.name, s.stream, '\n')
+            python_output_handlers = [s for s in stream_handlers if s.stream.name == 'stdout'][:-1]
+            files = [s for s in stream_handlers if os.path.exists(s.stream.name)]
+            to_delete = python_output_handlers + files
+            for f in files:
+                f.stream.close()
+            for d in to_delete:
+                THE_LOGGER.remove_stream_handler(d)
+                del d
 
             # Start logging.
-            log_stream, log_handler = set_log_file(logfile)
+            if level_int < 30:
+                THE_LOGGER.info('Started logging to {0}'.format(logfile))
+            log_stream, log_handler = set_log_file(logfile, level_int)
 
             # Catch traceback, if any.
             try:
                 result = function(*args, **kwargs)
+                close_log_file(log_stream, log_handler)
             except Exception as e:
                 THE_LOGGER.exception(e)
+                close_log_file(log_stream, log_handler)
                 result = None
             finally:
                 # End logging!
