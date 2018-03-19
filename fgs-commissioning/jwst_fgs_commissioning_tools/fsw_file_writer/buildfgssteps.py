@@ -68,8 +68,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
 # LOCAL
-from jwst_fgs_commissioning_tools import utils, log
-from jwst_fgs_commissioning_tools.fsw_file_writer import config, getbias, write_files
+from .. import utils, log
+from ..fsw_file_writer import config, getbias, write_files
 
 # DEFINE ALL PATHS
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))

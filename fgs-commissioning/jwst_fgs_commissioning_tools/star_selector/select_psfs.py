@@ -24,8 +24,8 @@ from scipy import ndimage, signal
 
 
 # LOCAL
-from jwst_fgs_commissioning_tools import log, utils
-from jwst_fgs_commissioning_tools.star_selector import SelectStarsGUI
+from .. import log, utils
+from ..star_selector import SelectStarsGUI
 
 # Adjust matplotlib origin
 rcParams['image.origin'] = 'upper'
