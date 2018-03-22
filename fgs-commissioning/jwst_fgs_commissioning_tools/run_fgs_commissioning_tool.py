@@ -93,7 +93,9 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
 
             if bkgd_stars:
                 fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
-
+        else:
+            fgs_im = image
+            log.info("Assuming that the input image is a raw FGS image")
         # create reg file
         if star_selection:
             select_psfs.create_reg_file(fgs_im, root, guider,
