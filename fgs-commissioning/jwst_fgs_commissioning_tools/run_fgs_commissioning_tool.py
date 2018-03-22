@@ -1,3 +1,41 @@
+'''Run the FGS Commissioning Tools end-to-end
+
+~Description
+
+Authors
+-------
+    - Keira Brooks
+    - Lauren Chambers
+
+Use
+---
+    This module can be executed in a Python shell as such:
+    ::
+        from jwst_fgs_commissioning_tools.convert_image import convert_image_to_raw_fgs
+        convert_image_to_raw_fgs.convert_im(input_im, guider, root,
+            nircam=True, nircam_det=None, fgs_counts=None, jmag=None,
+            out_dir=None):
+
+    Required arguments:
+        ``input_image`` - filepath for the input (NIRCam or FGS) image
+        ``guider`` - number for guider 1 or guider 2
+        ``root`` - will be used to create the output directory, ./out/{root}
+    Optional arguments:
+        ``nircam`` - denotes if the input_image is an FGS or NIRCam
+            image. If True, the image will be converted to FGS format.
+            Unless out_dir is specified, the FGS-formatted image will
+            be saved to ../out/{root}/FGS_imgs/{root}_binned_pad_norm.fits
+        ``nircam_det`` - used to specify the detector of a provided
+            NIRCam image. If left blank, the detector will be extracted
+            from the header of the NIRCam FITS file.
+        ``fgs_counts`` and ``jmag`` - used to normalize the input
+            NIRCam image, either to a desired J magnitude or to a
+            desired number of FGS counts. The jmag parameter can also
+            be used to normalize an FGS image.
+        ``out_dir`` - where output FGS image(s) will be saved. If not
+            provided, the image(s) will be saved to ../out/{root}.
+'''
+
 # STDLIB
 import os
 import shutil
