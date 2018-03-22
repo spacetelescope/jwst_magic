@@ -69,9 +69,14 @@ class MasterGui(QWidget):
         inputGrid.addWidget(self.button_input_image, 1, 5)
 
         # Guider
-        inputGrid.addWidget(QLabel('Guider', self), 2, 0)
-        self.textbox_guider = QLineEdit(self)
-        inputGrid.addWidget(self.textbox_guider, 2, 2)
+        self.rb_g1 = QRadioButton("Guider 1")
+        self.rb_g1.setChecked(True)
+        self.rb_g1.toggled.connect(lambda: self.btnstate(self.rb_g1))
+        inputGrid.addWidget(self.rb_g1, 2, 0)
+
+        self.rb_g2 = QRadioButton("Guider 2")
+        self.rb_g2.toggled.connect(lambda: self.btnstate(self.rb_g2))
+        inputGrid.addWidget(self.rb_g2, 2, 1)
 
         # Root
         inputGrid.addWidget(QLabel('Root', self), 3, 0)
@@ -87,12 +92,19 @@ class MasterGui(QWidget):
         self.button_input_image.clicked.connect(self.on_click_out)
         inputGrid.addWidget(self.button_input_image, 4, 5)
 
+        ## Global Alignment flag
+        self.cb_ga = QCheckBox('Non-standard PSFs', self)
+        self.cb_ga.setCheckable(True)
+        if global_alignment:
+            self.cb_ga.toggle()
+        inputGrid.addWidget(self.cb_ga, 5, 0)
+
         # Background stars?
         self.cb_bkgd_stars = QCheckBox('Background stars', self)
         self.cb_bkgd_stars.setCheckable(True)
         if bkgd_stars:
             self.cb_bkgd_stars.toggle()
-        inputGrid.addWidget(self.cb_bkgd_stars, 5, 0)
+        inputGrid.addWidget(self.cb_bkgd_stars, 6, 0)
 
         mainGrid.addWidget(inputGroupBox, 1, 0, 5, 3)
 
@@ -109,18 +121,14 @@ class MasterGui(QWidget):
         if self.convert_im:
             self.cb_convert_im.toggle()
 
-        # Set to be a NIRCam or FGS image
-        self.cb_nircam = QCheckBox('NIRCam Image', self)
-        self.cb_nircam.setCheckable(True)
-        if nircam:
-            self.cb_nircam.toggle()
-        convertGrid.addWidget(self.cb_nircam, 2, 0)
+        self.rb_nircam = QRadioButton("NIRCam Image")
+        self.rb_nircam.setChecked(True)
+        self.rb_nircam.toggled.connect(lambda: self.fgsbtnstate(self.rb_nircam))
+        convertGrid.addWidget(self.rb_nircam, 2, 0)
 
-        self.cb_fgs = QCheckBox('FGS Image', self)
-        self.cb_fgs.setCheckable(True)
-        if not nircam:
-            self.cb_fgs.toggle()
-        convertGrid.addWidget(self.cb_fgs, 2, 2)
+        self.rb_fgs = QRadioButton("FGS Image")
+        self.rb_fgs.toggled.connect(lambda: self.fgsbtnstate(self.rb_fgs))
+        convertGrid.addWidget(self.rb_fgs, 2, 1)
 
         # Set NIRCam detector
         convertGrid.addWidget(QLabel('NIRCam Detector:', self), 3, 0)
@@ -128,12 +136,21 @@ class MasterGui(QWidget):
         convertGrid.addWidget(self.textbox_nircam_det, 3, 2)
 
         #Normalize by FGS counts or JMAG
+        self.rb_fgs_counts = QRadioButton("FGS Counts")
+        self.rb_fgs_counts.setChecked(True)
+        self.rb_fgs_counts.toggled.connect(lambda: self.magbtnstate(self.rb_fgs_counts))
+        convertGrid.addWidget(self.rb_fgs_counts, 4, 0)
+
+        self.rb_jmag = QRadioButton("J mag")
+        self.rb_jmag.toggled.connect(lambda: self.magbtnstate(self.rb_jmag))
+        convertGrid.addWidget(self.rb_jmag, 4, 1)
+
         # Add checkbox
-        self.cb_fgs_counts = QCheckBox('FGS Counts', self)
-        convertGrid.addWidget(self.cb_fgs_counts, 4, 0)
-        # Add checkbox
-        self.cb_jmag = QCheckBox('J mag', self)
-        convertGrid.addWidget(self.cb_jmag, 4, 2)
+        # self.cb_fgs_counts = QCheckBox('FGS Counts', self)
+        # convertGrid.addWidget(self.cb_fgs_counts, 4, 0)
+        # # Add checkbox
+        # self.cb_jmag = QCheckBox('J mag', self)
+        # convertGrid.addWidget(self.cb_jmag, 4, 2)
         # Add textbox
         convertGrid.addWidget(QLabel('Value:', self), 4, 3)
         self.textbox_value = QLineEdit(self)
@@ -143,23 +160,16 @@ class MasterGui(QWidget):
             self.textbox_value.setText(str(self.jmag_default))
         convertGrid.addWidget(self.textbox_value, 4, 4)
         # Set toggling for FGS counts and Jmag
-        self.cb_fgs_counts.toggled.connect(self.on_check_fgscounts)
-        self.cb_jmag.toggled.connect(self.on_check_jmag)
-        if fgs_counts:
-            self.cb_fgs_counts.toggle()
-        else:
-            self.cb_jmag.toggle()
-
-        ## Global Alighment flat
-        self.cb_ga = QCheckBox('Global Alignment', self)
-        self.cb_ga.setCheckable(True)
-        if global_alignment:
-            self.cb_ga.toggle()
-        convertGrid.addWidget(self.cb_ga, 5, 0)
+        # self.cb_fgs_counts.toggled.connect(self.on_check_fgscounts)
+        # self.cb_jmag.toggled.connect(self.on_check_jmag)
+        # if fgs_counts:
+        #     self.cb_fgs_counts.toggle()
+        # else:
+        #     self.cb_jmag.toggle()
 
         # Set toggling
         self.cb_convert_im.toggled.connect(self.on_check_convertimage)
-        mainGrid.addWidget(convertGroupBox, 7, 0, 3, 3)
+        mainGrid.addWidget(convertGroupBox, 7, 0, 5, 3)
 
         # ### Build the STAR SELECTION section ---------------------------------
         # If we want to use the star slection GUI
@@ -247,7 +257,7 @@ class MasterGui(QWidget):
         button_run.resize(button_run.minimumSizeHint())
         button_run.move(self.image_dim*.6, self.image_dim*.75)
 
-        button_done = QPushButton("Done", self)
+        button_done = QPushButton("Exit", self)
         button_done.resize(button_done.minimumSizeHint())
         button_done.move(self.image_dim*.75, self.image_dim*.75)
 
@@ -374,7 +384,7 @@ class MasterGui(QWidget):
         ''' Checking the FGS box in Convert Image - turn off NIRCam'''
         if is_toggle:
             if self.cb_nircam.isChecked():
-                self.cb_nircam.toggle()    
+                self.cb_nircam.toggle()
 
     def on_check_fgscounts(self, is_toggle):
         ''' Checking the FGS counts box in Convert Image - turn off J mag box'''
@@ -384,6 +394,9 @@ class MasterGui(QWidget):
             fgs_counts_default = counts_to_jmag.jmag_to_fgs_counts(self.jmag_default,
                                                                    self.textbox_guider.text())
             self.textbox_value.setText(str(int(fgs_counts_default)))
+        else:
+            if not self.cb_jmag.isChecked():
+                self.cb_jmag.toggle()
 
     def on_check_jmag(self, is_toggle):
         ''' Checking the J mag box in Convert Image - turn off FGS Counts box'''
@@ -392,6 +405,9 @@ class MasterGui(QWidget):
                 self.cb_fgs_counts.toggle()
             # Set Value back to default
             self.textbox_value.setText(str(self.jmag_default))
+        else:
+            if not self.cb_fgs_counts.isChecked():
+                self.cb_fgs_counts.toggle()
 
     def on_check_starselect(self, is_toggle):
         ''' Checking the star selection GUI box '''
@@ -403,6 +419,8 @@ class MasterGui(QWidget):
         else:
             self.textbox_infile.setEnabled(True)
             self.button_input_infile.setEnabled(True)
+            if not self.cb_infile.isChecked():
+                self.cb_infile.toggle()
 
     def on_check_infile(self, is_toggle):
         ''' Checking the star selection infile box '''
@@ -410,6 +428,9 @@ class MasterGui(QWidget):
             self.textbox_infile.setEnabled(False)
             self.button_input_infile.setEnabled(False)
             if self.cb_star_selection.isChecked():
+                self.cb_star_selection.toggle()
+        else:
+            if not self.cb_star_selection.isChecked():
                 self.cb_star_selection.toggle()
 
     def on_check_filewriter(self, is_toggle):
@@ -435,6 +456,45 @@ class MasterGui(QWidget):
             self.cb_acq2.setEnabled(False)
             self.cb_trk.setEnabled(False)
             self.cb_fg.setEnabled(False)
+
+    def btnstate(self,b):
+        if b.text() == "Button 1":
+            if b.isChecked() == True:
+                print(b.text()+" is selected")
+            else:
+                print(b.text()+" is deselected")
+
+        if b.text() == "Button 2":
+            if b.isChecked() == True:
+                print(b.text()+" is selected")
+            else:
+                print(b.text()+" is deselected")
+
+    def fgsbtnstate(self,b):
+        if b.text() == "FGS Image":
+            if b.isChecked() == True:
+                self.textbox_nircam_det.setEnabled(False)
+            else:
+                self.textbox_nircam_det.setEnabled(True)
+        if b.text() == "NIRCam Image":
+            if b.isChecked() == True:
+                self.textbox_nircam_det.setEnabled(True)
+            else:
+                self.textbox_nircam_det.setEnabled(False)
+
+    def magbtnstate(self,b):
+        if b.text() == "Button 1":
+            if b.isChecked() == True:
+                print(b.text()+" is selected")
+            else:
+                print(b.text()+" is deselected")
+
+        if b.text() == "Button 2":
+            if b.isChecked() == True:
+                print(b.text()+" is selected")
+            else:
+                print(b.text()+" is deselected")
+
 
     def openFileNameDialog(self):
         options = QFileDialog.Options()
