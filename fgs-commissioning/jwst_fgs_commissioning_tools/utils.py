@@ -5,11 +5,73 @@ import itertools
 import os
 import sys
 import time
+import logging.config
+import yaml
 
 # Third Party
 from astropy.io import fits
 import numpy as np
 
+PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
+LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
+
+def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
+                            level=logging.DEBUG):
+    '''Set up logger using YAML file
+
+    References
+    ----------
+    https://fangpenlin.com/posts/2012/08/26/good-logging-practice-in-python/
+    https://www.blog.pythonlibrary.org/2016/06/09/python-how-to-create-an-exception-logging-decorator/
+    https://docs.python.org/2/howto/logging.html
+    '''
+    # Parse logging level input
+    if type(level) != int:
+        if level.upper() == 'DEBUG':
+            level = logging.DEBUG
+        elif level.upper() == 'INFO':
+            level = logging.INFO
+        elif level.upper() == 'WARNING':
+            level = logging.WARNING
+        elif level.upper() == 'ERROR':
+            level = logging.ERROR
+        elif level.upper() == 'CRITICAL':
+            level = logging.CRITICAL
+        else:
+            raise ValueError('Unknown logging level {}'.format(level))
+
+    # Try to open the config file
+    if os.path.exists(path):
+        with open(path, 'rt') as f:
+            config = yaml.safe_load(f.read())
+
+        # Update the stdout handler level
+        config['handlers']['console']['level'] = level
+
+        # Add user's log filename to file handler
+        task_name = module_name.split('.')[-1].split('_')
+        task_name = ''.join(task_name)
+        log_label = '_'.join([task_name, root])
+        log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
+        logfile = get_logname(log_path, log_label)
+        config['handlers']['file_handler']['filename'] = logfile
+
+        # # Replace filler "my_module" logger with module-specific logger
+        # config['loggers'][name] = config['loggers']['my_module']
+        # del config['loggers']['my_module']
+
+        # Create logger from modified dictionary
+        logging.config.dictConfig(config)
+
+    # If the config file doesn't exist, just make a super basic logger
+    else:
+        raise FileNotFoundError('No log config file at {}'.format(path))
+        logging.basicConfig(module_name, level=level)
+
+    logger = logging.getLogger(module_name)
+    logger.info('Started logging to file {}'.format(logfile))
+
+    return logger
 
 def ensure_dir_exists(fullpath):
     """Creates dirs from ``fullpath`` if they do not already exist.

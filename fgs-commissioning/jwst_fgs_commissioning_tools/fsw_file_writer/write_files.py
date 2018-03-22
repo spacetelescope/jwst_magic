@@ -6,7 +6,7 @@ from astropy.io import fits
 import numpy as np
 
 # LOCAL
-from .. import log, utils, coordinate_transforms
+from .. import utils, coordinate_transforms
 from ..fsw_file_writer import mkproc
 
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -210,7 +210,7 @@ def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
         fmt = '{:04X} '
 
     else:
-        log.error("FSW File Writing: Observation mode not recognized. Returning.")
+        raise ValueError("FSW File Writing: Observation mode {} not recognized.".format(obsmode))
 
     with open(os.path.join(out_dir, outfile), 'w') as file_out:
         for dat in flat.astype(np.uint16):

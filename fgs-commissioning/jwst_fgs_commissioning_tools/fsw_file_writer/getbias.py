@@ -9,7 +9,7 @@ import numpy as np
 from astropy.io import fits
 
 #LOCAL
-from .. import utils, log
+from .. import utils
 
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(FSW_PATH)[0]
@@ -30,8 +30,7 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, imgsize):
     elif guider == 2:
         bias0 = np.copy(BIASZERO_G2)
     else:
-        log.error("Do not recognize guider {}. Exiting.".format(guider))
-        raise StandardError("Guider not recognized.")
+        raise ValueError("Guider {} not recognized.".format(guider))
 
     if imgsize == 2048:
         xlow, ylow = 0, 0

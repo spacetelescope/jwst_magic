@@ -1,0 +1,28 @@
+version: 1
+disable_existing_loggers: False
+formatters:
+    simple:
+        format: "%(asctime)s - %(levelname)s - %(message)s"
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        level: DEBUG
+        formatter: simple
+        stream: ext://sys.stdout
+
+    file_handler:
+        class: logging.FileHandler
+        level: INFO
+        formatter: simple
+        filename: None
+
+loggers:
+    jwst_fgs_commissioning_tools:
+        level: INFO
+        handlers: [console, file_handler]
+        propagate: no
+
+root:
+    level: INFO
+    handlers: [console]

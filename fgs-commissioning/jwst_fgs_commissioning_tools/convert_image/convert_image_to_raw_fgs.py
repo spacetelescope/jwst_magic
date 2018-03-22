@@ -61,6 +61,7 @@ Notes
 from glob import glob
 import itertools
 import os
+import logging
 
 # THIRD PARTY
 import numpy as np
@@ -68,7 +69,7 @@ from astropy.io import fits
 from scipy import signal
 
 # LOCAL
-from .. import log, utils
+from .. import utils
 from ..convert_image import counts_to_jmag
 
 # Paths
@@ -85,6 +86,9 @@ FGS_PLATE_SIZE = 2.4  # FGS image size in arcseconds
 
 # Constants to change
 BAD_PIXEL_THRESH = 2000  # Bad pixel threshold
+
+# Start logger
+LOGGER = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------------------
 def bad_pixel_correction(data, bp_thresh):
@@ -266,7 +270,7 @@ def nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
             image = np.swapaxes(image, 0, 1)
 
     else:
-        log.error('Unfamiliar NIRCam detector provided. Check the header keyword' +
+        raise ValueError('Unfamiliar NIRCam detector provided. Check the header keyword' +
                   ' "DETECTOR" for the NIRCAM module, then re-run using the ' +
                   '"nircam_det" keyword to bypass the header query.')
 
@@ -340,7 +344,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
     else:
         detector = header['DETECTOR'][3:].strip()
 
-    log.info("Image Conversion: NIRCAM Detector = {}".format(detector))
+    LOGGER.info("Image Conversion: NIRCAM Detector = {}".format(detector))
 
     # Determine whether the NIRCam image is short- or long-wave to determine
     # the pixel scale
@@ -488,7 +492,7 @@ def normalize_data(data, fgs_counts, threshold=5):
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
-               nircam_det=None, out_dir=None):
+               nircam_det=None, out_dir=None, logger_passed=False):
     '''Takes NIRCam or FGS image; turns it into an FGS-like image and
     saves FITS file
 
@@ -530,76 +534,85 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
         If the input filename has more than one frame
     '''
 
-    # ---------------------------------------------------------------------
-    # Find FGS counts to be used for normalization
-    if fgs_counts is None:
-        if jmag is None:
-            log.warning("Image Conversion: No counts or J magnitude given, setting to default")
-            jmag = 11
-        fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-    else:
-        jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
+    # Start logging
+    if not logger_passed:
+        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-    log.info("Image Conversion: J magnitude = {:.1f}, FGS counts = {:.1f}".format(jmag, fgs_counts))
+    try:
+        # ---------------------------------------------------------------------
+        # Find FGS counts to be used for normalization
+        if fgs_counts is None:
+            if jmag is None:
+                LOGGER.warning("Image Conversion: No counts or J magnitude given, setting to default")
+                jmag = 11
+            fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
+        else:
+            jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
 
-    # ---------------------------------------------------------------------
-    # Determine output path and open file
-    basename = os.path.basename(input_im)
+        LOGGER.info("Image Conversion: J magnitude = {:.1f}, FGS counts = {:.1f}".format(jmag, fgs_counts))
 
-    log.info("Image Conversion: " +
-             "Beginning image conversion to guider {} FGS image".format(guider))
+        # ---------------------------------------------------------------------
+        # Determine output path and open file
+        basename = os.path.basename(input_im)
 
-    output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
-    utils.ensure_dir_exists(output_path_save)
+        LOGGER.info("Image Conversion: " +
+                 "Beginning image conversion to guider {} FGS image".format(guider))
 
-    data = fits.getdata(input_im, header=False)
-    header = fits.getheader(input_im, ext=0)
+        output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
+        utils.ensure_dir_exists(output_path_save)
 
-    if len(data.shape) > 2:
-        print(data.shape)
-        raise TypeError('Expecting a single frame or slope image.')
+        data = fits.getdata(input_im, header=False)
+        header = fits.getheader(input_im, ext=0)
 
-    # ---------------------------------------------------------------------
-    # Create raw FGS image
-    if nircam:
-        log.info("Image Conversion: This is a NIRCam image")
+        if len(data.shape) > 2:
+            print(data.shape)
+            raise TypeError('Expecting a single frame or slope image.')
 
-        # Pull out DQ array for this image
-        dq_arr = fits.getdata(input_im, extname='DQ')
-        if not dq_arr.min() == 1 and not dq_arr.max() == 1:
-            data = correct_nircam_dq(data, dq_arr)
+        # ---------------------------------------------------------------------
+        # Create raw FGS image
+        if nircam:
+            LOGGER.info("Image Conversion: This is a NIRCam image")
 
-        # Rotate the NIRCAM image into FGS frame
-        nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
-        # Pad image
-        data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
+            # Pull out DQ array for this image
+            dq_arr = fits.getdata(input_im, extname='DQ')
+            if not dq_arr.min() == 1 and not dq_arr.max() == 1:
+                data = correct_nircam_dq(data, dq_arr)
 
-    else:
-        log.info("Image Conversion: This is an FGS image")
-        guider = utils.get_guider(header)
+            # Rotate the NIRCAM image into FGS frame
+            nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
+            # Pad image
+            data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
-        try:
-            origin = header['ORIGIN'].strip()
-            if origin == 'ITM':
-                log.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
-                data = sci_to_fgs_raw(data, guider)
-        except KeyError:
-            pass
+        else:
+            LOGGER.info("Image Conversion: This is an FGS image")
+            guider = utils.get_guider(header)
 
-    # Normalize image
-    data_norm = normalize_data(data, fgs_counts)
+            try:
+                origin = header['ORIGIN'].strip()
+                if origin == 'ITM':
+                    LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
+                    data = sci_to_fgs_raw(data, guider)
+            except KeyError:
+                pass
 
-    # Any value above 65535 or below 0 will wrap when converted to uint16
-    data_norm = utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
+        # Normalize image
+        data_norm = normalize_data(data, fgs_counts)
 
-    # Load header file
-    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
-    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                               '{}_G{}.fits'.format(root, guider))
+        # Any value above 65535 or below 0 will wrap when converted to uint16
+        data_norm = utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
 
-    hdr = fits.getheader(header_file, ext=0)
-    utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
+        # Load header file
+        header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                                   '{}_G{}.fits'.format(root, guider))
 
-    log.info("Image Conversion complete for {}, guider = {}".format(root, guider))
+        hdr = fits.getheader(header_file, ext=0)
+        utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
+
+        LOGGER.info("Image Conversion complete for {}, guider = {}".format(root, guider))
+
+    except Exception as e:
+        LOGGER.exception(e)
+        raise
 
     return data_norm
