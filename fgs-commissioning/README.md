@@ -30,7 +30,7 @@ files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
 
 
 ### 4. Segment Guiding Tool (``segment_guiding``)
-Used to faciliate guiding on unstacked segment arrays during commissioning. When
+Used to facilitate guiding on unstacked segment arrays during commissioning. When
 provided 1) the commanded RA and Dec of a guide star and 2) the V2/V3 (or x/y)
 positions of all segments in an array, the segment guiding tool calculates the
 effective RA and Dec of all segments on the sky.
@@ -42,7 +42,7 @@ Installation notes
 
 This package was developed in a python 3.5 environment. Python 2.7 is not yet supported.
 
-The following supplmental packages are required:
+The following supplemental packages are required:
 * pysiaf (download here: https://grit.stsci.edu/ins-tel/jwst_siaf_prototype)
 * photutils
 

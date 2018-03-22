@@ -1,5 +1,49 @@
-# Built using template at:
-# https://matplotlib.org/examples/user_interfaces/embedding_in_qt5.html
+"""Interactive star selector GUI.
+
+Builds a GUI with PyQt5 that prompts the user to click on a data image
+to select guide and/or reference stars, which are then saved as output.
+To help the user select desirable stars, the GUI includes a dynamic
+matplotlib plot that displays the shape of the signal under the cursor.
+The user can also adjust the image boundaries and stretch. Once
+multiple stars have been selected, the user can choose to delete a
+selected star, or convert a reference star into the guide star.
+Built using template found at matplotlib.org (see references).
+
+Authors
+-------
+    - Lauren Chambers
+
+Use
+---
+This GUI can be run in the python shell or as a module, as such:
+    ::
+    from jwst_fgs_commissioning_tools.star_selector import SelectStarsGUI
+    inds = SelectStarsGUI.run_SelectStars(data_array, x_list, y_list, dist)
+
+References
+----------
+For matplotlib canvas example, see:
+    https://matplotlib.org/examples/user_interfaces/embedding_in_qt5.html
+
+Notes
+-----
+1. For the GUI to run successfully, the QtAgg matplotlib backend should
+be used. This can be set by declaring:
+    ::
+    import matplotlib
+    matplotlib.use('Qt5Agg')
+
+Note that this declaration must occur before pyplot or any other
+matplotlib-dependent packages are imported.
+
+2. Because this code is run in a suite that also uses pyplot, there
+will already by instances of the QApplication object floating around
+when this GUI is called. However, only one instance of QApplication can
+be run at once without things crashing terribly. In all GUIs within the
+FGS Commissioning Tools package, be sure to use the existing instance
+of QApplication (access it at QtCore.QCoreApplication.instance()) when
+calling the QApplication instance to run a window/dialog/GUI.
+"""
 
 # Standard Library
 from __future__ import unicode_literals
@@ -12,20 +56,18 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QApplication, \
-                            QSizePolicy, QFormLayout, QPushButton, QLineEdit, \
-                            QLabel, QTextEdit, QRadioButton, QGroupBox, \
-                            QGridLayout
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
+                             QLabel, QTextEdit, QRadioButton, QGroupBox,
+                             QSizePolicy, QGridLayout, QDialog, QMessageBox)
 from PyQt5.QtCore import pyqtSlot
-from astropy.io import fits
 
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['font.weight'] = 'light'
 matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
 
-class MyMplCanvas(FigureCanvas):
+class StarClickerMatplotlibCanvas(FigureCanvas):
     """Creates a matplotlib canvas as a PyQt widget to plot an FGS image.
 
     Initializes and draws a matplotlib canvas which plots the following:
@@ -80,13 +122,14 @@ class MyMplCanvas(FigureCanvas):
         self.draw()
 
     def init_profile(self):
-        # x_range = range(2048)
-        # self.y_slices = [self.data[i] for i in range(2048)]
-        # self.lines = [self.axes.plot(x_range, y, c='white') for y in self.y_slices]
-        self.axes.set_ylim(np.min(self.data) / 5, 5 * np.max(self.data))
+        profile_min = max(np.min(self.data) / 5, 1e-1)
+        self.axes.set_ylim(profile_min, 5 * np.max(self.data))
         self.axes.set_yscale('log')
         self.axes.set_ylabel('Counts')
         self.axes.set_xlabel('X Pixels')
+
+        self.countrate_label = self.axes.text(0.02, 0.9, '3 x 3 countrate:',
+                                              transform=self.axes.transAxes)
         self.draw()
 
     def zoom_to_fit(self):
@@ -104,14 +147,14 @@ class MyMplCanvas(FigureCanvas):
         ax_range = max(x_range, y_range)  # Choose the larger of the dimensions
         ax_range += 100  # Make sure not to clip off the edge of border PSFS
 
-        self.axes.set_ylim(min(2048, x_mid + ax_range/2),
-                           max(0, x_mid - ax_range/2))
-        self.axes.set_xlim(max(0, y_mid - ax_range/2),
-                           min(2048, y_mid + ax_range/2))
+        self.axes.set_ylim(min(2048, x_mid + ax_range / 2),
+                           max(0, x_mid - ax_range / 2))
+        self.axes.set_xlim(max(0, y_mid - ax_range / 2),
+                           min(2048, y_mid + ax_range / 2))
         self.draw()
 
 
-class ApplicationWindow(QtWidgets.QMainWindow):
+class StarSelectorWindow(QDialog):
     """Interactive PyQt GUI window used to select stars from an FGS image.
 
 
@@ -183,13 +226,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     fileQuit
         Closes the application
     """
-    def __init__(self, data=None, x=None, y=None, dist=None, qApp=None,
+    def __init__(self, data, x, y, dist, qApp, in_master_GUI,
                  print_output=False):
         '''Defines attributes; calls initUI() method to set up user interface.'''
         self.qApp = qApp
         self.print_output = print_output
 
-        self.title = 'PyQt5 matplotlib example - pythonspot.com'
         self.image_dim = 800
 
         self.data = data
@@ -201,6 +243,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.inds_of_inds = []
         self.epsilon = dist
 
+        self.in_master_GUI = in_master_GUI
+
+        # Initialize dialog object
+        QDialog.__init__(self, modal=True)
+
         # Initialize user interface
         self.initUI()
 
@@ -208,18 +255,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         '''Sets up interactive graphical user interface.
         '''
 
-        # Set window attributes
-        QMainWindow.__init__(self)
-        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        # Set up star selector dialog window
         self.setWindowTitle("FGS Guide & Reference Star Selector")
-        self.main_widget = QWidget(self)
         mainGrid = QGridLayout()  # set grid layout
-        self.main_widget.setLayout(mainGrid)
-        self.main_widget.setFocus()
-        self.setCentralWidget(self.main_widget)
+        self.setLayout(mainGrid)
+        self.setFocus()
 
         # Add plot - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        sc = MyMplCanvas(self.main_widget, width=5, height=4, dpi=100,
+        sc = StarClickerMatplotlibCanvas(self, width=5, height=4, dpi=100,
                          data=self.data, x=self.x, y=self.y, left=0.1, right=0.9)
         self.canvas = sc
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
@@ -244,7 +287,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # Show value under cursor
         self.pixel_label = QLabel('Pixel Value:', self,
-                                   alignment=QtCore.Qt.AlignRight)
+                                  alignment=QtCore.Qt.AlignRight)
         mainGrid.addWidget(self.pixel_label, 5, 0)
 
         self.pixel_textbox = QLineEdit(self)
@@ -296,8 +339,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # mainGrid.setRowMinimumHeight(1, self.image_dim*.2)
 
         # Plot slice of profile under cursor
-        prof = MyMplCanvas(self.main_widget, width=4, height=3, dpi=100,
-                           data=self.data, left=0.2, right=0.95, bottom=0.2)
+        prof = StarClickerMatplotlibCanvas(self, width=4, height=3, dpi=100,
+                                           data=self.data, left=0.2, right=0.95,
+                                           bottom=0.2)
         prof.init_profile()
         self.profile = prof
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
@@ -321,7 +365,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         cbarGrid.addWidget(self.vmax_textbox, 1, 1)
 
         self.cbarlims_button = QPushButton('Update colorbar limits', self)
-        self.cbarlims_button.clicked.connect(self.update_cbar)   # connect button to function on_click
+        self.cbarlims_button.clicked.connect(self.update_cbar)
         cbarGrid.addWidget(self.cbarlims_button, 2, 0, 1, 2)
 
         mainGrid.addWidget(cbarGroupBox, 3, 3, 3, 1)
@@ -352,7 +396,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         axGrid.addWidget(self.y2_textbox, 2, 3)
 
         self.axlims_button = QPushButton('Update axis limits', self)
-        self.axlims_button.clicked.connect(self.update_axes)   # connect button to function on_click
+        self.axlims_button.clicked.connect(self.update_axes)
         axGrid.addWidget(self.axlims_button, 3, 0, 1, 5)
 
         # Add "Zoom Fit" button
@@ -435,12 +479,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         mainGrid.addWidget(self.cancel_button, 4, 4, 2, 1,
                            alignment=QtCore.Qt.AlignVCenter)
 
+        # Show GUI - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        self.show()
+
     @pyqtSlot()
     def eventFilter(self, remove_button, event):
         '''Parse out the cursor moving in or out of a star deletion button, and
         updating the matplotlib axis with a red highlighted circle accordingly'''
         if event.type() == QtCore.QEvent.Enter:
-            if remove_button.isEnabled() == True:
+            if remove_button.isEnabled():
                 # Determine index of star corresponding to button
                 star_ind = self.remove_buttons.index(remove_button)
                 ind_of_star_ind = self.inds_of_inds.index(star_ind)
@@ -452,7 +499,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             return True
 
         if event.type() == QtCore.QEvent.Leave:
-            if remove_button.isEnabled() == True:
+            if remove_button.isEnabled():
                 # Determine index of star corresponding to button
                 star_ind = self.remove_buttons.index(remove_button)
                 ind_of_star_ind = self.inds_of_inds.index(star_ind)
@@ -501,7 +548,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         if event.inaxes:
             self.cursor_textbox.setText('({:.0f}, {:.0f})'.format(event.xdata,
                                                                   event.ydata))
-            self.pixel_textbox.setText('{:.2f}'.format(self.data[int(event.ydata),
+            self.pixel_textbox.setText('{:.0f}'.format(self.data[int(event.ydata),
                                                                  int(event.xdata)]))
 
     def update_profile(self, event):
@@ -522,6 +569,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.profile.axes.plot(x, y, c='cornflowerblue')
             self.profile.axes.set_xlim(int(np.floor(event.xdata - self.epsilon)),
                                        int(np.ceil(event.xdata + self.epsilon)))
+
+            countrate = np.sum(self.data[int(event.ydata) - 1:int(event.ydata) + 2,
+                                         int(event.xdata) - 1:int(event.xdata) + 2])
+            # self.profile.axes.text(0.02, 0.9, '3 x 3 countrate: {:.1f}'.format(countrate),
+            #                        transform=self.profile.axes.transAxes)
+
+            # print(dir(self.profile.countrate_label))
+            self.profile.countrate_label.set_text('3 x 3 countrate: {:.0f}'.format(countrate))
+
             self.profile.draw()
 
     def button_press_callback(self, event):
@@ -692,23 +748,49 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         return removestar
 
-
     def fileQuit(self):
-        '''Closes the application'''
-        # if self.inds == []:
+        '''Closes the star selector window'''
 
-        self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
-        self.close()
+        # If the user didn't choose any stars, ask if they really want to quit.
+        if self.inds == []:
+            no_stars_selected_dialog = QMessageBox()
+            no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
+            no_stars_selected_dialog.setInformativeText('The tool will not be able to continue. Do you want to quit anyway?')
+            no_stars_selected_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            no_stars_selected_dialog.buttonClicked.connect(self.nostars_dialog)
+            no_stars_selected_dialog.exec()
+
+        # If they do, then quit.
+        if self.answer:
+            # If not being called from the master GUI, exit the whole application
+            if not self.in_master_GUI:
+                self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+
+            # Close the star selector dialog window
+            self.close()
+
+    def nostars_dialog(self, button):
+        if 'No' in button.text():
+            self.answer = False
+        elif 'Yes' in button.text():
+            self.answer = True
 
     def cancel(self):
-        '''Closes the application and clears indices'''
+        '''Closes the star selector window and clears indices'''
+
+        # Clear the indices (i.e. don't save user selections)
         self.inds = []
-        self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+
+        # If not being called from the master GUI, exit the whole application
+        if not self.in_master_GUI:
+            self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+
+        # Close the star selector dialog window
         self.close()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def run_SelectStars(data, x, y, dist, print_output=False):
+def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
     '''Calls a PyQt GUI to allow interactive user selection of guide and reference stars.
 
     Params
@@ -732,29 +814,28 @@ def run_SelectStars(data, x, y, dist, print_output=False):
     '''
 
     # RUN GUI
-    # plt.close()
-    qApp = QApplication(sys.argv)
-    aw = ApplicationWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
-                           print_output=print_output)
-    aw.show()
+    if masterGUIapp:
+        qApp = masterGUIapp
+        in_master_GUI = True
+    else:
+        qApp = QtCore.QCoreApplication.instance()
+        if qApp is None:
+            qApp = QApplication(sys.argv)
+        in_master_GUI = False
+
+    window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
+                                in_master_GUI=in_master_GUI,
+                                print_output=print_output)
 
     try:
         plt.get_current_fig_manager().window.raise_()  # Bring window to front
     except AttributeError:
         pass
 
-    inds = aw.inds
-    qApp.exec_()  # Begin interactive session; pauses until qApp.exit() is called
+    if masterGUIapp:
+        window.exec_()  # Begin interactive session; pauses until window.exit() is called
+    else:
+        qApp.exec_()
+    inds = window.inds
 
     return inds
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-if __name__ == '__main__':
-    data = fits.open('../data/LMCfootprint_80/LMCfootprint_80.31512449419834_-70.45278790693078.fits')[0].data
-    data[data == 0] = 0.1  # Adjust so 0 shows up as such with a logNorm colorbar
-    gauss_sigma = 5
-    dist = 16
-
-    inds = run_SelectStars(data, gauss_sigma, dist)

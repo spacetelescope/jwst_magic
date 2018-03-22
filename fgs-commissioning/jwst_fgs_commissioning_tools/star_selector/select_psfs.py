@@ -194,7 +194,7 @@ def match_psfs_to_segments(x, y, global_alignment):
 
     # Determine boundaries of array
     x_min = min(x)
-    x_max = max(y)
+    x_max = max(x)
     y_min = min(y)
     y_max = max(y)
 
@@ -204,7 +204,7 @@ def match_psfs_to_segments(x, y, global_alignment):
         y_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
 
         x_coords = np.linspace(x_min, x_max, 9)
-        y_coords = np.linspace(y_min, y_max, 5)
+        y_coords = np.linspace(y_min, y_max, 5)[::-1]
     else:
         # Vertical orientation
         x_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
@@ -230,9 +230,9 @@ def match_psfs_to_segments(x, y, global_alignment):
         matched_labels.append(labels[i_seg])
 
     if len(set(matched_labels)) != len(matched_labels) and global_alignment:
-        log.warning('Could not accurately map labels to segments. This is an'+
-                     " issue only for the .prc re-writer.")
-        #raise ValueError('Could not accurately map labels to segments.')
+        log.warning('Could not accurately map labels to segments. It will not '
+                    'be possible to run fsw_file_writer.rewrite_prc using the '
+                    'ALLpsfs.txt file generated here.')
 
     return matched_labels
 
@@ -331,7 +331,7 @@ def parse_in_file(in_file):
 
     return out_cols, coords, nref
 
-def manual_star_selection(data, global_alignment, testing=False):
+def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=None):
     '''Algorithmically find and locate all PSFs in image using
     photutils.find_peaks; prompt user to select guide and reference stars
     using GUI.'''
@@ -371,7 +371,8 @@ def manual_star_selection(data, global_alignment, testing=False):
         gui_data = data.copy()
         gui_data[data == 0] = 0.1  # Alter null pixel values for LogNorm imshow
         inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
-                                              print_output=False)
+                                              print_output=False,
+                                              masterGUIapp=masterGUIapp)
     # If in testing mode, just make a random list of indices
     else:
         # Make random list of inds
@@ -396,7 +397,7 @@ def manual_star_selection(data, global_alignment, testing=False):
 
 def create_reg_file(data, root, guider, in_file=None,
                     global_alignment=False, return_nref=False, testing=False,
-                    out_dir=None):
+                    out_dir=None, masterGUIapp=None):
 
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir)
@@ -413,7 +414,7 @@ def create_reg_file(data, root, guider, in_file=None,
     else:
         # If no .incat or reg file provided, create reg file with manual
         # star selection using the SelectStarsGUI
-        cols, coords, nref, ALL_cols = manual_star_selection(data, global_alignment, testing)
+        cols, coords, nref, ALL_cols = manual_star_selection(data, global_alignment, testing, masterGUIapp)
 
     # Save PNG of image and all PSF locations in out_dir
     plot_centroids(data, coords, root, guider, out_dir)
