@@ -1,18 +1,12 @@
-import pysiaf
-
-# LOCAL
-try:
-    import log
-except ImportError:
-    in_tool = False
-
 '''
 Convert between FGS raw/native frame (pixels), ideal angle frame (arcsec), and
 DHAS frame (arcsec).
 '''
 
+import pysiaf
+
 # Open SIAF with pysiaf
-fgs_siaf = pysiaf.Siaf('FGS')
+FGS_SIAF = pysiaf.Siaf('FGS')
 
 def Raw2Det(x_raw, y_raw):
     '''
@@ -33,13 +27,11 @@ def Raw2Idl(x_raw, y_raw, guider):
     x_det, y_det = Raw2Det(x_raw, y_raw)
 
     if guider == 1:
-        fgs_full = fgs_siaf['FGS1_FULL']
+        fgs_full = FGS_SIAF['FGS1_FULL']
     elif guider == 2:
-        fgs_full = fgs_siaf['FGS2_FULL']
+        fgs_full = FGS_SIAF['FGS2_FULL']
 
     # If invalid guider number provided...
-    elif in_tool:
-        log.error('Unrecognized guider number: {}'.format(guider))
     else:
         raise ValueError('Unrecognized guider number: {}'.format(guider))
 
@@ -57,13 +49,11 @@ def Raw2Tel(x_raw, y_raw, guider):
     x_det, y_det = Raw2Det(x_raw, y_raw)
 
     if int(guider) == 1:
-        fgs_full = fgs_siaf['FGS1_FULL']
+        fgs_full = FGS_SIAF['FGS1_FULL']
     elif int(guider) == 2:
-        fgs_full = fgs_siaf['FGS2_FULL']
+        fgs_full = FGS_SIAF['FGS2_FULL']
 
     # If invalid guider number provided...
-    elif in_tool:
-        log.error('Unrecognized guider number: {}'.format(guider))
     else:
         raise ValueError('Unrecognized guider number: {}'.format(guider))
 
@@ -102,16 +92,13 @@ def Raw2DHAS(x_raw, y_raw, guider):
 def DHAS2Raw(x_dhas, y_dhas, guider):
 
     if int(guider) == 1:
-        fgs_full = fgs_siaf['FGS1_FULL']
+        fgs_full = FGS_SIAF['FGS1_FULL']
     elif int(guider) == 2:
-        fgs_full = fgs_siaf['FGS2_FULL']
+        fgs_full = FGS_SIAF['FGS2_FULL']
 
     # If invalid guider number provided...
-    elif in_tool:
-        log.error('Unrecognized guider number: {}'.format(guider))
     else:
         raise ValueError('Unrecognized guider number: {}'.format(guider))
-
 
     # DHAS to ideal
     x_idealangle = -x_dhas

@@ -60,6 +60,7 @@ Use
 
 # STDLIB
 import os
+import logging
 
 # Third Party
 from astropy.io import fits
@@ -68,7 +69,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
 # LOCAL
-from .. import utils, log
+from .. import utils
 from ..fsw_file_writer import config, getbias, write_files
 
 # DEFINE ALL PATHS
@@ -77,47 +78,58 @@ PACKAGE_PATH = os.path.split(FSW_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
+# Start logger
+LOGGER = logging.getLogger(__name__)
+
 class BuildFGSSteps(object):
     '''
     Creates an FGS simulation object for ID, ACQ, and/or TRK stages to be used
     with DHAS.
     '''
     def __init__(self, im, guider, root, step, reg_file=None, configfile=None,
-                 out_dir=None):
-        # Practical things
-        self.guider = guider
-        self.root = root
-        self.step = step
-        self.yoffset = 12
+                 out_dir=None, logger_passed=False):
+        # Set up logger
+        if not logger_passed:
+            utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-        ## DEFINE ALL THINGS PATHS
-        self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
-        utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
-        utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
-        utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
+        try:
+            # Practical things
+            self.guider = guider
+            self.root = root
+            self.step = step
+            self.yoffset = 12
 
-        ## READ IN IMAGE
-        if isinstance(im, str):
-            data = fits.getdata(im) #*_bin_norm from FGS_bin_tool
-            self.input_im = data
-        else:
-            self.input_im = im
+            ## DEFINE ALL THINGS PATHS
+            self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+            utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
+            utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
+            utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
 
-        # Correct for negative, saturated pixels and other nonsense
-        self.input_im = utils.correct_image(self.input_im)
+            ## READ IN IMAGE
+            if isinstance(im, str):
+                data = fits.getdata(im) #*_bin_norm from FGS_bin_tool
+                self.input_im = data
+            else:
+                self.input_im = im
 
-        # THEN convert to uint16
-        self.input_im = np.uint16(self.input_im)
+            # Correct for negative, saturated pixels and other nonsense
+            self.input_im = utils.correct_image(self.input_im)
 
-        log.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
+            # THEN convert to uint16
+            self.input_im = np.uint16(self.input_im)
 
-        self.get_coords_and_counts(reg_file=reg_file)
+            LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
 
-        section = '{}_dict'.format(self.step.lower())
-        config_ini = self.build_step(section, configfile)
-        self.image = self.create_img_arrays(section, config_ini)
-        self.write()
+            self.get_coords_and_counts(reg_file=reg_file)
 
+            section = '{}_dict'.format(self.step.lower())
+            config_ini = self.build_step(section, configfile)
+            self.image = self.create_img_arrays(section, config_ini)
+            self.write()
+
+        except Exception as e:
+            LOGGER.exception(e)
+            raise
 
     ### Guide star and reference star coordinates and countrates
     def get_coords_and_counts(self, reg_file=None):
@@ -128,7 +140,7 @@ class BuildFGSSteps(object):
             reg_file = os.path.join(self.out_dir,
                                     '{0}_G{1}_regfile.txt'.format(self.root,
                                                                   self.guider))
-        log.info("FSW File Writing: Using {} as the reg file".format(reg_file))
+        LOGGER.info("FSW File Writing: Using {} as the reg file".format(reg_file))
 
         if reg_file.endswith('reg'):
             self.xarr, self.yarr = np.loadtxt(reg_file)
