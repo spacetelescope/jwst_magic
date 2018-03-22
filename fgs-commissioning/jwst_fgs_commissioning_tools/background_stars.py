@@ -1,9 +1,12 @@
 # Add background stars to an FGS image by copying current image
 import random
+import logging
 import numpy as np
 
-from . import log
 from .convert_image import counts_to_jmag
+
+# Start logger
+LOGGER = logging.getLogger(__name__)
 
 def add_background_stars(image, jmag, fgs_counts, guider, nstars=5):
     # Randomly create 5 locations on the image
@@ -14,7 +17,7 @@ def add_background_stars(image, jmag, fgs_counts, guider, nstars=5):
     # Determine jmag and fgs_counts
     if not fgs_counts:
         if not jmag:
-            log.warning('No counts or J magnitude given, setting to default')
+            LOGGER.warning('No counts or J magnitude given, setting to default')
             jmag = 11
         fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
     else:
