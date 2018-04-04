@@ -4,7 +4,9 @@
 The Mosaic Simulator can be used to generate images with WCS header information consistent with the different observations of 
 OTE-01 Initial Image Mosaic (APT program 1134):
 
-![alt text](https://grit.stsci.edu/wfsc/tools/raw/commissioning/OTE-01-Observations.png "Initial Image Mosaic Observations")
+![alt text](https://grit.stsci.edu/wfsc/tools/blob/master/mosaic-simulator/OTE-01-Observations.png "Initial Image Mosaic Observations")
+
+The necessary datafiles can be downloaded from central store: ***REMOVED***/lajoie/InitialMosaicData/
 
 
 The sequence of events as the tool runs is as follows:
