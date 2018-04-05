@@ -1,6 +1,5 @@
-# WFSC Ancillary Tools for Commissioning
+# WFSC Mosaic Simulator
 
-## 1. Mosaic Simulator
 The Mosaic Simulator can be used to generate images with WCS header information consistent with the different observations of 
 OTE-01 Initial Image Mosaic (APT program 1134):
 
@@ -26,8 +25,3 @@ The user should specify in the script which observation number is desired. Value
 above).
 
 
-
-## 2. Mosaic Congrid
-This tool is a function taken out of the Mosaic Simulator and downsamples the input images into 100x100 images, which can then be 
-fed to QUIP. The WCS header information needs to be modified in order for the scaling to be correct; in particular the CDELTX and 
-CDX_Y keywords.
