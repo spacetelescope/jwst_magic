@@ -62,8 +62,8 @@ class MasterGui(QMainWindow):
     def __init__(self, root=None, fgs_counts=None, jmag=11.0,
                  nircam_det=None, nircam=True, global_alignment=False, steps=None,
                  in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
-                 star_selection_gui=True, file_writer=True, segment_guiding=False,
-                 app=None):
+                 star_selection=True, star_selection_gui=True, file_writer=True,
+                 segment_guiding=False, app=None):
 
         # Initialize main window object (?!?!)
         QMainWindow.__init__(self)
@@ -74,7 +74,7 @@ class MasterGui(QMainWindow):
 
         # Set stages
         self.convert_im = convert_im
-        self.star_selection_gui = star_selection_gui
+        self.star_selection = star_selection
         self.file_writer = file_writer
         self.segment_guiding = segment_guiding
 
@@ -88,13 +88,16 @@ class MasterGui(QMainWindow):
         if not steps:
             self.steps_default = ['ID', 'ACQ1', 'ACQ2', 'TRK']
         self.bkgd_stars_default = bkgd_stars
+        self.star_selection_gui_default = star_selection_gui
         self.in_file_default = in_file
         self.out_dir_default = out_dir
 
         self.initUI()
 
     def initUI(self):
-        # Set up GUI window
+        ''' Set up GUI window
+        Create boxes for each section and cretae the "run" and "exit" buttons
+        '''
         self.setWindowTitle(self.title)
         self.main_widget = QWidget(self)
         mainGrid = QGridLayout()  # set grid layout
@@ -143,7 +146,19 @@ class MasterGui(QMainWindow):
         self.show()
 
     def create_input_section(self):
-        inputGroupBox = QGroupBox('', self)
+        '''
+        Create the first box: Standard inputs
+
+        This section includes:
+        *Input Image
+        *Guider
+        *Root
+        *Out directory
+        *Non-standard psfs button
+        *Background stars button
+        '''
+
+        inputGroupBox = QGroupBox('Standard Inputs', self)
         inputGrid = QGridLayout()
         inputGroupBox.setLayout(inputGrid)
 
@@ -197,6 +212,16 @@ class MasterGui(QMainWindow):
         return inputGroupBox
 
     def create_convert_section(self):
+        '''
+        Create the second box: Convert Image
+        Take a FGS or NIRCam image and convert and renormalize it to create a
+        RAW FGS image
+
+        This section includes:
+        *NIRCam vs FGS Image
+        *NIRCAm Detector (only for if this is a NIRCam image)
+        *FGS Counts vs J mag w/ place to inlude counts or J mag for renormalization
+        '''
         convertGroupBox = QGroupBox('Convert Input Image to an FGS Raw Image', self)
         convertGrid = QGridLayout()
         convertGroupBox.setLayout(convertGrid)
@@ -214,14 +239,15 @@ class MasterGui(QMainWindow):
         instrument_group.addButton(self.rb_nircam)
         if self.nircam_default:
             self.rb_nircam.setChecked(True)
-        self.rb_nircam.toggled.connect(lambda: self.fgsbtnstate(self.rb_nircam))
+        self.rb_nircam.toggled.connect(lambda: self.btnstate(self.rb_nircam))
         convertGrid.addWidget(self.rb_nircam, 2, 0)
 
         self.rb_fgs = QRadioButton("FGS Image")
         instrument_group.addButton(self.rb_fgs)
         if not self.nircam_default:
             self.rb_fgs.setChecked(True)
-        self.rb_fgs.toggled.connect(lambda: self.fgsbtnstate(self.rb_fgs))
+            self.cb_nircam_det  = None
+        self.rb_fgs.toggled.connect(lambda: self.btnstate(self.rb_fgs))
         convertGrid.addWidget(self.rb_fgs, 2, 1)
 
         # Set NIRCam detector
@@ -250,12 +276,12 @@ class MasterGui(QMainWindow):
         magnitude_group = QButtonGroup(self.main_widget)
         self.rb_fgs_counts = QRadioButton("FGS Counts")
         magnitude_group.addButton(self.rb_fgs_counts)
-        self.rb_fgs_counts.toggled.connect(lambda: self.magbtnstate(self.rb_fgs_counts))
+        self.rb_fgs_counts.toggled.connect(lambda: self.btnstate(self.rb_fgs_counts))
         convertGrid.addWidget(self.rb_fgs_counts, 4, 0)
 
         self.rb_jmag = QRadioButton("J mag")
         magnitude_group.addButton(self.rb_jmag)
-        self.rb_jmag.toggled.connect(lambda: self.magbtnstate(self.rb_jmag))
+        self.rb_jmag.toggled.connect(lambda: self.btnstate(self.rb_jmag))
         convertGrid.addWidget(self.rb_jmag, 4, 1)
 
         convertGrid.addWidget(QLabel('Value:', self), 4, 3)
@@ -265,6 +291,11 @@ class MasterGui(QMainWindow):
             self.textbox_value.setText(str(self.jmag_default))
         elif self.fgs_counts_default:
             self.rb_fgs_counts.setChecked(True)
+            self.textbox_value.setText(str(self.fgs_counts_default))
+        elif not self.jmag_default and not self.fgs_counts_default:
+            self.rb_jmag.setChecked(True)
+            self.textbox_value.setText(str(self.jmag_default))
+
         convertGrid.addWidget(self.textbox_value, 4, 4)
 
         # Set toggling
@@ -273,43 +304,84 @@ class MasterGui(QMainWindow):
         return convertGroupBox
 
     def create_star_section(self):
+        '''
+        Create the third box: Do Star Selection
+        User decides if star selection will happen from pre-made file ("in/reg file")
+        or by opening the Star Selection GUI
+
+        This section includes:
+        *Star Selection GUI - User chooses own guide and reference stars
+        *In/Reg file - file giving x,y positions and count rates of guide and
+            reference stars (in that order)
+        '''
         # If we want to use the star slection GUI
         starGroupBox = QGroupBox('Guide and Reference Star Selection', self)
         starGrid = QGridLayout()
         starGroupBox.setLayout(starGrid)
 
+        self.cb_star_selection = QCheckBox('Complete Star Selection', self)
+        self.cb_star_selection.setCheckable(True)
+        self.cb_star_selection.setFont(self.title_font)
+        starGrid.addWidget(self.cb_star_selection, 1, 0)
+        if self.cb_star_selection:
+            self.cb_star_selection.toggle()
+
         ## Run the star selection GUI
         # Add checkbox
-        self.cb_star_selection = QCheckBox('Star Selection GUI', self)
-        self.cb_star_selection.setCheckable(True)
-        self.cb_star_selection.toggled.connect(self.on_check_starselect)
-        starGrid.addWidget(self.cb_star_selection, 1, 0)
+        self.cb_star_selection_gui = QCheckBox('Star Selection GUI', self)
+        self.cb_star_selection_gui.setCheckable(True)
+        self.cb_star_selection_gui.toggled.connect(self.on_check_starselectgui)
+        starGrid.addWidget(self.cb_star_selection_gui, 2, 0)
 
         ## Pass in an in or reg file
         # Add checkbox
         self.cb_infile = QCheckBox('In/Reg file', self)
         self.cb_infile.setCheckable(True)
         self.cb_infile.toggled.connect(self.on_check_infile)
-        starGrid.addWidget(self.cb_infile, 2, 0)
+        starGrid.addWidget(self.cb_infile, 3, 0)
         # Add textbox
         self.textbox_infile = QLineEdit(self)
         self.textbox_infile.setMinimumSize(200, 20)
-        starGrid.addWidget(self.textbox_infile, 2, 2)
+        starGrid.addWidget(self.textbox_infile, 3, 2)
         # Add 'Open' button
         self.button_input_infile = QPushButton('Open', self)
         self.button_input_infile.setToolTip('Open the in_file directory')
         self.button_input_infile.clicked.connect(self.on_click_infile)
-        starGrid.addWidget(self.button_input_infile, 2, 5)
+        starGrid.addWidget(self.button_input_infile, 3, 5)
+
+        self.cb_star_selection.toggled.connect(self.on_check_starselect)
+
+        #self.cb_star_selection.toggled.connect(self.on_check_starselectgui)
         # Check the box that is set to default
         if self.in_file_default:
-            self.cb_infile.toggle()
+            self.cb_infile.setChecked(True)
+            self.textbox_infile.setEnabled(True)
             self.textbox_infile.setText(self.in_file_default)
+            self.button_input_infile.setEnabled(True)
+            self.cb_star_selection_gui.setChecked(False)
         else:
-            self.cb_star_selection.toggle()
+            self.cb_star_selection_gui.setChecked(True)
+            self.cb_infile.setChecked(False)
+            self.textbox_infile.setEnabled(False)
+            self.button_input_infile.setEnabled(False)
+
 
         return starGroupBox
 
     def create_filewriter_section(self):
+        '''
+        Create the fourth box: FSW file writer
+        Create all files necessary for running this image through flight software
+        simulators
+
+        This section includes:
+        *ID/ACQ1/ACQ2/TRK/FG - steps to create files for
+            *ID - Identification
+            *ACQ1 - Acquisition 1
+            *ACQ2 - Acquisition 2
+            *TRK - Track
+            *FG - Fine guide
+        '''
         # Use the FSW file writer
         filewriterGroupBox = QGroupBox('Output FSW files', self)
         filewriterGrid = QGridLayout()
@@ -342,6 +414,12 @@ class MasterGui(QMainWindow):
         return filewriterGroupBox
 
     def create_segment_section(self):
+        '''
+        Create the fifth box: Segment Guiding
+        Will pop open separate GUI for setting the parameters for running the
+        Segment Guiding Tool and creating the segment override file.
+
+        '''
         # Do segment guiding
         segmentGroupBox = QGroupBox('Segment Guiding', self)
         segmentGrid = QGridLayout()
@@ -355,63 +433,25 @@ class MasterGui(QMainWindow):
         self.cb_segment_guiding.setFont(self.title_font)
         segmentGrid.addWidget(self.cb_segment_guiding, 1, 0)
 
-        segmentGrid.addWidget(QLabel('Segment In File', self), 2, 0)
-        self.textbox_seg_infile = QLineEdit(self)
-        self.textbox_seg_infile.setMinimumSize(200, 20)
-        segmentGrid.addWidget(self.textbox_seg_infile, 2, 1)
-
-        self.button_seg_infile = QPushButton('Open', self)
-        self.button_seg_infile.setToolTip('Open the segment infile')
-        self.button_seg_infile.clicked.connect(self.on_click_seginfile)
-        segmentGrid.addWidget(self.button_seg_infile, 2, 5)
-
-        segmentGrid.addWidget(QLabel('Selected Segments File', self), 3, 0)
-        self.textbox_segs = QLineEdit(self)
-        self.textbox_segs.setMinimumSize(200, 20)
-        segmentGrid.addWidget(self.textbox_segs, 3, 1)
-
-        self.button_segs = QPushButton('Open', self)
-        self.button_segs.setToolTip('Open the segments file')
-        self.button_segs.clicked.connect(self.on_click_segs)
-        segmentGrid.addWidget(self.button_segs, 3, 5)
-
-        segmentGrid.addWidget(QLabel('Program ID', self), 4, 0)
-        self.textbox_program_id = QLineEdit(self)
-        self.textbox_program_id.setMinimumSize(100, 20)
-        segmentGrid.addWidget(self.textbox_program_id, 4, 1)
-
-        segmentGrid.addWidget(QLabel('Observation Number', self), 5, 0)
-        self.textbox_obs_num = QLineEdit(self)
-        self.textbox_obs_num.setMinimumSize(100, 20)
-        segmentGrid.addWidget(self.textbox_obs_num, 5, 1)
-
-        segmentGrid.addWidget(QLabel('Visit Number', self), 6, 0)
-        self.textbox_visit_num = QLineEdit(self)
-        self.textbox_visit_num.setMinimumSize(100, 20)
-        segmentGrid.addWidget(self.textbox_visit_num, 6, 1)
-
-        if self.cb_segment_guiding.isChecked():
-            guider = int(self.cb_guider.currentText())
-            root = self.textbox_root.text()
-            if self.textbox_seg_infile.text() == "":
-                seg_file = "{}/{}_G{}_ALLpsfs.txt".format(self.textbox_outdir.text(), root, guider)
-                self.textbox_seg_infile.setText(seg_file)
-            if self.textbox_segs.text() == "":
-                segs = "{}/{}_G{}_regfile.txt".format(self.textbox_outdir.text(), root, guider)
-                self.textbox_segs.setText(segs)
+        self.cb_segment_guiding.toggled.connect(self.on_check_segment_guiding)
 
         return segmentGroupBox
 
 
     def close_application(self):
+        ''' Close the window'''
         self.close()
         self.app.quit()
 
     def close_dialog(self):
+        ''' Needed to make sure somethign happens when a button is clicked, but
+        does nothing.'''
         pass
 
     def run_tool(self):
-
+        '''
+        Takes inputs provided by user and runs run_fgs_commissioning_tool
+        '''
         # Required
         if self.textbox_input_im.text() == "":
             no_input_im_dialog = QMessageBox()
@@ -455,6 +495,7 @@ class MasterGui(QMainWindow):
 
         #Star selection
         star_selection = self.cb_star_selection.isChecked()
+        star_selectiongui = self.cb_star_selection_gui.isChecked()
         if not self.cb_infile.isChecked():
             in_file = None
         else:
@@ -483,47 +524,36 @@ class MasterGui(QMainWindow):
                                                nircam, global_alignment,
                                                steps, in_file, bkgd_stars,
                                                out_dir, convert_im, star_selection,
-                                               file_writer, self.app)
+                                               star_selectiongui, file_writer, self.app)
             print("** Run Complete **")
         if segment_guiding:
             pass
 
+    # What to do when specific buttons are pressed -----------------------------
     def on_click_input(self):
         ''' Using the Input Image Open button (open file) '''
-        filename = self.openFileNameDialog()
+        filename = self.open_filename_dialog("NIRCam or FGS image")
         self.textbox_input_im.setText(filename)
         if self.textbox_root.text() == "":
             root = utils.make_root(self.root_default, self.textbox_input_im.text())
             self.textbox_root.setText(root)
             if self.textbox_outdir.text() == "":
-                self.textbox_outdir.setText(utils.make_out_dir(self.out_dir_default, OUT_PATH, root))
+                self.textbox_outdir.setText(OUT_PATH)
         return filename
 
     def on_click_out(self):
         ''' Using the Out Dir Open button (open directory) '''
-        dirname = self.openDirNameDialog()
+        dirname = self.open_dirname_dialog()
         self.textbox_outdir.setText(dirname)
         return dirname
 
     def on_click_infile(self):
         ''' Using the Infile Open button (open file) '''
-        filename = self.openInFileDialog()
+        filename = self.open_filename_dialog('In/Reg file')
         self.textbox_infile.setText(filename)
         return filename
 
-    def on_click_seginfile(self):
-        ''' Using the Infile Open button (open file) '''
-        filename = self.openInFileDialog()
-        self.textbox_seg_infile.setText(filename)
-        return filename
-
-    def on_click_segs(self):
-        ''' Using the Infile Open button (open file) '''
-        filename = self.openInFileDialog()
-        self.textbox_segs.setText(filename)
-        return filename
-
-
+    # What to do when specific check boxes are checked -------------------------
     def on_check_convertimage(self, is_toggle):
         ''' Checking the convert image box - defaults set here'''
         if is_toggle:
@@ -548,64 +578,42 @@ class MasterGui(QMainWindow):
         if not self.rb_jmag.isChecked():
             self.rb_jmag.toggle()
 
-    def on_check_nircam(self, is_toggle):
-        ''' Checking the NIRCam box in Convert Image - turn off FGS'''
-        if is_toggle:
-            if self.cb_fgs.isChecked():
-                self.cb_fgs.toggle()
-
-    def on_check_fgs(self, is_toggle):
-        ''' Checking the FGS box in Convert Image - turn off NIRCam'''
-        if is_toggle:
-            if self.cb_nircam.isChecked():
-                self.cb_nircam.toggle()
-
-    def on_check_fgscounts(self, is_toggle):
-        ''' Checking the FGS counts box in Convert Image - turn off J mag box'''
-        if is_toggle:
-            if self.cb_jmag.isChecked():
-                self.cb_jmag.toggle()
-            fgs_counts_default = counts_to_jmag.jmag_to_fgs_counts(self.jmag_default_value,
-                                                                   int(self.cb_guider.currentText()))
-            self.textbox_value.setText(str(int(fgs_counts_default)))
-        else:
-            if not self.cb_jmag.isChecked():
-                self.cb_jmag.toggle()
-
-    def on_check_jmag(self, is_toggle):
-        ''' Checking the J mag box in Convert Image - turn off FGS Counts box'''
-        if is_toggle:
-            if self.cb_fgs_counts.isChecked():
-                self.cb_fgs_counts.toggle()
-            # Set Value back to default
-            self.textbox_value.setText(str(self.jmag_default_value))
-        else:
-            if not self.cb_fgs_counts.isChecked():
-                self.cb_fgs_counts.toggle()
-
     def on_check_starselect(self, is_toggle):
+        ''' Checking that the star selection step occurs box '''
+        if is_toggle:
+            self.cb_star_selection_gui.setEnabled(True)
+            self.cb_infile.setEnabled(True)
+            self.textbox_infile.setEnabled(True)
+            self.button_input_infile.setEnabled(True)
+
+        else:
+            self.cb_star_selection_gui.setEnabled(False)
+            self.cb_infile.setEnabled(False)
+            self.textbox_infile.setEnabled(False)
+            self.button_input_infile.setEnabled(False)
+
+
+    def on_check_starselectgui(self, is_toggle):
         ''' Checking the star selection GUI box '''
         if is_toggle:
             self.textbox_infile.setEnabled(False)
             self.button_input_infile.setEnabled(False)
-            if self.cb_infile.isChecked():
-                self.cb_infile.toggle()
+            self.cb_infile.setChecked(False)
         else:
             self.textbox_infile.setEnabled(True)
             self.button_input_infile.setEnabled(True)
-            if not self.cb_infile.isChecked():
-                self.cb_infile.toggle()
+            self.cb_infile.setChecked(True)
 
     def on_check_infile(self, is_toggle):
         ''' Checking the star selection infile box '''
         if is_toggle:
-            self.textbox_infile.setEnabled(False)
-            self.button_input_infile.setEnabled(False)
-            if self.cb_star_selection.isChecked():
-                self.cb_star_selection.toggle()
+            self.textbox_infile.setEnabled(True)
+            self.button_input_infile.setEnabled(True)
+            if self.cb_star_selection_gui.isChecked():
+                self.cb_star_selection_gui.toggle()
         else:
-            if not self.cb_star_selection.isChecked():
-                self.cb_star_selection.toggle()
+            if not self.cb_star_selection_gui.isChecked():
+                self.cb_star_selection_gui.toggle()
 
     def on_check_filewriter(self, is_toggle):
         ''' Checking the filewriter box - defaults set here'''
@@ -639,64 +647,58 @@ class MasterGui(QMainWindow):
             self.cb_trk.setEnabled(False)
             self.cb_fg.setEnabled(False)
 
-    def btnstate(self, b):
-        if b.text() == "Button 1":
-            if b.isChecked() == True:
-                print(b.text()+" is selected")
-            else:
-                print(b.text()+" is deselected")
+    def on_check_segment_guiding(self, is_toggle):
+        ''' Checking the segment guiding box. Turn off all other steps in GUI.'''
+        if is_toggle:
+            if self.cb_convert_im.isChecked():
+                self.cb_convert_im.toggle()
+            self.cb_convert_im.setEnabled(False)
+            if self.cb_file_writer.isChecked():
+                self.cb_file_writer.toggle()
+            self.cb_file_writer.setEnabled(False)
+            if self.cb_star_selection.isChecked():
+                self.cb_star_selection.toggle()
+            self.cb_star_selection.setEnabled(False)
+        else:
+            if not self.cb_convert_im.isChecked():
+                self.cb_convert_im.toggle()
+            self.cb_convert_im.setEnabled(True)
+            if not self.cb_file_writer.isChecked():
+                self.cb_file_writer.toggle()
+            self.cb_file_writer.setEnabled(True)
+            if not self.cb_star_selection.isChecked():
+                self.cb_star_selection.toggle()
+            self.cb_star_selection.setEnabled(True)
 
-        if b.text() == "Button 2":
-            if b.isChecked() == True:
-                print(b.text()+" is selected")
-            else:
-                print(b.text()+" is deselected")
 
-    def fgsbtnstate(self, b):
-        if b.text() == "FGS Image":
-            if b.isChecked() == True:
+    # What to do with specifc buttons ------------------------------------------
+    def btnstate(self, button):
+        ''' Simple button checking code. Only needs to do something specific
+        for choosing an FGS image vs NIRCam image.'''
+        if button.text() == "FGS Image":
+            if button.isChecked():
                 self.cb_nircam_det.setEnabled(False)
             else:
                 self.cb_nircam_det.setEnabled(True)
-        if b.text() == "NIRCam Image":
-            if b.isChecked() == True:
+        if button.text() == "NIRCam Image":
+            if button.isChecked():
                 self.cb_nircam_det.setEnabled(True)
             else:
                 self.cb_nircam_det.setEnabled(False)
 
-    def magbtnstate(self, b):
-        if b.text() == "Button 1":
-            if b.isChecked() == True:
-                print(b.text()+" is selected")
-            else:
-                print(b.text()+" is deselected")
-
-        if b.text() == "Button 2":
-            if b.isChecked() == True:
-                print(b.text()+" is selected")
-            else:
-                print(b.text()+" is deselected")
-
-
-    def openFileNameDialog(self):
+    # Dialog Boxes -------------------------------------------------------------
+    def open_filename_dialog(self, title):
+        ''' Dialog box for opening a NIRCam of FGS image'''
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open NIRCam or FGS image",
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open {}".format(title),
                                                   "", "All Files (*);;Python Files (*.py)",
                                                   options=options)
         if fileName:
             return fileName
 
-    def openInFileDialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open file",
-                                                  "", "All Files (*);;Python Files (*.py)",
-                                                  options=options)
-        if fileName:
-            return fileName
-
-    def openDirNameDialog(self):
+    def open_dirname_dialog(self):
+        ''' Dialog box for opening a directory'''
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         dirName = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
@@ -705,10 +707,11 @@ class MasterGui(QMainWindow):
 
 
 #===============================================================================
-def run_MasterGui(root=None, fgs_counts=None, jmag=None, nircam_det=None,
+def run_MasterGui(root=None, fgs_counts=None, jmag=11.0, nircam_det=None,
                   nircam=True, global_alignment=False, steps=None, in_file=None,
                   bkgd_stars=False, out_dir=None, convert_im=True,
-                  star_selection_gui=True, file_writer=True, segment_guiding=False):
+                  star_selection=True, star_selection_gui=True, file_writer=True,
+                  segment_guiding=False):
     # RUN GUI
     app = QtCore.QCoreApplication.instance()  # Use existing instance, if there is one
     if app is None:
