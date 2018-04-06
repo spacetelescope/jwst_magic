@@ -32,9 +32,9 @@ def Raw2Idl(x_raw, y_raw, guider):
     # Flip raw axes to get det axes
     x_det, y_det = Raw2Det(x_raw, y_raw)
 
-    if guider == 1:
+    if int(guider) == 1:
         fgs_full = fgs_siaf['FGS1_FULL']
-    elif guider == 2:
+    elif int(guider) == 2:
         fgs_full = fgs_siaf['FGS2_FULL']
 
     # If invalid guider number provided...

@@ -3,9 +3,11 @@
 import re
 import sys
 import numpy as np
-import utils
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
+
+# From local
+import utils
 
 def dat_to_array(file):
     with open(file) as f:

@@ -25,7 +25,9 @@ TASKNAME = 'run_all'
 
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
-            in_file=None, bkgd_stars=False, out_dir=None):
+            in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
+            star_selection=True, star_selection_gui=True, file_writer=True,
+            masterGUIapp=None):
 
     # Determine filename root
     root = utils.make_root(root, image)
@@ -39,7 +41,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     def run_all_with_logging(image, guider, root=None, fgs_counts=None, jmag=None,
                              nircam_det=None, nircam=True, global_alignment=False,
                              steps=None, in_file=None, bkgd_stars=False,
-                             out_dir=None):
+                             out_dir=None, convert_im=True, star_selection=True,
+                             star_selection_gui=True, file_writer=True, masterGUIapp=None):
         """
         This function will take any FGS or NIRCam image and create the outputs needed
         to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -80,34 +83,43 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         utils.ensure_dir_exists(out_dir_root)
 
         # Either convert provided NIRCam image to an FGS image...
-        fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
-                                                     nircam=nircam,
-                                                     fgs_counts=fgs_counts,
-                                                     jmag=jmag,
-                                                     nircam_det=nircam_det,
-                                                     out_dir=out_dir)
-        log.info("*** Image Conversion COMPLETE ***")
+        if convert_im:
+            fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
+                                                         nircam=nircam,
+                                                         fgs_counts=fgs_counts,
+                                                         jmag=jmag,
+                                                         nircam_det=nircam_det,
+                                                         out_dir=out_dir)
+            log.info("*** Image Conversion COMPLETE ***")
 
-        if steps is None:
-            steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
-
-        if bkgd_stars:
-            fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
-
+            if bkgd_stars:
+                fgs_im = background_stars.add_background_stars(fgs_im, jmag, fgs_counts, guider)
+        else:
+            fgs_im = image
+            log.info("Assuming that the input image is a raw FGS image")
         # create reg file
-        select_psfs.create_reg_file(fgs_im, root, guider,
-                                    return_nref=False,
-                                    global_alignment=global_alignment,
-                                    in_file=in_file, out_dir=out_dir)
-        log.info("*** Star Selection: COMPLETE ***")
+        if star_selection:
+            if star_selection_gui:
+                select_psfs.create_reg_file(fgs_im, root, guider,
+                                            return_nref=False,
+                                            global_alignment=global_alignment,
+                                            in_file=in_file, out_dir=out_dir,
+                                            masterGUIapp=masterGUIapp)
+                log.info("*** Star Selection: COMPLETE ***")
 
         # create all files for FSW/DHAS/FGSES/etc.
-        for step in steps:
-            buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step, out_dir=out_dir)
-        log.info("*** FSW File Writing: COMPLETE ***")
+        if file_writer:
+            if steps is None:
+                steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
+            for step in steps:
+                buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step, out_dir=out_dir)
+            log.info("*** FSW File Writing: COMPLETE ***")
 
     run_all_with_logging(image, guider, root=root, fgs_counts=fgs_counts,
                          jmag=jmag, nircam_det=nircam_det, nircam=nircam,
                          global_alignment=global_alignment,
                          steps=steps, in_file=in_file, bkgd_stars=bkgd_stars,
-                         out_dir=out_dir)
+                         out_dir=out_dir, convert_im=convert_im,
+                         star_selection=star_selection,
+                         star_selection_gui=star_selection_gui,
+                         file_writer=file_writer, masterGUIapp=masterGUIapp)
