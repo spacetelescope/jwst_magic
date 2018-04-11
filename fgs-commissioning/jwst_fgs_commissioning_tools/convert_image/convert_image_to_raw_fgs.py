@@ -1,7 +1,67 @@
+'''Convert NIRCam or FGS images to raw FGS frame.
+
+This tool takes input NIRCam or FGS images, rebins to FGS platescale
+if necessary, applies the DQ array if necessary, rotates the image
+according to the SIAF coordinate transformations, and renormalizes to
+the desired FGS counts/magnitude. The development of this code used
+mock-up NIRCam files from Ball Aerospace's ITM tool, simulating Global
+Alignment using the short wavelength channel.
+
+Authors
+-------
+    - Keira Brooks
+    - Lauren Chambers
+
+Use
+---
+    This module can be executed in a Python shell as such:
+    ::
+        from jwst_fgs_commissioning_tools.convert_image import convert_image_to_raw_fgs
+        convert_image_to_raw_fgs.convert_im(input_im, guider, root,
+            nircam=True, nircam_det=None, fgs_counts=None, jmag=None,
+            out_dir=None):
+
+    Required arguments:
+        ``input_image`` - filepath for the input (NIRCam or FGS) image
+        ``guider`` - number for guider 1 or guider 2
+        ``root`` - will be used to create the output directory, ./out/{root}
+    Optional arguments:
+        ``nircam`` - denotes if the input_image is an FGS or NIRCam
+            image. If True, the image will be converted to FGS format.
+            Unless out_dir is specified, the FGS-formatted image will
+            be saved to ../out/{root}/FGS_imgs/{root}_binned_pad_norm.fits
+        ``nircam_det`` - used to specify the detector of a provided
+            NIRCam image. If left blank, the detector will be extracted
+            from the header of the NIRCam FITS file.
+        ``fgs_counts`` and ``jmag`` - used to normalize the input
+            NIRCam image, either to a desired J magnitude or to a
+            desired number of FGS counts. The jmag parameter can also
+            be used to normalize an FGS image.
+        ``out_dir`` - where output FGS image(s) will be saved. If not
+            provided, the image(s) will be saved to ../out/{root}.
+
+References
+----------
+    See JWST-STScI-001550 (Rev A), "Description and Use of the JWST
+    Science Instrument Aperture File," on SOCCER for definition of
+    coordinate transformations between NIRCam and FGS frames, and
+    between DMS/Science frames and raw frames.
+
+Notes
+-----
+    NIRCam short wave FOV: 1.09' by 1.09'
+    NIRCam short wave pixel scale: 0.032"/pixel
+
+    FGS FOV: 2.4' by 2.4'
+    FGS pixel scale: 0.070"/pixel
+
+'''
+
 # STDLIB
 from glob import glob
 import itertools
 import os
+import logging
 
 # THIRD PARTY
 import numpy as np
@@ -9,27 +69,9 @@ from astropy.io import fits
 from scipy import signal
 
 # LOCAL
-from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
-from jwst_fgs_commissioning_tools import log, utils
+from .. import utils
+from ..convert_image import counts_to_jmag
 
-
-'''
-Python Img Re-Binning Tool for FGS comissioning data
-
-Input NIRCam images, rebin to FGS platescale and renormalize to desired FGS
-
-NIRCam FOV: 1.09' by 1.09'
-NIRCam pixel scale: 0.032"/pixel
-
-FGS FOV: 2.4' by 2.4'
-FGS pixel scale: 0.070"/pixel
-
-
-For development of this code, used mock-up NIRCam files from Ball Aerospace's ITM tool,
-simulating Global Alignment using the short wavelength channel
-
-(Sherie was told they include detector noise and bias offsets between the readout channels)
-'''
 # Paths
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(FSW_PATH)[0]
@@ -45,9 +87,26 @@ FGS_PLATE_SIZE = 2.4  # FGS image size in arcseconds
 # Constants to change
 BAD_PIXEL_THRESH = 2000  # Bad pixel threshold
 
+# Start logger
+LOGGER = logging.getLogger(__name__)
+
 # -------------------------------------------------------------------------------
 def bad_pixel_correction(data, bp_thresh):
-    '''Finds and smooths out bad pixels with a median filter'''
+    '''Finds bad pixels that are above a threshold; smooths them with a
+    median filter.
+
+    Parameters
+    ----------
+    data : 2-Dnumpy array
+        Image data
+    bp_thresh : int
+        Threshold above which pixels are considered "bad" and smoothed
+
+    Returns
+    -------
+    data : 2-D numpy array
+        Image data with pixel correction applied
+    '''
     # apply median filter
     smooth = signal.medfilt(data, 3)
 
@@ -74,26 +133,47 @@ def bad_pixel_correction(data, bp_thresh):
     return data
 
 def correct_nircam_dq(image, dq_array, bit_arr=None):
-    '''
+    '''Apply a data quality array correction to an input NIRCam image.
+
+    Parameters
+    ----------
+    image : 2-D numpy array
+        Image data
+    dq_array : 2-D numpy array
+        Data quality array
+    bit_arr : list, optional
+        List of DQ flags that indicate pixels that should be fixed (see Notes)
+
+    Returns
+    -------
+    im_copy : 2-D numpy array
+        Image data with DQ array corrections applied
+
+    Notes
+    -----
     Based on a conversation with Alicia Canipe on the NIRCam team on 02/09/2018,
-    try focusing on these flags
-    Bit Value Name      Description
-    0	1	    DO_NOT_USE	 Bad pixel. Do not use.
-    9	512	    NON_SCIENCE	 Pixel not on science portion of detector
-    10	1024	DEAD	     Dead pixel
-    13	8192	LOW_QE	     Low quantum efficiency
-    16	65536	NONLINEAR	 Pixel highly nonlinear
-    19	524288	NO_GAIN_VALUE	Gain cannot be measured
-    20	1048576	NO_LIN_CORR	 Linearity correction not available
-    21	2097152	NO_SAT_CHECK Saturation check not available
+    try focusing on these flags:
+
+    Bit  Value     Name             Description
+    --   -----     ----             -----------
+    0    1         DO_NOT_USE       Bad pixel. Do not use.
+    9    512       NON_SCIENCE      Pixel not on science portion of detector
+    10   1024      DEAD             Dead pixel
+    13   8192      LOW_QE           Low quantum efficiency
+    16   65536     NONLINEAR        Pixel highly nonlinear
+    19   524288    NO_GAIN_VALUE    Gain cannot be measured
+    20   1048576   NO_LIN_CORR      Linearity correction not available
+    21   2097152   NO_SAT_CHECK     Saturation check not available
     '''
+
     # Convert bits into values
     if bit_arr is None:
         bit_arr = [0, 9, 13, 16, 19, 20, 21]
 
     flags = [2**x for x in bit_arr]
     # Find all combinations of bits
-    flag_combinations = [seq for i in range(len(flags), 0, -1) for seq in itertools.combinations(flags, i)]
+    flag_combinations = [seq for i in range(len(flags), 0, -1)
+                         for seq in itertools.combinations(flags, i)]
 
     inds = []
     for flag_comb in flag_combinations:
@@ -107,16 +187,33 @@ def correct_nircam_dq(image, dq_array, bit_arr=None):
     # Fix bad pixel by taking median value in 3x3 box
     im_copy = np.copy(image)
     for ind in inds:
-        im_copy[ind] = np.median(image[ind[0]-2:ind[0]+2, ind[1]-2:ind[1]+2])
+        im_copy[ind] = np.median(image[ind[0] - 2:ind[0] + 2,
+                                       ind[1] - 2:ind[1] + 2])
 
     return im_copy
 
 def fgs_add_dq(image, guider):
+    '''Apply a data quality array correction to an FGS image.
+
+    Parameters
+    ----------
+    image : 2-D numpy array
+        Image data
+    guider : int
+        Guider number (1 or 2)
+
+    Returns
+    -------
+    image : 2-D numpy array
+        Image data with DQ array corrections applied
+
+    Notes
+    -----
+    Currently, we only have a map of all flagged pixels but no
+    indication as to why they are flagged. For now, we set all flagged
+    pixels to saturation.
     '''
-    Add FGS bad pixels to image
-    Currently, we only have a map of all flagged pixels but no indication as to
-    why they are flagged. For now, we set all flagged pixels to saturation.
-    '''
+
     if guider == 1:
         dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G1.fits'))
     elif guider == 2:
@@ -130,11 +227,30 @@ def fgs_add_dq(image, guider):
 
 
 def nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
-    '''
-    rotate image from NIRCam detector (raw) coordinate frame to FGS raw
+    '''Rotate image from NIRCam detector (raw) coordinate frame to FGS
+    raw, using transformations as defined by the Science Instrument
+    Aperture File (SIAF).
 
-    (See 'notebooks/Convert from NIRCam to FGS coordinate frames.ipynb')
+    Parameters
+    ----------
+    image : 2-D numpy array
+        Image data
+    nircam_detector : str
+        Name of NIRCam detector
+        Expects: A1, A2, A3, A4, A5, B1, B2, B3, B4, or B5
+    fgs_guider : int
+        Guider number (1 or 2)
+
+    Returns
+    -------
+    image : 2-D numpy array
+        Image data with coordinate frame transformation applied
+
+    Use
+    ---
+        See 'notebooks/Convert from NIRCam to FGS coordinate frames.ipynb'
     '''
+
     # Based on the specific detector frame, rotate to match the raw FGS frame
     if nircam_detector in ['A2', 'A4', 'B1', 'B3', 'B5']:
         if fgs_guider == 1:
@@ -154,19 +270,32 @@ def nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
             image = np.swapaxes(image, 0, 1)
 
     else:
-        log.error('Unfamiliar NIRCam detector provided. Check the header keyword' +
+        raise ValueError('Unfamiliar NIRCam detector provided. Check the header keyword' +
                   ' "DETECTOR" for the NIRCAM module, then re-run using the ' +
                   '"nircam_det" keyword to bypass the header query.')
 
     return image
 
 def sci_to_fgs_raw(image, fgs_guider):
-    '''
-    Rotate image from DMS science coordinate (same for NIRCam and FGS) frame to FGS raw
-    ** This is the expected frame for output DMS images **
+    '''Rotate NIRCam or FGS image from DMS/science coordinate frame
+    (the expected frame for output DMS images) to FGS raw.
 
-    (See 'notebooks/Convert from NIRCam to FGS coordinate frames.ipynb' and
-    'notebooks/Convert FGS coordinate frames.ipynb')
+    Parameters
+    ----------
+    image : 2-D numpy array
+        Image data
+    fgs_guider : int
+        Guider number (1 or 2)
+
+    Returns
+    -------
+    image : 2-D numpy array
+        Image data with coordinate frame transformation applied
+
+    Use
+    ---
+        See 'notebooks/Convert from NIRCam to FGS coordinate frames.ipynb'
+        and 'notebooks/Convert FGS coordinate frames.ipynb'
     '''
     if fgs_guider == 1:
         # FGS guider = 1; Swap axes
@@ -179,13 +308,13 @@ def sci_to_fgs_raw(image, fgs_guider):
 
 def rotate_nircam_image(image, fgs_guider, header, nircam_det,
                         nircam_coord_frame='sci'):
-    '''
-    Given NIRCAM module A or B (given by the header in your original NIRCAM image),
-    rotate/flip to put in correct orientation for FGS 1 and 2.
+    '''Given NIRCam image from module A or B (as defined in the header
+    in your original NIRCam image), rotate/flip to put in correct
+    orientation for FGS 1 or 2.
 
     Parameters:
     -----------
-    image: array-like
+    image: 2-D numpy array
         NIRCam image to be rotated into correct FGS frame
     fgs_guider: int
         Guider 1 or 2
@@ -194,19 +323,20 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
     nircam_det: str
         The NIRCam detector with which the image was taken.
         Expects: A1, A2, A3, A4, A5, B1, B2, B3, B4, or B5
-    nircam_coord_frame: str
+    nircam_coord_frame: str, optional
         The coordinate frame that the input image is in.
-        Expects: 'sci' for the science frame, or 'raw' or 'det' for the raw
-        detector frame
+        Expects: 'sci' for the science/DMS frame, or 'raw' or 'det' for
+        the raw detector frame
 
     Returns:
     --------
     nircam_scale: float
-        Detector scale factor depending on if the input image is from a long- or
-        shortwave detector
-    image: array-like
+        Detector pixel scale depending on if the input image is from a
+        long- or shortwave detector
+    image: 2-D numpy array
         The rotated NIRCam image
     '''
+
     # The Dectector keyword retruns 'NRCA*' or 'NRCB*' so to simplify matters
     # I just pull out the 4th character in the string
     if nircam_det is not None:
@@ -214,7 +344,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
     else:
         detector = header['DETECTOR'][3:].strip()
 
-    log.info("Image Conversion: NIRCAM Detector = {}".format(detector))
+    LOGGER.info("Image Conversion: NIRCAM Detector = {}".format(detector))
 
     # Determine whether the NIRCam image is short- or long-wave to determine
     # the pixel scale
@@ -225,6 +355,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
         # Shortwave
         nircam_scale = NIRCAM_SW_SCALE
 
+    # Perform the rotation
     if nircam_coord_frame == 'sci':
         image = sci_to_fgs_raw(image, fgs_guider)
     elif nircam_coord_frame == 'raw' or nircam_coord_frame == 'det':
@@ -236,9 +367,32 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
 
 
 def pad_data(data, padding, fgs_pix):
+    """Pad re-binned NIRCam data with mean of data; effectively placing
+    NIRCam data onto an appropriately-size FGS array with the
+    appropriate pixel scale.
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    padding : int
+        Width of padded area around data
+    fgs_pix : int
+        Number of pixels along one side of an FGS image (probably 2048)
+
+    Returns
+    -------
+    padded_data
+        Image data padded to match FGS pixel scale
+
+    Raises
+    ------
+    ValueError
+        If the output FGS image is not going to be 2048x2048 (i.e. if
+        the padding width does not match the size of the input image
+        data)
     """
-    Pad data with mean of data
-    """
+
     size = np.shape(data)[0]
 
     # Remove NIRCam pedestals
@@ -275,8 +429,23 @@ def pad_data(data, padding, fgs_pix):
     return padded_data
 
 def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
-    '''
-    Resize the passed in NIRCam image to match the expected FGS size
+    '''Resize a NIRCam image to the expected FGS size and pixel scale
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    nircam_scale : float
+        Pixel scale of NIRCam detector
+    fgs_pix : int
+        Number of pixels along one side of an FGS image (probably 2048)
+    fgs_plate_size : float
+        Pixel scale of FGS detector
+
+    Returns
+    -------
+    fgs_data
+        Re-binned and padded image data
     '''
     cropped = data[4:-4, 4:-4]  # crop 4pixel zero-padding
     binned_pix = int(round((data.shape[0] * nircam_scale * fgs_pix) / (fgs_plate_size * 60)))
@@ -290,9 +459,28 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
 
 
 def normalize_data(data, fgs_counts, threshold=5):
-    '''
-    Threshold of 5 assumes background is very low. *This will need to be automated
-    later.*
+    '''Re-normalize data to the desired FGS counts
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    fgs_counts : float
+        The FGS counts value to normalize to
+    threshold : int, optional
+        The value above which pixels are considered "data" and below
+        which pixels are considered "background" and thus are not
+        included in the normalization calculation
+
+    Returns
+    -------
+    data_norm
+        Normalized image data
+
+    Notes
+    -----
+        Threshold of 5 assumes background is very low.
+        *This will need to be automated later.*
     '''
     mask = data > threshold
     data_norm = np.copy(mask * data.astype(np.float64))
@@ -304,96 +492,127 @@ def normalize_data(data, fgs_counts, threshold=5):
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
-               nircam_det=None, out_dir=None):
-    '''
-    Takes NIRCam image and turns it into an FGS-like image, gets count rate and location of
-    each guide star in each image
+               nircam_det=None, out_dir=None, logger_passed=False):
+    '''Takes NIRCam or FGS image; turns it into an FGS-like image and
+    saves FITS file
 
     Parameters
-    ==========
+    ----------
     input_im: str
-        The path to the input image
+        Filepath for the input (NIRCam or FGS) image
     guider: int
-        1 or 2
-    fgs_counts: int
-        The FGS counts in the star. If set to 'None', pass in the jmag. SET TO 65353 FOR NOW
-    jmag: float
-        The J magnitude of the star. If set to 'None' and fgs_counts set to 'None',
-        will defaul to 11.
-    nircam_det: str
-        The NIRCAM module, otherwise the header will be parsed
+        Guider number (1 or 2)
+    root : str
+        Name used to create the output directory, ./out/{root}
+    nircam : bool, optional
+        Denotes if the input_image is an FGS or NIRCam image. If True,
+        the image will be converted to FGS format. Unless out_dir is
+        specified, the FGS-formatted image will be saved to
+        ../out/{root}/FGS_imgs/{root}_binned_pad_norm.fits
+    fgs_counts: int, optional
+        The FGS counts in the star. If set to 'None', pass in the jmag.
+        SET TO 65353 FOR NOW
+    jmag: float, optional
+        The J magnitude of the star. If set to 'None' and fgs_counts
+        set to 'None', will default to 11.
+    nircam_det: str, optional
+        The detector of a provided NIRCam image. If left blank, the
+        detector will be extracted from the header of the NIRCam FITS
+        file.
+    out_dir : str, optional
+        Where output FGS image(s) will be saved. If not provided, the
+        image(s) will be saved to ../out/{root}.
+
+    Returns
+    -------
+    data_norm : 2-D numpy array
+        Image formatted like a raw FGS image
+
+    Raises
+    ------
+    TypeError
+        If the input filename has more than one frame
     '''
 
-    # ---------------------------------------------------------------------
-    # Find FGS counts to be used for normalization
-    if fgs_counts is None:
-        if jmag is None:
-            log.warning("Image Conversion: No counts or J magnitude given, setting to default")
-            jmag = 11
-        fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-    else:
-        jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
+    # Start logging
+    if not logger_passed:
+        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-    log.info("Image Conversion: J magnitude = {:.1f}, FGS counts = {:.1f}".format(jmag, fgs_counts))
+    try:
+        # ---------------------------------------------------------------------
+        # Find FGS counts to be used for normalization
+        if fgs_counts is None:
+            if jmag is None:
+                LOGGER.warning("Image Conversion: No counts or J magnitude given, setting to default")
+                jmag = 11
+            fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
+        else:
+            jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
 
-    # ---------------------------------------------------------------------
-    # Determine output path and open file
-    basename = os.path.basename(input_im)
+        LOGGER.info("Image Conversion: J magnitude = {:.1f}, FGS counts = {:.1f}".format(jmag, fgs_counts))
 
-    log.info("Image Conversion: " +
-             "Beginning image conversion to guider {} FGS image".format(guider))
+        # ---------------------------------------------------------------------
+        # Determine output path and open file
+        basename = os.path.basename(input_im)
 
-    output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
-    utils.ensure_dir_exists(output_path_save)
+        LOGGER.info("Image Conversion: " +
+                 "Beginning image conversion to guider {} FGS image".format(guider))
 
-    data = fits.getdata(input_im, header=False)
-    header = fits.getheader(input_im, ext=0)
+        output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
+        utils.ensure_dir_exists(output_path_save)
 
-    if len(data.shape) > 2:
-        print(data.shape)
-        raise TypeError('Expecting a single frame or slope image.')
+        data = fits.getdata(input_im, header=False)
+        header = fits.getheader(input_im, ext=0)
 
-    # ---------------------------------------------------------------------
-    # Create raw FGS image
-    if nircam:
-        log.info("Image Conversion: This is a NIRCam image")
+        if len(data.shape) > 2:
+            print(data.shape)
+            raise TypeError('Expecting a single frame or slope image.')
 
-        # Pull out DQ array for this image
-        dq_arr = fits.getdata(input_im, extname='DQ')
-        if not dq_arr.min() == 1 and not dq_arr.max() == 1:
-            data = correct_nircam_dq(data, dq_arr)
+        # ---------------------------------------------------------------------
+        # Create raw FGS image
+        if nircam:
+            LOGGER.info("Image Conversion: This is a NIRCam image")
 
-        # Rotate the NIRCAM image into FGS frame
-        nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
-        # Pad image
-        data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
+            # Pull out DQ array for this image
+            dq_arr = fits.getdata(input_im, extname='DQ')
+            if not dq_arr.min() == 1 and not dq_arr.max() == 1:
+                data = correct_nircam_dq(data, dq_arr)
 
-    else:
-        log.info("Image Conversion: This is an FGS image")
-        guider = utils.get_guider(header)
+            # Rotate the NIRCAM image into FGS frame
+            nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
+            # Pad image
+            data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
-        try:
-            origin = header['ORIGIN'].strip()
-            if origin == 'ITM':
-                log.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
-                data = sci_to_fgs_raw(data, guider)
-        except KeyError:
-            pass
+        else:
+            LOGGER.info("Image Conversion: This is an FGS image")
+            guider = utils.get_guider(header)
 
-    # Normalize image
-    data_norm = normalize_data(data, fgs_counts)
+            try:
+                origin = header['ORIGIN'].strip()
+                if origin == 'ITM':
+                    LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
+                    data = sci_to_fgs_raw(data, guider)
+            except KeyError:
+                pass
 
-    # Any value above 65535 or below 0 will wrap when converted to uint16
-    data_norm = utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
+        # Normalize image
+        data_norm = normalize_data(data, fgs_counts)
 
-    # Load header file
-    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
-    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                               '{}_G{}.fits'.format(root, guider))
+        # Any value above 65535 or below 0 will wrap when converted to uint16
+        data_norm = utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
 
-    hdr = fits.getheader(header_file, ext=0)
-    utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
+        # Load header file
+        header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                                   '{}_G{}.fits'.format(root, guider))
 
-    log.info("Image Conversion complete for {}, guider = {}".format(root, guider))
+        hdr = fits.getheader(header_file, ext=0)
+        utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
+
+        LOGGER.info("Image Conversion complete for {}, guider = {}".format(root, guider))
+
+    except Exception as e:
+        LOGGER.exception(e)
+        raise
 
     return data_norm

@@ -6,6 +6,7 @@ from inspect import currentframe, getframeinfo
 import warnings
 import string
 import random
+import logging
 
 # Third Party
 import matplotlib
@@ -22,10 +23,9 @@ import numpy as np
 from photutils import find_peaks
 from scipy import ndimage, signal
 
-
 # LOCAL
-from jwst_fgs_commissioning_tools import log, utils
-from jwst_fgs_commissioning_tools.star_selector import SelectStarsGUI
+from .. import utils
+from ..star_selector import SelectStarsGUI
 
 # Adjust matplotlib origin
 rcParams['image.origin'] = 'upper'
@@ -38,6 +38,9 @@ rcParams['mathtext.bf'] = 'serif:normal'
 SS_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(SS_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
+
+# Start logger
+LOGGER = logging.getLogger(__name__)
 
 def count_psfs(smoothed_data, gauss_sigma, choose=False):
     """Use photutils.find_peaks to count how many PSFS are present in the data
@@ -58,7 +61,7 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
         coords = sources['x_peak', 'y_peak']
         coords = [(x, y) for [x, y] in coords]
 
-        log.info('Star Selection: {} PSFs detected in Gaussian-smoothed data \
+        LOGGER.info('Star Selection: {} PSFs detected in Gaussian-smoothed data \
             (threshold = {}; sigma = {})'.format(num_psfs, threshold, gauss_sigma))
 
     return num_psfs, coords, threshold
@@ -113,7 +116,7 @@ def choose_threshold(smoothed_data, gauss_sigma):
         coords = [(x, y) for [x, y] in sources_mean['x_peak', 'y_peak']]
         return num_psfs, coords, thresholds[1]
     else:
-        log.error('Star Selection: User rejection of identified PSFs.')
+        LOGGER.error('Star Selection: User rejection of identified PSFs.')
         raise StandardError('User rejection of identified PSFs.')
 
 def plot_centroids(data, coords, root, guider, out_dir):
@@ -230,7 +233,7 @@ def match_psfs_to_segments(x, y, global_alignment):
         matched_labels.append(labels[i_seg])
 
     if len(set(matched_labels)) != len(matched_labels) and global_alignment:
-        log.warning('Could not accurately map labels to segments. It will not '
+        LOGGER.warning('Could not accurately map labels to segments. It will not '
                     'be possible to run fsw_file_writer.rewrite_prc using the '
                     'ALLpsfs.txt file generated here.')
 
@@ -270,7 +273,7 @@ def parse_in_file(in_file):
                                named {}. Please rename columns.'.format(in_file,
                                                                         fix_colnames)
                 raise TypeError(err_message)
-                log.error(err_message)
+                LOGGER.error(err_message)
                 return
 
             for old_col, fix_col in zip(colnames, fix_colnames):
@@ -287,7 +290,7 @@ def parse_in_file(in_file):
                            named {}. Please rename columns.'.format(in_file,
                                                                     raw_columns.split())
             raise TypeError(err_message)
-            log.error(err_message)
+            LOGGER.error(err_message)
             return
 
     # Make sure all the necessary columns are present
@@ -301,11 +304,11 @@ def parse_in_file(in_file):
                        "count rate"/"countrate"/"ctot". Found columns \
                        named {}. Please rename columns.'.format(in_file, colnames)
         raise TypeError(err_message)
-        log.error(err_message)
+        LOGGER.error(err_message)
         return
 
     # Passed all the checkpoints! Move on to process the file.
-    log.info('Star Selection: Selecting stars from input file {}'.format(in_file))
+    LOGGER.info('Star Selection: Selecting stars from input file {}'.format(in_file))
 
     # Rename relevant old columns, if necessary:
     for col in colnames:
@@ -377,14 +380,14 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     else:
         # Make random list of inds
         n_select = min(11, num_psfs)
-        log.info('Star Selection: Testing mode; selecting {} PSFs at random.'.format(n_select))
+        LOGGER.info('Star Selection: Testing mode; selecting {} PSFs at random.'.format(n_select))
         inds = random.sample(range(num_psfs), n_select)
 
     nref = len(inds) - 1
     if len(inds) == 0:
         raise ValueError('Star Selection: No guide star and no reference stars selected')
     else:
-        log.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
+        LOGGER.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
 
     segment_labels = match_psfs_to_segments(x, y, global_alignment)
     ALL_cols = create_cols_for_coords_counts(x, y, counts, val,
@@ -397,41 +400,49 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
 
 def create_reg_file(data, root, guider, in_file=None,
                     global_alignment=False, return_nref=False, testing=False,
-                    out_dir=None, masterGUIapp=None):
+                    out_dir=None, masterGUIapp=None, logger_passed=False):
 
-    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
-    utils.ensure_dir_exists(out_dir)
+    if not logger_passed:
+        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-    # Any value above 65535 or below 0 will wrap when converted to uint16
-    data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
+    try:
+        out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+        utils.ensure_dir_exists(out_dir)
 
-    if in_file:
-        # Determine the kind of in_file and parse out the PSF locations and
-        # countrates accordingly
-        cols, coords, nref = parse_in_file(in_file)
-        ALL_cols = None
+        # Any value above 65535 or below 0 will wrap when converted to uint16
+        data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
 
-    else:
-        # If no .incat or reg file provided, create reg file with manual
-        # star selection using the SelectStarsGUI
-        cols, coords, nref, ALL_cols = manual_star_selection(data, global_alignment, testing, masterGUIapp)
+        if in_file:
+            # Determine the kind of in_file and parse out the PSF locations and
+            # countrates accordingly
+            cols, coords, nref = parse_in_file(in_file)
+            ALL_cols = None
+        else:
+            # If no .incat or reg file provided, create reg file with manual
+            # star selection using the SelectStarsGUI
+            cols, coords, nref, ALL_cols = manual_star_selection(data,
+                                                                 global_alignment,
+                                                                 testing,
+                                                                 masterGUIapp)
 
-    # Save PNG of image and all PSF locations in out_dir
-    plot_centroids(data, coords, root, guider, out_dir)
+        # Save PNG of image and all PSF locations in out_dir
+        plot_centroids(data, coords, root, guider, out_dir)
 
-    if ALL_cols:
-        # Write out file of ALL identified PSFs
+        if ALL_cols:
+            # Write out file of ALL identified PSFs
+            utils.write_cols_to_file(out_dir,
+                                     filename='{0}_G{1}_ALLpsfs.txt'.format(root, guider),
+                                     labels=['label', 'y', 'x', 'countrate'],
+                                     cols=ALL_cols)
+
+        # Write out regfile of selected PSFs
         utils.write_cols_to_file(out_dir,
-                                 filename='{0}_G{1}_ALLpsfs.txt'.format(root, guider),
-                                 labels=['label', 'y', 'x', 'countrate'],
-                                 cols=ALL_cols)
-
-
-    # Write out regfile of selected PSFs
-    utils.write_cols_to_file(out_dir,
-                             filename='{0}_G{1}_regfile.txt'.format(root, guider),
-                             labels=['y', 'x', 'countrate'],
-                             cols=cols)
+                                 filename='{0}_G{1}_regfile.txt'.format(root, guider),
+                                 labels=['y', 'x', 'countrate'],
+                                 cols=cols)
+    except Exception as e:
+        LOGGER.exception(e)
+        raise
 
     if return_nref:
         return cols, nref

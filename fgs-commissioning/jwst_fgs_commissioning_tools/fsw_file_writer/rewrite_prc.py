@@ -2,9 +2,9 @@
 from astropy.io import ascii as asc
 import numpy as np
 
-from jwst_fgs_commissioning_tools.star_selector import select_psfs
-from jwst_fgs_commissioning_tools.fsw_file_writer.mkproc import Mkproc
-from jwst_fgs_commissioning_tools import utils
+from .. import utils
+from ..star_selector import select_psfs
+from ..fsw_file_writer.mkproc import Mkproc
 
 
 def rewrite_prc(order, guider, root, out_dir, thresh_factor=0.9,
