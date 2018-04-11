@@ -573,6 +573,16 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
         if nircam:
             LOGGER.info("Image Conversion: This is a NIRCam image")
 
+            # Check that the pupil is clear
+            try:
+                pupil_keyword = header['PUPIL']
+                if pupil_keyword in ['CLEAR', 'Imaging Pupil']:
+                    pass
+                else:
+                    raise ValueError('NIRCam "PUPIL" header keyword for provided file is {}. Only the CLEAR/Imaging Pupil can be used to realistically simulate FGS images.'.format(pupil_keyword))
+            except KeyError:
+                pass
+
             # Pull out DQ array for this image
             dq_arr = fits.getdata(input_im, extname='DQ')
             if not dq_arr.min() == 1 and not dq_arr.max() == 1:
