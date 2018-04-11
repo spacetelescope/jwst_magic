@@ -1,3 +1,28 @@
+'''For given FGS counts, J mag or Jab mag, get the others.
+
+Convert between FGS counts, J magnitude, and J_ab magnitude. This
+module is very basic and is only for a single bandpass; look at
+count_rate.f in Sherie Holfeltz's code for the procedure for more
+bandpasses.
+
+Authors
+-------
+    - Keira Brooks
+    - Lauren Chambers
+
+Use
+---
+    This module can be imported in a Python shell as such:
+    ::
+        from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
+
+Notes
+-----
+    There is also some functionality for this in Pysynphot so that
+    should be looked into at some point for consistency with other
+    systems
+'''
+
 # Third Party
 import matplotlib.pyplot as plt
 from matplotlib import cycler
@@ -16,18 +41,19 @@ matplotlib.rcParams['axes.prop_cycle'] = cycler(u'color', ['#1f77b4',
                                                            '#bcbd22',
                                                            '#17becf'])
 
-
-''' For given FGS counts, J mag or Jab mag, get the others.
-This is very basic and is only for a single bandpass, look at count_rate.f for
-the procedure for more bandpasses.
-
-NOTE: There is also some functionality for this
-in Pysynphot so that should be looked into at some point for consistency with
-other systems'''
-
 def find_conversion(guider):
-    '''Guider 1 and 2 have different gains that are used as conversion factors
-    from ADU/sec to e-/sec
+    '''Find the conversion factor from ADU/sec to e-/sec for a given
+    guider
+
+    Parameters
+    ----------
+    guider : int
+        Guider number (1 or 2)
+
+    Returns
+    -------
+    conversion : float
+        Appropriate conversion factor from ADU/sec to e-/sec
     '''
     if guider == 1:
         conversion = 1.55
@@ -66,13 +92,12 @@ def jmag_to_fgs_counts(jmag, guider):
     return e_to_counts(electrons, guider)
 
 def plot_jmag_v_counts(jmags=None):
-    '''
-    For a range of J magnitudes, plot the relation with FGS
+    '''For a range of J magnitudes, plot the relation with FGS
     counts (defaults to Jmags = (5,18)) for both guider 1 and 2.
 
     Parameters
-    ==========
-    jmags: tuple
+    ----------
+    jmags : tuple, optional
         Start and stop of J magnitude array
     '''
     if jmags is None:
