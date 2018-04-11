@@ -26,13 +26,12 @@ def getbias(guider, xcoord, ycoord, nreads, nramps, imgsize):
     For acquisition 1: nreads = 2, nramps = 6, nx, ny = 128, 128
     For acquisition 2: nreads = 2, nramps = 5, nx, ny = 32, 32
     """
-    if guider == 1:
+    if int(guider) == 1:
         bias0 = np.copy(BIASZERO_G1)
-    elif guider == 2:
+    elif int(guider) == 2:
         bias0 = np.copy(BIASZERO_G2)
     else:
-        log.error("Do not recognize guider {}. Exiting.".format(guider))
-        raise StandardError("Guider not recognized.")
+        raise StandardError("Do not recognize guider {}. Exiting.".format(guider))
 
     if imgsize == 2048:
         xlow, ylow = 0, 0
