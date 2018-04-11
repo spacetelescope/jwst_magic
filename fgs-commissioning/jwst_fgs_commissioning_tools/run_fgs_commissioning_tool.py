@@ -66,7 +66,8 @@ LOGGER = logging.getLogger(__name__)
 def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
             in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
-            star_selection=True, file_writer=True, masterGUIapp=None):
+            star_selection=True, star_selection_gui=True, file_writer=True,
+            masterGUIapp=None):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -124,17 +125,21 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                                      logger_passed=True)
         LOGGER.info("*** Image Conversion COMPLETE ***")
 
-    if bkgd_stars:
-        fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, jmag, fgs_counts, guider)
+        if bkgd_stars:
+            fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, jmag, fgs_counts, guider)
+    else:
+        fgs_im = image
+        LOGGER.info("Assuming that the input image is a raw FGS image")
 
     # create reg file
     if star_selection:
-        select_psfs.create_reg_file(fgs_im, root, guider,
-                                    return_nref=False,
-                                    global_alignment=global_alignment,
-                                    in_file=in_file, out_dir=out_dir,
-                                    logger_passed=True, masterGUIapp=masterGUIapp)
-        LOGGER.info("*** Star Selection: COMPLETE ***")
+        if star_selection_gui:
+            select_psfs.create_reg_file(fgs_im, root, guider,
+                                        return_nref=False,
+                                        global_alignment=global_alignment,
+                                        in_file=in_file, out_dir=out_dir,
+                                        logger_passed=True, masterGUIapp=masterGUIapp)
+            LOGGER.info("*** Star Selection: COMPLETE ***")
 
     # create all files for FSW/DHAS/FGSES/etc.
     if file_writer:

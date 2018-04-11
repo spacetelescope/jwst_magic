@@ -751,6 +751,7 @@ class StarSelectorWindow(QDialog):
     def fileQuit(self):
         '''Closes the star selector window'''
 
+        self.answer = True
         # If the user didn't choose any stars, ask if they really want to quit.
         if self.inds == []:
             no_stars_selected_dialog = QMessageBox()
@@ -772,8 +773,6 @@ class StarSelectorWindow(QDialog):
     def nostars_dialog(self, button):
         if 'No' in button.text():
             self.answer = False
-        elif 'Yes' in button.text():
-            self.answer = True
 
     def cancel(self):
         '''Closes the star selector window and clears indices'''
