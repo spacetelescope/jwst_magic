@@ -58,6 +58,8 @@ MASTERGUI_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(MASTERGUI_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
+GROUPBOX_TITLE_STYLESHEET = 'QGroupBox { font-size: 18px; font-weight: bold; margin-top: 40px } QGroupBox::title { top: -30px }'
+
 class MasterGui(QMainWindow):
 
     def __init__(self, root=None, fgs_counts=None, jmag=11.0,
@@ -135,11 +137,13 @@ class MasterGui(QMainWindow):
         # ###  Save out inputs and run tool ------------------------------------
         button_run = QPushButton("Run", self)
         button_run.resize(button_run.minimumSizeHint())
+        button_run.setStyleSheet('QPushButton { background-color: #7DCEA0 }')
         button_run.clicked.connect(self.run_tool)
         mainGrid.addWidget(button_run, 6, 0, 1, 1)
 
         button_done = QPushButton("Exit", self)
         button_done.resize(button_done.minimumSizeHint())
+        button_done.setStyleSheet('QPushButton { background-color: #EC7063 }')
         button_done.clicked.connect(self.close_application)
         mainGrid.addWidget(button_done, 6, 1, 1, 1)
 
@@ -160,11 +164,12 @@ class MasterGui(QMainWindow):
         '''
 
         inputGroupBox = QGroupBox('Standard Inputs', self)
+        inputGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
         inputGrid = QGridLayout()
         inputGroupBox.setLayout(inputGrid)
 
         # Input Image
-        inputGrid.addWidget(QLabel('Input Image (required)', self), 1, 0)
+        inputGrid.addWidget(QLabel('<b>Input Image (required)</b>', self), 1, 0)
         self.textbox_input_im = QLineEdit(self)
         self.textbox_input_im.setMinimumSize(400, 20)
         inputGrid.addWidget(self.textbox_input_im, 2, 0)
@@ -175,7 +180,7 @@ class MasterGui(QMainWindow):
         inputGrid.addWidget(self.button_input_image, 2, 1)
 
         # Guider
-        inputGrid.addWidget(QLabel('Guider (required)', self), 3, 0)
+        inputGrid.addWidget(QLabel('<b>Guider (required)</b>', self), 3, 0)
         self.cb_guider = QComboBox(self)
         self.cb_guider.addItem("-Select-")
         self.cb_guider.addItem("1")
@@ -184,13 +189,13 @@ class MasterGui(QMainWindow):
         inputGrid.addWidget(self.cb_guider, 4, 0, 1, 2)
 
         # Root
-        inputGrid.addWidget(QLabel('Root', self), 5, 0)
+        inputGrid.addWidget(QLabel('<b>Root</b>', self), 5, 0)
         self.textbox_root = QLineEdit(self)
         self.textbox_root.editingFinished.connect(self.update_filepreview)
         inputGrid.addWidget(self.textbox_root, 6, 0, 1, 2)
 
         # Out directory
-        inputGrid.addWidget(QLabel('Out Directory - the directory where files are saved', self), 7, 0)
+        inputGrid.addWidget(QLabel('<b>Out Directory</b> - the directory where files are saved', self), 7, 0)
         self.textbox_outdir = QLineEdit(self)
         self.textbox_outdir.setText(self.out_dir_default)
         self.textbox_outdir.setEnabled(False)
@@ -201,7 +206,7 @@ class MasterGui(QMainWindow):
         inputGrid.addWidget(self.button_input_image, 8, 1)
 
         # Filepath preview
-        inputGrid.addWidget(QLabel('Example output filepath', self), 9, 0)
+        inputGrid.addWidget(QLabel('Example Output Filepath', self), 9, 0)
         self.textbox_filepreview = QTextEdit(self)
         self.textbox_filepreview.setStyleSheet("QTextEdit { background-color : #ECECEC }");
         self.textbox_filepreview.setMaximumSize(2000, 40)
@@ -234,38 +239,38 @@ class MasterGui(QMainWindow):
         *NIRCAm Detector (only for if this is a NIRCam image)
         *FGS Counts vs J mag w/ place to inlude counts or J mag for renormalization
         '''
-        convertGroupBox = QGroupBox('Convert Input Image to an FGS Raw Image', self)
+        self.convertGroupBox = QGroupBox('Convert Input Image to an FGS Raw Image', self)
+        self.convertGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
+        self.convertGroupBox.setCheckable(True)
         convertGrid = QGridLayout()
-        convertGroupBox.setLayout(convertGrid)
+        self.convertGroupBox.setLayout(convertGrid)
 
         # # If we want to convert image
-        self.cb_convert_im = QCheckBox('Convert Image', self)
-        self.cb_convert_im.setCheckable(True)
-        self.cb_convert_im.setFont(self.title_font)
-        convertGrid.addWidget(self.cb_convert_im, 1, 0)
-        if self.convert_im:
-            self.cb_convert_im.toggle()
+        self.convertGroupBox.setChecked(self.convert_im)
+        self.convertGroupBox.toggled.connect(self.on_check_convertimage)
 
+        # What is the input image?
+        # NIRCam
         instrument_group = QButtonGroup(self.main_widget) # Number group
         self.rb_nircam = QRadioButton("NIRCam Image")
         instrument_group.addButton(self.rb_nircam)
-        if self.nircam_default:
-            self.rb_nircam.setChecked(True)
+        self.rb_nircam.setChecked(self.nircam_default)
         self.rb_nircam.toggled.connect(lambda: self.btnstate(self.rb_nircam))
         convertGrid.addWidget(self.rb_nircam, 2, 0)
 
+        #FGS
         self.rb_fgs = QRadioButton("FGS Image")
         instrument_group.addButton(self.rb_fgs)
         if not self.nircam_default:
             self.rb_fgs.setChecked(True)
-            self.cb_nircam_det  = None
+            self.cb_nircam_det = None
         self.rb_fgs.toggled.connect(lambda: self.btnstate(self.rb_fgs))
         convertGrid.addWidget(self.rb_fgs, 2, 1)
 
         # Set NIRCam detector
         convertGrid.addWidget(QLabel('NIRCam Detector:', self), 3, 0)
         self.cb_nircam_det = QComboBox(self)
-        self.cb_nircam_det.addItem("-Select-")
+        self.cb_nircam_det.addItem("-Parse from Header-")
         self.cb_nircam_det.addItem("A1")
         self.cb_nircam_det.addItem("A2")
         self.cb_nircam_det.addItem("A3")
@@ -310,10 +315,7 @@ class MasterGui(QMainWindow):
 
         convertGrid.addWidget(self.textbox_value, 4, 4)
 
-        # Set toggling
-        self.cb_convert_im.toggled.connect(self.on_check_convertimage)
-
-        return convertGroupBox
+        return self.convertGroupBox
 
     def create_star_section(self):
         '''
@@ -327,16 +329,15 @@ class MasterGui(QMainWindow):
             reference stars (in that order)
         '''
         # If we want to use the star slection GUI
-        starGroupBox = QGroupBox('Guide and Reference Star Selection', self)
+        self.starGroupBox = QGroupBox('Guide and Reference Star Selection', self)
+        self.starGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
+        self.starGroupBox.setCheckable(True)
         starGrid = QGridLayout()
-        starGroupBox.setLayout(starGrid)
+        self.starGroupBox.setLayout(starGrid)
 
-        self.cb_star_selection = QCheckBox('Complete Star Selection', self)
-        self.cb_star_selection.setCheckable(True)
-        self.cb_star_selection.setFont(self.title_font)
-        starGrid.addWidget(self.cb_star_selection, 1, 0)
-        if self.cb_star_selection:
-            self.cb_star_selection.toggle()
+        # If we want to use the star slection GUI
+        self.starGroupBox.setChecked(self.star_selection)
+        self.starGroupBox.toggled.connect(self.on_check_starselect)
 
         ## Run the star selection GUI
         # Add checkbox
@@ -361,9 +362,6 @@ class MasterGui(QMainWindow):
         self.button_input_infile.clicked.connect(self.on_click_infile)
         starGrid.addWidget(self.button_input_infile, 3, 5)
 
-        self.cb_star_selection.toggled.connect(self.on_check_starselect)
-
-        #self.cb_star_selection.toggled.connect(self.on_check_starselectgui)
         # Check the box that is set to default
         if self.in_file_default:
             self.cb_infile.setChecked(True)
@@ -378,7 +376,7 @@ class MasterGui(QMainWindow):
             self.button_input_infile.setEnabled(False)
 
 
-        return starGroupBox
+        return self.starGroupBox
 
     def create_filewriter_section(self):
         '''
@@ -395,17 +393,16 @@ class MasterGui(QMainWindow):
             *FG - Fine guide
         '''
         # Use the FSW file writer
-        filewriterGroupBox = QGroupBox('Output FSW files', self)
+        self.filewriterGroupBox = QGroupBox('Output FSW files', self)
+        self.filewriterGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
+        self.filewriterGroupBox.setCheckable(True)
         filewriterGrid = QGridLayout()
-        filewriterGroupBox.setLayout(filewriterGrid)
+        self.filewriterGroupBox.setLayout(filewriterGrid)
 
         # Write the files out
-        self.cb_file_writer = QCheckBox('FSW File Writer', self)
-        self.cb_file_writer.setCheckable(True)
-        self.cb_file_writer.toggled.connect(self.on_check_filewriter)
+        self.filewriterGroupBox.setChecked(self.file_writer)
+        self.filewriterGroupBox.toggled.connect(self.on_check_filewriter)
 
-        self.cb_file_writer.setFont(self.title_font)
-        filewriterGrid.addWidget(self.cb_file_writer, 1, 0)
         # Which steps to write out
         self.cb_id = QCheckBox('ID', self)
         # if 'ID' in steps:
@@ -420,10 +417,8 @@ class MasterGui(QMainWindow):
         self.cb_fg = QCheckBox('FG', self)
         filewriterGrid.addWidget(self.cb_fg, 2, 5)
 
-        if self.file_writer:
-            self.cb_file_writer.toggle()
 
-        return filewriterGroupBox
+        return self.filewriterGroupBox
 
     def create_segment_section(self):
         '''
@@ -433,21 +428,17 @@ class MasterGui(QMainWindow):
 
         '''
         # Do segment guiding
-        segmentGroupBox = QGroupBox('Segment Guiding', self)
+        self.segmentGroupBox = QGroupBox('Segment Guiding', self)
+        self.segmentGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
+        self.segmentGroupBox.setCheckable(True)
+        self.segmentGroupBox.setChecked(self.segment_guiding)
         segmentGrid = QGridLayout()
-        segmentGroupBox.setLayout(segmentGrid)
+        self.segmentGroupBox.setLayout(segmentGrid)
 
-        self.cb_segment_guiding = QCheckBox('Segment Guiding', self)
-        self.cb_segment_guiding.setCheckable(True)
-        if self.segment_guiding:
-            self.cb_segment_guiding.toggle()
+        self.segmentGroupBox.setChecked(self.segment_guiding)
+        self.segmentGroupBox.toggled.connect(self.on_check_segment_guiding)
 
-        self.cb_segment_guiding.setFont(self.title_font)
-        segmentGrid.addWidget(self.cb_segment_guiding, 1, 0)
-
-        self.cb_segment_guiding.toggled.connect(self.on_check_segment_guiding)
-
-        return segmentGroupBox
+        return self.segmentGroupBox
 
 
     def close_application(self):
@@ -493,7 +484,7 @@ class MasterGui(QMainWindow):
         global_alignment = self.cb_ga.isChecked()
 
         #Convert image
-        convert_im = self.cb_convert_im.isChecked()
+        convert_im = self.convertGroupBox.isChecked()
         nircam = self.rb_nircam.isChecked()
         nircam_det = str(self.cb_nircam_det.currentText())
         if self.rb_fgs_counts.isChecked():
@@ -506,7 +497,7 @@ class MasterGui(QMainWindow):
             jmag = None
 
         #Star selection
-        star_selection = self.cb_star_selection.isChecked()
+        star_selection = self.starGroupBox.isChecked()
         star_selectiongui = self.cb_star_selection_gui.isChecked()
         if not self.cb_infile.isChecked():
             in_file = None
@@ -514,7 +505,7 @@ class MasterGui(QMainWindow):
             in_file = self.textbox_infile.text()
 
         #File writer
-        file_writer = self.cb_file_writer.isChecked()
+        file_writer = self.filewriterGroupBox.isChecked()
         steps = []
         if self.cb_id.isChecked():
             steps.append('ID')
@@ -527,8 +518,7 @@ class MasterGui(QMainWindow):
         if self.cb_fg.isChecked():
             steps.append('FG')
 
-
-        segment_guiding = self.cb_segment_guiding.isChecked()
+        segment_guiding = self.segmentGroupBox.isChecked()
 
         if convert_im or star_selection or file_writer:
             run_fgs_commissioning_tool.run_all(input_image, guider, root,
@@ -668,26 +658,26 @@ class MasterGui(QMainWindow):
 
     def on_check_segment_guiding(self, is_toggle):
         ''' Checking the segment guiding box. Turn off all other steps in GUI.'''
+        # If we are using SGT
         if is_toggle:
-            if self.cb_convert_im.isChecked():
-                self.cb_convert_im.toggle()
-            self.cb_convert_im.setEnabled(False)
-            if self.cb_file_writer.isChecked():
-                self.cb_file_writer.toggle()
-            self.cb_file_writer.setEnabled(False)
-            if self.cb_star_selection.isChecked():
-                self.cb_star_selection.toggle()
-            self.cb_star_selection.setEnabled(False)
+            # self.convertGroupBox.setChecked(False)
+            self.convertGroupBox.setEnabled(False)
+
+            # self.filewriterGroupBox.setChecked(False)
+            self.filewriterGroupBox.setEnabled(False)
+
+            # self.starGroupBox.setChecked(False)
+            self.starGroupBox.setEnabled(False)
+        # If we are not
         else:
-            if not self.cb_convert_im.isChecked():
-                self.cb_convert_im.toggle()
-            self.cb_convert_im.setEnabled(True)
-            if not self.cb_file_writer.isChecked():
-                self.cb_file_writer.toggle()
-            self.cb_file_writer.setEnabled(True)
-            if not self.cb_star_selection.isChecked():
-                self.cb_star_selection.toggle()
-            self.cb_star_selection.setEnabled(True)
+            # self.convertGroupBox.setChecked(True)
+            self.convertGroupBox.setEnabled(True)
+
+            # self.filewriterGroupBox.setChecked(True)
+            self.filewriterGroupBox.setEnabled(True)
+
+            # self.starGroupBox.setChecked(True)
+            self.starGroupBox.setEnabled(True)
 
 
     # What to do with specific buttons ------------------------------------------
@@ -729,8 +719,12 @@ class MasterGui(QMainWindow):
         if self.textbox_outdir.text() != "" and self.textbox_root.text() != ""\
            and self.cb_guider.currentText() != "-Select-":
             self.textbox_filepreview.setText(os.path.join(self.textbox_outdir.text(),
-                                             'out', self.textbox_root.text(),
+                                             'out', self.textbox_root.text(), 'dhas',
                                              '{}_G{}_strips.fits'.format(self.textbox_root.text(),
+                                                                         self.cb_guider.currentText())))
+            self.textbox_infile.setText(os.path.join(self.textbox_outdir.text(),
+                                             'out', self.textbox_root.text(),
+                                             '{}_G{}_regfile.txt'.format(self.textbox_root.text(),
                                                                          self.cb_guider.currentText())))
 
 
