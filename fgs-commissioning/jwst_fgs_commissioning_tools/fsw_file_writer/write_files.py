@@ -120,8 +120,9 @@ def write_all(obj):
                       step='ID', out_dir=obj.out_dir)
 
         # Ground system file
-        convert_fits_to_dat(filename_id_strips, obj.step,
-                            os.path.join(obj.out_dir, 'ground_system'))
+        convert_fits_to_dat(obj.strips, obj.step,
+                            os.path.join(obj.out_dir, 'ground_system'),
+                            obj.guider, root=obj.root)
 
     elif obj.step == 'ACQ1' or obj.step == 'ACQ2':
         # STScI only files - mostly just for quick checks of the data
@@ -150,8 +151,9 @@ def write_all(obj):
                           acq2_imgsize=obj.acq2_imgsize)
 
         # Ground system file
-        convert_fits_to_dat(filename_noisy_sky, obj.step,
-                            os.path.join(obj.out_dir, 'ground_system'))
+        convert_fits_to_dat(obj.image, obj.step,
+                            os.path.join(obj.out_dir, 'ground_system'),
+                            obj.guider, root=obj.root)
 
     else:
         # DHAS file
@@ -164,39 +166,37 @@ def write_all(obj):
 
         utils.write_fits(filename_image, np.uint16(obj.image))
         # Ground system file
-        convert_fits_to_dat(filename_image, obj.step,
-                            os.path.join(obj.out_dir, 'ground_system'))
+        convert_fits_to_dat(obj.image, obj.step,
+                            os.path.join(obj.out_dir, 'ground_system'),
+                            obj.guider, root=obj.root)
 
 # ------------------------------------------------------------------------------
-def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
+def convert_fits_to_dat(data, obsmode, out_dir, guider, root=None):
     '''
     Convert a .fits file to a .dat file for use on the ground system
 
-    If 'infile' is an array, provide 'root'.
+    If 'data' is an array, provide 'root'.
 
     Parameters
     ----------
-    infile: str, array-like
+    data: str, array-like
         Can be a str (implies that this is a .fits file) or an array/cube
     obsmode: str
         The mode of image (i.e. 'PSF', 'CAL', 'TRK', 'ACQ'/'ACQ1'/'ACQ2', or 'ID')
     outfile: str
         Where to save the file
     root: str
-        If infile is array-like, please provide the root image name
+        If data is array-like, please provide the root image name
     '''
 
     obsmode = obsmode.upper()
 
-    if isinstance(infile, str):
-        data = fits.getdata(infile)
-
-        filename = infile.split('/')[-1]
-        root = filename.split('.')[0]
+    if isinstance(data, str):
+        data = fits.getdata(data)
+        filename = data.split('/')[-1].split('.')[0]
     else:
-        root = '{}_{}'.format(root, obsmode)
+        filename = '{}_G{}_{}.dat'.format(root, guider, obsmode)
 
-    outfile = '{}.dat'.format(root)
     #data = swap_if_little_endian(data)
     flat = data.flatten()
 
@@ -212,11 +212,11 @@ def convert_fits_to_dat(infile, obsmode, out_dir, root=None):
     else:
         raise ValueError("FSW File Writing: Observation mode {} not recognized.".format(obsmode))
 
-    with open(os.path.join(out_dir, outfile), 'w') as file_out:
+    with open(os.path.join(out_dir, filename), 'w') as file_out:
         for dat in flat.astype(np.uint16):
             file_out.write(fmt.format(dat))
 
-    print("Successfully wrote: {}".format(os.path.join(out_dir, outfile)))
+    print("Successfully wrote: {}".format(os.path.join(out_dir, filename)))
     return
 
 # Write out files
