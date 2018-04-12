@@ -201,7 +201,7 @@ class MasterGui(QMainWindow):
         inputGrid.addWidget(self.button_input_image, 8, 1)
 
         # Filepath preview
-        inputGrid.addWidget(QLabel('Filepath preview - example output filepath', self), 9, 0)
+        inputGrid.addWidget(QLabel('Example output filepath', self), 9, 0)
         self.textbox_filepreview = QTextEdit(self)
         self.textbox_filepreview.setStyleSheet("QTextEdit { background-color : #ECECEC }");
         self.textbox_filepreview.setMaximumSize(2000, 40)
