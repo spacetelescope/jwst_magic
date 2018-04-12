@@ -409,6 +409,10 @@ def create_reg_file(data, root, guider, in_file=None,
         out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
         utils.ensure_dir_exists(out_dir)
 
+        # Read in image (check if it is a filename)
+        if isinstance(data, str):
+            data = fits.getdata(data)
+
         # Any value above 65535 or below 0 will wrap when converted to uint16
         data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
 
