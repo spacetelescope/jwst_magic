@@ -62,7 +62,7 @@ class MasterGui(QMainWindow):
 
     def __init__(self, root=None, fgs_counts=None, jmag=11.0,
                  nircam_det=None, nircam=True, global_alignment=False, steps=None,
-                 in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
+                 in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                  star_selection=True, star_selection_gui=True, file_writer=True,
                  segment_guiding=False, app=None):
 
@@ -166,13 +166,13 @@ class MasterGui(QMainWindow):
         # Input Image
         inputGrid.addWidget(QLabel('Input Image (required)', self), 1, 0)
         self.textbox_input_im = QLineEdit(self)
-        self.textbox_input_im.setMinimumSize(200, 20)
+        self.textbox_input_im.setMinimumSize(400, 20)
         inputGrid.addWidget(self.textbox_input_im, 2, 0)
 
         self.button_input_image = QPushButton('Open', self)
         self.button_input_image.setToolTip('Open the input image')
         self.button_input_image.clicked.connect(self.on_click_input)
-        inputGrid.addWidget(self.button_input_image, 2, 5)
+        inputGrid.addWidget(self.button_input_image, 2, 1)
 
         # Guider
         inputGrid.addWidget(QLabel('Guider (required)', self), 3, 0)
@@ -180,35 +180,46 @@ class MasterGui(QMainWindow):
         self.cb_guider.addItem("-Select-")
         self.cb_guider.addItem("1")
         self.cb_guider.addItem("2")
-        inputGrid.addWidget(self.cb_guider, 4, 0)
+        self.cb_guider.activated.connect(self.update_filepreview)
+        inputGrid.addWidget(self.cb_guider, 4, 0, 1, 2)
 
         # Root
         inputGrid.addWidget(QLabel('Root', self), 5, 0)
         self.textbox_root = QLineEdit(self)
-        inputGrid.addWidget(self.textbox_root, 6, 0)
+        self.textbox_root.editingFinished.connect(self.update_filepreview)
+        inputGrid.addWidget(self.textbox_root, 6, 0, 1, 2)
 
         # Out directory
         inputGrid.addWidget(QLabel('Out Directory - the directory where files are saved', self), 7, 0)
         self.textbox_outdir = QLineEdit(self)
+        self.textbox_outdir.setText(self.out_dir_default)
+        self.textbox_outdir.setEnabled(False)
         inputGrid.addWidget(self.textbox_outdir, 8, 0)
         self.button_input_image = QPushButton('Open', self)
         self.button_input_image.setToolTip('Open the out directory')
         self.button_input_image.clicked.connect(self.on_click_out)
-        inputGrid.addWidget(self.button_input_image, 8, 5)
+        inputGrid.addWidget(self.button_input_image, 8, 1)
+
+        # Filepath preview
+        inputGrid.addWidget(QLabel('Filepath preview - example output filepath', self), 9, 0)
+        self.textbox_filepreview = QTextEdit(self)
+        self.textbox_filepreview.setStyleSheet("QTextEdit { background-color : #ECECEC }");
+        self.textbox_filepreview.setMaximumSize(2000, 40)
+        inputGrid.addWidget(self.textbox_filepreview, 10, 0, 1, 2)
 
         ## Global Alignment flag
         self.cb_ga = QCheckBox('Non-standard PSFs (i.e. Global alignment, image array)', self)
         self.cb_ga.setCheckable(True)
         if self.global_alignment_default:
             self.cb_ga.toggle()
-        inputGrid.addWidget(self.cb_ga, 9, 0)
+        inputGrid.addWidget(self.cb_ga, 11, 0)
 
         # Background stars?
         self.cb_bkgd_stars = QCheckBox('Background stars', self)
         self.cb_bkgd_stars.setCheckable(True)
         if self.bkgd_stars_default:
             self.cb_bkgd_stars.toggle()
-        inputGrid.addWidget(self.cb_bkgd_stars, 10, 0)
+        inputGrid.addWidget(self.cb_bkgd_stars, 12, 0)
 
         return inputGroupBox
 
@@ -539,13 +550,20 @@ class MasterGui(QMainWindow):
             root = utils.make_root(self.root_default, self.textbox_input_im.text())
             self.textbox_root.setText(root)
             if self.textbox_outdir.text() == "":
+                self.textbox_outdir.setEnabled(True)
                 self.textbox_outdir.setText(OUT_PATH)
+            if self.textbox_outdir.text() == OUT_PATH:
+                self.textbox_outdir.setEnabled(True)
+
+        self.update_filepreview()
         return filename
 
     def on_click_out(self):
         ''' Using the Out Dir Open button (open directory) '''
         dirname = self.open_dirname_dialog()
+        self.textbox_outdir.setEnabled(True)
         self.textbox_outdir.setText(dirname)
+        self.update_filepreview()
         return dirname
 
     def on_click_infile(self):
@@ -672,7 +690,7 @@ class MasterGui(QMainWindow):
             self.cb_star_selection.setEnabled(True)
 
 
-    # What to do with specifc buttons ------------------------------------------
+    # What to do with specific buttons ------------------------------------------
     def btnstate(self, button):
         ''' Simple button checking code. Only needs to do something specific
         for choosing an FGS image vs NIRCam image.'''
@@ -706,11 +724,20 @@ class MasterGui(QMainWindow):
         if dirName:
             return dirName
 
+    # Helper Functions ---------------------------------------------------------
+    def update_filepreview(self):
+        if self.textbox_outdir.text() != "" and self.textbox_root.text() != ""\
+           and self.cb_guider.currentText() != "-Select-":
+            self.textbox_filepreview.setText(os.path.join(self.textbox_outdir.text(),
+                                             'out', self.textbox_root.text(),
+                                             '{}_G{}_strips.fits'.format(self.textbox_root.text(),
+                                                                         self.cb_guider.currentText())))
+
 
 #===============================================================================
 def run_MasterGui(root=None, fgs_counts=None, jmag=11.0, nircam_det=None,
                   nircam=True, global_alignment=False, steps=None, in_file=None,
-                  bkgd_stars=False, out_dir=None, convert_im=True,
+                  bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
                   segment_guiding=False):
     # RUN GUI
