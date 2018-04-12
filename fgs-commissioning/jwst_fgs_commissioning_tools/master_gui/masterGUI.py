@@ -54,7 +54,8 @@ from jwst_fgs_commissioning_tools import run_fgs_commissioning_tool
 from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
 from jwst_fgs_commissioning_tools import utils
 
-PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
+MASTERGUI_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(MASTERGUI_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
 class MasterGui(QMainWindow):
