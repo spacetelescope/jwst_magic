@@ -15,10 +15,7 @@ import logging
 # Work out backend business
 import matplotlib
 backend = matplotlib.get_backend()
-if backend in ['Qt5Agg', 'module://ipykernel.pylab.backend_inline']:
-    print('Using {} backend. Will not be able to use segment guiding GUI (requires TkAgg).'.format(backend))
-elif backend != 'TkAgg':
-    matplotlib.use("TkAgg")
+matplotlib.use("Qt5Agg")
 
 import matplotlib.pyplot as plt
 import pysiaf
@@ -26,16 +23,17 @@ from pysiaf.utils import rotations
 from tkinter import Tk, StringVar, Radiobutton, Label, Entry, Button
 import numpy as np
 from astropy.io import ascii as asc
+from astropy.io import fits
 from astropy.table import Table
 from functools import partial
 
 from .. import coordinate_transforms, utils
+from ..segment_guiding import SegmentGuidingGUI
 
 # Establish segment guiding files directory
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(LOCAL_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
-# SGT_FILES_PATH = os.path.join(os.path.split(PACKAGE_PATH)[0], 'segment_guiding_files')
 
 # Open the SIAF with pysiaf
 FGS_SIAF = pysiaf.Siaf('FGS')
@@ -61,9 +59,6 @@ class SegmentGuidingCalculator:
 
         # Will the tool be run through the GUI?
         self.GUI = GUI
-        if self.GUI:
-            # If so, initialize the GUI object
-            self.SegmentGuidingGUI = SegmentGuidingGUI(self)
 
         # Parse the input file type (ALLpsfs.txt, regfile.txt, and VSS infile)
         self.parse_infile(segment_infile, selected_segs, vss_infile, GS_params_dict)
@@ -302,35 +297,34 @@ class SegmentGuidingCalculator:
 
     def parse_infile(self, segment_infile, selected_segs, vss_infile, GS_params_dict):
 
-        # If not running through the GUI, get GS parameters from dictionary or VSS file
-        if not self.GUI:
-            if vss_infile and GS_params_dict:
-                LOGGER.info('Reading RA, Dec, and PA from VSS file {}'.format(vss_infile))
-                LOGGER.info('Reading boresight offset and segment number from user-provided dictionary.')
-                self.get_guidestar_params_from_visit_file(vss_infile)
-                self.V2Boff = GS_params_dict['V2Boff']
-                self.V3Boff = GS_params_dict['V3Boff']
-                self.segNum = GS_params_dict['segNum']
+        # Get GS parameters from dictionary or VSS file
+        if vss_infile and GS_params_dict:
+            LOGGER.info('Reading RA, Dec, and PA from VSS file {}'.format(vss_infile))
+            LOGGER.info('Reading boresight offset and segment number from user-provided dictionary.')
+            self.get_guidestar_params_from_visit_file(vss_infile)
+            self.V2Boff = GS_params_dict['V2Boff']
+            self.V3Boff = GS_params_dict['V3Boff']
+            self.segNum = GS_params_dict['segNum']
 
-            elif vss_infile:
-                LOGGER.info('Reading RA, Dec, and PA from VSS file {}'.format(vss_infile))
-                LOGGER.info('Setting boresight offset = 0 and segment number = 0.')
-                self.get_guidestar_params_from_visit_file(vss_infile)
-                self.V2Boff = 0
-                self.V3Boff = 0
-                self.segNum = 0
+        elif vss_infile:
+            LOGGER.info('Reading RA, Dec, and PA from VSS file {}'.format(vss_infile))
+            LOGGER.info('Setting boresight offset = 0 and segment number = 0.')
+            self.get_guidestar_params_from_visit_file(vss_infile)
+            self.V2Boff = 0
+            self.V3Boff = 0
+            self.segNum = 0
 
-            elif GS_params_dict:
-                LOGGER.info('Reading all GS parameters from user-provided dictionary.')
-                # Map GS_params_dict keys to attributes
-                for attr_name in GS_params_dict.keys():
-                    setattr(self, attr_name, GS_params_dict[attr_name])
+        elif GS_params_dict:
+            LOGGER.info('Reading all GS parameters from user-provided dictionary.')
+            # Map GS_params_dict keys to attributes
+            for attr_name in GS_params_dict.keys():
+                setattr(self, attr_name, GS_params_dict[attr_name])
 
-            else:
-                raise ValueError('If running the tool outside of the GUI, must '
-                                 'supply a dictionary of the required parameters '
-                                 'to the GS_params_dict argument and/or supply a '
-                                 'VSS file to the vss_infile argument.')
+        else:
+            raise ValueError('If running the tool outside of the GUI, must '
+                             'supply a dictionary of the required parameters '
+                             'to the GS_params_dict argument and/or supply a '
+                             'VSS file to the vss_infile argument.')
 
         LOGGER.info('Segment coordinates read from {}'.format(segment_infile))
 
@@ -576,198 +570,12 @@ class SegmentGuidingCalculator:
             errcode = 1
         return errcode
 
-class SegmentGuidingGUI(SegmentGuidingCalculator):
-    def __init__(self, calculator):
-        # Check that you are using the right backend (or python will crash!)
-        if matplotlib.get_backend() != 'TkAgg':
-            errmsg = 'Cannot run GUI with current matplotlib backend (' + \
-                     matplotlib.get_backend() + '). Please restart python ' \
-                     'and load with TkAgg as matplotlib backend, or elect ' \
-                     'to run the tool without the GUI.'
-            raise EnvironmentError(errmsg)
-
-        # Inherit attributes from calculator object
-        self.calculator = calculator
-
-        # Initialize the GUI
-        self.initUI()
-
-    def initUI(self):
-        self.root_window = Tk()
-        self.root_window.title('Segmented Guide Stars')
-        self.root_window['bg'] = 'Snow2'
-
-        # Choose FGS using Radio Buttons
-        self.fgsNum = StringVar()
-        self.fgsNum.trace('w', partial(self.callback, 'fgsNum'))
-        r1 = Radiobutton(self.root_window, text='FGS1', variable=self.fgsNum,
-                         value='1', command=self.calculator.FGSsetup)
-        r1.grid(row=1)
-        r2 = Radiobutton(self.root_window, text='FGS2', variable=self.fgsNum,
-                         value='2', command=self.calculator.FGSsetup)
-        r2.grid(row=1, column=1)
-        r1.select()  # Default to FGS1
-
-        # Boxes to receive FGS lookup
-        Label(self.root_window, text='V2Ref').grid(row=2, column=1)
-        Label(self.root_window, text='V3Ref').grid(row=2, column=2)
-        Label(self.root_window, text='Angle').grid(row=2, column=3)
-        self.fgsV2 = StringVar()
-        self.fgsV3 = StringVar()
-        self.fgsAngle = StringVar()
-        self.fgsParity = StringVar()
-        self.fgstitle = Label(self.root_window, text='FGS' + self.fgsNum.get())
-        self.fgstitle.grid(row=3)
-        self.LfgsV2 = Label(self.root_window, text=self.fgsV2.get())
-        self.LfgsV2.grid(row=3, column=1)
-        self.LfgsV3 = Label(self.root_window, text=self.fgsV3.get())
-        self.LfgsV3.grid(row=3, column=2)
-        self.LfgsA = Label(self.root_window, text=self.fgsAngle.get())
-        self.LfgsA.grid(row=3, column=3)
-
-        # Choose segment
-        Label(self.root_window, text='Segment number').grid(row=4)
-        self.segNum = StringVar()
-        self.seg = Entry(self.root_window, textvariable=self.segNum)
-        self.seg.grid(row=4, column=1)
-        Label(self.root_window, text='  Segment 0 means use segment centroid').grid(row=4, column=2)
-        self.segNum.trace('w', self.calculator.ChosenSeg)
-        self.segNum.trace('w', partial(self.callback, 'segNum'))
-
-        self.chSegdV2 = StringVar()
-        self.chSegdV3 = StringVar()
-        Label(self.root_window, text='Segment Offset').grid(row=5)
-        self.chsegdv2 = Label(self.root_window, text='TBD')  # Chosen segment
-        self.chsegdv2.grid(row=5, column=1)
-        self.chsegdv3 = Label(self.root_window, text='TBD')
-        self.chsegdv3.grid(row=5, column=2)
-
-        # Ideal
-        Label.idl = Label(self.root_window, text='Ideal Coordinates').grid(row=6)
-        self.segxidl = Label(self.root_window, text='')
-        self.segxidl.grid(row=6, column=1)
-        self.segyidl = Label(self.root_window, text='')
-        self.segyidl.grid(row=6, column=2)
-
-        # Boresight Offset
-        self.V2Boff = StringVar()
-        self.V3Boff = StringVar()
-        Label(self.root_window, text='Boresight Offset').grid(row=7)
-        self.EV2Boff = Entry(self.root_window, textvariable=self.V2Boff)
-        self.EV2Boff.grid(row=7, column=1)
-        self.EV3Boff = Entry(self.root_window, textvariable=self.V3Boff)
-        self.EV3Boff.grid(row=7, column=2)
-        self.V2Boff.trace('w', partial(self.callback, 'V2Boff'))
-        self.V3Boff.trace('w', partial(self.callback, 'V3Boff'))
-        self.V2Boff.set('0.1')
-        self.V3Boff.set('0.2')
-        self.V2Boff.trace('w', self.Ready)
-        self.V3Boff.trace('w', self.Ready)
-
-        # V2V3 aiming point
-        Label(self.root_window, text='Aiming V2V3').grid(row=8)
-        self.V2Aim_label = Label(self.root_window, text='V2')
-        self.V2Aim_label.grid(row=8, column=1)
-        self.V3Aim_label = Label(self.root_window, text='V3')
-        self.V3Aim_label.grid(row=8, column=2)
-
-        # widgets for guide star calculation
-        Label(self.root_window, text='RA').grid(row=9, column=1)
-        Label(self.root_window, text='Dec').grid(row=9, column=2)
-        Label(self.root_window, text='PA').grid(row=9, column=3)
-        Label(self.root_window, text='Guide Star').grid(row=10)
-        self.RA = StringVar()
-        self.Dec = StringVar()
-        self.PA = StringVar()
-        self.egs1 = Entry(self.root_window, textvariable=self.RA)
-        self.egs1.grid(row=10, column=1)
-        self.egs2 = Entry(self.root_window, textvariable=self.Dec)
-        self.egs2.grid(row=10, column=2)
-        self.egs3 = Entry(self.root_window, textvariable=self.PA)
-        self.egs3.grid(row=10, column=3)
-
-        self.RA.trace('w', self.Ready)
-        self.RA.trace('w', partial(self.callback, 'RA'))
-        self.Dec.trace('w', self.Ready)
-        self.Dec.trace('w', partial(self.callback, 'Dec'))
-        self.PA.trace('w', self.Ready)
-        self.PA.trace('w', partial(self.callback, 'PA'))
-
-        # Bottom row - Calculate, error message and Finish
-        self.go = Button(self.root_window, text='Calculate', command=self.calculator.Calculate,
-                         fg='green', state='disabled')
-        self.go.grid(row=11)
-        self.errmsg = Label(self.root_window, text='')
-        self.errmsg.grid(row=11, column=1, columnspan=2)
-        Button(self.root_window, text='Finish', command=self.Finish, fg='red').\
-            grid(row=11, column=3)
-
-    def callback(self, var_name, *args):
-        if var_name == 'fgsNum':
-            self.calculator.fgsNum = self.fgsNum.get()
-
-        elif var_name == 'V2Boff':
-            self.calculator.V2Boff = float(self.V2Boff.get())
-
-        elif var_name == 'V3Boff':
-            self.calculator.V3Boff = float(self.V3Boff.get())
-
-        elif var_name == 'RA':
-            self.calculator.RA = float(self.RA.get())
-
-        elif var_name == 'Dec':
-            self.calculator.Dec = float(self.Dec.get())
-
-        elif var_name == 'PA':
-            self.calculator.PA = float(self.PA.get())
-
-        elif var_name == 'segNum':
-            self.calculator.segNum = self.segNum.get()
-
-    def redefine_vars(self, function):
-        # Update GUI and clear all calculations to force new calculation
-
-        # In FGSsetup
-        if function == 'FGSsetup':
-            self.fgstitle.config(text='FGS' + self.calculator.fgsNum)
-            self.LfgsV2.config(text=self.calculator.fgsV2)  # Put results in Lfgs Label
-            self.LfgsV3.config(text=self.calculator.fgsV3)
-            self.LfgsA.config(text=self.calculator.fgsAngle)
-
-        # In chosenseg
-        if function == 'ChosenSeg':
-            self.chsegdv2.configure(text='%8.4f' % self.calculator.V2SegN)
-            self.chsegdv3.configure(text='%8.4f' % self.calculator.V3SegN)
-            self.V2Aim_label.configure(text='%8.4f' % self.calculator.V2Aim)
-            self.V3Aim_label.configure(text='%8.4f' % self.calculator.V3Aim)
-            self.segxidl.configure(text='%8.4f' % self.calculator.xIdl)
-            self.segyidl.configure(text='%8.4f' % self.calculator.yIdl)
-
-    def Ready(self, *args):
-        if self.RA.get() == '' or self.Dec.get() == '' or self.PA.get() == '' or \
-           self.V2Boff.get() == '' or self.V3Boff.get() == '':
-            return
-
-        else:
-            segN = int(self.segNum.get())
-            if segN in list(range(19)):
-                self.go.config(state='normal')
-                self.errmsg.config(text='')
-
-    def Show(self):
-        self.root_window.mainloop()
-
-    def Finish(self):
-        LOGGER.info("*** Segment Guiding File Creation: COMPLETE ***")
-        self.root_window.quit()  # frees up iPython window
-        self.root_window.destroy()  # closes GUI
-
 ############################## End Class SegmentForm ###############################
 
 
-def run_tool(segment_infile, program_id, observation_num, visit_num, root=None,
+def run_tool(segment_infile, program_id=0, observation_num=0, visit_num=0, root=None,
              GUI=False, GS_params_dict=None, selected_segs=None, vss_infile=None,
-             out_dir=None):
+             out_dir=None, data=None, masterGUIapp=None):
     # if not GS_params_dict and not GUI:
     #     GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
     #                       'V3Boff': 0.2,  # V3 boresight offset
@@ -781,30 +589,35 @@ def run_tool(segment_infile, program_id, observation_num, visit_num, root=None,
     utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
     try:
+        if GUI:
+            # Parse regfile for locations of segments
+            regfile = asc.read(segment_infile)
+            x = regfile['x']
+            y = regfile['y']
+            coords = [(x_i, y_i) for x_i, y_i in zip(x, y)]
+
+            # Find the minimum distance between PSFs
+            if len(coords) < 2:
+                # For cases where we only have star, we assume that we are sufficiently
+                #isolated from other stars, but also that the guide star's PSF may be
+                #distorted enough that it might appear quite large on the detector
+                dist = 20
+            else:
+                dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
+
+            inds = SegmentGuidingGUI.run_SelectSegmentOverride(data, x, y, dist, masterGUIapp=masterGUIapp)
+            print(inds)
+
         # Set up guiding calculator object
         sg = SegmentGuidingCalculator(segment_infile, program_id, observation_num,
                                       visit_num, root=root, GUI=GUI,
                                       GS_params_dict=GS_params_dict,
                                       selected_segs=selected_segs,
                                       vss_infile=vss_infile, out_dir=out_dir)
-
-        # Either run the GUI or run the calculation
-        if GUI:
-            sg.SegmentGuidingGUI.Show()
-        else:
-            sg.ChosenSeg()
-            sg.Calculate()
+        sg.ChosenSeg()
+        sg.Calculate()
 
     except Exception as e:
         LOGGER.exception(e)
         raise
 
-############################## Main Program - Actions #####################################
-
-
-if __name__ == '__main__':
-    segment_infile = os.path.join(SGT_FILES_PATH, 'SGTintegrationexample.txt')
-    program_id = 999
-    observation_num = 1
-    visit_num = 1
-    run_tool(segment_infile, program_id, observation_num, visit_num)
