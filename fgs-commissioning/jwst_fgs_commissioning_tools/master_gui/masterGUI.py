@@ -49,10 +49,11 @@ from PyQt5.QtCore import pyqtSlot, Qt, QSettings, QTimer
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
+from astropy.io import fits
 
-from jwst_fgs_commissioning_tools import run_fgs_commissioning_tool
-from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
-from jwst_fgs_commissioning_tools import utils
+from .. import run_fgs_commissioning_tool, utils
+from ..convert_image import counts_to_jmag
+from ..segment_guiding import segment_guiding
 
 MASTERGUI_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(MASTERGUI_PATH)[0]
@@ -169,44 +170,49 @@ class MasterGui(QMainWindow):
         inputGroupBox.setLayout(inputGrid)
 
         # Input Image
-        inputGrid.addWidget(QLabel('<b>Input Image (required)</b>', self), 1, 0)
+        inputGrid.addWidget(QLabel('<b>Input Image*</b>', self), 1, 0)
         self.textbox_input_im = QLineEdit(self)
         self.textbox_input_im.setMinimumSize(400, 20)
-        inputGrid.addWidget(self.textbox_input_im, 2, 0)
+        inputGrid.addWidget(self.textbox_input_im, 1, 1)
 
         self.button_input_image = QPushButton('Open', self)
         self.button_input_image.setToolTip('Open the input image')
         self.button_input_image.clicked.connect(self.on_click_input)
-        inputGrid.addWidget(self.button_input_image, 2, 1)
+        inputGrid.addWidget(self.button_input_image, 1, 2)
 
         # Guider
-        inputGrid.addWidget(QLabel('<b>Guider (required)</b>', self), 3, 0)
+        inputGrid.addWidget(QLabel('<b>Guider*</b>', self), 2, 0)
         self.cb_guider = QComboBox(self)
         self.cb_guider.addItem("-Select-")
         self.cb_guider.addItem("1")
         self.cb_guider.addItem("2")
         self.cb_guider.activated.connect(self.update_filepreview)
-        inputGrid.addWidget(self.cb_guider, 4, 0, 1, 2)
+        inputGrid.addWidget(self.cb_guider, 2, 1, 1, 2)
 
         # Root
-        inputGrid.addWidget(QLabel('<b>Root</b>', self), 5, 0)
+        inputGrid.addWidget(QLabel('<b>Root</b>', self), 3, 0)
         self.textbox_root = QLineEdit(self)
         self.textbox_root.editingFinished.connect(self.update_filepreview)
-        inputGrid.addWidget(self.textbox_root, 6, 0, 1, 2)
+        inputGrid.addWidget(self.textbox_root, 3, 1)
+
+        self.button_root = QPushButton('Use Default', self)
+        self.button_root.setToolTip('Derive the root from the input filename')
+        self.button_root.clicked.connect(self.on_click_root)
+        inputGrid.addWidget(self.button_root, 3, 2)
 
         # Out directory
-        inputGrid.addWidget(QLabel('<b>Out Directory</b> - the directory where files are saved', self), 7, 0)
-        self.textbox_outdir = QLineEdit(self)
-        self.textbox_outdir.setText(self.out_dir_default)
+        inputGrid.addWidget(QLabel('<b>Out Directory</b>', self), 4, 0)
+        self.textbox_outdir = QLineEdit(self.out_dir_default, self)
+        self.textbox_outdir.setToolTip('The directory where files are saved')
         self.textbox_outdir.setEnabled(False)
-        inputGrid.addWidget(self.textbox_outdir, 8, 0)
+        inputGrid.addWidget(self.textbox_outdir, 4, 1)
         self.button_input_image = QPushButton('Open', self)
         self.button_input_image.setToolTip('Open the out directory')
         self.button_input_image.clicked.connect(self.on_click_out)
-        inputGrid.addWidget(self.button_input_image, 8, 1)
+        inputGrid.addWidget(self.button_input_image, 4, 2)
 
         # Filepath preview
-        inputGrid.addWidget(QLabel('Example Output Filepath', self), 9, 0)
+        inputGrid.addWidget(QLabel('Example Output Filepath', self), 9, 0, 1, 2)
         self.textbox_filepreview = QTextEdit(self)
         self.textbox_filepreview.setStyleSheet("QTextEdit { background-color : #ECECEC }");
         self.textbox_filepreview.setMaximumSize(2000, 40)
@@ -217,7 +223,7 @@ class MasterGui(QMainWindow):
         self.cb_ga.setCheckable(True)
         if self.global_alignment_default:
             self.cb_ga.toggle()
-        inputGrid.addWidget(self.cb_ga, 11, 0)
+        inputGrid.addWidget(self.cb_ga, 11, 0, 1, 2)
 
         # Background stars?
         self.cb_bkgd_stars = QCheckBox('Background stars', self)
@@ -225,6 +231,8 @@ class MasterGui(QMainWindow):
         if self.bkgd_stars_default:
             self.cb_bkgd_stars.toggle()
         inputGrid.addWidget(self.cb_bkgd_stars, 12, 0)
+
+        inputGrid.addWidget(QLabel('* - Required Parameter', self), 13, 0)
 
         return inputGroupBox
 
@@ -341,26 +349,26 @@ class MasterGui(QMainWindow):
 
         ## Run the star selection GUI
         # Add checkbox
-        self.cb_star_selection_gui = QCheckBox('Star Selection GUI', self)
+        self.cb_star_selection_gui = QCheckBox('Click-to-select (GUI)', self)
         self.cb_star_selection_gui.setCheckable(True)
         self.cb_star_selection_gui.toggled.connect(self.on_check_starselectgui)
-        starGrid.addWidget(self.cb_star_selection_gui, 2, 0)
+        starGrid.addWidget(self.cb_star_selection_gui, 0, 0)
 
         ## Pass in an in or reg file
         # Add checkbox
-        self.cb_infile = QCheckBox('In/Reg file', self)
+        self.cb_infile = QCheckBox('Load In/Reg file', self)
         self.cb_infile.setCheckable(True)
         self.cb_infile.toggled.connect(self.on_check_infile)
-        starGrid.addWidget(self.cb_infile, 3, 0)
+        starGrid.addWidget(self.cb_infile, 0, 1)
         # Add textbox
         self.textbox_infile = QLineEdit(self)
         self.textbox_infile.setMinimumSize(200, 20)
-        starGrid.addWidget(self.textbox_infile, 3, 2)
+        starGrid.addWidget(self.textbox_infile, 0, 2)
         # Add 'Open' button
         self.button_input_infile = QPushButton('Open', self)
         self.button_input_infile.setToolTip('Open the in_file directory')
         self.button_input_infile.clicked.connect(self.on_click_infile)
-        starGrid.addWidget(self.button_input_infile, 3, 5)
+        starGrid.addWidget(self.button_input_infile, 0, 3)
 
         # Check the box that is set to default
         if self.in_file_default:
@@ -417,6 +425,9 @@ class MasterGui(QMainWindow):
         self.cb_fg = QCheckBox('FG', self)
         filewriterGrid.addWidget(self.cb_fg, 2, 5)
 
+        # Just rewrite the .prc files?
+        self.cb_rewrite_prc = QCheckBox('Just rewrite the .prc files?', self)
+        filewriterGrid.addWidget(self.cb_rewrite_prc, 3, 1, 1, 5)
 
         return self.filewriterGroupBox
 
@@ -427,6 +438,14 @@ class MasterGui(QMainWindow):
         Segment Guiding Tool and creating the segment override file.
 
         '''
+        # 'V2Boff': 0.1,  # V2 boresight offset
+    #                       'V3Boff': 0.2,  # V3 boresight offset
+    #                       'fgsNum': 1,  # guider number
+    #                       'RA': 30.,  # RA of guide star
+    #                       'Dec': 50.,  # Dec of guide star
+    #                       'PA': 2.,  # position angle of guide star
+    #                       'segNum': 0}  # selected segment to guide on
+
         # Do segment guiding
         self.segmentGroupBox = QGroupBox('Segment Guiding', self)
         self.segmentGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
@@ -437,6 +456,36 @@ class MasterGui(QMainWindow):
 
         self.segmentGroupBox.setChecked(self.segment_guiding)
         self.segmentGroupBox.toggled.connect(self.on_check_segment_guiding)
+
+        # APT proposal, observation, visit numbers
+        segmentGrid.addWidget(QLabel('Program Num.', self), 0, 0)
+        self.textbox_prognum = QLineEdit(str(700), self)
+        segmentGrid.addWidget(self.textbox_prognum, 0, 1)
+        segmentGrid.addWidget(QLabel('Observation Num.', self), 1, 0)
+        self.textbox_obsnum = QLineEdit(str(1), self)
+        segmentGrid.addWidget(self.textbox_obsnum, 1, 1)
+        segmentGrid.addWidget(QLabel('Visit Num.', self), 2, 0)
+        self.textbox_visitnum = QLineEdit(str(1), self)
+        segmentGrid.addWidget(self.textbox_visitnum, 2, 1)
+
+        # RA, Dec, and PA
+        segmentGrid.addWidget(QLabel('RA', self), 0, 2)
+        self.textbox_RA = QLineEdit(str(30), self)
+        segmentGrid.addWidget(self.textbox_RA, 0, 3)
+        segmentGrid.addWidget(QLabel('Dec.', self), 1, 2)
+        self.textbox_Dec = QLineEdit(str(50), self)
+        segmentGrid.addWidget(self.textbox_Dec, 1, 3)
+        segmentGrid.addWidget(QLabel('Position Angle', self), 2, 2)
+        self.textbox_PA = QLineEdit(str(13), self)
+        segmentGrid.addWidget(self.textbox_PA, 2, 3)
+
+        # Boresight Offset
+        segmentGrid.addWidget(QLabel('V2 Boresight Offset', self), 3, 0)
+        self.textbox_V2Boff = QLineEdit(str(0), self)
+        segmentGrid.addWidget(self.textbox_V2Boff, 3, 1)
+        segmentGrid.addWidget(QLabel('V3 Boresight Offset', self), 3, 2)
+        self.textbox_V3Boff = QLineEdit(str(0), self)
+        segmentGrid.addWidget(self.textbox_V3Boff, 3, 3)
 
         return self.segmentGroupBox
 
@@ -518,7 +567,40 @@ class MasterGui(QMainWindow):
         if self.cb_fg.isChecked():
             steps.append('FG')
 
-        segment_guiding = self.segmentGroupBox.isChecked()
+        # Segment guiding
+        if self.segmentGroupBox.isChecked():
+            segment_infile = os.path.join(out_dir, 'out', root,
+                                          '{}_G{}_ALLpsfs.txt'.format(root, guider))
+            if not os.path.exists(segment_infile):
+                raise OSError('Provided segment infile {} not found.'.format(segment_infile))
+
+            program_id = self.textbox_prognum.text()
+            observation_num = self.textbox_obsnum.text()
+            visit_num = self.textbox_visitnum.text()
+
+            if nircam:
+                fgs_image = os.path.join(out_dir, 'out', root, 'FGS_imgs', '{}_G{}.fits'.format(root, guider))
+                data = fits.open(fgs_image)[0].data
+            else:
+                fgs_image = input_image
+                data = fits.open(fgs_image)[1].data
+
+            GS_params_dict = {'V2Boff': self.textbox_V2Boff.text(),
+                              'V3Boff': self.textbox_V3Boff.text(),
+                              'fgsNum': guider,
+                              'RA': self.textbox_RA.text(),
+                              'Dec': self.textbox_Dec.text(),
+                              'PA': self.textbox_PA.text(),
+                              'segNum': 0}
+
+            segment_guiding.run_tool(segment_infile, program_id=program_id,
+                                     observation_num=observation_num,
+                                     visit_num=visit_num, root=root,
+                                     GUI=True, GS_params_dict=GS_params_dict,
+                                     out_dir=out_dir, data=data,
+                                     masterGUIapp=self.app)
+            print("** Run Complete **")
+            return
 
         if convert_im or star_selection or file_writer:
             run_fgs_commissioning_tool.run_all(input_image, guider, root,
@@ -528,8 +610,7 @@ class MasterGui(QMainWindow):
                                                out_dir, convert_im, star_selection,
                                                star_selectiongui, file_writer, self.app)
             print("** Run Complete **")
-        if segment_guiding:
-            pass
+
 
     # What to do when specific buttons are pressed -----------------------------
     def on_click_input(self):
@@ -561,6 +642,13 @@ class MasterGui(QMainWindow):
         filename = self.open_filename_dialog('In/Reg file')
         self.textbox_infile.setText(filename)
         return filename
+
+    def on_click_root(self):
+        ''' Using the Set Default Root button'''
+        root = utils.make_root(None, self.textbox_input_im.text())
+        self.textbox_root.setText(root)
+        self.update_filepreview()
+        return root
 
     # What to do when specific check boxes are checked -------------------------
     def on_check_convertimage(self, is_toggle):
