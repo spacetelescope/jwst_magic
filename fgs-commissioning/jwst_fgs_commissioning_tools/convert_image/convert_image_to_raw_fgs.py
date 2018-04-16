@@ -339,7 +339,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
 
     # The Dectector keyword retruns 'NRCA*' or 'NRCB*' so to simplify matters
     # I just pull out the 4th character in the string
-    if nircam_det is not None:
+    if nircam_det not in [None, "-Parse from Header-"]:
         detector = nircam_det
     else:
         detector = header['DETECTOR'][3:].strip()
@@ -395,19 +395,6 @@ def pad_data(data, padding, fgs_pix):
 
     size = np.shape(data)[0]
 
-    # Remove NIRCam pedestals
-    ped_size = size // 4
-    noped_data = np.zeros(np.shape(data))
-    for i in range(4):
-        ped_start = i * ped_size
-        ped_stop = (i + 1) * ped_size
-        ped_strip = data[:, ped_start:ped_stop]
-        pedestal = np.median(ped_strip)
-
-        # Subtract median from each pedestal strip
-        noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
-        # print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
-
     # Create an array of size (binned data + 2*padding), filled with the mean data value
     padded_size = size + 2 * (padding)
     if padded_size != fgs_pix - 8:
@@ -417,11 +404,11 @@ def pad_data(data, padding, fgs_pix):
         # If something else is going on....
         else:
             raise ValueError('Padded image not of proper size (should be 2040): {}'.format(padded_size))
-    avg_signal = np.mean(noped_data)
+    avg_signal = np.mean(data)
     padded_data = np.full((padded_size, padded_size), avg_signal)
 
     # Replace center of array with real data
-    padded_data[padding:padding + size, padding:padding + size] = noped_data
+    padded_data[padding:padding + size, padding:padding + size] = data
 
     # Correct high or low pixels
     padded_data = utils.correct_image(padded_data, 65000, 0)
@@ -488,6 +475,39 @@ def normalize_data(data, fgs_counts, threshold=5):
     data_norm[mask == 0] = data[mask == 0]  # background is not normalized
 
     return data_norm
+
+
+def remove_pedestal(data):
+    """Subtract the vertical pedestals/amps from a raw frame
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+
+    Returns
+    -------
+    noped_data : 2-D numpy array
+        Image data with pedestals subtracted
+    """
+    size = np.shape(data)[0]
+    ped_size = size // 4
+    noped_data = np.zeros(np.shape(data))
+    pedestals = []
+    for i in range(4):
+        ped_start = i * ped_size
+        ped_stop = (i + 1) * ped_size
+        ped_strip = data[:, ped_start:ped_stop]
+        pedestal = np.median(ped_strip)
+        pedestals.append(pedestal)
+
+        # Subtract median from each pedestal strip
+        noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
+        # print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
+    LOGGER.info("Image Conversion: " +
+                "Removed pedestal values from NIRCam image: {} ".format(', '.join(['{:.2f}'.format(p) for p in pedestals])))
+
+    return noped_data
 
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
@@ -588,6 +608,8 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
             if not dq_arr.min() == 1 and not dq_arr.max() == 1:
                 data = correct_nircam_dq(data, dq_arr)
 
+            # Remove pedestal from NIRCam data
+            data = remove_pedestal(data)
             # Rotate the NIRCAM image into FGS frame
             nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
             # Pad image
