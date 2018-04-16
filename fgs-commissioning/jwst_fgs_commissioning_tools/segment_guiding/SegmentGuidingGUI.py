@@ -147,6 +147,7 @@ class SegmentGuidingWindow(QDialog):
         self.epsilon = dist
 
         self.in_master_GUI = in_master_GUI
+        self.n_orientations = 0
 
         # Initialize dialog object
         QDialog.__init__(self, modal=True)
@@ -726,6 +727,7 @@ class SegmentGuidingWindow(QDialog):
         self.segment_override_model.appendRow(item)
         self.segment_override_list.setModel(self.segment_override_model)
         self.clear_selected_stars()
+        self.n_orientations += 1
 
     def clear_selected_stars(self):
         # Reset text boxes and selection buttons
@@ -778,13 +780,15 @@ class SegmentGuidingWindow(QDialog):
     def delete_orientation(self):
         selected_orientation_index = self.segment_override_list.selectedIndexes()[0].row()
         self.segment_override_model.takeRow(selected_orientation_index)
+        self.n_orientations -= 1
+
 
     def fileQuit(self):
         '''Closes the star selector window'''
 
         self.answer = True
         # If the user didn't choose any stars, ask if they really want to quit.
-        if self.inds == []:
+        if self.inds == [] and self.n_orientations == 0:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
             no_stars_selected_dialog.setInformativeText('The tool will not be able to continue. Do you want to quit anyway?')
@@ -843,6 +847,9 @@ def run_SelectSegmentOverride(data, x, y, dist, print_output=False, masterGUIapp
         List of indices of positions of selected stars
     '''
 
+    # Alter data to accurately display null or negative values in log scale plot
+    data[data <= 0] = 1
+
     # RUN GUI
     if masterGUIapp:
         qApp = masterGUIapp
@@ -854,18 +861,26 @@ def run_SelectSegmentOverride(data, x, y, dist, print_output=False, masterGUIapp
         in_master_GUI = False
 
     window = SegmentGuidingWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
-                                in_master_GUI=in_master_GUI,
-                                print_output=print_output)
+                                  in_master_GUI=in_master_GUI,
+                                  print_output=print_output)
 
+    # Bring window to front
     try:
-        plt.get_current_fig_manager().window.raise_()  # Bring window to front
+        plt.get_current_fig_manager().window.raise_()
     except AttributeError:
         pass
 
+    # Begin interactive session; pauses until window.exit() is called
     if masterGUIapp:
-        window.exec_()  # Begin interactive session; pauses until window.exit() is called
+        window.exec_()
     else:
         qApp.exec_()
-    inds = window.inds
+
+    # Save indices of selected stars to pass
+    inds = []
+    for i in range(window.n_orientations):
+        orientation = window.segment_override_model.item(i).text()
+        selected_indices = [int(s) for s in orientation.split(', ')]
+        inds.append(selected_indices)
 
     return inds
