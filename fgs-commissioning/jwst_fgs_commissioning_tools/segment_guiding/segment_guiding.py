@@ -218,33 +218,32 @@ class SegmentGuidingCalculator:
                                      self.SegDec[p], self.xDet[p], self.yDet[p]))
             LOGGER.info('Segment Guiding: ' + all_segments)
 
-
         # Write out visit file with RA/Decs of selected segments
         with open(out_file, 'w') as f:
             out_string = 'sts -gs_select {:4d}:{}:{}'.format(int(self.program_id),
                                                              self.observation_num,
                                                              self.visit_num)
 
-            # If a regfile has been provided, only use the selected segments
+            # If segments have been selected, only use those
             try:
-                orientations = self.selected_segment_ids
-                if np.shape(orientations)[0] > 1:
-                    guide_segments = [s[0] for s in orientations]
-                    all_selected_segs = list(set(np.concatenate(orientations)))
+                orientations = list(self.selected_segment_ids)
+                guide_segments = [s[0] for s in orientations]
+                all_selected_segs = list(set(np.concatenate(orientations)))
 
-                    for i in range(len(all_selected_segs)):
-                        # Reorder all possible segments
-                        all_selected_segs.append(all_selected_segs[0])
-                        all_selected_segs.remove(all_selected_segs[0])
-                        new_seg = list(np.copy(all_selected_segs))
+                for i in range(len(all_selected_segs)):
+                    # Reorder all possible segments
+                    all_selected_segs.append(all_selected_segs[0])
+                    all_selected_segs.remove(all_selected_segs[0])
+                    new_seg = list(np.copy(all_selected_segs))
 
-                        # Add to orientation list if not already provided as guide star
-                        if new_seg[0] not in guide_segments:
-                            orientations.append(new_seg)
-                            guide_segments.append(new_seg[0])
+                    # Add to orientation list if not already provided as guide star
+                    if new_seg[0] not in guide_segments:
+                        orientations.append(new_seg)
+                        guide_segments.append(new_seg[0])
 
-            # except AttributeError:
-            #     orientations = np.array([np.linspace(1, nseg, nseg).astype(int)])
+            # If not, use all 18 segments
+            except AttributeError:
+                orientations = np.array([np.linspace(1, nseg, nseg).astype(int)])
 
             # If countrates were included in the input file, use them!
             try:
@@ -252,6 +251,7 @@ class SegmentGuidingCalculator:
             except AttributeError:
                 rate = [0.0] * nseg
 
+            # Write the commands for each orientation
             for i_o, orientation in enumerate(orientations):
                 guide_seg_id = orientation[0]
 
@@ -261,7 +261,7 @@ class SegmentGuidingCalculator:
                                                                    self.SegDec[guide_seg_id - 1],
                                                                    rate[guide_seg_id - 1])
 
-                # Add list of segment IDs for reference stars
+                # Add list of segment IDs for all reference stars
                 for ref_seg_id in orientation:
                     if ref_seg_id != guide_seg_id:
                         star_string += ', %d' % (ref_seg_id)
@@ -269,6 +269,7 @@ class SegmentGuidingCalculator:
                 out_string += star_string
 
             f.write(out_string)
+
             if verbose:
                 LOGGER.info('Segment Guiding: ' + 'Guide Star Override: ' + \
                             out_string.replace('-star', '\n                -star'))
