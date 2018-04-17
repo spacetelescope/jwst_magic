@@ -212,11 +212,11 @@ class MasterGui(QMainWindow):
         inputGrid.addWidget(self.button_input_image, 4, 2)
 
         # Filepath preview
-        inputGrid.addWidget(QLabel('Example Output Filepath', self), 9, 0, 1, 2)
+        inputGrid.addWidget(QLabel('Example Output Filepath:', self), 9, 0, 1, 2)
         self.textbox_filepreview = QTextEdit(self)
         self.textbox_filepreview.setStyleSheet("QTextEdit { background-color : #ECECEC }");
         self.textbox_filepreview.setMaximumSize(2000, 40)
-        inputGrid.addWidget(self.textbox_filepreview, 10, 0, 1, 2)
+        inputGrid.addWidget(self.textbox_filepreview, 10, 0, 1, 3)
 
         ## Global Alignment flag
         self.cb_ga = QCheckBox('Non-standard PSFs (i.e. Global alignment, image array)', self)
@@ -438,14 +438,6 @@ class MasterGui(QMainWindow):
         Segment Guiding Tool and creating the segment override file.
 
         '''
-        # 'V2Boff': 0.1,  # V2 boresight offset
-    #                       'V3Boff': 0.2,  # V3 boresight offset
-    #                       'fgsNum': 1,  # guider number
-    #                       'RA': 30.,  # RA of guide star
-    #                       'Dec': 50.,  # Dec of guide star
-    #                       'PA': 2.,  # position angle of guide star
-    #                       'segNum': 0}  # selected segment to guide on
-
         # Do segment guiding
         self.segmentGroupBox = QGroupBox('Segment Guiding', self)
         self.segmentGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
@@ -453,42 +445,51 @@ class MasterGui(QMainWindow):
         self.segmentGroupBox.setChecked(self.segment_guiding)
         segmentGrid = QGridLayout()
         self.segmentGroupBox.setLayout(segmentGrid)
-
         self.segmentGroupBox.setChecked(self.segment_guiding)
         self.segmentGroupBox.toggled.connect(self.on_check_segment_guiding)
 
+        # Read from regfile or user selection?
+        self.selectedsegments_button_group = QButtonGroup(self)
+        self.rb_regfile = QRadioButton("Read one orientation from regfile.txt")
+        self.selectedsegments_button_group.addButton(self.rb_regfile)
+        self.rb_regfile.setChecked(True)
+        segmentGrid.addWidget(self.rb_regfile, 0, 0, 1, 2)
+        self.rb_SGTGUI = QRadioButton("Click-to-select one or more orientations (GUI)")
+        self.selectedsegments_button_group.addButton(self.rb_SGTGUI)
+        self.rb_SGTGUI.setChecked(False)
+        segmentGrid.addWidget(self.rb_SGTGUI, 0, 2, 1, 2)
+
         # APT proposal, observation, visit numbers
-        segmentGrid.addWidget(QLabel('Program Num.', self), 0, 0)
+        segmentGrid.addWidget(QLabel('Program Num.', self), 1, 0)
         self.textbox_prognum = QLineEdit(str(700), self)
-        segmentGrid.addWidget(self.textbox_prognum, 0, 1)
-        segmentGrid.addWidget(QLabel('Observation Num.', self), 1, 0)
+        segmentGrid.addWidget(self.textbox_prognum, 1, 1)
+        segmentGrid.addWidget(QLabel('Observation Num.', self), 2, 0)
         self.textbox_obsnum = QLineEdit(str(1), self)
-        segmentGrid.addWidget(self.textbox_obsnum, 1, 1)
-        segmentGrid.addWidget(QLabel('Visit Num.', self), 2, 0)
+        segmentGrid.addWidget(self.textbox_obsnum, 2, 1)
+        segmentGrid.addWidget(QLabel('Visit Num.', self), 3, 0)
         self.textbox_visitnum = QLineEdit(str(1), self)
-        segmentGrid.addWidget(self.textbox_visitnum, 2, 1)
+        segmentGrid.addWidget(self.textbox_visitnum, 3, 1)
 
         # RA, Dec, and PA
-        segmentGrid.addWidget(QLabel('RA', self), 0, 2)
+        segmentGrid.addWidget(QLabel('RA', self), 1, 2)
         self.textbox_RA = QLineEdit(str(30), self)
-        segmentGrid.addWidget(self.textbox_RA, 0, 3)
-        segmentGrid.addWidget(QLabel('Dec.', self), 1, 2)
+        segmentGrid.addWidget(self.textbox_RA, 1, 3)
+        segmentGrid.addWidget(QLabel('Dec.', self), 2, 2)
         self.textbox_Dec = QLineEdit(str(50), self)
-        segmentGrid.addWidget(self.textbox_Dec, 1, 3)
-        segmentGrid.addWidget(QLabel('Position Angle', self), 2, 2)
+        segmentGrid.addWidget(self.textbox_Dec, 2, 3)
+        segmentGrid.addWidget(QLabel('Position Angle', self), 3, 2)
         self.textbox_PA = QLineEdit(str(13), self)
-        segmentGrid.addWidget(self.textbox_PA, 2, 3)
+        segmentGrid.addWidget(self.textbox_PA, 3, 3)
 
         # Boresight Offset
-        segmentGrid.addWidget(QLabel('V2 Boresight Offset', self), 3, 0)
+        segmentGrid.addWidget(QLabel('V2 Boresight Offset', self), 4, 0)
         self.textbox_V2Boff = QLineEdit(str(0), self)
-        segmentGrid.addWidget(self.textbox_V2Boff, 3, 1)
-        segmentGrid.addWidget(QLabel('V3 Boresight Offset', self), 3, 2)
+        segmentGrid.addWidget(self.textbox_V2Boff, 4, 1)
+        segmentGrid.addWidget(QLabel('V3 Boresight Offset', self), 4, 2)
         self.textbox_V3Boff = QLineEdit(str(0), self)
-        segmentGrid.addWidget(self.textbox_V3Boff, 3, 3)
+        segmentGrid.addWidget(self.textbox_V3Boff, 4, 3)
 
         return self.segmentGroupBox
-
 
     def close_application(self):
         ''' Close the window'''
@@ -593,11 +594,21 @@ class MasterGui(QMainWindow):
                               'PA': self.textbox_PA.text(),
                               'segNum': 0}
 
+            # Determine whether to load regfile or run GUI
+            load_orientation_from_regfile = self.selectedsegments_button_group.checkedButton() == self.rb_regfile
+            if load_orientation_from_regfile:
+                selected_segs = self.textbox_infile.text()
+                GUI = False
+            else:
+                selected_segs = None
+                GUI = True
+
             segment_guiding.run_tool(segment_infile, program_id=program_id,
                                      observation_num=observation_num,
                                      visit_num=visit_num, root=root,
-                                     GUI=True, GS_params_dict=GS_params_dict,
+                                     GUI=GUI, GS_params_dict=GS_params_dict,
                                      out_dir=out_dir, data=data,
+                                     selected_segs=selected_segs,
                                      masterGUIapp=self.app)
             print("** Run Complete **")
             return
