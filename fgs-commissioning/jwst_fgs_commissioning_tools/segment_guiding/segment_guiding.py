@@ -43,7 +43,7 @@ LOGGER = logging.getLogger(__name__)
 
 class SegmentGuidingCalculator:
     def __init__(self, segment_infile, program_id, observation_num, visit_num,
-                 root=None, GUI=False, GS_params_dict=None,
+                 root=None, GUI=False, GS_params_dict=None, refonly=False,
                  selected_segs=None, vss_infile=None, out_dir=None):
 
         self.root = root
@@ -57,7 +57,9 @@ class SegmentGuidingCalculator:
 
         # Will the tool be run through the GUI?
         self.GUI = GUI
-        self.multiple_orientations = False
+
+        # Implement "refonly" label for reference stars?
+        self.refonly = refonly
 
         # Parse the input file type (ALLpsfs.txt, regfile.txt, and VSS infile)
         self.get_gs_params(vss_infile, GS_params_dict)
@@ -183,14 +185,13 @@ class SegmentGuidingCalculator:
         self.check_coords()
 
         # Print and save final output
-        self.write_visit_file(nseg)
+        self.write_override_file(nseg)
 
         # Save .pngs of plots
         self.plot_segments()
 
-    def write_visit_file(self, nseg, verbose=True):
-
-        # Define path and name of output visit file
+    def write_override_file(self, nseg, verbose=True):
+        # Define path and name of output override file
         out_file = 'gs-override-{}_{}_{}.txt'.format(self.program_id, self.observation_num,
                                                      self.visit_num)
         out_file = os.path.join(self.out_dir, out_file)
@@ -218,7 +219,7 @@ class SegmentGuidingCalculator:
                                      self.SegDec[p], self.xDet[p], self.yDet[p]))
             LOGGER.info('Segment Guiding: ' + all_segments)
 
-        # Write out visit file with RA/Decs of selected segments
+        # Write out override file with RA/Decs of selected segments
         with open(out_file, 'w') as f:
             out_string = 'sts -gs_select {:4d}:{}:{}'.format(int(self.program_id),
                                                              self.observation_num,
@@ -229,6 +230,9 @@ class SegmentGuidingCalculator:
                 orientations = list(self.selected_segment_ids)
                 guide_segments = [s[0] for s in orientations]
                 all_selected_segs = list(set(np.concatenate(orientations)))
+
+                if self.refonly:
+                    n_guide_segments = len(guide_segments)
 
                 for i in range(len(all_selected_segs)):
                     # Reorder all possible segments
@@ -255,16 +259,26 @@ class SegmentGuidingCalculator:
             for i_o, orientation in enumerate(orientations):
                 guide_seg_id = orientation[0]
 
-                # Format segment properties (ID, RA, Dec, countrate)
-                star_string = ' -star%d = %d, %.6f, %.6f, %.1f' % (i_o + 1, guide_seg_id,
-                                                                   self.SegRA[guide_seg_id - 1],
-                                                                   self.SegDec[guide_seg_id - 1],
-                                                                   rate[guide_seg_id - 1])
+                label = 'star'
+                seg = i_o + 1
+                # If implementing "ref_only" labels, determine if star is guide
+                # or reference star, and alter label and ID accordingly
+                if self.refonly:
+                    if i_o >= n_guide_segments:
+                        label = 'ref_only'
+                        seg = i_o + 1 - n_guide_segments
 
-                # Add list of segment IDs for all reference stars
-                for ref_seg_id in orientation:
-                    if ref_seg_id != guide_seg_id:
-                        star_string += ', %d' % (ref_seg_id)
+                # Format segment properties (ID, RA, Dec, countrate)
+                star_string = ' -%s%d = %d, %.6f, %.6f, %.1f' % (label, seg, guide_seg_id,
+                                                                 self.SegRA[guide_seg_id - 1],
+                                                                 self.SegDec[guide_seg_id - 1],
+                                                                 rate[guide_seg_id - 1])
+
+                if self.refonly and label == 'star':
+                    # Add list of segment IDs for all reference stars
+                    for ref_seg_id in orientation:
+                        if ref_seg_id != guide_seg_id:
+                            star_string += ', %d' % (ref_seg_id)
 
                 out_string += star_string
 
@@ -272,7 +286,8 @@ class SegmentGuidingCalculator:
 
             if verbose:
                 LOGGER.info('Segment Guiding: ' + 'Guide Star Override: ' + \
-                            out_string.replace('-star', '\n                -star'))
+                            out_string.replace('-star', '\n                -star').\
+                            replace('-ref_only', '\n                -ref_only'))
             LOGGER.info('Segment Guiding: ' + 'Saved {} segment commands to {}'.format(len(orientations), out_file))
 
     def check_coords(self):
@@ -299,7 +314,8 @@ class SegmentGuidingCalculator:
                 continue
 
     def get_gs_params(self, vss_infile, GS_params_dict):
-        # Get GS parameters from dictionary or VSS file
+        '''Get GS parameters from dictionary or VSS file
+        '''
         if vss_infile and GS_params_dict:
             LOGGER.info('Segment Guiding: ' + 'Reading RA, Dec, and PA from VSS file {}'.format(vss_infile))
             LOGGER.info('Segment Guiding: ' + 'Reading boresight offset and segment number from user-provided dictionary.')
@@ -337,14 +353,14 @@ class SegmentGuidingCalculator:
             column_names = read_table.colnames
             n_segs = len(read_table)
 
+            # Are the segment positions already in V2/V3?
             if (any(['V2Seg' == c for c in column_names])) and \
                (any(['V3Seg' == c for c in column_names])):
-
                 segment_coords = read_table
 
+            # If not, convert pixel x/y to V2/V3
             elif (any(['x' == c for c in column_names])) and \
                  (any(['y' == c for c in column_names])):
-
                 segment_coords = Table()
                 segment_coords['SegID'] = np.linspace(1, n_segs, n_segs).astype(int)
                 v2, v3 = coordinate_transforms.Raw2Tel(read_table['x'], read_table['y'], self.fgsNum)
@@ -353,13 +369,14 @@ class SegmentGuidingCalculator:
             else:
                 raise TypeError('Incompatible file type: ', segment_infile)
 
+            # If the countrates are included in the input file, read them!
             if (any(['countrate' == c for c in column_names])):
                 self.counts_array = read_table['countrate']
 
         else:
             raise TypeError('Incompatible file type: ', segment_infile)
 
-        # Determine the IDs and coordinates of all segments
+        # Define the IDs and coordinates of all segments
         self.SegIDArray = segment_coords['SegID']
         self.V2SegArray = segment_coords['V2Seg']
         self.V3SegArray = segment_coords['V3Seg']
@@ -368,14 +385,17 @@ class SegmentGuidingCalculator:
     def get_selected_segs(self, selected_segs):
         # If a list of selected segments has been provided, figure that out
 
-        # If the selected segments are a list (passed from GUI)
+        # If the selected segments are an array of lists (passed from GUI)
         if isinstance(selected_segs, np.ndarray):
-            if len(np.shape(selected_segs)) > 1:
-                self.multiple_orientations = True
+            # If there is more than one orientation provided
+            if isinstance(selected_segs[0], list):
+                self.selected_segment_ids = []
+                for i, orientation in enumerate(selected_segs):
+                    self.selected_segment_ids[i] = [s - 1 for s in selected_segs]
 
-            self.selected_segment_ids = selected_segs - 1
-
-            return
+            # If there is only one
+            else:
+                self.selected_segment_ids = selected_segs - 1
 
         # Else if they are a regfile, parse it.
         elif os.path.exists(selected_segs):
@@ -386,6 +406,7 @@ class SegmentGuidingCalculator:
             raise TypeError('Unrecognized data type passed to selected_segs ({}); must be regfile.txt path or array of indices.'.format(selected_segs))
 
     def parse_regfile(self, selected_segs):
+        # Make sure the file is ascii-readable
         n_segs = len(self.SegIDArray)
         try:
             read_selected_segs = asc.read(selected_segs)
@@ -394,34 +415,35 @@ class SegmentGuidingCalculator:
         except:
             raise TypeError('Incompatible regfile type: ', selected_segs)
 
+        # Are the segment positions already in V2/V3?
         if (any(['V2Seg' == c for c in column_names])) and \
            (any(['V3Seg' == c for c in column_names])):
-
             selected_segment_coords = read_selected_segs
 
+        # If not, convert pixel x/y to V2/V3
         elif (any(['x' == c for c in column_names])) and \
              (any(['y' == c for c in column_names])):
-
             selected_segment_coords = Table()
             v2, v3 = coordinate_transforms.Raw2Tel(read_selected_segs['x'],
                                                    read_selected_segs['y'],
                                                    self.fgsNum)
             selected_segment_coords['V2Seg'], selected_segment_coords['V3Seg'] = v2, v3
 
+        # If the positions aren't V2/V3 or x/y, what are they??
         else:
             raise TypeError('Incompatible regfile type: ', selected_segs)
 
+        # Match locations of selected segments to IDs of known segments
         selected_segs_ids = []
         for coords in zip(selected_segment_coords['V2Seg', 'V3Seg']):
             for i_seg in range(n_segs):
                 if coords[0]['V2Seg'] == self.V2SegArray[i_seg] and \
                    coords[0]['V3Seg'] == self.V3SegArray[i_seg]:
                     selected_segs_ids.append(i_seg + 1)
-
         if len(selected_segs_ids) == 0:
             raise TypeError('Coordinates of selected segments file do not match those of the provided input file.')
 
-        self.selected_segment_ids = selected_segs_ids
+        self.selected_segment_ids = [selected_segs_ids]
 
     def get_guidestar_params_from_visit_file(self, visit_file):
         # Open provided visit file, verify formatting, and get index of data start
@@ -582,7 +604,7 @@ class SegmentGuidingCalculator:
 
 def run_tool(segment_infile, program_id=0, observation_num=0, visit_num=0, root=None,
              GUI=False, GS_params_dict=None, selected_segs=None, vss_infile=None,
-             out_dir=None, data=None, masterGUIapp=None):
+             out_dir=None, data=None, masterGUIapp=None, refonly=False):
     # if not GS_params_dict and not GUI:
     #     GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
     #                       'V3Boff': 0.2,  # V3 boresight offset
@@ -597,10 +619,10 @@ def run_tool(segment_infile, program_id=0, observation_num=0, visit_num=0, root=
 
     try:
         if GUI:
-            # Parse regfile for locations of segments
-            regfile = asc.read(segment_infile)
-            x = regfile['x']
-            y = regfile['y']
+            # Parse ALLpsfs.txt for locations of segments
+            all_segment_locations = asc.read(segment_infile)
+            x = all_segment_locations['x']
+            y = all_segment_locations['y']
             coords = [(x_i, y_i) for x_i, y_i in zip(x, y)]
 
             # Find the minimum distance between PSFs
@@ -624,7 +646,8 @@ def run_tool(segment_infile, program_id=0, observation_num=0, visit_num=0, root=
                                       visit_num, root=root, GUI=GUI,
                                       GS_params_dict=GS_params_dict,
                                       selected_segs=selected_segs,
-                                      vss_infile=vss_infile, out_dir=out_dir)
+                                      vss_infile=vss_infile, out_dir=out_dir,
+                                      refonly=refonly)
         sg.ChosenSeg()
         sg.Calculate()
 
