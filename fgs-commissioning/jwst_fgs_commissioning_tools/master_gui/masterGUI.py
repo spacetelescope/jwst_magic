@@ -258,13 +258,14 @@ class MasterGui(QMainWindow):
         self.convertGroupBox.toggled.connect(self.on_check_convertimage)
 
         # What is the input image?
+        convertGrid.addWidget(QLabel('<b>Input Image Type:</b>', self), 0, 0)
         # NIRCam
         instrument_group = QButtonGroup(self.main_widget) # Number group
         self.rb_nircam = QRadioButton("NIRCam Image")
         instrument_group.addButton(self.rb_nircam)
         self.rb_nircam.setChecked(self.nircam_default)
         self.rb_nircam.toggled.connect(lambda: self.btnstate(self.rb_nircam))
-        convertGrid.addWidget(self.rb_nircam, 2, 0)
+        convertGrid.addWidget(self.rb_nircam, 0, 2)
 
         #FGS
         self.rb_fgs = QRadioButton("FGS Image")
@@ -273,10 +274,10 @@ class MasterGui(QMainWindow):
             self.rb_fgs.setChecked(True)
             self.cb_nircam_det = None
         self.rb_fgs.toggled.connect(lambda: self.btnstate(self.rb_fgs))
-        convertGrid.addWidget(self.rb_fgs, 2, 1)
+        convertGrid.addWidget(self.rb_fgs, 0, 1)
 
         # Set NIRCam detector
-        convertGrid.addWidget(QLabel('NIRCam Detector:', self), 3, 0)
+        convertGrid.addWidget(QLabel('NIRCam Detector:', self), 0, 3)
         self.cb_nircam_det = QComboBox(self)
         self.cb_nircam_det.addItem("-Parse from Header-")
         self.cb_nircam_det.addItem("A1")
@@ -295,21 +296,23 @@ class MasterGui(QMainWindow):
             if index >= 0:
                 self.cb_nircam_det.setCurrentIndex(index)
 
-        convertGrid.addWidget(self.cb_nircam_det, 3, 1)
+        convertGrid.addWidget(self.cb_nircam_det, 0, 4)
 
         #Normalize by FGS counts or JMAG
+        convertGrid.addWidget(QLabel('<b>Normalize to:</b>', self), 1, 0)
+
         magnitude_group = QButtonGroup(self.main_widget)
         self.rb_fgs_counts = QRadioButton("FGS Counts")
         magnitude_group.addButton(self.rb_fgs_counts)
         self.rb_fgs_counts.toggled.connect(lambda: self.btnstate(self.rb_fgs_counts))
-        convertGrid.addWidget(self.rb_fgs_counts, 4, 0)
+        convertGrid.addWidget(self.rb_fgs_counts, 1, 1)
 
         self.rb_jmag = QRadioButton("J mag")
         magnitude_group.addButton(self.rb_jmag)
         self.rb_jmag.toggled.connect(lambda: self.btnstate(self.rb_jmag))
-        convertGrid.addWidget(self.rb_jmag, 4, 1)
+        convertGrid.addWidget(self.rb_jmag, 1, 2)
 
-        convertGrid.addWidget(QLabel('Value:', self), 4, 3)
+        convertGrid.addWidget(QLabel('Value:', self), 1, 3)
         self.textbox_value = QLineEdit(self)
         if self.jmag_default:
             self.rb_jmag.setChecked(True)
@@ -321,7 +324,7 @@ class MasterGui(QMainWindow):
             self.rb_jmag.setChecked(True)
             self.textbox_value.setText(str(self.jmag_default))
 
-        convertGrid.addWidget(self.textbox_value, 4, 4)
+        convertGrid.addWidget(self.textbox_value, 1, 4)
 
         return self.convertGroupBox
 
@@ -347,19 +350,19 @@ class MasterGui(QMainWindow):
         self.starGroupBox.setChecked(self.star_selection)
         self.starGroupBox.toggled.connect(self.on_check_starselect)
 
+
         ## Run the star selection GUI
-        # Add checkbox
-        self.cb_star_selection_gui = QCheckBox('Click-to-select (GUI)', self)
-        self.cb_star_selection_gui.setCheckable(True)
-        self.cb_star_selection_gui.toggled.connect(self.on_check_starselectgui)
-        starGrid.addWidget(self.cb_star_selection_gui, 0, 0)
+        self.starselection_button_group = QButtonGroup(self)
+        self.rb_star_selection_gui = QRadioButton('Click-to-select (GUI)', self)
+        self.starselection_button_group.addButton(self.rb_star_selection_gui)
+        self.rb_star_selection_gui.toggled.connect(self.on_check_starselectgui)
+        starGrid.addWidget(self.rb_star_selection_gui, 0, 0)
 
         ## Pass in an in or reg file
-        # Add checkbox
-        self.cb_infile = QCheckBox('Load In/Reg file', self)
-        self.cb_infile.setCheckable(True)
-        self.cb_infile.toggled.connect(self.on_check_infile)
-        starGrid.addWidget(self.cb_infile, 0, 1)
+        self.rb_infile = QRadioButton('Load In/Reg file', self)
+        self.starselection_button_group.addButton(self.rb_infile)
+        self.rb_infile.toggled.connect(self.on_check_infile)
+        starGrid.addWidget(self.rb_infile, 0, 1)
         # Add textbox
         self.textbox_infile = QLineEdit(self)
         self.textbox_infile.setMinimumSize(200, 20)
@@ -372,14 +375,14 @@ class MasterGui(QMainWindow):
 
         # Check the box that is set to default
         if self.in_file_default:
-            self.cb_infile.setChecked(True)
+            self.rb_infile.setChecked(True)
             self.textbox_infile.setEnabled(True)
             self.textbox_infile.setText(self.in_file_default)
             self.button_input_infile.setEnabled(True)
-            self.cb_star_selection_gui.setChecked(False)
+            self.rb_star_selection_gui.setChecked(False)
         else:
-            self.cb_star_selection_gui.setChecked(True)
-            self.cb_infile.setChecked(False)
+            self.rb_star_selection_gui.setChecked(True)
+            self.rb_infile.setChecked(False)
             self.textbox_infile.setEnabled(False)
             self.button_input_infile.setEnabled(False)
 
@@ -459,35 +462,41 @@ class MasterGui(QMainWindow):
         self.rb_SGTGUI.setChecked(False)
         segmentGrid.addWidget(self.rb_SGTGUI, 0, 2, 1, 2)
 
+        # Implement ``ref_only`` tag?
+        self.cb_refonly = QCheckBox('Designate reference stars with "refonly"', self)
+        self.cb_refonly.setCheckable(True)
+        self.cb_refonly.setChecked(True)
+        segmentGrid.addWidget(self.cb_refonly, 1, 0, 1, 4)
+
         # APT proposal, observation, visit numbers
-        segmentGrid.addWidget(QLabel('Program Num.', self), 1, 0)
+        segmentGrid.addWidget(QLabel('Program Num.', self), 2, 0)
         self.textbox_prognum = QLineEdit(str(700), self)
-        segmentGrid.addWidget(self.textbox_prognum, 1, 1)
-        segmentGrid.addWidget(QLabel('Observation Num.', self), 2, 0)
+        segmentGrid.addWidget(self.textbox_prognum, 2, 1)
+        segmentGrid.addWidget(QLabel('Observation Num.', self), 3, 0)
         self.textbox_obsnum = QLineEdit(str(1), self)
-        segmentGrid.addWidget(self.textbox_obsnum, 2, 1)
-        segmentGrid.addWidget(QLabel('Visit Num.', self), 3, 0)
+        segmentGrid.addWidget(self.textbox_obsnum, 3, 1)
+        segmentGrid.addWidget(QLabel('Visit Num.', self), 4, 0)
         self.textbox_visitnum = QLineEdit(str(1), self)
-        segmentGrid.addWidget(self.textbox_visitnum, 3, 1)
+        segmentGrid.addWidget(self.textbox_visitnum, 4, 1)
 
         # RA, Dec, and PA
-        segmentGrid.addWidget(QLabel('RA', self), 1, 2)
+        segmentGrid.addWidget(QLabel('RA', self), 2, 2)
         self.textbox_RA = QLineEdit(str(30), self)
-        segmentGrid.addWidget(self.textbox_RA, 1, 3)
-        segmentGrid.addWidget(QLabel('Dec.', self), 2, 2)
+        segmentGrid.addWidget(self.textbox_RA, 2, 3)
+        segmentGrid.addWidget(QLabel('Dec.', self), 3, 2)
         self.textbox_Dec = QLineEdit(str(50), self)
-        segmentGrid.addWidget(self.textbox_Dec, 2, 3)
-        segmentGrid.addWidget(QLabel('Position Angle', self), 3, 2)
+        segmentGrid.addWidget(self.textbox_Dec, 3, 3)
+        segmentGrid.addWidget(QLabel('Position Angle', self), 4, 2)
         self.textbox_PA = QLineEdit(str(13), self)
-        segmentGrid.addWidget(self.textbox_PA, 3, 3)
+        segmentGrid.addWidget(self.textbox_PA, 4, 3)
 
         # Boresight Offset
-        segmentGrid.addWidget(QLabel('V2 Boresight Offset', self), 4, 0)
+        segmentGrid.addWidget(QLabel('V2 Boresight Offset', self), 5, 0)
         self.textbox_V2Boff = QLineEdit(str(0), self)
-        segmentGrid.addWidget(self.textbox_V2Boff, 4, 1)
-        segmentGrid.addWidget(QLabel('V3 Boresight Offset', self), 4, 2)
+        segmentGrid.addWidget(self.textbox_V2Boff, 5, 1)
+        segmentGrid.addWidget(QLabel('V3 Boresight Offset', self), 5, 2)
         self.textbox_V3Boff = QLineEdit(str(0), self)
-        segmentGrid.addWidget(self.textbox_V3Boff, 4, 3)
+        segmentGrid.addWidget(self.textbox_V3Boff, 5, 3)
 
         return self.segmentGroupBox
 
@@ -548,8 +557,8 @@ class MasterGui(QMainWindow):
 
         #Star selection
         star_selection = self.starGroupBox.isChecked()
-        star_selectiongui = self.cb_star_selection_gui.isChecked()
-        if not self.cb_infile.isChecked():
+        star_selectiongui = self.rb_star_selection_gui.isChecked()
+        if not self.rb_infile.isChecked():
             in_file = None
         else:
             in_file = self.textbox_infile.text()
@@ -570,6 +579,8 @@ class MasterGui(QMainWindow):
 
         # Segment guiding
         if self.segmentGroupBox.isChecked():
+            refonly = self.cb_refonly.isChecked()
+
             segment_infile = os.path.join(out_dir, 'out', root,
                                           '{}_G{}_ALLpsfs.txt'.format(root, guider))
             if not os.path.exists(segment_infile):
@@ -609,7 +620,7 @@ class MasterGui(QMainWindow):
                                      GUI=GUI, GS_params_dict=GS_params_dict,
                                      out_dir=out_dir, data=data,
                                      selected_segs=selected_segs,
-                                     masterGUIapp=self.app)
+                                     masterGUIapp=self.app, refonly=refonly)
             print("** Run Complete **")
             return
 
@@ -689,14 +700,14 @@ class MasterGui(QMainWindow):
     def on_check_starselect(self, is_toggle):
         ''' Checking that the star selection step occurs box '''
         if is_toggle:
-            self.cb_star_selection_gui.setEnabled(True)
-            self.cb_infile.setEnabled(True)
+            self.rb_star_selection_gui.setEnabled(True)
+            self.rb_infile.setEnabled(True)
             self.textbox_infile.setEnabled(True)
             self.button_input_infile.setEnabled(True)
 
         else:
-            self.cb_star_selection_gui.setEnabled(False)
-            self.cb_infile.setEnabled(False)
+            self.rb_star_selection_gui.setEnabled(False)
+            self.rb_infile.setEnabled(False)
             self.textbox_infile.setEnabled(False)
             self.button_input_infile.setEnabled(False)
 
@@ -706,22 +717,22 @@ class MasterGui(QMainWindow):
         if is_toggle:
             self.textbox_infile.setEnabled(False)
             self.button_input_infile.setEnabled(False)
-            self.cb_infile.setChecked(False)
+            self.rb_infile.setChecked(False)
         else:
             self.textbox_infile.setEnabled(True)
             self.button_input_infile.setEnabled(True)
-            self.cb_infile.setChecked(True)
+            self.rb_infile.setChecked(True)
 
     def on_check_infile(self, is_toggle):
         ''' Checking the star selection infile box '''
         if is_toggle:
             self.textbox_infile.setEnabled(True)
             self.button_input_infile.setEnabled(True)
-            if self.cb_star_selection_gui.isChecked():
-                self.cb_star_selection_gui.toggle()
+            if self.rb_star_selection_gui.isChecked():
+                self.rb_star_selection_gui.toggle()
         else:
-            if not self.cb_star_selection_gui.isChecked():
-                self.cb_star_selection_gui.toggle()
+            if not self.rb_star_selection_gui.isChecked():
+                self.rb_star_selection_gui.toggle()
 
     def on_check_filewriter(self, is_toggle):
         ''' Checking the filewriter box - defaults set here'''
