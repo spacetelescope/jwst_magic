@@ -44,7 +44,7 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
-                             QLabel, QTextEdit, QRadioButton, QGroupBox,
+                             QLabel, QTextEdit, QRadioButton, QGroupBox, QFrame,
                              QSizePolicy, QGridLayout, QDialog, QMessageBox,
                              QListView, QToolButton, QCheckBox, QComboBox)
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -56,6 +56,7 @@ matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
 from ..star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
+GROUPBOX_TITLE_STYLESHEET = 'QGroupBox { font-size: 14px; font-weight: bold; margin-top: 30px } QGroupBox::title { top: -20px }'
 
 class SegmentGuidingWindow(QDialog):
     """Interactive PyQt GUI window used to select stars from an FGS image.
@@ -160,7 +161,7 @@ class SegmentGuidingWindow(QDialog):
         '''
 
         # Set up star selector dialog window
-        self.setWindowTitle("FGS Guide & Reference Star Selector")
+        self.setWindowTitle("FGS Segment Guide Star Override")
         mainGrid = QGridLayout()  # set grid layout
         self.setLayout(mainGrid)
         self.setFocus()
@@ -172,33 +173,12 @@ class SegmentGuidingWindow(QDialog):
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
                                            self.y)
         self.canvas.zoom_to_crop()
-        mainGrid.addWidget(self.canvas, 0, 0, 4, 4)
-        self.canvas.setMinimumSize(self.image_dim - 150, self.image_dim - 150)
+        mainGrid.addWidget(self.canvas, 0, 0, 5, 2)
+        self.canvas.setMinimumSize(self.image_dim, self.image_dim)
 
-        # Show current cursor position
-        self.cursor_label = QLabel('Cursor Position:', self,
-                                   alignment=QtCore.Qt.AlignRight)
-        mainGrid.addWidget(self.cursor_label, 0, 0,
-                           alignment=QtCore.Qt.AlignVCenter)
-
-        self.cursor_textbox = QLineEdit(self)
-        self.cursor_textbox.setPlaceholderText('Move cursor into axes')
-        self.cursor_textbox.setFixedSize(150, 20)
-        mainGrid.addWidget(self.cursor_textbox, 0, 1)
-
-        self.canvas.mpl_connect('motion_notify_event',
-                                self.update_cursor_position)
-
-        # Show value under cursor
-        self.pixel_label = QLabel('Pixel Value:', self,
-                                  alignment=QtCore.Qt.AlignRight)
-        mainGrid.addWidget(self.pixel_label, 0, 2,
-                           alignment=QtCore.Qt.AlignVCenter)
-
-        self.pixel_textbox = QLineEdit(self)
-        self.pixel_textbox.setPlaceholderText('Move cursor into axes')
-        self.pixel_textbox.setFixedSize(150, 20)
-        mainGrid.addWidget(self.pixel_textbox, 0, 3)
+        # Add cursor-tracking
+        cursorFrame = self.create_cursor_section()
+        mainGrid.addWidget(cursorFrame, 4, 0, 1, 2, alignment=QtCore.Qt.AlignHCenter)
 
         # Update cursor position and pixel value under cursor
         self.canvas.mpl_connect('motion_notify_event',
@@ -214,38 +194,44 @@ class SegmentGuidingWindow(QDialog):
         instructionsGroupBox = QGroupBox('Instructions', self)
         vBox = QVBoxLayout()
 
-        self.instructions = QLabel('''<b>Star Selection:</b> Click as near to the center of the star \
+        self.instructions = QLabel('''<b>Guide and Reference Star Selection:</b> Click as near to the center of the star \
         as possible. The first star that is choosen will be the <span style=\
         "background-color: #FFFF00">guide star</span>. All additional stars that are \
         clicked on are the <span style="background-color: #FFA500">reference stars\
-        </span>. Star locations will appear in the list at right as they are selected; \
+        </span>. Star locations will appear in the list below at left as they are selected; \
         the guide star can be re-selected using the radio buttons. Errors will be shown\
-        in the output box below.<br>
-        <b>Segment Guiding Commands:</b> Once you are happy with your selection, \
-        click "Save Configuration" to save the stars you have selected as a \
-        segment guiding override command. If you want to select multiple \
+        in the output box below.<br><br>
+        <b>Segment Guiding Override Commands:</b> Once you are happy with your selection, \
+        click "Save Command" to save the stars you have selected as a \
+        segment guiding override command. You will see it appear in the list below at right. If you want to select multiple \
         orientations to guide on, repeat the star selection process and again \
-        click "Save Configuration" when you are done. Segment override commands \
+        click "Save Command" when you are done. Segment override commands \
         can be deleted, and the order in which they will be commanded can be \
-        altered using the buttons in the "Segment Override Commands" box.''', self)
+        altered using the buttons in the "Segment Override Commands" box. <br> The \
+        center of the segment override pointing (i.e. the location that will \
+        match the guide star RA and Dec) can be aligned with either the center \
+        of the segment array or with a specific segment by setting \
+        the "Center of Override Pointing" parameters.''', self)
         # self.instructions.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
         self.instructions.setWordWrap(True)
+        instructionsGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
         vBox.addWidget(self.instructions)
         instructionsGroupBox.setLayout(vBox)
         instructionsGroupBox.setSizePolicy(QSizePolicy.Preferred,
                                            QSizePolicy.Maximum)
-        mainGrid.addWidget(instructionsGroupBox, 0, 4, 1, 2,
+        mainGrid.addWidget(instructionsGroupBox, 0, 2, 1, 2,
                            alignment=QtCore.Qt.AlignTop)
 
         # Log to update
         self.log_textbox = QTextEdit(self)
         self.log_textbox.setPlaceholderText('No stars selected.')
         # self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
-        self.log_textbox.setMaximumSize(700, 50)
+        self.log_textbox.setMinimumSize(350, 50)
+        # self.log_textbox.setMaximumSize(700, 50)
         # mainGrid.setRowMinimumHeight(1, 320)
-        mainGrid.addWidget(self.log_textbox, 1, 4, 1, 2,
+        mainGrid.addWidget(self.log_textbox, 1, 3, 1, 1,
                            alignment=QtCore.Qt.AlignHCenter)
 
         # Plot slice of profile under cursor
@@ -255,88 +241,113 @@ class SegmentGuidingWindow(QDialog):
         prof.init_profile()
         self.profile = prof
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
-        # mainGrid.setRowMinimumHeight(2, self.image_dim * .25)
-        # mainGrid.setColumnMinimumWidth(2, self.image_dim * .5)
-        mainGrid.addWidget(self.profile, 3, 4, 4, 1,
+        self.profile.setMinimumSize(200, 250)
+        mainGrid.addWidget(self.profile, 5, 2, 1, 1,
                            alignment=QtCore.Qt.AlignVCenter)
 
         # Create colorbar-updating section
         cbarGroupBox = self.create_colorbar_section(sc)
-        cbarGroupBox.setMaximumSize(200, 250)
-        mainGrid.addWidget(cbarGroupBox, 4, 0, 3, 2)
+        cbarGroupBox.setMaximumSize(200, 150)
+        mainGrid.addWidget(cbarGroupBox, 5, 0, 1, 1,
+                           alignment=QtCore.Qt.AlignTop|QtCore.Qt.AlignHCenter)
 
         # Create axes-updating section
         axGroupBox = self.create_axes_section(sc)
-        axGroupBox.setMaximumSize(250, 250)
-        mainGrid.addWidget(axGroupBox, 4, 2, 3, 2)
+        axGroupBox.setMaximumSize(450, 150)
+        mainGrid.addWidget(axGroupBox, 5, 1, 1, 1,
+                           alignment=QtCore.Qt.AlignTop|QtCore.Qt.AlignHCenter)
 
         # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         # Create selected stars section
         starsGroupBox = self.create_selectedstars_section()
-        mainGrid.addWidget(starsGroupBox, 2, 4, 1, 1)
+        mainGrid.addWidget(starsGroupBox, 1, 2, 4, 1)
 
         # Create segment guiding section
         segmentGuidingGroupBox = self.create_segmentguiding_section()
-        mainGrid.addWidget(segmentGuidingGroupBox, 2, 5, 1, 1)
+        mainGrid.addWidget(segmentGuidingGroupBox, 2, 3, 1, 1)
 
         # Create override pointing center section
         overrideCenterGroupBox = self.create_overridecenter_section()
-        mainGrid.addWidget(overrideCenterGroupBox, 3, 5, 2, 1)
+        overrideCenterGroupBox.setMaximumSize(400, 120)
+        mainGrid.addWidget(overrideCenterGroupBox, 3, 3, 2, 1)
 
-        # Add "Done" button
-        self.done_button = QPushButton('Done', self)
-        self.done_button.setToolTip('Close the window')
-        self.done_button.clicked.connect(self.fileQuit)
-        self.done_button.setMinimumSize(150, 50)
-        mainGrid.addWidget(self.done_button, 5, 5, 1, 1,
-                           alignment=QtCore.Qt.AlignBottom)
-
-        # Add "Cancel" button
-        self.cancel_button = QPushButton('Cancel', self)
-        self.cancel_button.setToolTip('Close the window and discard changes')
-        self.cancel_button.clicked.connect(self.cancel)
-        self.cancel_button.setMinimumSize(150, 50)
-        mainGrid.addWidget(self.cancel_button, 6, 5, 2, 1,
-                           alignment=QtCore.Qt.AlignVCenter)
+        # Buttons to close the GUI
+        closeButtonsFrame = self.create_closebuttons_section()
+        mainGrid.addWidget(closeButtonsFrame, 5, 3, 1, 1)
 
         # Show GUI - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         self.show()
+
+    def create_cursor_section(self):
+        cursorFrame = QFrame(self)
+        cursorGrid = QGridLayout()
+        cursorFrame.setLayout(cursorGrid)
+        cursorFrame.setMaximumSize(600, 60)
+        cursorFrame.setFrameStyle(QFrame.NoFrame)
+
+        # Show current cursor position
+        self.cursor_label = QLabel('Cursor Position:', self,
+                                   alignment=QtCore.Qt.AlignRight)
+        cursorGrid.addWidget(self.cursor_label, 0, 0,
+                             alignment=QtCore.Qt.AlignVCenter)
+
+        self.cursor_textbox = QLineEdit(self)
+        self.cursor_textbox.setPlaceholderText('Move cursor into axes')
+        self.cursor_textbox.setFixedSize(150, 20)
+        cursorGrid.addWidget(self.cursor_textbox, 0, 1)
+
+        self.canvas.mpl_connect('motion_notify_event',
+                                self.update_cursor_position)
+
+        # Show value under cursor
+        self.pixel_label = QLabel('Pixel Value:', self,
+                                  alignment=QtCore.Qt.AlignRight)
+        cursorGrid.addWidget(self.pixel_label, 0, 2,
+                             alignment=QtCore.Qt.AlignVCenter)
+
+        self.pixel_textbox = QLineEdit(self)
+        self.pixel_textbox.setPlaceholderText('Move cursor into axes')
+        self.pixel_textbox.setFixedSize(150, 20)
+        cursorGrid.addWidget(self.pixel_textbox, 0, 3)
+
+        return cursorFrame
 
     def create_axes_section(self, sc):
         # Create axis-updating section
         axGroupBox = QGroupBox('Axes Limits', self)
         axGrid = QGridLayout()
         axGroupBox.setLayout(axGrid)
+        axGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
-        axGrid.addWidget(QLabel('X: ( ', self), 1, 0)
-        axGrid.addWidget(QLabel(',', self), 1, 2)
-        axGrid.addWidget(QLabel(' )', self), 1, 4)
+        axGrid.addWidget(QLabel('X: ( ', self), 0, 0, 2, 1)
+        axGrid.addWidget(QLabel(',', self), 0, 2, 2, 1)
+        axGrid.addWidget(QLabel(' )', self), 0, 4, 2, 1)
 
-        axGrid.addWidget(QLabel('Y: ( ', self), 2, 0)
-        axGrid.addWidget(QLabel(',', self), 2, 2)
-        axGrid.addWidget(QLabel(' )', self), 2, 4)
+        axGrid.addWidget(QLabel('Y: ( ', self), 2, 0, 2, 1)
+        axGrid.addWidget(QLabel(',', self), 2, 2, 2, 1)
+        axGrid.addWidget(QLabel(' )', self), 2, 4, 2, 1)
 
         self.x1_textbox = QLineEdit(str(sc.axes.get_xlim()[0]), self)
         self.x1_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.x1_textbox, 1, 1)
+        axGrid.addWidget(self.x1_textbox, 0, 1, 2, 1)
 
         self.x2_textbox = QLineEdit(str(sc.axes.get_xlim()[1]), self)
         self.x2_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.x2_textbox, 1, 3)
+        axGrid.addWidget(self.x2_textbox, 0, 3, 2, 1)
 
         self.y1_textbox = QLineEdit(str(sc.axes.get_ylim()[1]), self)
         self.y1_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.y1_textbox, 2, 1)
+        axGrid.addWidget(self.y1_textbox, 2, 1, 2, 1)
 
         self.y2_textbox = QLineEdit(str(sc.axes.get_ylim()[0]), self)
         self.y2_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.y2_textbox, 2, 3)
+        axGrid.addWidget(self.y2_textbox, 2, 3, 2, 1)
 
         self.axlims_button = QPushButton('Update axis limits', self)
         self.axlims_button.clicked.connect(self.update_axes)
-        self.axlims_button.setFixedSize(150, 20)
-        axGrid.addWidget(self.axlims_button, 3, 0, 1, 5,
+        self.axlims_button.setFixedSize(150, 25)
+        axGrid.addWidget(self.axlims_button, 0, 5, 1, 1,
                          alignment=QtCore.Qt.AlignHCenter)
 
         # Add "Zoom Fit" button
@@ -344,8 +355,8 @@ class SegmentGuidingWindow(QDialog):
         self.zoom_button.setToolTip('Zoom to encompass all data')
         self.zoom_button.clicked.connect(sc.zoom_to_fit)
         self.zoom_button.clicked.connect(self.update_textboxes)
-        self.zoom_button.setFixedSize(150, 20)
-        axGrid.addWidget(self.zoom_button, 4, 0, 1, 5,
+        self.zoom_button.setFixedSize(150, 25)
+        axGrid.addWidget(self.zoom_button, 1, 5, 2, 1,
                          alignment=QtCore.Qt.AlignHCenter)
 
         # Add "Crop to Data" button
@@ -353,8 +364,8 @@ class SegmentGuidingWindow(QDialog):
         self.crop_button.setToolTip('Zoom crop to data')
         self.crop_button.clicked.connect(sc.zoom_to_crop)
         self.crop_button.clicked.connect(self.update_textboxes)
-        self.crop_button.setFixedSize(150, 20)
-        axGrid.addWidget(self.crop_button, 5, 0, 1, 5,
+        self.crop_button.setFixedSize(150, 25)
+        axGrid.addWidget(self.crop_button, 3, 5, 1, 1,
                          alignment=QtCore.Qt.AlignHCenter)
 
         return axGroupBox
@@ -364,6 +375,7 @@ class SegmentGuidingWindow(QDialog):
         cbarGroupBox = QGroupBox('Colorbar Limits', self)
         cbarGrid = QGridLayout()
         cbarGroupBox.setLayout(cbarGrid)
+        cbarGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
         cbarGrid.addWidget(QLabel('Min Value:  ', self), 0, 0)
         cbarGrid.addWidget(QLabel('Max Value:  ', self), 1, 0)
@@ -379,7 +391,7 @@ class SegmentGuidingWindow(QDialog):
         self.cbarlims_button = QPushButton('Update colorbar limits', self)
         self.cbarlims_button.setStyleSheet('QPushButton {color: black}')
         self.cbarlims_button.clicked.connect(self.update_cbar)
-        self.cbarlims_button.setFixedSize(150, 20)
+        self.cbarlims_button.setFixedSize(170, 25)
         cbarGrid.addWidget(self.cbarlims_button, 2, 0, 1, 2,
                            alignment=QtCore.Qt.AlignHCenter)
 
@@ -390,6 +402,7 @@ class SegmentGuidingWindow(QDialog):
         selectStarsGrid = QGridLayout()
         starsGroupBox.setLayout(selectStarsGrid)
         starsGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        starsGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
         # Show selected stars
         guide_label = QLabel('Guide\nStar?', self)
@@ -430,13 +443,17 @@ class SegmentGuidingWindow(QDialog):
         self.guidestar_buttons = [child for child in starsGroupBox.findChildren(QRadioButton)]
         self.remove_buttons = [child for child in starsGroupBox.findChildren(QPushButton)]
 
-        save_button = QPushButton('Save Configuration', starsGroupBox)
+        save_button = QPushButton('Save Command', starsGroupBox)
+        save_button.setFixedSize(200, 25)
         save_button.clicked.connect(self.save_orientation_to_list)
-        selectStarsGrid.addWidget(save_button, 12, 0, 1, 3)
+        selectStarsGrid.addWidget(save_button, 12, 0, 1, 3,
+                                  alignment=QtCore.Qt.AlignHCenter)
 
         clear_button = QPushButton('Clear Selection', starsGroupBox)
+        clear_button.setFixedSize(200, 25)
         clear_button.clicked.connect(self.clear_selected_stars)
-        selectStarsGrid.addWidget(clear_button, 13, 0, 1, 3)
+        selectStarsGrid.addWidget(clear_button, 13, 0, 1, 3,
+                                  alignment=QtCore.Qt.AlignHCenter)
 
         return starsGroupBox
 
@@ -444,6 +461,7 @@ class SegmentGuidingWindow(QDialog):
         overrideCenterGroupBox = QGroupBox('Center of Override Pointing', self)
         overrideCenterGrid = QGridLayout()
         overrideCenterGroupBox.setLayout(overrideCenterGrid)
+        overrideCenterGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
         # Use calculated center of array as pointing
         self.mean_position_checkbox = QCheckBox('Use Center of Segment Array', self)
@@ -458,7 +476,7 @@ class SegmentGuidingWindow(QDialog):
         for i in range(18):
             self.segment_center_dropdown.addItem(str(i + 1))
         self.segment_center_dropdown.activated.connect(self.update_center_seg)
-        overrideCenterGrid.addWidget(self.segment_center_dropdown, 1, 1)
+        overrideCenterGrid.addWidget(self.segment_center_dropdown, 2, 0)
 
         # Set to default: segNum = 0
         self.mean_position_checkbox.setChecked(True)
@@ -466,17 +484,23 @@ class SegmentGuidingWindow(QDialog):
         return overrideCenterGroupBox
 
     def create_segmentguiding_section(self):
-        segmentGuidingGroupBox = QGroupBox('Segment Override Commands', self)
+        segmentGuidingGroupBox = QGroupBox('Segment Guiding Override Commands', self)
         segmentGuidingGrid = QGridLayout()
         segmentGuidingGroupBox.setLayout(segmentGuidingGrid)
         segmentGuidingGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        segmentGuidingGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
         # Show segment override commands
         self.segment_override_list = QListView(segmentGuidingGroupBox)
         self.segment_override_model = QStandardItemModel(self.segment_override_list)
-        self.segment_override_list.setMinimumSize(100, 200)
+        self.segment_override_list.setMinimumSize(100, 100)
         self.segment_override_list.setModel(self.segment_override_model)
         segmentGuidingGrid.addWidget(self.segment_override_list, 0, 0, 2, 2)
+
+        # Add default text
+        item = QStandardItem('No commands saved')
+        self.segment_override_model.appendRow(item)
+        self.segment_override_list.setEnabled(False)
 
         # Load button
         load_button = QPushButton('Load', segmentGuidingGroupBox)
@@ -491,17 +515,41 @@ class SegmentGuidingWindow(QDialog):
         # Up and down arrows
         move_up_button = QToolButton(segmentGuidingGroupBox)
         move_up_button.setArrowType(QtCore.Qt.UpArrow)
-        # load_button.clicked.connect(self.load_orientation)
+        move_up_button.clicked.connect(self.move_orientation_up)
         segmentGuidingGrid.addWidget(move_up_button, 0, 2,
                                      alignment=QtCore.Qt.AlignBottom)
 
         move_down_button = QToolButton(segmentGuidingGroupBox)
         move_down_button.setArrowType(QtCore.Qt.DownArrow)
-        # load_button.clicked.connect(self.load_orientation)
+        move_down_button.clicked.connect(self.move_orientation_down)
         segmentGuidingGrid.addWidget(move_down_button, 1, 2,
                                      alignment=QtCore.Qt.AlignTop)
 
         return segmentGuidingGroupBox
+
+    def create_closebuttons_section(self):
+        closeButtonsFrame = QFrame(self)
+        closeButtonsGrid = QGridLayout()
+        closeButtonsFrame.setLayout(closeButtonsGrid)
+        closeButtonsFrame.setFrameStyle(QFrame.NoFrame)
+
+        # Add "Done" button
+        self.done_button = QPushButton('Done', self)
+        self.done_button.setToolTip('Close the window')
+        self.done_button.clicked.connect(self.fileQuit)
+        self.done_button.setMinimumSize(150, 50)
+        closeButtonsGrid.addWidget(self.done_button, 0, 0,
+                                   alignment=QtCore.Qt.AlignBottom)
+
+        # Add "Cancel" button
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.setToolTip('Close the window and discard changes')
+        self.cancel_button.clicked.connect(self.cancel)
+        self.cancel_button.setMinimumSize(150, 50)
+        closeButtonsGrid.addWidget(self.cancel_button, 1, 0,
+                                   alignment=QtCore.Qt.AlignTop)
+
+        return closeButtonsFrame
 
 
     @pyqtSlot()
@@ -772,10 +820,14 @@ class SegmentGuidingWindow(QDialog):
         return removestar
 
     def save_orientation_to_list(self):
+        if not self.segment_override_list.isEnabled():
+            self.segment_override_list.setEnabled(True)
+            self.segment_override_model.takeRow(0)
+
         orientation_summary = ', '.join([str(int(position.text()[:2])) for position in self.star_positions if position.text() != ''])
         item = QStandardItem(orientation_summary)
         self.segment_override_model.appendRow(item)
-        self.segment_override_list.setModel(self.segment_override_model)
+        # self.segment_override_list.setModel(self.segment_override_model)
         self.clear_selected_stars()
         self.n_orientations += 1
 
@@ -837,6 +889,30 @@ class SegmentGuidingWindow(QDialog):
         selected_orientation_index = self.segment_override_list.selectedIndexes()[0].row()
         self.segment_override_model.takeRow(selected_orientation_index)
         self.n_orientations -= 1
+
+    def move_orientation_up(self):
+        # Move the item up
+        selected_orientation_index = self.segment_override_list.selectedIndexes()[0].row()
+        row = self.segment_override_model.takeRow(selected_orientation_index)
+        # Don't move if at the end of the list
+        new_index = max(0, selected_orientation_index - 1)
+        self.segment_override_model.insertRow(new_index, row)
+
+        # Maintain which item is selected
+        ind = self.segment_override_model.index(new_index, 0)
+        self.segment_override_list.setCurrentIndex(ind)
+
+    def move_orientation_down(self):
+        # Move the item down
+        selected_orientation_index = self.segment_override_list.selectedIndexes()[0].row()
+        row = self.segment_override_model.takeRow(selected_orientation_index)
+        # Don't move if at the end of the list
+        new_index = min(self.segment_override_model.rowCount(), selected_orientation_index + 1)
+        self.segment_override_model.insertRow(new_index, row)
+
+        # Maintain which item is selected
+        ind = self.segment_override_model.index(new_index, 0)
+        self.segment_override_list.setCurrentIndex(ind)
 
     def update_center_seg(self):
         '''Use the location of a specific segment as the pointing center
