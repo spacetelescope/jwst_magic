@@ -247,7 +247,7 @@ class MasterGui(QMainWindow):
         *NIRCAm Detector (only for if this is a NIRCam image)
         *FGS Counts vs J mag w/ place to inlude counts or J mag for renormalization
         '''
-        self.convertGroupBox = QGroupBox('Convert Input Image to an FGS Raw Image', self)
+        self.convertGroupBox = QGroupBox('Convert Input Image to a Raw FGS Image', self)
         self.convertGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
         self.convertGroupBox.setCheckable(True)
         convertGrid = QGridLayout()
@@ -404,7 +404,7 @@ class MasterGui(QMainWindow):
             *FG - Fine guide
         '''
         # Use the FSW file writer
-        self.filewriterGroupBox = QGroupBox('Output FSW files', self)
+        self.filewriterGroupBox = QGroupBox('Write Flight Software (FSW) Files', self)
         self.filewriterGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
         self.filewriterGroupBox.setCheckable(True)
         filewriterGrid = QGridLayout()
@@ -439,10 +439,9 @@ class MasterGui(QMainWindow):
         Create the fifth box: Segment Guiding
         Will pop open separate GUI for setting the parameters for running the
         Segment Guiding Tool and creating the segment override file.
-
         '''
         # Do segment guiding
-        self.segmentGroupBox = QGroupBox('Segment Guiding', self)
+        self.segmentGroupBox = QGroupBox('Segment Guiding and Override', self)
         self.segmentGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
         self.segmentGroupBox.setCheckable(True)
         self.segmentGroupBox.setChecked(self.segment_guiding)
@@ -456,11 +455,11 @@ class MasterGui(QMainWindow):
         self.rb_regfile = QRadioButton("Read one orientation from regfile.txt")
         self.selectedsegments_button_group.addButton(self.rb_regfile)
         self.rb_regfile.setChecked(True)
-        segmentGrid.addWidget(self.rb_regfile, 0, 0, 1, 2)
+        segmentGrid.addWidget(self.rb_regfile, 0, 0, 1, 3)
         self.rb_SGTGUI = QRadioButton("Click-to-select one or more orientations (GUI)")
         self.selectedsegments_button_group.addButton(self.rb_SGTGUI)
         self.rb_SGTGUI.setChecked(False)
-        segmentGrid.addWidget(self.rb_SGTGUI, 0, 2, 1, 2)
+        segmentGrid.addWidget(self.rb_SGTGUI, 0, 3, 1, 3)
 
         # Implement ``ref_only`` tag?
         self.cb_refonly = QCheckBox('Designate reference stars with "refonly"', self)
@@ -469,34 +468,50 @@ class MasterGui(QMainWindow):
         segmentGrid.addWidget(self.cb_refonly, 1, 0, 1, 4)
 
         # APT proposal, observation, visit numbers
-        segmentGrid.addWidget(QLabel('Program Num.', self), 2, 0)
+        segmentGrid.addWidget(QLabel('Program Num.', self), 2, 0,
+                              alignment=QtCore.Qt.AlignRight)
         self.textbox_prognum = QLineEdit(str(700), self)
+        self.textbox_prognum.setFixedSize(80, 20)
         segmentGrid.addWidget(self.textbox_prognum, 2, 1)
-        segmentGrid.addWidget(QLabel('Observation Num.', self), 3, 0)
+        segmentGrid.addWidget(QLabel('Observation Num.', self), 2, 2,
+                              alignment=QtCore.Qt.AlignRight)
         self.textbox_obsnum = QLineEdit(str(1), self)
-        segmentGrid.addWidget(self.textbox_obsnum, 3, 1)
-        segmentGrid.addWidget(QLabel('Visit Num.', self), 4, 0)
+        self.textbox_obsnum.setFixedSize(80, 20)
+        segmentGrid.addWidget(self.textbox_obsnum, 2, 3)
+        segmentGrid.addWidget(QLabel('Visit Num.', self), 2, 4,
+                              alignment=QtCore.Qt.AlignRight)
         self.textbox_visitnum = QLineEdit(str(1), self)
-        segmentGrid.addWidget(self.textbox_visitnum, 4, 1)
+        self.textbox_visitnum.setFixedSize(80, 20)
+        segmentGrid.addWidget(self.textbox_visitnum, 2, 5)
 
         # RA, Dec, and PA
-        segmentGrid.addWidget(QLabel('RA', self), 2, 2)
+        segmentGrid.addWidget(QLabel('RA', self), 3, 0,
+                              alignment=QtCore.Qt.AlignRight)
         self.textbox_RA = QLineEdit(str(30), self)
-        segmentGrid.addWidget(self.textbox_RA, 2, 3)
-        segmentGrid.addWidget(QLabel('Dec.', self), 3, 2)
+        self.textbox_RA.setFixedSize(80, 20)
+        segmentGrid.addWidget(self.textbox_RA, 3, 1)
+        segmentGrid.addWidget(QLabel('Dec.', self), 3, 2,
+                              alignment=QtCore.Qt.AlignRight)
         self.textbox_Dec = QLineEdit(str(50), self)
+        self.textbox_Dec.setFixedSize(80, 20)
         segmentGrid.addWidget(self.textbox_Dec, 3, 3)
-        segmentGrid.addWidget(QLabel('Position Angle', self), 4, 2)
+        segmentGrid.addWidget(QLabel('Position Angle', self), 3, 4,
+                              alignment=QtCore.Qt.AlignRight)
         self.textbox_PA = QLineEdit(str(13), self)
-        segmentGrid.addWidget(self.textbox_PA, 4, 3)
+        self.textbox_PA.setFixedSize(80, 20)
+        segmentGrid.addWidget(self.textbox_PA, 3, 5)
 
         # Boresight Offset
-        segmentGrid.addWidget(QLabel('V2 Boresight Offset', self), 5, 0)
+        segmentGrid.addWidget(QLabel('V2 Boresight Offset', self), 4, 0,
+                              alignment=QtCore.Qt.AlignRight)
         self.textbox_V2Boff = QLineEdit(str(0), self)
-        segmentGrid.addWidget(self.textbox_V2Boff, 5, 1)
-        segmentGrid.addWidget(QLabel('V3 Boresight Offset', self), 5, 2)
+        self.textbox_V2Boff.setFixedSize(80, 20)
+        segmentGrid.addWidget(self.textbox_V2Boff, 4, 1)
+        segmentGrid.addWidget(QLabel('V3 Boresight Offset', self), 4, 2,
+                              alignment=QtCore.Qt.AlignRight)
         self.textbox_V3Boff = QLineEdit(str(0), self)
-        segmentGrid.addWidget(self.textbox_V3Boff, 5, 3)
+        self.textbox_V3Boff.setFixedSize(80, 20)
+        segmentGrid.addWidget(self.textbox_V3Boff, 4, 3)
 
         return self.segmentGroupBox
 

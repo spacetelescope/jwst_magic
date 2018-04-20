@@ -46,7 +46,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
                              QLabel, QTextEdit, QRadioButton, QGroupBox,
                              QSizePolicy, QGridLayout, QDialog, QMessageBox,
-                             QListView)
+                             QListView, QToolButton, QCheckBox, QComboBox)
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import pyqtSlot
 
@@ -214,13 +214,20 @@ class SegmentGuidingWindow(QDialog):
         instructionsGroupBox = QGroupBox('Instructions', self)
         vBox = QVBoxLayout()
 
-        self.instructions = QLabel('''Click as near to the center of the star \
+        self.instructions = QLabel('''<b>Star Selection:</b> Click as near to the center of the star \
         as possible. The first star that is choosen will be the <span style=\
         "background-color: #FFFF00">guide star</span>. All additional stars that are \
         clicked on are the <span style="background-color: #FFA500">reference stars\
         </span>. Star locations will appear in the list at right as they are selected; \
         the guide star can be re-selected using the radio buttons. Errors will be shown\
-        in the output box below.''', self)
+        in the output box below.<br>
+        <b>Segment Guiding Commands:</b> Once you are happy with your selection, \
+        click "Save Configuration" to save the stars you have selected as a \
+        segment guiding override command. If you want to select multiple \
+        orientations to guide on, repeat the star selection process and again \
+        click "Save Configuration" when you are done. Segment override commands \
+        can be deleted, and the order in which they will be commanded can be \
+        altered using the buttons in the "Segment Override Commands" box.''', self)
         # self.instructions.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
         self.instructions.setWordWrap(True)
@@ -236,7 +243,7 @@ class SegmentGuidingWindow(QDialog):
         self.log_textbox = QTextEdit(self)
         self.log_textbox.setPlaceholderText('No stars selected.')
         # self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
-        self.log_textbox.setFixedSize(350, 50)
+        self.log_textbox.setMaximumSize(700, 50)
         # mainGrid.setRowMinimumHeight(1, 320)
         mainGrid.addWidget(self.log_textbox, 1, 4, 1, 2,
                            alignment=QtCore.Qt.AlignHCenter)
@@ -272,6 +279,10 @@ class SegmentGuidingWindow(QDialog):
         # Create segment guiding section
         segmentGuidingGroupBox = self.create_segmentguiding_section()
         mainGrid.addWidget(segmentGuidingGroupBox, 2, 5, 1, 1)
+
+        # Create override pointing center section
+        overrideCenterGroupBox = self.create_overridecenter_section()
+        mainGrid.addWidget(overrideCenterGroupBox, 3, 5, 2, 1)
 
         # Add "Done" button
         self.done_button = QPushButton('Done', self)
@@ -375,16 +386,17 @@ class SegmentGuidingWindow(QDialog):
         return cbarGroupBox
 
     def create_selectedstars_section(self):
-        starsGroupBox = QGroupBox(self)
+        starsGroupBox = QGroupBox('Selected Guide and Reference Stars', self)
         selectStarsGrid = QGridLayout()
         starsGroupBox.setLayout(selectStarsGrid)
         starsGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
         # Show selected stars
         guide_label = QLabel('Guide\nStar?', self)
-        guide_label.setMinimumSize(30, 30)
-        guide_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        selectStarsGrid.addWidget(guide_label, 0, 0)
+        guide_label.setMinimumSize(40, 40)
+        # guide_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        selectStarsGrid.addWidget(guide_label, 0, 0,
+                                  alignment=QtCore.Qt.AlignVCenter)
         selectStarsGrid.addWidget(QLabel('Star Position', self), 0, 1)
         # selectStarsGrid.setColumnMinimumWidth(0, 50)
         # selectStarsGrid.setColumnMinimumWidth(1, 120)
@@ -428,28 +440,66 @@ class SegmentGuidingWindow(QDialog):
 
         return starsGroupBox
 
+    def create_overridecenter_section(self):
+        overrideCenterGroupBox = QGroupBox('Center of Override Pointing', self)
+        overrideCenterGrid = QGridLayout()
+        overrideCenterGroupBox.setLayout(overrideCenterGrid)
+
+        # Use calculated center of array as pointing
+        self.mean_position_checkbox = QCheckBox('Use Center of Segment Array', self)
+        self.mean_position_checkbox.toggled.connect(self.update_center_avg)
+        overrideCenterGrid.addWidget(self.mean_position_checkbox, 0, 0, 1, 2)
+
+        # Use location of specific array as pointing
+        segment_center_label = QLabel('Use Segment as Center:', self)
+        overrideCenterGrid.addWidget(segment_center_label, 1, 0)
+        self.segment_center_dropdown = QComboBox(self)
+        self.segment_center_dropdown.addItem('-Select Segment-')
+        for i in range(18):
+            self.segment_center_dropdown.addItem(str(i + 1))
+        self.segment_center_dropdown.activated.connect(self.update_center_seg)
+        overrideCenterGrid.addWidget(self.segment_center_dropdown, 1, 1)
+
+        # Set to default: segNum = 0
+        self.mean_position_checkbox.setChecked(True)
+
+        return overrideCenterGroupBox
+
     def create_segmentguiding_section(self):
-        segmentGuidingGroupBox = QGroupBox(self)
+        segmentGuidingGroupBox = QGroupBox('Segment Override Commands', self)
         segmentGuidingGrid = QGridLayout()
         segmentGuidingGroupBox.setLayout(segmentGuidingGrid)
         segmentGuidingGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
         # Show segment override commands
-        segment_label = QLabel('Segment Override Commands', self)
-        segmentGuidingGrid.addWidget(segment_label, 0, 0, 1, 2)
-
         self.segment_override_list = QListView(segmentGuidingGroupBox)
         self.segment_override_model = QStandardItemModel(self.segment_override_list)
+        self.segment_override_list.setMinimumSize(100, 200)
         self.segment_override_list.setModel(self.segment_override_model)
-        segmentGuidingGrid.addWidget(self.segment_override_list, 1, 0, 1, 2)
+        segmentGuidingGrid.addWidget(self.segment_override_list, 0, 0, 2, 2)
 
-        edit_button = QPushButton('Load', segmentGuidingGroupBox)
-        edit_button.clicked.connect(self.load_orientation)
-        segmentGuidingGrid.addWidget(edit_button, 2, 0)
+        # Load button
+        load_button = QPushButton('Load', segmentGuidingGroupBox)
+        load_button.clicked.connect(self.load_orientation)
+        segmentGuidingGrid.addWidget(load_button, 2, 0)
 
+        # Delete button
         remove_button = QPushButton('Delete', segmentGuidingGroupBox)
         remove_button.clicked.connect(self.delete_orientation)
         segmentGuidingGrid.addWidget(remove_button, 2, 1)
+
+        # Up and down arrows
+        move_up_button = QToolButton(segmentGuidingGroupBox)
+        move_up_button.setArrowType(QtCore.Qt.UpArrow)
+        # load_button.clicked.connect(self.load_orientation)
+        segmentGuidingGrid.addWidget(move_up_button, 0, 2,
+                                     alignment=QtCore.Qt.AlignBottom)
+
+        move_down_button = QToolButton(segmentGuidingGroupBox)
+        move_down_button.setArrowType(QtCore.Qt.DownArrow)
+        # load_button.clicked.connect(self.load_orientation)
+        segmentGuidingGrid.addWidget(move_down_button, 1, 2,
+                                     alignment=QtCore.Qt.AlignTop)
 
         return segmentGuidingGroupBox
 
@@ -740,8 +790,14 @@ class SegmentGuidingWindow(QDialog):
             self.remove_buttons[i].setEnabled(False)
 
         # Reset matplotlib canvas
+        ind_to_remove = 0
         for i in range(len(self.canvas.axes.lines)):
-            self.canvas.axes.lines.remove(self.canvas.axes.lines[0])
+            # But don't remove the center marker
+            if hasattr(self, 'center'):
+                if self.canvas.axes.lines[ind_to_remove] == self.center[0]:
+                    ind_to_remove = 1
+                    continue
+            self.canvas.axes.lines.remove(self.canvas.axes.lines[ind_to_remove])
         self.canvas.draw()
 
         # Reset index list
@@ -782,9 +838,69 @@ class SegmentGuidingWindow(QDialog):
         self.segment_override_model.takeRow(selected_orientation_index)
         self.n_orientations -= 1
 
+    def update_center_seg(self):
+        '''Use the location of a specific segment as the pointing center
+        '''
+        # Uncheck "use segment center" box
+        self.mean_position_checkbox.setChecked(False)
+
+        # Remove old center
+        try:
+            self.canvas.axes.lines.remove(self.center[0])
+        except (AttributeError, ValueError) as e:
+            pass
+        self.segNum = ''
+
+        if self.segment_center_dropdown.currentText() != "-Select Segment-":
+            # Replace with new center
+            i_seg_center = int(self.segment_center_dropdown.currentText()) - 1
+            self.center = self.canvas.axes.plot(self.x[i_seg_center],
+                                                self.y[i_seg_center], 'x', ms=20,
+                                                alpha=0.8, mfc='white',
+                                                mec='white', mew=5, lw=0)
+
+            self.segNum = int(self.segment_center_dropdown.currentText())
+
+        self.canvas.draw()
+
+    def update_center_avg(self):
+        '''Use the mean of the array as the pointing center
+        '''
+        # Remove old center
+        try:
+            self.canvas.axes.lines.remove(self.center[0])
+        except (AttributeError, ValueError) as e:
+            pass
+        self.segNum = ''
+
+        if self.mean_position_checkbox.isChecked():
+            self.segment_center_dropdown.setCurrentIndex(0)
+
+            # Calculate center of array
+            x_mean = np.average(self.x)
+            y_mean = np.average(self.y)
+
+            # Plot mean location of array on canvas
+            self.center = self.canvas.axes.plot(x_mean, y_mean, 'x', ms=20, alpha=0.8,
+                                                mfc='white', mec='white', mew=5, lw=0)
+
+            self.segNum = 0
+
+        self.canvas.draw()
+
 
     def fileQuit(self):
         '''Closes the star selector window'''
+        # If the center segment number hasn't been set, don't quit.
+        try:
+            int(self.segNum)
+        except (ValueError, AttributeError) as e:
+            no_segNum_selected_dialog = QMessageBox()
+            no_segNum_selected_dialog.setText('No center segment number')
+            no_segNum_selected_dialog.setInformativeText('The center of override pointing (segNum) has not been defined. Please define before quitting.')
+            no_segNum_selected_dialog.setStandardButtons(QMessageBox.Ok)
+            no_segNum_selected_dialog.exec()
+            return
 
         self.answer = True
         # If the user didn't choose any stars, ask if they really want to quit.
@@ -883,4 +999,7 @@ def run_SelectSegmentOverride(data, x, y, dist, print_output=False, masterGUIapp
         selected_indices = [int(s) for s in orientation.split(', ')]
         inds.append(selected_indices)
 
-    return inds
+    # Save index of center segment (pointing)
+    segNum = window.segNum
+
+    return inds, segNum
