@@ -274,7 +274,7 @@ class SegmentGuidingCalculator:
                                                                  self.SegDec[guide_seg_id - 1],
                                                                  rate[guide_seg_id - 1])
 
-                if self.refonly and label == 'star':
+                if not self.refonly or (self.refonly and label == 'star'):
                     # Add list of segment IDs for all reference stars
                     for ref_seg_id in orientation:
                         if ref_seg_id != guide_seg_id:
