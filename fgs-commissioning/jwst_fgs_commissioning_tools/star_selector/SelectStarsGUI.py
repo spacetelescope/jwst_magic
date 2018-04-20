@@ -58,13 +58,15 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
-                             QLabel, QTextEdit, QRadioButton, QGroupBox,
+                             QLabel, QTextEdit, QRadioButton, QGroupBox, QFrame,
                              QSizePolicy, QGridLayout, QDialog, QMessageBox)
 from PyQt5.QtCore import pyqtSlot
 
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['font.weight'] = 'light'
 matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
+
+GROUPBOX_TITLE_STYLESHEET = 'QGroupBox { font-size: 14px; font-weight: bold; margin-top: 30px } QGroupBox::title { top: -20px }'
 
 
 class StarClickerMatplotlibCanvas(FigureCanvas):
@@ -119,6 +121,8 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
                                          clim=(0.1, 1e3), norm=LogNorm())
         self.axes.scatter(x, y, c='r', marker='+')
         self.fig.colorbar(self.fitsplot, ax=self.axes, fraction=0.046, pad=0.04)
+        self.axes.set_xlabel('Raw FGS X (–V3) [pixels]')
+        self.axes.set_ylabel('Raw FGS Y (V2) [pixels]')
         self.draw()
 
     def init_profile(self):
@@ -268,32 +272,12 @@ class StarSelectorWindow(QDialog):
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
                                            self.y)
         self.canvas.zoom_to_crop()
-        mainGrid.addWidget(sc, 0, 0, 4, 2)
+        mainGrid.addWidget(sc, 0, 0, 5, 1)
+        self.canvas.setMinimumSize(self.image_dim, self.image_dim)
 
-        mainGrid.setColumnMinimumWidth(0, self.image_dim - 150)
-
-        # Show current cursor position
-        self.cursor_label = QLabel('Cursor Position:', self,
-                                   alignment=QtCore.Qt.AlignRight)
-        mainGrid.addWidget(self.cursor_label, 4, 0)
-
-        self.cursor_textbox = QLineEdit(self)
-        self.cursor_textbox.setPlaceholderText('Move cursor into axes')
-        self.cursor_textbox.setMinimumSize(200, 20)
-        mainGrid.addWidget(self.cursor_textbox, 4, 1)
-
-        self.canvas.mpl_connect('motion_notify_event',
-                                self.update_cursor_position)
-
-        # Show value under cursor
-        self.pixel_label = QLabel('Pixel Value:', self,
-                                  alignment=QtCore.Qt.AlignRight)
-        mainGrid.addWidget(self.pixel_label, 5, 0)
-
-        self.pixel_textbox = QLineEdit(self)
-        self.pixel_textbox.setPlaceholderText('Move cursor into axes')
-        self.pixel_textbox.setMinimumSize(200, 20)
-        mainGrid.addWidget(self.pixel_textbox, 5, 1)
+        # Add cursor-tracking
+        cursorFrame = self.create_cursor_section()
+        mainGrid.addWidget(cursorFrame, 4, 0, 1, 1, alignment=QtCore.Qt.AlignHCenter)
 
         # Update cursor position and pixel value under cursor
         self.canvas.mpl_connect('motion_notify_event',
@@ -303,10 +287,11 @@ class StarSelectorWindow(QDialog):
         self.canvas.mpl_connect('button_press_event',
                                 self.button_press_callback)
 
-        # Add first column  - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Add other widgets  - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         # Make Group Box to put the label in, because it will misbehave
         instructionsGroupBox = QGroupBox('Instructions', self)
+        instructionsGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
         vBox = QVBoxLayout()
 
         self.instructions = QLabel('''Click as near to the center of the star \
@@ -324,7 +309,7 @@ class StarSelectorWindow(QDialog):
         instructionsGroupBox.setLayout(vBox)
         instructionsGroupBox.setSizePolicy(QSizePolicy.Preferred,
                                            QSizePolicy.Maximum)
-        mainGrid.addWidget(instructionsGroupBox, 0, 2, 1, 3,
+        mainGrid.addWidget(instructionsGroupBox, 0, 1, 1, 3,
                            alignment=QtCore.Qt.AlignTop)
 
         # Log to update
@@ -332,11 +317,8 @@ class StarSelectorWindow(QDialog):
         self.log_textbox.setPlaceholderText('No stars selected.')
         # self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
         self.log_textbox.setMinimumSize(10, 300)
-        mainGrid.setRowMinimumHeight(1, 320)
-        mainGrid.addWidget(self.log_textbox, 1, 2, 1, 2,
+        mainGrid.addWidget(self.log_textbox, 1, 1, 1, 2,
                            alignment=QtCore.Qt.AlignTop)
-
-        # mainGrid.setRowMinimumHeight(1, self.image_dim*.2)
 
         # Plot slice of profile under cursor
         prof = StarClickerMatplotlibCanvas(self, width=4, height=3, dpi=100,
@@ -345,93 +327,168 @@ class StarSelectorWindow(QDialog):
         prof.init_profile()
         self.profile = prof
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
-        mainGrid.setRowMinimumHeight(2, self.image_dim * .25)
-        # mainGrid.setColumnMinimumWidth(2, self.image_dim * .5)
-        mainGrid.addWidget(self.profile, 2, 2, 1, 2,
+        mainGrid.addWidget(self.profile, 2, 1, 1, 2,
                            alignment=QtCore.Qt.AlignVCenter)
 
         # Create colorbar-updating section
-        cbarGroupBox = QGroupBox('Colorbar Limits', self)
-        cbarGrid = QGridLayout()
-        cbarGroupBox.setLayout(cbarGrid)
+        cbarGroupBox = self.create_colorbar_section(sc)
+        cbarGroupBox.setMaximumSize(200, 150)
+        mainGrid.addWidget(cbarGroupBox, 3, 1, 2, 1,
+                           alignment=QtCore.Qt.AlignTop|QtCore.Qt.AlignHCenter)
 
-        cbarGrid.addWidget(QLabel('Min Value:  ', self), 0, 0)
-        cbarGrid.addWidget(QLabel('Max Value:  ', self), 1, 0)
+        # Create axes-updating section
+        axGroupBox = self.create_axes_section(sc)
+        axGroupBox.setMinimumSize(200, 150)
+        mainGrid.addWidget(axGroupBox, 3, 2, 2, 1,
+                           alignment=QtCore.Qt.AlignTop|QtCore.Qt.AlignHCenter)
 
-        self.vmin_textbox = QLineEdit(str(sc.fitsplot.get_clim()[0]), self)
-        cbarGrid.addWidget(self.vmin_textbox, 0, 1)
+        # Create selected stars section
+        starsGroupBox = self.create_selectedstars_section()
+        mainGrid.addWidget(starsGroupBox, 1, 3, 2, 1)
 
-        self.vmax_textbox = QLineEdit(str(sc.fitsplot.get_clim()[1]), self)
-        cbarGrid.addWidget(self.vmax_textbox, 1, 1)
+        # Buttons to close the GUI
+        closeButtonsFrame = self.create_closebuttons_section()
+        mainGrid.addWidget(closeButtonsFrame, 3, 3, 2, 1)
 
-        self.cbarlims_button = QPushButton('Update colorbar limits', self)
-        self.cbarlims_button.clicked.connect(self.update_cbar)
-        cbarGrid.addWidget(self.cbarlims_button, 2, 0, 1, 2)
+        # Show GUI - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        self.show()
 
-        mainGrid.addWidget(cbarGroupBox, 3, 3, 3, 1)
+    def create_cursor_section(self):
+        cursorFrame = QFrame(self)
+        cursorGrid = QGridLayout()
+        cursorFrame.setLayout(cursorGrid)
+        cursorFrame.setMaximumSize(600, 60)
+        cursorFrame.setFrameStyle(QFrame.NoFrame)
 
+        # Show current cursor position
+        self.cursor_label = QLabel('Cursor Position:', self,
+                                   alignment=QtCore.Qt.AlignRight)
+        cursorGrid.addWidget(self.cursor_label, 0, 0,
+                             alignment=QtCore.Qt.AlignVCenter)
+
+        self.cursor_textbox = QLineEdit(self)
+        self.cursor_textbox.setPlaceholderText('Move cursor into axes')
+        self.cursor_textbox.setFixedSize(150, 20)
+        cursorGrid.addWidget(self.cursor_textbox, 0, 1)
+
+        self.canvas.mpl_connect('motion_notify_event',
+                                self.update_cursor_position)
+
+        # Show value under cursor
+        self.pixel_label = QLabel('Pixel Value:', self,
+                                  alignment=QtCore.Qt.AlignRight)
+        cursorGrid.addWidget(self.pixel_label, 0, 2,
+                             alignment=QtCore.Qt.AlignVCenter)
+
+        self.pixel_textbox = QLineEdit(self)
+        self.pixel_textbox.setPlaceholderText('Move cursor into axes')
+        self.pixel_textbox.setFixedSize(150, 20)
+        cursorGrid.addWidget(self.pixel_textbox, 0, 3)
+
+        return cursorFrame
+
+    def create_axes_section(self, sc):
         # Create axis-updating section
         axGroupBox = QGroupBox('Axes Limits', self)
         axGrid = QGridLayout()
         axGroupBox.setLayout(axGrid)
+        axGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
-        axGrid.addWidget(QLabel('X: ( ', self), 1, 0)
-        axGrid.addWidget(QLabel(',', self), 1, 2)
-        axGrid.addWidget(QLabel(' )', self), 1, 4)
+        axGrid.addWidget(QLabel('X: ( ', self), 0, 0, 1, 1)
+        axGrid.addWidget(QLabel(',', self), 0, 2, 1, 1)
+        axGrid.addWidget(QLabel(' )', self), 0, 4, 1, 1)
 
-        axGrid.addWidget(QLabel('Y: ( ', self), 2, 0)
-        axGrid.addWidget(QLabel(',', self), 2, 2)
-        axGrid.addWidget(QLabel(' )', self), 2, 4)
+        axGrid.addWidget(QLabel('Y: ( ', self), 1, 0, 1, 1)
+        axGrid.addWidget(QLabel(',', self), 1, 2, 1, 1)
+        axGrid.addWidget(QLabel(' )', self), 1, 4, 1, 1)
 
         self.x1_textbox = QLineEdit(str(sc.axes.get_xlim()[0]), self)
-        axGrid.addWidget(self.x1_textbox, 1, 1)
+        self.x1_textbox.setFixedSize(80, 20)
+        axGrid.addWidget(self.x1_textbox, 0, 1, 1, 1)
 
         self.x2_textbox = QLineEdit(str(sc.axes.get_xlim()[1]), self)
-        axGrid.addWidget(self.x2_textbox, 1, 3)
+        self.x2_textbox.setFixedSize(80, 20)
+        axGrid.addWidget(self.x2_textbox, 0, 3, 1, 1)
 
         self.y1_textbox = QLineEdit(str(sc.axes.get_ylim()[1]), self)
-        axGrid.addWidget(self.y1_textbox, 2, 1)
+        self.y1_textbox.setFixedSize(80, 20)
+        axGrid.addWidget(self.y1_textbox, 1, 1, 1, 1)
 
         self.y2_textbox = QLineEdit(str(sc.axes.get_ylim()[0]), self)
-        axGrid.addWidget(self.y2_textbox, 2, 3)
+        self.y2_textbox.setFixedSize(80, 20)
+        axGrid.addWidget(self.y2_textbox, 1, 3, 1, 1)
 
         self.axlims_button = QPushButton('Update axis limits', self)
         self.axlims_button.clicked.connect(self.update_axes)
-        axGrid.addWidget(self.axlims_button, 3, 0, 1, 5)
+        self.axlims_button.setFixedSize(150, 25)
+        axGrid.addWidget(self.axlims_button, 2, 0, 1, 5,
+                         alignment=QtCore.Qt.AlignHCenter)
 
         # Add "Zoom Fit" button
         self.zoom_button = QPushButton('Zoom Fit', self)
         self.zoom_button.setToolTip('Zoom to encompass all data')
         self.zoom_button.clicked.connect(sc.zoom_to_fit)
         self.zoom_button.clicked.connect(self.update_textboxes)
-        axGrid.addWidget(self.zoom_button, 4, 0, 1, 5)
+        self.zoom_button.setFixedSize(150, 25)
+        axGrid.addWidget(self.zoom_button, 3, 0, 1, 5,
+                         alignment=QtCore.Qt.AlignHCenter)
 
         # Add "Crop to Data" button
         self.crop_button = QPushButton('Crop to Data', self)
         self.crop_button.setToolTip('Zoom crop to data')
         self.crop_button.clicked.connect(sc.zoom_to_crop)
         self.crop_button.clicked.connect(self.update_textboxes)
-        axGrid.addWidget(self.crop_button, 5, 0, 1, 5)
+        self.crop_button.setFixedSize(150, 25)
+        axGrid.addWidget(self.crop_button, 4, 0, 1, 5,
+                         alignment=QtCore.Qt.AlignHCenter)
 
-        mainGrid.addWidget(axGroupBox, 3, 2, 3, 1)
+        return axGroupBox
 
-        # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def create_colorbar_section(self, sc):
+        # Create colorbar-updating section
+        cbarGroupBox = QGroupBox('Colorbar Limits', self)
+        cbarGrid = QGridLayout()
+        cbarGroupBox.setLayout(cbarGrid)
+        cbarGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
-        starsGroupBox = QGroupBox(self)
-        col2Grid = QGridLayout()
+        cbarGrid.addWidget(QLabel('Min Value:  ', self), 0, 0)
+        cbarGrid.addWidget(QLabel('Max Value:  ', self), 1, 0)
+
+        self.vmin_textbox = QLineEdit(str(sc.fitsplot.get_clim()[0]), self)
+        self.vmin_textbox.setFixedSize(80, 20)
+        cbarGrid.addWidget(self.vmin_textbox, 0, 1)
+
+        self.vmax_textbox = QLineEdit(str(sc.fitsplot.get_clim()[1]), self)
+        self.vmax_textbox.setFixedSize(80, 20)
+        cbarGrid.addWidget(self.vmax_textbox, 1, 1)
+
+        self.cbarlims_button = QPushButton('Update colorbar limits', self)
+        self.cbarlims_button.setStyleSheet('QPushButton {color: black}')
+        self.cbarlims_button.clicked.connect(self.update_cbar)
+        self.cbarlims_button.setFixedSize(170, 25)
+        cbarGrid.addWidget(self.cbarlims_button, 2, 0, 1, 2,
+                           alignment=QtCore.Qt.AlignHCenter)
+
+        return cbarGroupBox
+
+    def create_selectedstars_section(self):
+        starsGroupBox = QGroupBox('Selected Guide and Reference Stars', self)
+        selectStarsGrid = QGridLayout()
+        starsGroupBox.setLayout(selectStarsGrid)
+        starsGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        starsGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
         # Show selected stars
         guide_label = QLabel('Guide\nStar?', self)
-        guide_label.setMinimumSize(30, 30)
-        guide_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        col2Grid.addWidget(guide_label, 0, 0)
-        col2Grid.addWidget(QLabel('Star Position', self), 0, 1)
-        col2Grid.setColumnMinimumWidth(0, 50)
-        col2Grid.setColumnMinimumWidth(1, 120)
-        self.nStars = 11
+        guide_label.setMinimumSize(40, 40)
+        # guide_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        selectStarsGrid.addWidget(guide_label, 0, 0,
+                                  alignment=QtCore.Qt.AlignVCenter)
+        selectStarsGrid.addWidget(QLabel('Star Position', self), 0, 1)
+        # selectStarsGrid.setColumnMinimumWidth(0, 50)
+        # selectStarsGrid.setColumnMinimumWidth(1, 120)
 
-        self.star_positions = []
-        self.guidestar_buttons = []
+        self.nStars = 11
         for n in range(self.nStars):
             # Create radio buttons
             guidestar_button = QRadioButton(starsGroupBox)
@@ -442,6 +499,7 @@ class StarSelectorWindow(QDialog):
 
             # Create star position textboxes
             star_position = QLineEdit(starsGroupBox)
+            star_position.setMinimumSize(170, 20)
             if n == 0: star_position.setPlaceholderText('No stars selected')
 
             # Create 'remove' buttons
@@ -451,36 +509,39 @@ class StarSelectorWindow(QDialog):
             remove_button.setEnabled(False)
 
             # Add to starsGroupBox grid layout
-            col2Grid.addWidget(guidestar_button, n + 1, 0)
-            col2Grid.addWidget(star_position, n + 1, 1)
-            col2Grid.addWidget(remove_button, n + 1, 2)
+            selectStarsGrid.addWidget(guidestar_button, n + 1, 0)
+            selectStarsGrid.addWidget(star_position, n + 1, 1)
+            selectStarsGrid.addWidget(remove_button, n + 1, 2)
 
         self.star_positions = [child for child in starsGroupBox.findChildren(QLineEdit)]
         self.guidestar_buttons = [child for child in starsGroupBox.findChildren(QRadioButton)]
         self.remove_buttons = [child for child in starsGroupBox.findChildren(QPushButton)]
 
-        starsGroupBox.setLayout(col2Grid)
-        starsGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        mainGrid.addWidget(starsGroupBox, 1, 4, 2, 1)
+        return starsGroupBox
+
+    def create_closebuttons_section(self):
+        closeButtonsFrame = QFrame(self)
+        closeButtonsGrid = QGridLayout()
+        closeButtonsFrame.setLayout(closeButtonsGrid)
+        closeButtonsFrame.setFrameStyle(QFrame.NoFrame)
 
         # Add "Done" button
         self.done_button = QPushButton('Done', self)
         self.done_button.setToolTip('Close the window')
         self.done_button.clicked.connect(self.fileQuit)
         self.done_button.setMinimumSize(150, 50)
-        mainGrid.addWidget(self.done_button, 3, 4, 1, 1,
-                           alignment=QtCore.Qt.AlignBottom)
+        closeButtonsGrid.addWidget(self.done_button, 0, 0,
+                                   alignment=QtCore.Qt.AlignBottom)
 
         # Add "Cancel" button
         self.cancel_button = QPushButton('Cancel', self)
         self.cancel_button.setToolTip('Close the window and discard changes')
         self.cancel_button.clicked.connect(self.cancel)
         self.cancel_button.setMinimumSize(150, 50)
-        mainGrid.addWidget(self.cancel_button, 4, 4, 2, 1,
-                           alignment=QtCore.Qt.AlignVCenter)
+        closeButtonsGrid.addWidget(self.cancel_button, 1, 0,
+                                   alignment=QtCore.Qt.AlignTop)
 
-        # Show GUI - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        self.show()
+        return closeButtonsFrame
 
     @pyqtSlot()
     def eventFilter(self, remove_button, event):

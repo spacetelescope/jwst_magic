@@ -429,7 +429,7 @@ class MasterGui(QMainWindow):
         filewriterGrid.addWidget(self.cb_fg, 2, 5)
 
         # Just rewrite the .prc files?
-        self.cb_rewrite_prc = QCheckBox('Just rewrite the .prc files?', self)
+        self.cb_rewrite_prc = QCheckBox('Just rewrite the .prc files and regfile.text', self)
         filewriterGrid.addWidget(self.cb_rewrite_prc, 3, 1, 1, 5)
 
         return self.filewriterGroupBox
@@ -452,7 +452,7 @@ class MasterGui(QMainWindow):
 
         # Read from regfile or user selection?
         self.selectedsegments_button_group = QButtonGroup(self)
-        self.rb_regfile = QRadioButton("Read one orientation from regfile.txt")
+        self.rb_regfile = QRadioButton("Read one orientation from regfile.txt (assume segNum = 0)")
         self.selectedsegments_button_group.addButton(self.rb_regfile)
         self.rb_regfile.setChecked(True)
         segmentGrid.addWidget(self.rb_regfile, 0, 0, 1, 3)

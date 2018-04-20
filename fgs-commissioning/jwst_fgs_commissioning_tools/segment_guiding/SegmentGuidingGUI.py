@@ -56,7 +56,15 @@ matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
 from ..star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
-GROUPBOX_TITLE_STYLESHEET = 'QGroupBox { font-size: 14px; font-weight: bold; margin-top: 30px } QGroupBox::title { top: -20px }'
+GROUPBOX_TITLE_STYLESHEET = '\
+QGroupBox { \
+    font-size: 14px; \
+    font-weight: bold; \
+    margin-top: 30px \
+} \
+QGroupBox::title { \
+    top: -20px \
+}'
 
 class SegmentGuidingWindow(QDialog):
     """Interactive PyQt GUI window used to select stars from an FGS image.
@@ -173,12 +181,12 @@ class SegmentGuidingWindow(QDialog):
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
                                            self.y)
         self.canvas.zoom_to_crop()
-        mainGrid.addWidget(self.canvas, 0, 0, 5, 2)
-        self.canvas.setMinimumSize(self.image_dim, self.image_dim)
+        self.canvas.setMinimumSize(self.image_dim, 0)
+        mainGrid.addWidget(self.canvas, 0, 0, 6, 1)
 
         # Add cursor-tracking
         cursorFrame = self.create_cursor_section()
-        mainGrid.addWidget(cursorFrame, 4, 0, 1, 2, alignment=QtCore.Qt.AlignHCenter)
+        mainGrid.addWidget(cursorFrame, 5, 0, 1, 1, alignment=QtCore.Qt.AlignHCenter)
 
         # Update cursor position and pixel value under cursor
         self.canvas.mpl_connect('motion_notify_event',
@@ -188,7 +196,7 @@ class SegmentGuidingWindow(QDialog):
         self.canvas.mpl_connect('button_press_event',
                                 self.button_press_callback)
 
-        # Add first column  - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Add other widgets  - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         # Make Group Box to put the label in, because it will misbehave
         instructionsGroupBox = QGroupBox('Instructions', self)
@@ -221,17 +229,15 @@ class SegmentGuidingWindow(QDialog):
         instructionsGroupBox.setLayout(vBox)
         instructionsGroupBox.setSizePolicy(QSizePolicy.Preferred,
                                            QSizePolicy.Maximum)
-        mainGrid.addWidget(instructionsGroupBox, 0, 2, 1, 2,
+        mainGrid.addWidget(instructionsGroupBox, 0, 1, 1, 4,
                            alignment=QtCore.Qt.AlignTop)
 
         # Log to update
         self.log_textbox = QTextEdit(self)
         self.log_textbox.setPlaceholderText('No stars selected.')
-        # self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
         self.log_textbox.setMinimumSize(350, 50)
-        # self.log_textbox.setMaximumSize(700, 50)
-        # mainGrid.setRowMinimumHeight(1, 320)
-        mainGrid.addWidget(self.log_textbox, 1, 3, 1, 1,
+        self.log_textbox.setMaximumSize(700, 150)
+        mainGrid.addWidget(self.log_textbox, 1, 4, 1, 1,
                            alignment=QtCore.Qt.AlignHCenter)
 
         # Plot slice of profile under cursor
@@ -242,39 +248,41 @@ class SegmentGuidingWindow(QDialog):
         self.profile = prof
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
         self.profile.setMinimumSize(200, 250)
-        mainGrid.addWidget(self.profile, 5, 2, 1, 1,
+        mainGrid.addWidget(self.profile, 1, 1, 2, 2,
                            alignment=QtCore.Qt.AlignVCenter)
 
         # Create colorbar-updating section
         cbarGroupBox = self.create_colorbar_section(sc)
         cbarGroupBox.setMaximumSize(200, 150)
-        mainGrid.addWidget(cbarGroupBox, 5, 0, 1, 1,
+        mainGrid.addWidget(cbarGroupBox, 3, 1, 2, 1,
                            alignment=QtCore.Qt.AlignTop|QtCore.Qt.AlignHCenter)
 
         # Create axes-updating section
         axGroupBox = self.create_axes_section(sc)
-        axGroupBox.setMaximumSize(450, 150)
-        mainGrid.addWidget(axGroupBox, 5, 1, 1, 1,
+        axGroupBox.setMinimumSize(250, 150)
+        mainGrid.addWidget(axGroupBox, 3, 2, 2, 1,
                            alignment=QtCore.Qt.AlignTop|QtCore.Qt.AlignHCenter)
-
-        # Add second column  - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         # Create selected stars section
         starsGroupBox = self.create_selectedstars_section()
-        mainGrid.addWidget(starsGroupBox, 1, 2, 4, 1)
+        starsGroupBox.setMaximumSize(500, 550)
+        mainGrid.addWidget(starsGroupBox, 1, 3, 4, 1, alignment=QtCore.Qt.AlignTop)
 
         # Create segment guiding section
         segmentGuidingGroupBox = self.create_segmentguiding_section()
-        mainGrid.addWidget(segmentGuidingGroupBox, 2, 3, 1, 1)
+        segmentGuidingGroupBox.setMaximumSize(500, 225)
+        mainGrid.addWidget(segmentGuidingGroupBox, 2, 4, 2, 1,
+                           alignment=QtCore.Qt.AlignTop)
 
         # Create override pointing center section
         overrideCenterGroupBox = self.create_overridecenter_section()
-        overrideCenterGroupBox.setMaximumSize(400, 120)
-        mainGrid.addWidget(overrideCenterGroupBox, 3, 3, 2, 1)
+        overrideCenterGroupBox.setMaximumSize(500, 120)
+        mainGrid.addWidget(overrideCenterGroupBox, 4, 4, 1, 1,
+                           alignment=QtCore.Qt.AlignTop)
 
         # Buttons to close the GUI
         closeButtonsFrame = self.create_closebuttons_section()
-        mainGrid.addWidget(closeButtonsFrame, 5, 3, 1, 1)
+        mainGrid.addWidget(closeButtonsFrame, 5, 1, 1, 4)
 
         # Show GUI - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         self.show()
@@ -320,34 +328,34 @@ class SegmentGuidingWindow(QDialog):
         axGroupBox.setLayout(axGrid)
         axGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
-        axGrid.addWidget(QLabel('X: ( ', self), 0, 0, 2, 1)
-        axGrid.addWidget(QLabel(',', self), 0, 2, 2, 1)
-        axGrid.addWidget(QLabel(' )', self), 0, 4, 2, 1)
+        axGrid.addWidget(QLabel('X: ( ', self), 0, 0, 1, 1)
+        axGrid.addWidget(QLabel(',', self), 0, 2, 1, 1)
+        axGrid.addWidget(QLabel(' )', self), 0, 4, 1, 1)
 
-        axGrid.addWidget(QLabel('Y: ( ', self), 2, 0, 2, 1)
-        axGrid.addWidget(QLabel(',', self), 2, 2, 2, 1)
-        axGrid.addWidget(QLabel(' )', self), 2, 4, 2, 1)
+        axGrid.addWidget(QLabel('Y: ( ', self), 1, 0, 1, 1)
+        axGrid.addWidget(QLabel(',', self), 1, 2, 1, 1)
+        axGrid.addWidget(QLabel(' )', self), 1, 4, 1, 1)
 
         self.x1_textbox = QLineEdit(str(sc.axes.get_xlim()[0]), self)
         self.x1_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.x1_textbox, 0, 1, 2, 1)
+        axGrid.addWidget(self.x1_textbox, 0, 1, 1, 1)
 
         self.x2_textbox = QLineEdit(str(sc.axes.get_xlim()[1]), self)
         self.x2_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.x2_textbox, 0, 3, 2, 1)
+        axGrid.addWidget(self.x2_textbox, 0, 3, 1, 1)
 
         self.y1_textbox = QLineEdit(str(sc.axes.get_ylim()[1]), self)
         self.y1_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.y1_textbox, 2, 1, 2, 1)
+        axGrid.addWidget(self.y1_textbox, 1, 1, 1, 1)
 
         self.y2_textbox = QLineEdit(str(sc.axes.get_ylim()[0]), self)
         self.y2_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.y2_textbox, 2, 3, 2, 1)
+        axGrid.addWidget(self.y2_textbox, 1, 3, 1, 1)
 
         self.axlims_button = QPushButton('Update axis limits', self)
         self.axlims_button.clicked.connect(self.update_axes)
         self.axlims_button.setFixedSize(150, 25)
-        axGrid.addWidget(self.axlims_button, 0, 5, 1, 1,
+        axGrid.addWidget(self.axlims_button, 2, 0, 1, 5,
                          alignment=QtCore.Qt.AlignHCenter)
 
         # Add "Zoom Fit" button
@@ -356,7 +364,7 @@ class SegmentGuidingWindow(QDialog):
         self.zoom_button.clicked.connect(sc.zoom_to_fit)
         self.zoom_button.clicked.connect(self.update_textboxes)
         self.zoom_button.setFixedSize(150, 25)
-        axGrid.addWidget(self.zoom_button, 1, 5, 2, 1,
+        axGrid.addWidget(self.zoom_button, 3, 0, 1, 5,
                          alignment=QtCore.Qt.AlignHCenter)
 
         # Add "Crop to Data" button
@@ -365,7 +373,7 @@ class SegmentGuidingWindow(QDialog):
         self.crop_button.clicked.connect(sc.zoom_to_crop)
         self.crop_button.clicked.connect(self.update_textboxes)
         self.crop_button.setFixedSize(150, 25)
-        axGrid.addWidget(self.crop_button, 3, 5, 1, 1,
+        axGrid.addWidget(self.crop_button, 4, 0, 1, 5,
                          alignment=QtCore.Qt.AlignHCenter)
 
         return axGroupBox
@@ -401,18 +409,17 @@ class SegmentGuidingWindow(QDialog):
         starsGroupBox = QGroupBox('Selected Guide and Reference Stars', self)
         selectStarsGrid = QGridLayout()
         starsGroupBox.setLayout(selectStarsGrid)
-        starsGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         starsGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
         # Show selected stars
         guide_label = QLabel('Guide\nStar?', self)
-        guide_label.setMinimumSize(40, 40)
-        # guide_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        guide_label.setFixedSize(40, 30)
         selectStarsGrid.addWidget(guide_label, 0, 0,
                                   alignment=QtCore.Qt.AlignVCenter)
-        selectStarsGrid.addWidget(QLabel('Star Position', self), 0, 1)
-        # selectStarsGrid.setColumnMinimumWidth(0, 50)
-        # selectStarsGrid.setColumnMinimumWidth(1, 120)
+
+        star_label = QLabel('Star Position', self)
+        star_label.setFixedSize(100, 30)
+        selectStarsGrid.addWidget(star_label, 0, 1)
 
         self.nStars = 11
         for n in range(self.nStars):
@@ -487,13 +494,13 @@ class SegmentGuidingWindow(QDialog):
         segmentGuidingGroupBox = QGroupBox('Segment Guiding Override Commands', self)
         segmentGuidingGrid = QGridLayout()
         segmentGuidingGroupBox.setLayout(segmentGuidingGrid)
-        segmentGuidingGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        # segmentGuidingGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         segmentGuidingGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
 
         # Show segment override commands
         self.segment_override_list = QListView(segmentGuidingGroupBox)
         self.segment_override_model = QStandardItemModel(self.segment_override_list)
-        self.segment_override_list.setMinimumSize(100, 100)
+        # self.segment_override_list.setMaximumSize(500, 200)
         self.segment_override_list.setModel(self.segment_override_model)
         segmentGuidingGrid.addWidget(self.segment_override_list, 0, 0, 2, 2)
 
