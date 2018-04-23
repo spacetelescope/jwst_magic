@@ -105,24 +105,30 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.axes = self.fig.add_subplot(111)
         self.fig.subplots_adjust(top=.95, left=left, right=right,
                                  bottom=bottom)
+        self.cbar = []
+        self.peaks = []
 
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
 
-        # self.compute_initial_figure(self.fig, data, x, y)
-
-        # FigureCanvas.setSizePolicy(self,
-        #                            QtWidgets.QSizePolicy.Expanding,
-        #                            QtWidgets.QSizePolicy.Expanding)
-        # FigureCanvas.updateGeometry(self)
-
-    def compute_initial_figure(self, fig, data, x, y):
+    def compute_initial_figure(self, fig, data, x, y,
+                               xlabel='Raw FGS X (–V3) [pixels]',
+                               ylabel='Raw FGS Y (V2) [pixels]'):
+        # Plot data
         self.fitsplot = self.axes.imshow(data, cmap='bone', interpolation='nearest',
                                          clim=(0.1, 1e3), norm=LogNorm())
-        self.axes.scatter(x, y, c='r', marker='+')
-        self.fig.colorbar(self.fitsplot, ax=self.axes, fraction=0.046, pad=0.04)
-        self.axes.set_xlabel('Raw FGS X (–V3) [pixels]')
-        self.axes.set_ylabel('Raw FGS Y (V2) [pixels]')
+        if self.peaks != []:
+            self.peaks.remove()
+        self.peaks = self.axes.scatter(x, y, c='r', marker='+')
+
+        # Update colorbar
+        if self.cbar != []:
+            self.cbar.remove()
+        self.cbar = self.fig.colorbar(self.fitsplot, ax=self.axes, fraction=0.046, pad=0.04, norm=LogNorm())
+
+        # Add axis labels
+        self.axes.set_xlabel(xlabel)
+        self.axes.set_ylabel(ylabel)
         self.draw()
 
     def init_profile(self):
