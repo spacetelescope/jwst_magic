@@ -827,6 +827,14 @@ class SegmentGuidingWindow(QDialog):
         return removestar
 
     def save_orientation_to_list(self):
+        if self.inds == []:
+            no_stars_selected_dialog = QMessageBox()
+            no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
+            no_stars_selected_dialog.setInformativeText('Please select at least one star to command.')
+            no_stars_selected_dialog.setStandardButtons(QMessageBox.Ok)
+            no_stars_selected_dialog.exec()
+            return
+
         if not self.segment_override_list.isEnabled():
             self.segment_override_list.setEnabled(True)
             self.segment_override_model.takeRow(0)
@@ -979,7 +987,7 @@ class SegmentGuidingWindow(QDialog):
             int(self.segNum)
         except (ValueError, AttributeError) as e:
             no_segNum_selected_dialog = QMessageBox()
-            no_segNum_selected_dialog.setText('No center segment number')
+            no_segNum_selected_dialog.setText('No center segment number' + ' ' * 50)
             no_segNum_selected_dialog.setInformativeText('The center of override pointing (segNum) has not been defined. Please define before quitting.')
             no_segNum_selected_dialog.setStandardButtons(QMessageBox.Ok)
             no_segNum_selected_dialog.exec()
