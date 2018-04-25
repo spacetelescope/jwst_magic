@@ -994,15 +994,19 @@ class SegmentGuidingWindow(QDialog):
             return
 
         self.answer = True
-        # If the user didn't choose any stars, ask if they really want to quit.
-        if self.inds == [] and self.n_orientations == 0:
+        # If the user selected stars but didn't explicitly save them as a
+        # command, do it for them
+        if self.inds != [] and self.n_orientations == 0:
+            self.save_orientation_to_list()
+
+        # If the user really didn't choose any stars, ask if they really want to quit.
+        elif self.inds == [] and self.n_orientations == 0:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
             no_stars_selected_dialog.setInformativeText('The tool will not be able to continue. Do you want to quit anyway?')
             no_stars_selected_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             no_stars_selected_dialog.buttonClicked.connect(self.nostars_dialog)
             no_stars_selected_dialog.exec()
-
         # If they do, then quit.
         if self.answer:
             # If not being called from the master GUI, exit the whole application
