@@ -58,8 +58,7 @@ from .convert_image import counts_to_jmag
 from .segment_guiding import segment_guiding
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
-MASTERGUI_PATH = os.path.dirname(os.path.realpath(__file__))
-PACKAGE_PATH = os.path.split(MASTERGUI_PATH)[0]
+PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
 GROUPBOX_TITLE_STYLESHEET = 'QGroupBox { font-size: 18px; font-weight: bold; margin-top: 40px } QGroupBox::title { top: -30px }'
@@ -671,12 +670,12 @@ class MasterGui(QMainWindow):
                 fgs_image = input_image
                 data = fits.open(fgs_image)[1].data
 
-            GS_params_dict = {'V2Boff': self.textbox_V2Boff.text(),
-                              'V3Boff': self.textbox_V3Boff.text(),
+            GS_params_dict = {'V2Boff': float(self.textbox_V2Boff.text()),
+                              'V3Boff': float(self.textbox_V3Boff.text()),
                               'fgsNum': guider,
-                              'RA': self.textbox_RA.text(),
-                              'Dec': self.textbox_Dec.text(),
-                              'PA': self.textbox_PA.text(),
+                              'RA': float(self.textbox_RA.text()),
+                              'Dec': float(self.textbox_Dec.text()),
+                              'PA': float(self.textbox_PA.text()),
                               'segNum': 0}
 
             # Determine whether to load regfile or run GUI
@@ -955,29 +954,8 @@ class MasterGui(QMainWindow):
                 header = hdulist[0].header
             data[data <= 0] = 1
 
-            # Parse instrument
-            try:
-                instrument = header['INSTRUME'].upper()
-                if "NIRCAM" in instrument:
-                    self.rb_nircam.setChecked(True)
-                elif "FGS" in instrument:
-                    self.rb_fgs.setChecked(True)
-            except KeyError:
-                pass
-
-            # Parse detector
-            try:
-                detector = header['DETECTOR'].upper()
-                if "NRC" in detector:
-                    detector = detector.strip()[-2:]
-                    index = self.cb_nircam_det.findText(detector, Qt.MatchFixedString)
-                    if index >= 0:
-                        self.cb_nircam_det.setEnabled(True)
-                        self.cb_nircam_det.setCurrentIndex(index)
-                elif "GUIDER" in detector:
-                    self.rb_fgs.setChecked(True)
-            except KeyError:
-                self.cb_nircam_det.setCurrentIndex(0)
+            # Try to get information out of the header
+            self.parse_header(header)
 
             # Plot data
             self.input_canvas.compute_initial_figure(self.input_canvas.fig, data,
@@ -1069,6 +1047,81 @@ class MasterGui(QMainWindow):
 
         return self.converted_canvas.draw()
 
+    def parse_header(self, header):
+        # Parse instrument
+        try:
+            instrument = header['INSTRUME'].upper()
+            if "NIRCAM" in instrument:
+                self.rb_nircam.setChecked(True)
+            elif "FGS" in instrument:
+                self.rb_fgs.setChecked(True)
+        except KeyError:
+            pass
+
+        # Parse detector
+        try:
+            detector = header['DETECTOR'].upper()
+            # Handle NIRCam case
+            if "NRC" in detector:
+                # Handle longwave case
+                if "LONG" in detector:
+                    module = detector[3]
+                    if module == 'A' :
+                        index = 5
+                    elif module == 'B':
+                        index = 10
+
+                # Handle shortwave case
+                else:
+                    detector = detector.strip()[-2:]
+                    index = self.cb_nircam_det.findText(detector, Qt.MatchFixedString)
+
+                # Update dropdown menu
+                if index >= 0:
+                    self.cb_nircam_det.setEnabled(True)
+                    self.cb_nircam_det.setCurrentIndex(index)
+
+            # Handle FGS case
+            elif "GUIDER" in detector:
+                self.rb_fgs.setChecked(True)
+        # If there is not DETECTOR keyword, set NIRCam detector back to parse
+        except KeyError:
+            self.cb_nircam_det.setCurrentIndex(0)
+
+        # Parse RA, Dec, and PA
+        try:
+            RA = str(header['TARG_RA'])
+            self.textbox_RA.setText(RA)
+        except KeyError:
+            try:
+                RA = str(header['RA_TARG'])
+                self.textbox_RA.setText(RA)
+            except KeyError:
+                pass
+        try:
+            Dec = str(header['TARG_DEC'])
+            self.textbox_Dec.setText(Dec)
+        except KeyError:
+            try:
+                Dec = str(header['DEC_TARG'])
+                self.textbox_Dec.setText(Dec)
+            except KeyError:
+                pass
+        try:
+            PA = str(header['PA_V3'])
+            self.textbox_PA.setText(PA)
+        except KeyError:
+            pass
+
+        # Parse APT program, observation, and visit information
+        keywords = ['PROGRAM', 'OBSERVTN', 'VISIT']
+        textboxes = [self.textbox_prognum, self.textbox_obsnum, self.textbox_visitnum]
+        for keyword, textbox in zip(keywords, textboxes):
+            try:
+                value = str(header[keyword])
+                textbox.setText(value)
+            except KeyError:
+                pass
 
 #===============================================================================
 def run_MasterGui(root=None, fgs_counts=None, jmag=11.0, nircam_det=None,
