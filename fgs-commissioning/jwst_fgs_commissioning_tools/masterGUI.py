@@ -473,7 +473,14 @@ class MasterGui(QMainWindow):
         self.cb_refonly = QCheckBox('Designate reference stars with "refonly"', self)
         self.cb_refonly.setCheckable(True)
         self.cb_refonly.setChecked(True)
-        segmentGrid.addWidget(self.cb_refonly, 1, 0, 1, 4)
+        segmentGrid.addWidget(self.cb_refonly, 1, 0, 1, 3)
+
+        # Count rate uncertainty factor
+        segmentGrid.addWidget(QLabel('Count Rate Uncertainty Factor', self), 1, 3, 1, 2,
+                              alignment=QtCore.Qt.AlignRight)
+        self.textbox_ct_uncert_fctr = QLineEdit('0.9', self)
+        self.textbox_ct_uncert_fctr.setFixedSize(80, 20)
+        segmentGrid.addWidget(self.textbox_ct_uncert_fctr, 1, 5)
 
         # APT proposal, observation, visit numbers
         segmentGrid.addWidget(QLabel('Program Num.', self), 2, 0,
@@ -663,12 +670,14 @@ class MasterGui(QMainWindow):
             observation_num = self.textbox_obsnum.text()
             visit_num = self.textbox_visitnum.text()
 
+            ct_uncert_fctr = float(self.textbox_ct_uncert_fctr.text())
+
             if nircam:
                 fgs_image = self.converted_im_file
-                data = fits.open(fgs_image)[0].data
+                # data = fits.open(fgs_image)[0].data
             else:
                 fgs_image = input_image
-                data = fits.open(fgs_image)[1].data
+            data = fits.open(fgs_image)[0].data
 
             GS_params_dict = {'V2Boff': float(self.textbox_V2Boff.text()),
                               'V3Boff': float(self.textbox_V3Boff.text()),
@@ -693,7 +702,8 @@ class MasterGui(QMainWindow):
                                      GUI=GUI, GS_params_dict=GS_params_dict,
                                      out_dir=out_dir, data=data,
                                      selected_segs=selected_segs,
-                                     masterGUIapp=self.app, refonly=refonly)
+                                     masterGUIapp=self.app, refonly=refonly,
+                                     ct_uncert_fctr=ct_uncert_fctr)
             print("** Run Complete **")
             return
 
@@ -924,7 +934,10 @@ class MasterGui(QMainWindow):
             self.regfile = os.path.join(root_dir,
                                         '{}_G{}_regfile.txt'.format(self.textbox_root.text(),
                                                                     self.cb_guider.currentText()))
-            self.textbox_infile.setText(self.regfile)
+            if os.path.exists(self.regfile):
+                self.textbox_infile.setText(self.regfile)
+            else:
+                self.textbox_infile.setText("")
 
             # Update ALLpsfs.txt filepath
             self.ALLpsfs = os.path.join(root_dir,
