@@ -603,10 +603,13 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
             except KeyError:
                 pass
 
-            # Pull out DQ array for this image
-            dq_arr = fits.getdata(input_im, extname='DQ')
-            if not dq_arr.min() == 1 and not dq_arr.max() == 1:
-                data = correct_nircam_dq(data, dq_arr)
+            # (Try to) Pull out DQ array for this image
+            try:
+                dq_arr = fits.getdata(input_im, extname='DQ')
+                if not dq_arr.min() == 1 and not dq_arr.max() == 1:
+                    data = correct_nircam_dq(data, dq_arr)
+            except KeyError:
+                LOGGER.warning("Image Conversion: No DQ extension found; DQ correction cannot be performed.")
 
             # Remove pedestal from NIRCam data
             data = remove_pedestal(data)
