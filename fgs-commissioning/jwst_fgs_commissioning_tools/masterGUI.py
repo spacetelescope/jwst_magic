@@ -53,10 +53,10 @@ from astropy.io import fits
 from astropy.io import ascii as asc
 import numpy as np
 
-from .. import run_fgs_commissioning_tool, utils
-from ..convert_image import counts_to_jmag
-from ..segment_guiding import segment_guiding
-from ..star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
+from . import run_fgs_commissioning_tool, utils
+from .convert_image import counts_to_jmag
+from .segment_guiding import segment_guiding
+from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
 MASTERGUI_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(MASTERGUI_PATH)[0]
