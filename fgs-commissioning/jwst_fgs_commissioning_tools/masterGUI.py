@@ -55,8 +55,9 @@ import numpy as np
 
 from . import run_fgs_commissioning_tool, utils
 from .convert_image import counts_to_jmag
+from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
-from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
+from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
@@ -438,6 +439,7 @@ class MasterGui(QMainWindow):
 
         # Just rewrite the .prc files?
         self.cb_rewrite_prc = QCheckBox('Just rewrite the .prc files and regfile.text', self)
+        self.cb_rewrite_prc.toggled.connect(self.on_check_rewrite_prc)
         filewriterGrid.addWidget(self.cb_rewrite_prc, 3, 0, 1, 6)
 
         return self.filewriterGroupBox
@@ -660,6 +662,34 @@ class MasterGui(QMainWindow):
         if self.cb_fg.isChecked():
             steps.append('FG')
 
+        # Rewrite .prc and regfile.txt ONLY
+        if self.cb_rewrite_prc.isChecked():
+            # Open converted FGS file
+            fgs_filename = os.path.join(out_dir, 'out', root, 'FGS_imgs',
+                                        '{}_G{}.fits'.format(root, guider))
+            data = fits.open(fgs_filename)[0].data
+            data[data <= 0] = 1
+
+            # Open ALLpsfs.txt (list of all identified segments)
+            all_psfs = os.path.join(out_dir, 'out', root,
+                                    '{}_G{}_ALLpsfs.txt'.format(root, guider))
+            all_rows = asc.read(all_psfs)
+            labels = all_rows['label'].data
+            x = all_rows['x'].data
+            y = all_rows['y'].data
+
+            # Run the select stars GUI to determint the new orientation
+            inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
+            order = ''.join(labels[inds])
+
+            # Rewrite the id.prc and acq.prc files
+            rewrite_prc.rewrite_prc(order, guider, root, out_dir)
+            print("** Run Complete **")
+
+            # Update converted image preview
+            self.update_converted_image_preview()
+            return
+
         # Segment guiding
         if self.segmentGroupBox.isChecked():
             refonly = self.cb_refonly.isChecked()
@@ -707,6 +737,9 @@ class MasterGui(QMainWindow):
                                      masterGUIapp=self.app, refonly=refonly,
                                      ct_uncert_fctr=ct_uncert_fctr)
             print("** Run Complete **")
+
+            # Update converted image preview
+            self.update_converted_image_preview()
             return
 
         if convert_im or star_selection or file_writer:
@@ -870,24 +903,35 @@ class MasterGui(QMainWindow):
         ''' Checking the segment guiding box. Turn off all other steps in GUI.'''
         # If we are using SGT
         if is_toggle:
-            # self.convertGroupBox.setChecked(False)
             self.convertGroupBox.setEnabled(False)
-
-            # self.filewriterGroupBox.setChecked(False)
             self.filewriterGroupBox.setEnabled(False)
-
-            # self.starGroupBox.setChecked(False)
             self.starGroupBox.setEnabled(False)
         # If we are not
         else:
-            # self.convertGroupBox.setChecked(True)
             self.convertGroupBox.setEnabled(True)
-
-            # self.filewriterGroupBox.setChecked(True)
             self.filewriterGroupBox.setEnabled(True)
-
-            # self.starGroupBox.setChecked(True)
             self.starGroupBox.setEnabled(True)
+
+    def on_check_rewrite_prc(self):
+        '''Checking the rewrite .prc box. Turn off all other steps in GUI.'''
+        if self.cb_rewrite_prc.isChecked():
+            self.convertGroupBox.setEnabled(False)
+            self.starGroupBox.setEnabled(False)
+            self.segmentGroupBox.setEnabled(False)
+
+            self.cb_cal.setEnabled(False)
+            self.cb_acq2.setEnabled(False)
+            self.cb_trk.setEnabled(False)
+            self.cb_fg.setEnabled(False)
+        else:
+            self.convertGroupBox.setEnabled(True)
+            self.starGroupBox.setEnabled(True)
+            self.segmentGroupBox.setEnabled(True)
+
+            self.cb_cal.setEnabled(True)
+            self.cb_acq2.setEnabled(True)
+            self.cb_trk.setEnabled(True)
+            self.cb_fg.setEnabled(True)
 
     # What to do with specific buttons ------------------------------------------
     def btnstate(self, button):

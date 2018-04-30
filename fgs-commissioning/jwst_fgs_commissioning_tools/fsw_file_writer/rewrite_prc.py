@@ -1,4 +1,15 @@
-'''Make custom prc files'''
+'''Rewrite .prc and regfile.txt files with new guide and reference stars
+
+Allow the user to rewrite the ID.prc, ACQ.prc, and regfile.txt files
+without having to rerun image conversion and star selection.
+
+Author
+------
+    - Lauren Chambers
+'''
+import os
+import logging
+
 from astropy.io import ascii as asc
 import numpy as np
 
@@ -6,15 +17,20 @@ from .. import utils
 from ..star_selector import select_psfs
 from ..fsw_file_writer.mkproc import Mkproc
 
+# Start logger
+LOGGER = logging.getLogger(__name__)
+
 
 def rewrite_prc(order, guider, root, out_dir, thresh_factor=0.9,
                 prc=True, regfile=True):
     '''For a given dataset, rewrite the PRC and regfile to select a new commanded
     guide star and reference stars'''
 
+    out_dir = os.path.join(out_dir, 'out', root)
+
     # Open log of all identified PSFs
-    print("Reading from (and writing to) {}".format(out_dir))
-    all_psfs = out_dir + '/{}_G{}_ALLpsfs.txt'.format(root, guider)
+    LOGGER.info("Rewrite PRC: Reading from (and writing to) {}".format(out_dir))
+    all_psfs = os.path.join(out_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))
     all_rows = asc.read(all_psfs)
     labels = all_rows['label'].data
 
@@ -35,7 +51,7 @@ def rewrite_prc(order, guider, root, out_dir, thresh_factor=0.9,
         # Add threshold
         thresh = rows['countrate'] * thresh_factor
         rows['threshold'] = thresh
-        print('Threshold: {}'.format(thresh_factor))
+        LOGGER.info('Rewrite PRC: Threshold: {}'.format(thresh_factor))
 
         Mkproc(guider, root, rows['x'], rows['y'], rows['countrate'], step='ID',
                out_dir=out_dir, thresh_factor=thresh_factor)

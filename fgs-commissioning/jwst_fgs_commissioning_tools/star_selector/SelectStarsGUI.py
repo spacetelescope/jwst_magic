@@ -96,7 +96,6 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
 
     def __init__(self, parent=None, width=15, height=15, dpi=100, data=None,
                  x=None, y=None, left=None, right=None, bottom=0.05):
-
         self.data = data
         self.x = x
         self.y = y
