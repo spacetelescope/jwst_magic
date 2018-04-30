@@ -107,12 +107,15 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
 
     # Determine output directory
     out_dir_root = utils.make_out_dir(out_dir, OUT_PATH, root)
+    utils.ensure_dir_exists(out_dir_root)
 
     LOGGER.info("Package directory: {}".format(PACKAGE_PATH))
     LOGGER.info("Processing request for {}. \nAll data will be saved in: {}".format(root,
                                                                                     out_dir_root))
     LOGGER.info("Input image: {}".format(os.path.abspath(image)))
-    utils.ensure_dir_exists(out_dir_root)
+
+    # Copy input image into out directory
+    shutil.copy(os.path.abspath(image), out_dir_root)
 
     # Either convert provided NIRCam image to an FGS image...
     if convert_im:
