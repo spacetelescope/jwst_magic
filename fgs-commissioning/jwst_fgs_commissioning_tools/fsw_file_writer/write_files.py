@@ -1,3 +1,62 @@
+'''Writes all flight software files for CAL, ID, ACQ, and/or TRK steps
+
+This module takes an FGS simulation object for CAL, ID, ACQ, and/or TRK
+steps (created in ``buildfgssteps.py``), which it uses to write the
+necessary flight software files for use with the DHAS, the FGSES/
+CertLab, or just for user inspection. The files created for each step
+are as follows:
+
+    CAL:
+        sky.fits (the input file after being time-normalized (converted
+            from counts/s to counts)
+        bias.fits (bias file used to create noisy FGS image)
+        cds.fits (correlated double sample)
+        .fits
+    ID:
+        sky.fits (the input file after being time-normalized (converted
+            from counts/s to counts)
+        bias.fits (bias file used to create noisy FGS image)
+        cds.fits (correlated double sample)
+        ff.fits (full frame; image before CDS)
+        strips.fits (strips to run in DHAS)
+        strips.dat (strips to run in FGSES)
+        .gssscat
+        .stc
+        .prc (to run in DHAS or FGSES)
+    ACQ1 or ACQ2:
+        sky.fits (the input file after being time-normalized (converted
+            from counts/s to counts)
+        bias.fits (bias file used to create noisy FGS image)
+        cds.fits (correlated double sample)
+        .fits (to run in DHAS)
+        .dat (to run in FGSES)
+        .cat
+        .stc
+        .prc (to run in DHAS or FGSES)
+    LOSTRK:
+        .fits
+        .dat (to run in FGSES)
+    TRK:
+        .fits (to run in DHAS)
+
+Authors
+-------
+    - Keira Brooks
+    - Lauren Chambers
+
+Use
+---
+    This module can be executed in a Python shell as such:
+    ::
+        from jwst_fgs_commissioning_tools.fsw_file_writer import write_files
+        write_files.write_all(obj)
+
+    Required arguments:
+        ``obj`` - FGS simulation object for CAL, ID, ACQ, and/or TRK
+            stages; created by ``buildfgssteps.py``
+'''
+
+
 # STDLIB
 import os
 
@@ -9,169 +68,232 @@ import numpy as np
 from .. import utils, coordinate_transforms
 from ..fsw_file_writer import mkproc
 
+# Define all paths
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(FSW_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
+
 def write_all(obj):
+    '''Create **all** the files and images needed for simulation with
+    the flight software and use by analysts for a particular step
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
     '''
-    Create **all** the files and images needs for ID & ACQ
-    Requires: time_normed_im, step, x, y, countrate, bias, idarr
+    # Determine the root filename
+    filename_root = '{}_G{}_{}'.format(obj.root, obj.guider, obj.step)
+    obj.filename_root = filename_root
 
-    ID & ACQ:
-    <name>_G<guider>_<step>sky.fits :   fits file of they time_normed_im array
+    if obj.step == 'CAL':
+        # Write files for use by folks at STScI
+        write_sky(obj)
+        write_bias(obj)
+        write_cds(obj)
+        write_image(obj)
 
-    <name>_G<guider>_<step>.stc :       list of x, y, and countrate for the guide
-                                        and reference stars
-    <name>_G<guider>_<step>bias.fits :  fits file of the bias cube for ID
+    elif obj.step == 'ID':
+        # Write files for use by folks at STScI
+        write_sky(obj)
+        write_bias(obj)
+        write_stc(obj)
+        write_cds(obj)
+        write_cat(obj)
+        write_image(obj)
 
-    <name>_G<guider>_<step>cds.fits :
+        # Write files for use in the DHAS and FGSES
+        write_strips(obj)
+        write_prc(obj)
+        write_dat(obj)
 
-    ID Only:
-    <name>_G<guider>_<step>.gssscat :   list of x and y coordinates of the guide
-                                        and reference stars
-    <name>_G<guider><step>ff.fits :     fits cube of the sky with added bias and noise
-                                        to simulate the read and ramp cycle for ID
-    <name>_G<guider>_<step>strips.fits : fits cube of overlaping strips cut
-                                         from arr
+    elif obj.step == 'ACQ1':
+        # Write files for use by folks at STScI
+        write_sky(obj)
+        write_bias(obj)
+        write_stc(obj)
+        write_cds(obj)
+        write_cat(obj)
 
-    ACQ Only:
-    <name>_G<guider>_<step>.cat :   list of x and y coordinates of the guide
-                                        and reference stars
-    <name>_G<guider><step>.fits :   fits cube of the sky with added bias and noise
-                                        to simulate the read and ramp cycle for ID
+        # Write files for use in the DHAS and FGSES
+        write_image(obj)
+        write_prc(obj)
+        write_dat(obj)
+
+    elif obj.step == 'ACQ2':
+        # Write files for use by folks at STScI
+        write_sky(obj)
+        write_bias(obj)
+        write_stc(obj)
+        write_cds(obj)
+        write_cat(obj)
+
+        # Write files for use in the DHAS and FGSES
+        write_image(obj)
+        write_dat(obj)
+
+    elif obj.step == 'TRK':
+        # Write files for use by folks at STScI
+        write_sky(obj)
+        write_bias(obj)
+        write_stc(obj)
+
+        # Write files for use in the DHAS
+        write_image(obj)
+        write_dat(obj)
+
+    elif obj.step == 'LOSTRK':
+        # Write files for use by folks at STScI
+        write_sky(obj)
+        write_stc(obj)
+
+        # Write files for use in the DHAS and FGSES
+        write_image(obj)
+        write_dat(obj)
+
+
+def write_sky(obj):
+    '''Write the time-normed image, or "sky" image
+
+    Units:  counts per one second
+    Size:   n_cols x n_rows
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
     '''
-
-    # STScI only files - mostly just for quick checks of the data
-    # Sky image
-    filename_sky = os.path.join(obj.out_dir,
-                                'stsci',
-                                '{}_G{}_{}sky.fits'.format(obj.root,
-                                                           obj.guider,
-                                                           obj.step))
+    filename_sky = os.path.join(obj.out_dir, 'stsci',
+                                obj.filename_root + 'sky.fits')
     utils.write_fits(filename_sky, obj.time_normed_im)
 
-    # STC files using offset, rotated catalog
-    filename_stc = os.path.join(obj.out_dir,
-                                'stsci',
-                                '{}_G{}_{}.stc'.format(obj.root,
-                                                       obj.guider,
-                                                       obj.step))
-    if obj.step == 'ACQ1' or obj.step == 'ACQ2':
-        write_stc(filename_stc, obj.xarr - obj.imgsize // 2,
-                  obj.yarr - obj.imgsize // 2, obj.countrate,
-                  obj.guider)
-    else:
-        write_stc(filename_stc, obj.xarr, obj.yarr,
-                  obj.countrate, obj.guider)
 
-    # Bias image
+def write_bias(obj):
+    '''Write the bias image
+
+    Units:  counts
+    Size:   n_cols x n_rows x (n_reads x n_ramps)
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
+    '''
     if obj.bias is not None:
         filename_bias = os.path.join(obj.out_dir,
                                      'stsci',
-                                     '{}_G{}_{}bias.fits'.format(obj.root,
-                                                                 obj.guider,
-                                                                 obj.step))
+                                     obj.filename_root + 'bias.fits')
         utils.write_fits(filename_bias, obj.bias)
 
-    # Create CDS image
+
+def write_cds(obj):
+    '''Write the correlated double sample (CDS) image by subtracting
+    the 0th read from the 1st read
+
+    Units:  counts
+    Size:   n_cols x n_rows x ((n_reads x n_ramps)/2)
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
+    '''
     if obj.cds is not None:
         filename_cds = os.path.join(obj.out_dir,
                                     'stsci',
-                                    '{}_G{}_{}cds.fits'.format(obj.root,
-                                                               obj.guider,
-                                                               obj.step))
+                                    obj.filename_root + 'cds.fits')
         utils.write_fits(filename_cds, obj.cds)
 
+
+def write_image(obj):
+    '''Write a normal image (i.e. ACQ1, TRK, CAL)
+
+    Units:  counts
+    Size:   n_cols x n_rows x (n_reads x n_ramps)
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
+    '''
+
     if obj.step == 'ID':
-        # STScI only files - mostly just for quick checks of the data
-        # Star catalog in real pixs
-        filename_starcat = os.path.join(obj.out_dir,
-                                        'stsci',
-                                        '{}_G{}_{}.gssscat'.format(obj.root,
-                                                                   obj.guider,
-                                                                   obj.step))
-        write_cat(filename_starcat, obj.xarr, obj.yarr)
+        # Create "full-frame" (rather than strips) image
+        location = 'stsci'
+        filetype = 'ff.fits'
+    else:
+        location = 'dhas'
+        filetype = '.fits'
 
-        # Create ff fits file
-        filename_ff = os.path.join(obj.out_dir,
-                                   'stsci',
-                                   '{}_G{}_{}ff.fits'.format(obj.root,
-                                                             obj.guider,
-                                                             obj.step))
-        utils.write_fits(filename_ff, np.uint16(obj.image))
+    # Create image fits file
+    filename = os.path.join(obj.out_dir, location,
+                            obj.filename_root + filetype)
+    utils.write_fits(filename, np.uint16(obj.image))
 
-        # DHAS file
-        # Extract strips from ff img
-        filename_id_strips = os.path.join(obj.out_dir,
-                                          'dhas',
-                                          '{}_G{}_{}strips.fits'.format(obj.root,
-                                                                        obj.guider,
-                                                                        obj.step))
-        # Write to strips to fits file
-        filename_hdr = os.path.join(DATA_PATH,
-                                    'newG{}magicHdrImg.fits'.format(obj.guider))
-        hdr0 = fits.getheader(filename_hdr, ext=0)
-        utils.write_fits(filename_id_strips, obj.strips, header=hdr0)
-        # Don't need to include the yoffset in the .prc IF the strips offset
-        # parameter in DHAS is set to 12
-        mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
-                      step='ID', out_dir=obj.out_dir)
 
-        # Ground system file
-        convert_fits_to_dat(obj.strips, obj.step,
-                            os.path.join(obj.out_dir, 'ground_system'),
-                            obj.guider, root=obj.root)
+def write_strips(obj):
+    '''Write an ID strips image
 
-    elif obj.step == 'ACQ1' or obj.step == 'ACQ2':
-        # STScI only files - mostly just for quick checks of the data
-        # star catalog in real pixs
-        filename_starcat = os.path.join(obj.out_dir,
-                                        'stsci',
-                                        '{}_G{}_{}.cat'.format(obj.root,
-                                                               obj.guider,
-                                                               obj.step))
-        write_cat(filename_starcat, obj.xarr, obj.yarr)
+    Units:  counts
+    Size:   2048 x 64 x (36 x n_reads x n_ramps)
 
-        # DHAS file
-        # Noisy sky acquisition fits images
-        filename_noisy_sky = os.path.join(obj.out_dir,
-                                          'dhas',
-                                          '{}_G{}_{}.fits'.format(obj.root,
-                                                                  obj.guider,
-                                                                  obj.step))
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
+    '''
 
-        utils.write_fits(filename_noisy_sky, np.uint16(obj.image))
+    # Extract strips from ff img
+    filename_id_strips = os.path.join(obj.out_dir,
+                                      'dhas',
+                                      obj.filename_root + 'strips.fits')
+    # Write to strips to fits file
+    filename_hdr = os.path.join(DATA_PATH,
+                                'newG{}magicHdrImg.fits'.format(obj.guider))
+    hdr0 = fits.getheader(filename_hdr, ext=0)
+    utils.write_fits(filename_id_strips, obj.strips, header=hdr0)
 
-        if obj.step == 'ACQ1':
-            mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
-                          step='ACQ', out_dir=obj.out_dir,
-                          acq1_imgsize=obj.acq1_imgsize,
-                          acq2_imgsize=obj.acq2_imgsize)
 
-        # Ground system file
-        convert_fits_to_dat(obj.image, obj.step,
-                            os.path.join(obj.out_dir, 'ground_system'),
-                            obj.guider, root=obj.root)
+def write_prc(obj):
+    '''Write a procedure (.prc) file for use with file software
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
+
+    Notes
+    -----
+        Don't need to include the yoffset in the .prc IF the strips
+        offset parameter in DHAS is set to 12
+    '''
+    if obj.step == 'ID':
+        step = 'ID'
+        acq1_imgsize = None
+        acq1_imgsize = None
+
+    if obj.step == 'ACQ1':
+        step = 'ACQ'
+        acq1_imgsize = obj.acq1_imgsize
+        acq2_imgsize = obj.acq2_imgsize
 
     else:
-        # DHAS file
-        # Noisy sky acquisition fits images
-        filename_image = os.path.join(obj.out_dir,
-                                      'dhas',
-                                      '{}_G{}_{}.fits'.format(obj.root,
-                                                              obj.guider,
-                                                              obj.step))
+        return
 
-        utils.write_fits(filename_image, np.uint16(obj.image))
-        # Ground system file
-        convert_fits_to_dat(obj.image, obj.step,
-                            os.path.join(obj.out_dir, 'ground_system'),
-                            obj.guider, root=obj.root)
+    mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
+                  step=step, out_dir=obj.out_dir, acq1_imgsize=acq1_imgsize,
+                  acq2_imgsize=acq2_imgsize)
 
-# ------------------------------------------------------------------------------
-def convert_fits_to_dat(data, obsmode, out_dir, guider, root=None):
+def write_dat(obj):
     '''
     Convert a .fits file to a .dat file for use on the ground system
 
@@ -179,23 +301,25 @@ def convert_fits_to_dat(data, obsmode, out_dir, guider, root=None):
 
     Parameters
     ----------
-    data: str, array-like
-        Can be a str (implies that this is a .fits file) or an array/cube
-    obsmode: str
-        The mode of image (i.e. 'PSF', 'CAL', 'TRK', 'ACQ'/'ACQ1'/'ACQ2', or 'ID')
-    outfile: str
-        Where to save the file
-    root: str
-        If data is array-like, please provide the root image name
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
     '''
+    if obj.step == 'ID':
+        data_to_write = obj.strips
+    else:
+        data_to_write = obj.image
 
-    obsmode = obsmode.upper()
+    out_dir = os.path.join(obj.out_dir, 'ground_system')
 
-    if isinstance(data, str):
-        data = fits.getdata(data)
+    obsmode = obj.step.upper()
+
+    if isinstance(data_to_write, str):
+        data = fits.getdata(data_to_write)
         filename = data.split('/')[-1].split('.')[0]
     else:
-        filename = '{}_G{}_{}.dat'.format(root, guider, obsmode)
+        data = data_to_write
+        filename = '{}_G{}_{}.dat'.format(obj.root, obj.guider, obsmode)
 
     #data = swap_if_little_endian(data)
     flat = data.flatten()
@@ -219,30 +343,61 @@ def convert_fits_to_dat(data, obsmode, out_dir, guider, root=None):
     print("Successfully wrote: {}".format(os.path.join(out_dir, filename)))
     return
 
-# Write out files
-def write_stc(filename, xarr, yarr, countrate, guider):
+
+def write_stc(obj):
     """
     Write out stc files using offset, rotated catalog
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
     """
-    xia, yia = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
+    # STC files using offset, rotated catalog
+    filename_stc = os.path.join(obj.out_dir,
+                                'stsci',
+                                obj.filename_root + '.stc')
+    if obj.step == 'ACQ1' or obj.step == 'ACQ2':
+        xarr = obj.xarr - obj.imgsize // 2
+        yarr = obj.yarr - obj.imgsize // 2
+    else:
+        xarr = obj.xarr
+        yarr = obj.yarr
+
+    xia, yia = coordinate_transforms.Raw2DHAS(xarr, yarr, obj.guider)
     xia = np.asarray(xia)
     yia = np.asarray(yia)
-    countrate = np.asarray(countrate)
+    countrate = np.asarray(obj.countrate)
 
     inum = np.arange(len(xia))
     data = np.array([inum, xia, yia, countrate]).T
 
-    utils.write_to_file(filename, data, fmt=['%d', '%f', '%f', '%e'])
-    print("Successfully wrote: {}".format(filename))
+    utils.write_to_file(filename_stc, data, fmt=['%d', '%f', '%f', '%e'])
+    print("Successfully wrote: {}".format(filename_stc))
 
 
-def write_cat(filename, xarr, yarr):
+def write_cat(obj):
     '''
-    Write out star catalog in real pixs
+    Write out star catalog in real pixels
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py``
     '''
-    coords = np.array([xarr, yarr]).T
+    if obj.step == 'ID':
+        filetype = '.gssscat'
+    else:
+        filetype = '.cat'
+
+    filename_starcat = os.path.join(obj.out_dir, 'stsci',
+                                    obj.filename_root + filetype)
+
+    coords = np.array([obj.xarr, obj.yarr]).T
     try:
-        utils.write_to_file(filename, coords, fmt=['%d', '%d'])
+        utils.write_to_file(filename_starcat, coords, fmt=['%d', '%d'])
     except AttributeError:
-        utils.write_to_file(filename, coords)
-    print("Successfully wrote: {}".format(filename))
+        utils.write_to_file(filename_starcat, coords)
+    print("Successfully wrote: {}".format(filename_starcat))

@@ -1,36 +1,9 @@
-'''Writes all flight software files for ID, ACQ, and/or TRK steps
+'''Setup to write all simulated files for CAL, ID, ACQ, and/or TRK steps
 
-This module creates an FGS simulation object for ID, ACQ, and/or TRK
-steps, which it uses to create the necessary flight software files for
-use with the DHAS, the FGSES/CertLab, or just for user inspection. The
-files created for each step are as follows:
-
-    ID:
-        sky.fits (the input file after being time-normalized (converted
-            from counts/s to counts)
-        bias.fits (bias file used to create noisy FGS image)
-        cds.fits (correlated double sample)
-        ff.fits (full frame; image before CDS)
-        strips.fits (strips to run in DHAS)
-        strips.dat (strips to run in FGSES)
-        .gssscat
-        .stc
-        .prc (to run in DHAS or FGSES)
-    ACQ1 or ACQ2:
-        sky.fits (the input file after being time-normalized (converted
-            from counts/s to counts)
-        bias.fits (bias file used to create noisy FGS image)
-        cds.fits (correlated double sample)
-        .fits (to run in DHAS)
-        .dat (to run in FGSES)
-        .cat
-        .stc
-        .prc (to run in DHAS or FGSES)
-    LOSTRK:
-        .fits
-        .dat (to run in FGSES)
-    TRK:
-        .fits (to run in DHAS)
+This module parses the ``config.ini`` file to create an FGS simulation
+object for CAL, ID, ACQ, and/or TRK steps. This object will ultimately
+pass to ``write_files.py`` to create the necessary flight software files
+for use with the DHAS, the FGSES/CertLab, or just for user inspection.
 
 Authors
 -------
@@ -118,23 +91,26 @@ class BuildFGSSteps(object):
             # THEN convert to uint16
             self.input_im = np.uint16(self.input_im)
 
-            LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
+            # LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
 
             self.get_coords_and_counts(reg_file=reg_file)
 
             section = '{}_dict'.format(self.step.lower())
             config_ini = self.build_step(section, configfile)
             self.image = self.create_img_arrays(section, config_ini)
-            self.write()
+
+            # Write the files
+            LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
+            write_files.write_all(self)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    ### Guide star and reference star coordinates and countrates
     def get_coords_and_counts(self, reg_file=None):
         '''
-        Get coordinate information of guide star and reference stars
+        Get coordinate information and countrates of guide star and
+        reference stars
         '''
         if reg_file is None:
             reg_file = os.path.join(self.out_dir,
@@ -163,8 +139,8 @@ class BuildFGSSteps(object):
 
     def build_step(self, section, configfile=None):
         '''
-        Build the step of commissioning based on the parameters in the config.ini
-        and return the step section if step is known
+        Build the step of commissioning based on the parameters in the
+        config.ini and return the step section if step is known
         '''
         self.nreads = 2
 
@@ -172,10 +148,10 @@ class BuildFGSSteps(object):
             configfile = os.path.join(DATA_PATH, 'config.ini')
         config_ini = config.load_config_ini(configfile)
 
-        if self.step != 'ID':
+        if self.step not in ['ID', 'CAL']:
+            # If not ID or CAL (i.e. if making a subarray), only use the guide star
             self.xarr = np.asarray([self.xarr[0]])
             self.yarr = np.asarray([self.yarr[0]])
-
             self.countrate = np.asarray([self.countrate[0]])
             self.input_im = create_im_subarray(self.input_im, self.xarr,
                                                self.yarr, config_ini.getint(section, 'imgsize'))
@@ -188,12 +164,28 @@ class BuildFGSSteps(object):
         return config_ini
 
     def create_img_arrays(self, section, config_ini):
+        '''Create the needed image arrays for the given step.
+
+        Possible arrays include:
+            - time_normed_im : the "sky" image, or the time-normalized
+                image (in counts per one second, AKA counts)
+            - bias : the FGS bias used to simulate the image; includes
+                0th read bias structure and KTC "shot" noise. An array
+                of size (nramps x nreads) x n_rows x n_columns
+            - cds : subtracts the zeroth read from the first read
+            - strips : divides a full-frame array into 36 strips of
+                size 64 x 2048
+
+        The array named "image" is the final image, including any
+        necessary detector effects, and either full-frame or the
+        appropriately sized subarray.
+
+        If creating LOSTRK images, the final "image" array will be
+        normalized and resized for use in the FGSES
         '''
-        Create a noisy sky image for ID and ACQ steps.
-        There is only an added poissonfactor for ACQ2.
-        PoissonNoise should always be set to True for ID.
-        '''
-        #Create the time-normalized image
+
+        # Create the time-normalized image (will be in counts, where the
+        # input_im is in counts per second)
         self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tcds')
 
         ## Grab the expected bias
@@ -202,8 +194,8 @@ class BuildFGSSteps(object):
                                         self.nreads, config_ini.getint(section, 'nramps'),
                                         config_ini.getint(section, 'imgsize'))
 
-            ## Take the bias and add a noisy version of the input image, adding signal
-            ## over each read
+            # Take the bias and add a noisy version of the input image
+            # (specifically Poisson noise), adding signal over each read
             image = np.copy(self.bias)
             for ireads in range(self.nreads):
                 image[ireads::(self.nreads)] += (ireads + 1) * \
@@ -215,11 +207,14 @@ class BuildFGSSteps(object):
         ## Cut any pixels over saturation or under zero
         image = utils.correct_image(image)
 
+        # Create the CDS image by subtracting the first read from the second
+        # read, for each ramp
         if config_ini.getboolean(section, 'cdsimg'):
             self.cds = create_cds(image)
         else:
             self.cds = None
 
+        # If in ID, split the full-frame image into strips
         if config_ini.getboolean(section, 'stripsimg'):
             self.strips = create_strips(image,
                                         config_ini.getint(section, 'imgsize'),
@@ -229,6 +224,8 @@ class BuildFGSSteps(object):
                                         config_ini.getint(section, 'height'),
                                         self.yoffset,
                                         config_ini.getint(section, 'overlap'))
+
+        # Modify further for LOSTRK images (that will be run in FGSES)
         if self.step == 'LOSTRK':
             # Normalize to a count sum of 1000
             image = image / np.sum(image) * 1000
@@ -239,10 +236,10 @@ class BuildFGSSteps(object):
 
         return image
 
-    def write(self):
-        write_files.write_all(self)
+# ------------------------------------------------------------------------------
+# EXTERNAL FUNCTIONS
+# ------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
 def create_strips(image, imgsize, nstrips, nramps, nreads, h, yoffset, overlap):
     '''
     Create the ID strips fits image to be passed into DHAS
@@ -292,20 +289,19 @@ def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
 
     plt.show()
 
-### Arrays and array manipulation
-def add_jitter(cube, total_shift=3):
-    '''
-    Add random single pixel jitter
+# def add_jitter(cube, total_shift=3):
+#     '''
+#     Add random single pixel jitter
 
-    VERY rudimentary. Uses np.roll so images look kind of funny.
-    '''
-    cube2 = np.zeros_like(cube)
-    for i, img in enumerate(cube):
-        # This will generate a random integer up to the total_shift
-        shift = np.random.randint(total_shift + 1)
-        cube2[i] = np.roll(img, shift)
+#     VERY rudimentary. Uses np.roll so images look kind of funny.
+#     '''
+#     cube2 = np.zeros_like(cube)
+#     for i, img in enumerate(cube):
+#         # This will generate a random integer up to the total_shift
+#         shift = np.random.randint(total_shift + 1)
+#         cube2[i] = np.roll(img, shift)
 
-    return cube2
+#     return cube2
 
 def create_im_subarray(image, xcoord, ycoord, imgsize, show_fig=False):
     '''
