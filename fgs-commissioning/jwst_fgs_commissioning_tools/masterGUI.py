@@ -423,9 +423,9 @@ class MasterGui(QMainWindow):
         self.filewriterGroupBox.toggled.connect(self.on_check_filewriter)
 
         # Which steps to write out
+        self.cb_cal = QCheckBox('CAL', self)
+        filewriterGrid.addWidget(self.cb_cal, 2, 0)
         self.cb_id = QCheckBox('ID', self)
-        # if 'ID' in steps:
-        #     self.cb_id.
         filewriterGrid.addWidget(self.cb_id, 2, 1)
         self.cb_acq1 = QCheckBox('ACQ1', self)
         filewriterGrid.addWidget(self.cb_acq1, 2, 2)
@@ -438,7 +438,7 @@ class MasterGui(QMainWindow):
 
         # Just rewrite the .prc files?
         self.cb_rewrite_prc = QCheckBox('Just rewrite the .prc files and regfile.text', self)
-        filewriterGrid.addWidget(self.cb_rewrite_prc, 3, 1, 1, 5)
+        filewriterGrid.addWidget(self.cb_rewrite_prc, 3, 0, 1, 6)
 
         return self.filewriterGroupBox
 
@@ -647,6 +647,8 @@ class MasterGui(QMainWindow):
         #File writer
         file_writer = self.filewriterGroupBox.isChecked()
         steps = []
+        if self.cb_cal.isChecked():
+            steps.append('CAL')
         if self.cb_id.isChecked():
             steps.append('ID')
         if self.cb_acq1.isChecked():

@@ -144,7 +144,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     # create all files for FSW/DHAS/FGSES/etc.
     if file_writer:
         if steps is None:
-            steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
+            steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
         for step in steps:
             buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step,
                                         out_dir=out_dir, logger_passed=True)
