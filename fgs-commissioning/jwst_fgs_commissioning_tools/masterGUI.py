@@ -53,7 +53,7 @@ from astropy.io import fits
 from astropy.io import ascii as asc
 import numpy as np
 
-from . import run_fgs_commissioning_tool, utils
+from . import run_fgs_commissioning_tool, utils, background_stars
 from .convert_image import counts_to_jmag
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
@@ -100,6 +100,7 @@ class MasterGui(QMainWindow):
         self.out_dir_default = out_dir
 
         self.converted_im_circles = []
+        self.bkgd_stars = None
 
         self.initUI()
 
@@ -237,8 +238,7 @@ class MasterGui(QMainWindow):
         # Background stars?
         self.cb_bkgd_stars = QCheckBox('Background stars', self)
         self.cb_bkgd_stars.setCheckable(True)
-        if self.bkgd_stars_default:
-            self.cb_bkgd_stars.toggle()
+        # self.cb_bkgd_stars.toggle.connect(self.on_check_bkgdstars)
         inputGrid.addWidget(self.cb_bkgd_stars, 12, 0)
 
         inputGrid.addWidget(QLabel('* - Required Parameter', self), 13, 0)
@@ -622,7 +622,7 @@ class MasterGui(QMainWindow):
         root = self.textbox_root.text()
         out_dir = self.textbox_outdir.text()
 
-        bkgd_stars = self.cb_bkgd_stars.isChecked()
+        bkgd_stars = self.bkgd_stars
         global_alignment = self.cb_ga.isChecked()
 
         #Convert image
@@ -932,6 +932,12 @@ class MasterGui(QMainWindow):
             self.cb_acq2.setEnabled(True)
             self.cb_trk.setEnabled(True)
             self.cb_fg.setEnabled(True)
+
+    def on_check_bkgdstars(self):
+        if self.cb_bkgd_stars.isChecked():
+            guider = int(self.cb_guider.currentText())
+            jmag = float(self.textbox_value.text())
+            self.bkgd_stars = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
 
     # What to do with specific buttons ------------------------------------------
     def btnstate(self, button):
