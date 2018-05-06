@@ -1,15 +1,18 @@
 # Add background stars to an FGS image by copying current image
 import random
 import logging
+import requests
+
 import numpy as np
 from astropy.stats import sigma_clipped_stats
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.io import ascii as asc
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
                              QLabel, QTextEdit, QRadioButton, QGroupBox, QFrame,
                              QSizePolicy, QGridLayout, QDialog, QMessageBox,
-                             QTableWidget)
+                             QTableWidget, QComboBox)
 from PyQt5.QtCore import pyqtSlot, QObject
 import matplotlib as mpl
 from matplotlib.cm import viridis_r
@@ -34,6 +37,8 @@ class BackgroundStarsWindow(QDialog):
         self.jmag = jmag
         self.image_dim = 400
         self.in_master_GUI = in_master_GUI
+
+        self.extended = None
 
         # Initialize dialog object
         QDialog.__init__(self, modal=True)
@@ -177,7 +182,7 @@ class BackgroundStarsWindow(QDialog):
         '''
         '''
         # Set up group box
-        self.catalogGroupBox = QGroupBox('Add Stars from Guide Star Catalog', self)
+        self.catalogGroupBox = QGroupBox('Add Stars from Guide Star Catalog 2.4.1', self)
         self.catalogGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
         self.catalogGroupBox.setCheckable(True)
         catalogGrid = QGridLayout()
@@ -345,11 +350,20 @@ class BackgroundStarsWindow(QDialog):
             label = None
             )
         # Plot stars with unknown jmags
-        self.masked_catalog_stars = self.canvas.axes.scatter(
-            self.x[mask], self.y[mask], c='white', marker='*', s=500,
-            edgecolors='red', label='J Magnitude < 18'
-            )
-        self.legend = self.canvas.axes.legend()
+        if len(self.x[mask]) > 0:
+            self.masked_catalog_stars = self.canvas.axes.scatter(
+                self.x[mask], self.y[mask], c='white', marker='*', s=500,
+                edgecolors='red', label='Unknown J Magnitude'
+                )
+            self.legend = self.canvas.axes.legend()
+
+        # # Plot extended sources
+        # if self.extended:
+        #     self.masked_catalog_stars = self.canvas.axes.scatter(
+        #         self.extended['x'], self.y[mask], c='white', marker='galaxy_icon.jpg', s=500,
+        #         edgecolors='red', label='Extended source'
+        #         )
+        #     self.legend = self.canvas.axes.legend()
 
         # Redraw all necessary plot elements
         self.canvas.cbar.draw_all()
@@ -376,6 +390,10 @@ class BackgroundStarsWindow(QDialog):
         # Remove catalog stars, if they have already been plotted
         try:
             self.catalog_stars.remove()
+        except (AttributeError, ValueError) as e:
+            pass
+        # Remove masekd catalog stars, if they have already been plotted
+        try:
             self.masked_catalog_stars.remove()
             self.legend.remove()
         except (AttributeError, ValueError) as e:
@@ -400,17 +418,57 @@ class BackgroundStarsWindow(QDialog):
         # Redraw the defined stars
         self.draw_defined_stars()
 
-    def query_gsc(self, RA, Dec, guider):
-        coord = SkyCoord(RA, Dec, unit=(u.deg, u.deg))
-        v = Vizier(catalog='I/305/out', columns=['RAJ2000', 'DEJ2000', 'jmag', 'Class'])
-        v.ROW_LIMIT = -1
-        result = v.query_region(coord, radius="1.6m")
-        queried_catalog = result['I/305/out']
-        RAs = queried_catalog['RAJ2000']
-        Decs = queried_catalog['DEJ2000']
-        jmag = queried_catalog['jmag']
+    def query_gsc(self, coordinates, guider):
+        '''Create and parse a web query to GSC 2.4.1 to determine the
+        positions and magnitudes of objects around the guide star.
+
+        References
+        ----------
+            For information about GSC 2:
+                https://outerspace.stsci.edu/display/GC
+        '''
+        # Parse RA and Dec
+        RA = coordinates.ra.degree
+        Dec = coordinates.dec.degree
+
+        # Query MAST to get GSC 2.4.1 results in CSV form
+        radius = 1.6 / 60 # 1.6 arcmin in degrees
+        web_query = "http://gsss.stsci.edu/webservices/vo/CatalogSearch.aspx?RA={:f}&DEC={:f}&DSN=+&FORMAT=CSV&CAT=GSC241&SR={:f}&".format(RA, Dec, radius)
+        print(web_query)
+        page = requests.get(web_query)
+        csv_data = page.text
+        table = asc.read(csv_data)
+
+        # Only take the necessary columns
+        queried_catalog = table['ra', 'dec', 'classification', 'tmassJmag']
+        RAs = table['ra']
+        Decs = table['dec']
+        jmag = table['tmassJmag']
 
         print('Finshed query; found {} sources.'.format(len(RAs)))
+
+        # Only select sources that are stars
+        mask_pointSources = [c == 0 for c in queried_catalog['classification']]
+        RAs = RAs[mask_pointSources]
+        Decs = Decs[mask_pointSources]
+        jmag = jmag[mask_pointSources]
+
+        # self.extended = queried_catalog[~mask_pointSources]
+
+        # Remove the guide star!
+        # (Assume that is the star closest to the center, if there is a star
+        # within 1" of the pointing)
+        distances = [np.sqrt((ra - RA)**2 + (dec - Dec)**2) for (ra, dec) in zip(RAs, Decs)]
+        i_mindist = np.where(min(distances))[0][0] # probably just zero
+        print(distances)
+        print(i_mindist, distances[i_mindist])
+        if distances[i_mindist] < 1/60/60:
+            print('Removing assumed guide star at {}, {}'.format(RAs[i_mindist], Decs[i_mindist]))
+            np.delete(RAs, i_mindist)
+            np.delete(Decs, i_mindist)
+            np.delete(jmag, i_mindist)
+        else:
+            print('No guide star found within 1 arcsec of the pointing.')
 
         # Convert RA/Dec to X/Y pixels
         V2 = (RAs - RA) *60 * 60
@@ -426,9 +484,13 @@ class BackgroundStarsWindow(QDialog):
             else:
                 in_detector_frame.append(False)
 
+
         self.x = x_raw[in_detector_frame]
         self.y = y_raw[in_detector_frame]
         self.jmags = jmag[in_detector_frame]
+
+
+
 
         print('Found {} sources in detector FOV.'.format(len(self.x)))
 
@@ -466,6 +528,7 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
     else:
         qApp.exec_()
 
+    # Create dictionary to pass to ``add_background_stars``
     stars = {}
     stars['x'] = window.x
     stars['y'] = window.y
@@ -560,8 +623,8 @@ def add_background_stars(image, stars, jmag, fgs_counts, guider):
         else:
             star_data = star_data[:, 2048 - (y2 - y1):]
 
-        print('Adding background star with magnitude {:.1f} at location ({}, {}).'.format(jmag,
-                                                                                          x, y))
+        # print('Adding background star with magnitude {:.1f} at location ({}, {}).'.format(jmag,
+        #                                                                                   x, y))
         add_data[x1:x2, y1:y2] += star_data
 
     return add_data
