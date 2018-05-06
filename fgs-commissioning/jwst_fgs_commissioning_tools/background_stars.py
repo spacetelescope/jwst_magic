@@ -186,20 +186,28 @@ class BackgroundStarsWindow(QDialog):
         self.catalogGroupBox.toggled.connect(self.on_check_section)
 
         # Add RA and Dec text boxes
-        catalogGrid.addWidget(QLabel('RA (deg): ', self), 0, 0, alignment=QtCore.Qt.AlignRight)
+        catalogGrid.addWidget(QLabel('RA: ', self), 0, 0, alignment=QtCore.Qt.AlignRight)
         self.textbox_RA = QLineEdit(self)
         self.textbox_RA.setMaximumSize(150, 20)
         catalogGrid.addWidget(self.textbox_RA, 0, 1)
 
-        catalogGrid.addWidget(QLabel('Dec (deg): ', self), 1, 0, alignment=QtCore.Qt.AlignRight)
+        catalogGrid.addWidget(QLabel('Dec: ', self), 1, 0, alignment=QtCore.Qt.AlignRight)
         self.textbox_Dec = QLineEdit(self)
         self.textbox_Dec.setMaximumSize(150, 20)
         catalogGrid.addWidget(self.textbox_Dec, 1, 1)
 
+        # Add units
+        self.cb_RAUnits = QComboBox(self)
+        self.cb_RAUnits.addItem("-Select-")
+        self.cb_RAUnits.addItem("Hours")
+        self.cb_RAUnits.addItem("Degrees")
+        catalogGrid.addWidget(self.cb_RAUnits, 0, 2)
+        catalogGrid.addWidget(QLabel('Degrees', self), 1, 2)
+
         # Add "query" button
         self.button_query = QPushButton('Query GSC', self)
         self.button_query.clicked.connect(self.draw_catalog_stars)
-        catalogGrid.addWidget(self.button_query, 0, 2, 2, 1)
+        catalogGrid.addWidget(self.button_query, 0, 3, 2, 1)
 
         return self.catalogGroupBox
 
@@ -317,25 +325,16 @@ class BackgroundStarsWindow(QDialog):
            self.textbox_Dec.text() == '':
             return
 
-        # Ensure the RA and Dec are physical values:
-        if float(self.textbox_RA.text()) > 360 or\
-           float(self.textbox_RA.text()) < 0:
-            print('RA out of bounds: ', self.textbox_RA.text())
-            return
-        if float(self.textbox_Dec.text()) > 90 or\
-           float(self.textbox_Dec.text()) < -90:
-            print('Dec out of bounds: ', self.textbox_Dec.text())
-            return
-
         # Remove other stars and lines, if they have already been plotted
         self.clear_plot()
 
         # Query guide star catalog (GSC) to find stars around given pointing
         # Convert from RA & Dec to pixel coordinates
-        RA = float(self.textbox_RA.text())
-        Dec = float(self.textbox_Dec.text())
-        queried_catalog = self.query_gsc(RA, Dec, self.guider)
-
+        RAunit_index = int(self.cb_RAUnits.currentIndex())
+        unit_RA = [None, u.hourangle, u.deg][RAunit_index]
+        unit_Dec = u.deg
+        coordinates = SkyCoord(self.textbox_RA.text(), self.textbox_Dec.text(), unit=(unit_RA, unit_Dec))
+        queried_catalog = self.query_gsc(coordinates, self.guider)
 
         # Plot every star
         mask = np.array([j is np.ma.masked for j in self.jmags])
