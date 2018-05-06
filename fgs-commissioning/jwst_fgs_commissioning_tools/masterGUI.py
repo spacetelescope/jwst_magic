@@ -236,10 +236,13 @@ class MasterGui(QMainWindow):
         inputGrid.addWidget(self.cb_ga, 11, 0, 1, 2)
 
         # Background stars?
-        self.cb_bkgd_stars = QCheckBox('Background stars', self)
-        self.cb_bkgd_stars.setCheckable(True)
-        # self.cb_bkgd_stars.toggle.connect(self.on_check_bkgdstars)
-        inputGrid.addWidget(self.cb_bkgd_stars, 12, 0)
+        self.button_bkgd_stars = QPushButton('Add Background Stars', self)
+        self.button_bkgd_stars.clicked.connect(self.on_click_bkgdstars)
+        inputGrid.addWidget(self.button_bkgd_stars, 12, 0)
+
+        self.textbox_bkgd_stars = QLineEdit('No Background Stars Added', self)
+        self.textbox_bkgd_stars.setStyleSheet("QLineEdit { background-color : #ECECEC }");
+        inputGrid.addWidget(self.textbox_bkgd_stars, 12, 1)
 
         inputGrid.addWidget(QLabel('* - Required Parameter', self), 13, 0)
 
@@ -593,27 +596,33 @@ class MasterGui(QMainWindow):
         does nothing.'''
         pass
 
+    def no_inputImage_dialog(self):
+        no_input_im_dialog = QMessageBox()
+        no_input_im_dialog.setText('No input image' + ' ' * 50)
+        no_input_im_dialog.setInformativeText('The tool will not be able to continue. Please pass in an input image.')
+        no_input_im_dialog.setStandardButtons(QMessageBox.Ok)
+        no_input_im_dialog.buttonClicked.connect(self.close_dialog)
+        no_input_im_dialog.exec()
+
+    def no_guider_dialog(self):
+        no_guider_dialog = QMessageBox()
+        no_guider_dialog.setText('No guider choosen' + ' ' * 50)
+        no_guider_dialog.setInformativeText('The tool will not be able to continue. Please select Guider 1 or 2.')
+        no_guider_dialog.setStandardButtons(QMessageBox.Ok)
+        no_guider_dialog.buttonClicked.connect(self.close_dialog)
+        no_guider_dialog.exec()
+
     def run_tool(self):
         '''
         Takes inputs provided by user and runs run_fgs_commissioning_tool
         '''
         # Required
         if self.textbox_input_im.text() == "":
-            no_input_im_dialog = QMessageBox()
-            no_input_im_dialog.setText('No input image' + ' ' * 50)
-            no_input_im_dialog.setInformativeText('The tool will not be able to continue. Please pass in an input image.')
-            no_input_im_dialog.setStandardButtons(QMessageBox.Ok)
-            no_input_im_dialog.buttonClicked.connect(self.close_dialog)
-            no_input_im_dialog.exec()
+            self.no_inputImage_dialog
             return
 
         if str(self.cb_guider.currentText()) == '-Select-':
-            no_guider_dialog = QMessageBox()
-            no_guider_dialog.setText('No guider choosen' + ' ' * 50)
-            no_guider_dialog.setInformativeText('The tool will not be able to continue. Please select Guider 1 or 2.')
-            no_guider_dialog.setStandardButtons(QMessageBox.Ok)
-            no_guider_dialog.buttonClicked.connect(self.close_dialog)
-            no_guider_dialog.exec()
+            self.no_guider_dialog()
             return
 
         input_image = self.textbox_input_im.text()
@@ -805,6 +814,22 @@ class MasterGui(QMainWindow):
         self.update_filepreview()
         return root
 
+    def on_click_bkgdstars(self):
+        if self.textbox_input_im.text() == "":
+            self.no_inputImage_dialog()
+            return
+
+        if str(self.cb_guider.currentText()) == '-Select-':
+            self.no_guider_dialog()
+            return
+
+        guider = int(self.cb_guider.currentText())
+        jmag = float(self.textbox_value.text())
+        self.bkgd_stars = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
+
+        if isinstance(self.bkgd_stars, dict):
+            self.textbox_bkgd_stars.setText('{} Background Stars Added'.format(len(self.bkgd_stars['x'])))
+
     # What to do when specific check boxes are checked -------------------------
     def on_check_convertimage(self, is_toggle):
         ''' Checking the convert image box - defaults set here'''
@@ -933,11 +958,6 @@ class MasterGui(QMainWindow):
             self.cb_trk.setEnabled(True)
             self.cb_fg.setEnabled(True)
 
-    def on_check_bkgdstars(self):
-        if self.cb_bkgd_stars.isChecked():
-            guider = int(self.cb_guider.currentText())
-            jmag = float(self.textbox_value.text())
-            self.bkgd_stars = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
 
     # What to do with specific buttons ------------------------------------------
     def btnstate(self, button):
