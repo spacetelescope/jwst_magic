@@ -276,7 +276,7 @@ class SegmentGuidingCalculator:
 
                 # Format segment properties (ID, RA, Dec, countrate, uncertainty)
                 star_string = ' -%s%d = %d, %.6f, %.6f, %.1f, %.1f' % (
-                    label, seg, guide_seg_id, self.SegRA[guide_seg_id - 1],
+                    label, seg, guide_seg_id + 1, self.SegRA[guide_seg_id - 1],
                     self.SegDec[guide_seg_id - 1], rate[guide_seg_id - 1],
                     uncertainty[guide_seg_id - 1])
 
@@ -284,7 +284,7 @@ class SegmentGuidingCalculator:
                     # Add list of segment IDs for all reference stars
                     for ref_seg_id in orientation:
                         if ref_seg_id != guide_seg_id:
-                            star_string += ', %d' % (ref_seg_id)
+                            star_string += ', %d' % (ref_seg_id + 1)
 
                 out_string += star_string
 
