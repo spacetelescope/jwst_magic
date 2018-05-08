@@ -512,7 +512,7 @@ def remove_pedestal(data):
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
-               nircam_det=None, out_dir=None, logger_passed=False):
+               nircam_det=None, out_dir=None, logger_passed=False, normalize=True):
     '''Takes NIRCam or FGS image; turns it into an FGS-like image and
     saves FITS file
 
@@ -559,19 +559,6 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
     try:
-        # ---------------------------------------------------------------------
-        # Find FGS counts to be used for normalization
-        if fgs_counts is None:
-            if jmag is None:
-                LOGGER.warning("Image Conversion: No counts or J magnitude given, setting to default")
-                jmag = 11
-            fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-        else:
-            jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
-
-        LOGGER.info("Image Conversion: J magnitude = {:.1f}, FGS counts = {:.1f}".format(jmag, fgs_counts))
-
-        # ---------------------------------------------------------------------
         # Determine output path and open file
         basename = os.path.basename(input_im)
 
@@ -588,8 +575,8 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
             print(data.shape)
             raise TypeError('Expecting a single frame or slope image.')
 
-        # ---------------------------------------------------------------------
-        # Create raw FGS image
+        # Create raw FGS image...
+        # From a NIRCam image
         if nircam:
             LOGGER.info("Image Conversion: This is a NIRCam image")
 
@@ -618,6 +605,7 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
             # Pad image
             data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
+        # From an FGS image (i.e. do nothing)
         else:
             LOGGER.info("Image Conversion: This is an FGS image")
             guider = utils.get_guider(header)
@@ -630,21 +618,30 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
             except KeyError:
                 pass
 
-        # Normalize image
-        data_norm = normalize_data(data, fgs_counts)
-        LOGGER.info("Image Conversion: normalizing to {} JMag ({} FGS counts)".format(jmag, fgs_counts))
+        # Normalize the image, if the "normalize" flag is True
+        if normalize:
+            # Find FGS counts to be used for normalization
+            if fgs_counts is None:
+                if jmag is None:
+                    LOGGER.warning("Image Conversion: No counts or J magnitude given, setting to default")
+                    jmag = 11
+                fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
+            else:
+                jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
 
-        LOGGER.info("Image Conversion complete for {}, guider = {}".format(root, guider))
+            # Normalize the data
+            data = normalize_data(data, fgs_counts)
+            LOGGER.info("Image Conversion: Normalizing to {} J Magnitude ({} FGS counts)".format(jmag, fgs_counts))
 
     except Exception as e:
         LOGGER.exception(e)
         raise
 
-    return data_norm
+    return data
 
-def write_FGS_im(data_norm, out_dir, root, guider, fgsout_path=None):
+def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
     # Any value above 65535 or below 0 will wrap when converted to uint16
-    data_norm = utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
+    data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
 
     # Define output path
     output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
@@ -658,7 +655,7 @@ def write_FGS_im(data_norm, out_dir, root, guider, fgsout_path=None):
     # Write FITS file
     fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
                                '{}_G{}.fits'.format(root, guider))
-    utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
+    utils.write_fits(fgsout_path, np.uint16(data), header=hdr)
 
     return fgsout_path
 

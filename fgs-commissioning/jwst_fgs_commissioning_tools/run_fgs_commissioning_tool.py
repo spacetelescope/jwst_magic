@@ -67,7 +67,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
             in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
-            masterGUIapp=None, copy_original=True):
+            masterGUIapp=None, copy_original=True, normalize=True):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -129,7 +129,8 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                                      jmag=jmag,
                                                      nircam_det=nircam_det,
                                                      out_dir=out_dir,
-                                                     logger_passed=True)
+                                                     logger_passed=True,
+                                                     normalize=normalize)
 
         if bkgd_stars:
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, jmag, fgs_counts, guider)
