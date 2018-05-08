@@ -94,15 +94,19 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         Resets axes limits to (0, 2048)
     """
 
-    def __init__(self, parent=None, width=15, height=15, dpi=100, data=None,
-                 x=None, y=None, left=None, right=None, bottom=0.05):
+    def __init__(self, parent=None, width=None, height=None, dpi=100, data=None,
+                 x=None, y=None, left=None, right=None, bottom=0.05, top=0.95):
+
         self.data = data
         self.x = x
         self.y = y
 
-        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        if width and height:
+            self.fig = Figure(figsize=(width, height), dpi=dpi)
+        else:
+            self.fig = Figure(dpi=dpi)
         self.axes = self.fig.add_subplot(111)
-        self.fig.subplots_adjust(top=.95, left=left, right=right,
+        self.fig.subplots_adjust(top=top, left=left, right=right,
                                  bottom=bottom)
         self.cbar = []
         self.peaks = []

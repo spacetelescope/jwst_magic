@@ -633,17 +633,6 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
         # Normalize image
         data_norm = normalize_data(data, fgs_counts)
 
-        # Any value above 65535 or below 0 will wrap when converted to uint16
-        data_norm = utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
-
-        # Load header file
-        header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
-        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                                   '{}_G{}.fits'.format(root, guider))
-
-        hdr = fits.getheader(header_file, ext=0)
-        utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
-
         LOGGER.info("Image Conversion complete for {}, guider = {}".format(root, guider))
 
     except Exception as e:
@@ -651,3 +640,25 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
         raise
 
     return data_norm
+
+def write_FGS_im(data_norm, out_dir, root, guider, fgsout_path=None):
+    # Any value above 65535 or below 0 will wrap when converted to uint16
+    data_norm = utils.correct_image(data_norm, upper_threshold=65535, upper_limit=65535)
+
+    # Define output path
+    output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
+    if not fgsout_path:
+        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                                   '{}_G{}.fits'.format(root, guider))
+    # Load header file
+    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+    hdr = fits.getheader(header_file, ext=0)
+
+    # Write FITS file
+    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                               '{}_G{}.fits'.format(root, guider))
+    utils.write_fits(fgsout_path, np.uint16(data_norm), header=hdr)
+
+    return fgsout_path
+
+

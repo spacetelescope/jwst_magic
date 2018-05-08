@@ -67,7 +67,7 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
             in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
-            masterGUIapp=None):
+            masterGUIapp=None, copy_original=True):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -115,7 +115,11 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     LOGGER.info("Input image: {}".format(os.path.abspath(image)))
 
     # Copy input image into out directory
-    shutil.copy(os.path.abspath(image), out_dir_root)
+    if copy_original:
+        try:
+            shutil.copy(os.path.abspath(image), out_dir_root)
+        except shutil.SameFileError:
+            pass
 
     # Either convert provided NIRCam image to an FGS image...
     if convert_im:
@@ -126,10 +130,14 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                                      nircam_det=nircam_det,
                                                      out_dir=out_dir,
                                                      logger_passed=True)
-        LOGGER.info("*** Image Conversion COMPLETE ***")
 
         if bkgd_stars:
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, jmag, fgs_counts, guider)
+
+        # Write converted image
+        convert_image_to_raw_fgs.write_FGS_im(fgs_im, out_dir, root, guider)
+        LOGGER.info("*** Image Conversion COMPLETE ***")
+    # Or, if an FGS image was provided, use it!
     else:
         fgs_im = image
         LOGGER.info("Assuming that the input image is a raw FGS image")
@@ -142,7 +150,9 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                         global_alignment=global_alignment,
                                         in_file=in_file, out_dir=out_dir,
                                         logger_passed=True, masterGUIapp=masterGUIapp)
-            LOGGER.info("*** Star Selection: COMPLETE ***")
+        else:
+            LOGGER.info("Star Selection: Reading guide and reference star positions from {}".format(in_file))
+        LOGGER.info("*** Star Selection: COMPLETE ***")
 
     # create all files for FSW/DHAS/FGSES/etc.
     if file_writer:
