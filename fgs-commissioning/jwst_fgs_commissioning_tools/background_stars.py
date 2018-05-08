@@ -37,6 +37,7 @@ class BackgroundStarsWindow(QDialog):
         self.jmag = jmag
         self.image_dim = 400
         self.in_master_GUI = in_master_GUI
+        self.method = None
 
         self.extended = None
 
@@ -270,6 +271,9 @@ class BackgroundStarsWindow(QDialog):
             vmin=self.vmax, vmax=self.vmin
             )
 
+        # Record what method was used
+        self.method = "random"
+
         # Redraw all necessary plot elements
         self.canvas.cbar.draw_all()
         self.canvas.cbar.ax.invert_xaxis()
@@ -319,6 +323,9 @@ class BackgroundStarsWindow(QDialog):
             vmin=self.vmax, vmax=self.vmin
             )
 
+        # Record what method was used
+        self.method = "user-defined"
+
         # Redraw all necessary plot elements
         self.canvas.cbar.draw_all()
         self.canvas.cbar.ax.invert_xaxis()
@@ -364,6 +371,10 @@ class BackgroundStarsWindow(QDialog):
         #         edgecolors='red', label='Extended source'
         #         )
         #     self.legend = self.canvas.axes.legend()
+
+
+        # Record what method was used
+        self.method = "catalog"
 
         # Redraw all necessary plot elements
         self.canvas.cbar.draw_all()
@@ -534,7 +545,7 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
     stars['y'] = window.y
     stars['jmag'] = window.jmags
 
-    return stars
+    return stars, window.method
 
 
 def add_background_stars(image, stars, jmag, fgs_counts, guider):

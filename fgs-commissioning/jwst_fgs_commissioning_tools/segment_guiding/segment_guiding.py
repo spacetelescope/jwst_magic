@@ -210,7 +210,7 @@ class SegmentGuidingCalculator:
                 V2/V3 Refs: ({1}, {2}) arc-sec
                 Guiding segment number: {3}
                 V2/V3 Boresight offset: ({4}, {5}) arc-sec
-                Guide star RA & Dec: ({6}, {7} degrees
+                Guide star RA & Dec: ({6}, {7}) degrees
                 Position angle: {8} degrees""".format(self.fgsNum, self.fgsV2, self.fgsV3, self.segNum, V2B, V3B, gsRA, gsDec, gsPA)
             LOGGER.info('Segment Guiding: ' + summary_output)
 
