@@ -16,7 +16,6 @@ from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
 from PyQt5.QtCore import pyqtSlot, QObject
 import matplotlib as mpl
 from matplotlib.cm import viridis_r
-from astroquery.vizier import Vizier
 
 from . import coordinate_transforms
 from .convert_image import counts_to_jmag
