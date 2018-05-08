@@ -189,7 +189,8 @@ class MasterGui(QMainWindow):
         bkgd_stars = self.bkgd_stars
 
         # Handle the case where we want to use a pre-existing converted image
-        if self.checkBox_useConvertedImage.isChecked():
+        if self.checkBox_useConvertedImage.isChecked() and convert_im and\
+           self.checkBox_useConvertedImage.isEnabled():
             convert_im = False
             input_image = self.converted_im_file
             copy_original = False
@@ -318,16 +319,15 @@ class MasterGui(QMainWindow):
         filename = self.open_filename_dialog("NIRCam or FGS image", file_type="FITS files (*.fits)")
         self.lineEdit_inputImage.setText(filename)
 
-        # If the root is still undefined, derive the root from the filename and
-        # assume the default output directory (OUT_PATH)
-        if self.lineEdit_root.text() == "":
-            root = utils.make_root(self.root_default, self.lineEdit_inputImage.text())
-            self.lineEdit_root.setText(root)
-            if self.textEdit_out.toPlainText() == "":
-                self.textEdit_out.setEnabled(True)
-                self.textEdit_out.setText(OUT_PATH)
-            if self.textEdit_out.toPlainText() == OUT_PATH:
-                self.textEdit_out.setEnabled(True)
+        # Derive the root from the filename and assume the default output
+        # directory (OUT_PATH)
+        root = utils.make_root(self.root_default, self.lineEdit_inputImage.text())
+        self.lineEdit_root.setText(root)
+        if self.textEdit_out.toPlainText() == "":
+            self.textEdit_out.setEnabled(True)
+            self.textEdit_out.setText(OUT_PATH)
+        if self.textEdit_out.toPlainText() == OUT_PATH:
+            self.textEdit_out.setEnabled(True)
 
         # Update the example filepath (and converted image preview, if possible)
         self.update_filepreview()
@@ -630,6 +630,7 @@ class MasterGui(QMainWindow):
             self.textEdit_showingConverted.setEnabled(False)
 
             # Disable the "use converted image" buttons
+            self.checkBox_useConvertedImage.setChecked(False)
             self.checkBox_useConvertedImage.setEnabled(False)
 
             # Update plot to not show anything
