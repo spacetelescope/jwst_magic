@@ -35,18 +35,16 @@ provided 1) the commanded RA and Dec of a guide star and 2) the V2/V3 (or x/y)
 positions of all segments in an array, the segment guiding tool calculates the
 effective RA and Dec of all segments on the sky.
 
-------------------
 
 Installation notes
 ------------------
-
 This package was developed in a python 3.5 environment. Python 2.7 is not yet supported.
 
 The following supplemental packages are required:
-* pysiaf (download here: https://grit.stsci.edu/ins-tel/jwst_siaf_prototype)
+* pysiaf
 * photutils
 
-To install:
+#### To install:
 
 1) Clone the gitlab repository to your local machine
 
@@ -62,22 +60,21 @@ To install:
 
 Running the Tools
 -----------------
-These tools are best run in IPython or Jupyter Notebook.
-
-#### Jupyter Notebook
-See the `FGS Commisioning Tool Tutorial.ipynb` notebook for examples on how to run the tools.
+These tools are best run in IPython terminal.
 
 #### IPython
 In IPython, execute the following steps:
 
 ```
-In[1]: from jwst_fgs_commissioning_tools import run_fgs_commissioning_tool
+In[1]: import jwst_fgs_commissioning_tools
 
-In[2]: input_image = ‘full/path/to/image.fits’
-
-In[3]: guider = 1
-
-In[4]: run_fgs_commissioning_tool.run_all(input_image, guider)
+In[2]: jwst_fgs_commissioning_tools.run_tool_GUI()
 ```
 
-Developed by Keira Brooks, Lauren Chambers, Kathryn St. Laurent and collaborators, 2016-2018.
+
+Tutorial
+-----------------
+See the [`FGS Commissioning Tool Tutorial.ipynb`](notebooks/FGS Commissioning Tool Tutorial.ipynb) notebook for examples on how to run the tools on a modular level from within a Jupyter notebook.
+
+
+###### Developed by Keira Brooks, Lauren Chambers, Kathryn St. Laurent and collaborators, 2016-2018.
