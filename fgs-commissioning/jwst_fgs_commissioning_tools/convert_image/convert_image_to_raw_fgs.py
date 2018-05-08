@@ -632,6 +632,7 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
 
         # Normalize image
         data_norm = normalize_data(data, fgs_counts)
+        LOGGER.info("Image Conversion: normalizing to {} JMag ({} FGS counts)".format(jmag, fgs_counts))
 
         LOGGER.info("Image Conversion complete for {}, guider = {}".format(root, guider))
 
