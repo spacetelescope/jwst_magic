@@ -145,6 +145,9 @@ class MasterGui(QMainWindow):
         # Segment guiding widgets
         self.pushButton_regfileSegmentGuiding.clicked.connect(self.on_click_infile)
 
+        # Image preview widgets
+        self.checkBox_showStars.toggled.connect(self.on_click_showstars)
+
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,6 +181,7 @@ class MasterGui(QMainWindow):
         convert_im = self.groupBox_imageConverter.isChecked()
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
+        normalize = self.checkBox_normalize.isChecked()
         if self.comboBox_normalize.currentText()=='FGS counts':
             fgs_counts = float(self.lineEdit_normalize.text())
         else:
@@ -306,7 +310,7 @@ class MasterGui(QMainWindow):
                                                steps, in_file, bkgd_stars,
                                                out_dir, convert_im, star_selection,
                                                star_selectiongui, file_writer,
-                                               self.app, copy_original)
+                                               self.app, copy_original, normalize)
             print("** Run Complete **")
 
             # Update converted image preview
@@ -392,6 +396,16 @@ class MasterGui(QMainWindow):
         if isinstance(self.bkgd_stars, dict):
             self.textEdit_backgroundStars.setText('{} background stars sdded {}'.\
                 format(len(self.bkgd_stars['x']), method_adverb[method]))
+
+    def on_click_showstars(self, bool):
+        '''Show or hide plots of star positions and selected stars.
+        '''
+        for line in self.converted_im_circles:
+            line[0].set_visible(bool)
+        self.canvas_converted.peaks.set_visible(bool)
+
+        self.canvas_converted.draw()
+
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
@@ -582,8 +596,12 @@ class MasterGui(QMainWindow):
             self.textEdit_showingConverted.setText(self.converted_im_file)
 
             # Toggle the "use converted image" buttons
-            self.checkBox_useConvertedImage.setEnabled(True)
+            if self.groupBox_imageConverter.isChecked():
+                self.checkBox_useConvertedImage.setEnabled(True)
             self.checkBox_useConvertedImage.setChecked(True)
+
+            # Enable the "show stars" button
+            self.checkBox_showStars.setEnabled(True)
 
             # Load data
             with fits.open(self.converted_im_file) as hdulist:
@@ -632,6 +650,9 @@ class MasterGui(QMainWindow):
             # Disable the "use converted image" buttons
             self.checkBox_useConvertedImage.setChecked(False)
             self.checkBox_useConvertedImage.setEnabled(False)
+
+            # Disable the "show stars" button
+            self.checkBox_showStars.setEnabled(False)
 
             # Update plot to not show anything
             dummy_img = self.canvas_converted.axes.imshow(
