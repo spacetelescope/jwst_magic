@@ -40,9 +40,16 @@ Installation notes
 ------------------
 This package was developed in a python 3.5 environment. Python 2.7 is not yet supported.
 
-The following supplemental packages are required, and are available for easily installation with `pip`:
-* `pysiaf`
+The following supplemental packages are required, and will be **automatically installed** with the package:
+* `astropy`
+* `matplotlib`
+* `numpy`
 * `photutils`
+* `PyQt5`
+* `pysiaf`
+* `pytest`
+* `pyyaml`
+* `requests`
 
 ##### To install:
 
