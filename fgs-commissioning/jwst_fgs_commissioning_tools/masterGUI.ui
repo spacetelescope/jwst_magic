@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1336</width>
-    <height>889</height>
+    <width>1432</width>
+    <height>874</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,101 +36,6 @@
        <bool>false</bool>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_input">
-         <property name="text">
-          <string>&lt;b&gt;Input Image*&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1" colspan="3">
-        <widget class="QLineEdit" name="lineEdit_inputImage"/>
-       </item>
-       <item row="0" column="4">
-        <widget class="QPushButton" name="pushButton_inputImage">
-         <property name="text">
-          <string>Open</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_guider">
-         <property name="text">
-          <string>&lt;b&gt;Guider*&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QRadioButton" name="radioButton_G1">
-         <property name="text">
-          <string>1</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_guider</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QRadioButton" name="radioButton_G2">
-         <property name="text">
-          <string>2</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_guider</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="1" column="3">
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>274</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_root">
-         <property name="text">
-          <string>&lt;b&gt;Root&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1" colspan="3">
-        <widget class="QLineEdit" name="lineEdit_root"/>
-       </item>
-       <item row="2" column="4">
-        <widget class="QPushButton" name="pushButton_root">
-         <property name="text">
-          <string>Use Default</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_out">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Out Directory&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="4">
-        <widget class="QPushButton" name="pushButton_out">
-         <property name="text">
-          <string>Open</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="2">
-        <widget class="QLabel" name="label_requiredParameter">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;* - Required Parameter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
        <item row="3" column="1" colspan="3">
         <widget class="QTextEdit" name="textEdit_out">
          <property name="sizePolicy">
@@ -153,7 +58,349 @@
          </property>
         </widget>
        </item>
+       <item row="2" column="4">
+        <widget class="QPushButton" name="pushButton_root">
+         <property name="text">
+          <string>Use Default</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_root">
+         <property name="text">
+          <string>&lt;b&gt;Root&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_guider">
+         <property name="text">
+          <string>&lt;b&gt;Guider*&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1" colspan="3">
+        <widget class="QLineEdit" name="lineEdit_root"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_input">
+         <property name="text">
+          <string>&lt;b&gt;Input Image*&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="4">
+        <widget class="QPushButton" name="pushButton_out">
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QPushButton" name="pushButton_inputImage">
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="2">
+        <widget class="QLabel" name="label_requiredParameter">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;* - Required Parameter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QRadioButton" name="radioButton_G2">
+         <property name="text">
+          <string>2</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_guider</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_out">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Out Directory&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QRadioButton" name="radioButton_G1">
+         <property name="text">
+          <string>1</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_guider</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>310</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="1" colspan="3">
+        <widget class="QLineEdit" name="lineEdit_inputImage"/>
+       </item>
       </layout>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_imageConverter">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="toolTip">
+       <string>Convert input image into a raw FGS image</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+      </property>
+      <property name="title">
+       <string>Image Converter</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0" colspan="4">
+        <widget class="QCheckBox" name="checkBox_useConvertedImage">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Use existing converted image (shown at right) rather than input image</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_instrument">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QRadioButton" name="radioButton_FGS">
+         <property name="text">
+          <string>FGS</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_instrument</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="1" column="2" colspan="2">
+        <widget class="QRadioButton" name="radioButton_NIRCam">
+         <property name="text">
+          <string>NIRCam</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_instrument</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_detector">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1" colspan="3">
+        <widget class="QComboBox" name="comboBox_detector">
+         <item>
+          <property name="text">
+           <string>- Parse from header -</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A2</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A3</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A4</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A5 - long wave</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B2</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B3</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B4</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B5 - long wave</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1" colspan="2">
+        <widget class="QCheckBox" name="checkBox_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Normalize to:</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="3">
+        <widget class="QLineEdit" name="lineEdit_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">.QLineEdit:disabled {color: grey}</string>
+         </property>
+         <property name="text">
+          <string>11.0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="4">
+        <widget class="QComboBox" name="comboBox_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="currentIndex">
+          <number>2</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>- Select units -</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>FGS counts</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>J Magnitude</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_backgroundStars">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1" colspan="3">
+        <widget class="QTextEdit" name="textEdit_backgroundStars">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="4">
+        <widget class="QPushButton" name="pushButton_backgroundStars">
+         <property name="text">
+          <string>Add Background Stars</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QPushButton" name="pushButton_quit">
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+	background-color: rgb(255, 102, 102);
+}</string>
+      </property>
+      <property name="text">
+       <string>Quit</string>
+      </property>
      </widget>
     </item>
     <item row="0" column="2" rowspan="6">
@@ -255,7 +502,7 @@ Image:</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="0" colspan="2">
+           <item row="2" column="0" colspan="2">
             <widget class="QWidget" name="canvas_converted_slot" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -269,6 +516,7 @@ Image:</string>
                <height>600</height>
               </size>
              </property>
+             <zorder>groupBox_imageConverter</zorder>
             </widget>
            </item>
            <item row="0" column="1">
@@ -294,303 +542,24 @@ Image:</string>
              </property>
             </widget>
            </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QCheckBox" name="checkBox_showStars">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Show most recent guide and reference star selections (regfile.txt)</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </widget>
        </item>
       </layout>
-     </widget>
-    </item>
-    <item row="1" column="0" colspan="2">
-     <widget class="QGroupBox" name="groupBox_imageConverter">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="toolTip">
-       <string>Convert input image into a raw FGS image</string>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
-      </property>
-      <property name="title">
-       <string>Image Converter</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="3" column="3">
-        <widget class="QComboBox" name="comboBox_normalize">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="currentIndex">
-          <number>2</number>
-         </property>
-         <item>
-          <property name="text">
-           <string>- Select units -</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>FGS counts</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>J Magnitude</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QRadioButton" name="radioButton_NIRCam">
-         <property name="text">
-          <string>NIRCam</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_instrument</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="3" column="1" colspan="2">
-        <widget class="QLineEdit" name="lineEdit_normalize">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>11.0</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_detector">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="3">
-        <widget class="QPushButton" name="pushButton_backgroundStars">
-         <property name="text">
-          <string>Add Background Stars</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QRadioButton" name="radioButton_FGS">
-         <property name="text">
-          <string>FGS</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_instrument</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_normalize">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_instrument">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_backgroundStars">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1" colspan="2">
-        <widget class="QComboBox" name="comboBox_detector">
-         <item>
-          <property name="text">
-           <string>- Parse from header -</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A1</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A2</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A3</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A4</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A5 - long wave</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B1</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B2</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B3</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B4</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B5 - long wave</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="4" column="1" colspan="2">
-        <widget class="QTextEdit" name="textEdit_backgroundStars">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>40</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QTextEdit { background-color : #ECECEC }
-\</string>
-         </property>
-         <property name="html">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0" colspan="4">
-        <widget class="QCheckBox" name="checkBox_useConvertedImage">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Use existing converted image (shown at right) rather than input image</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="2" column="0" colspan="2">
-     <widget class="QGroupBox" name="groupBox_starSelector">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
-      </property>
-      <property name="title">
-       <string>Star Selector</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0" colspan="2">
-        <widget class="QCheckBox" name="checkBox_globalAlignment">
-         <property name="text">
-          <string>Non-Standard PSFs (e.g. Global Alignment, unphased image array)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="2">
-        <widget class="QPushButton" name="pushButton_regfileStarSelector">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Open</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QRadioButton" name="radioButton_starSelectorGUI">
-         <property name="text">
-          <string>Click-to-Select (GUI)</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_starSelector</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QLineEdit" name="lineEdit_regfileStarSelector">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QRadioButton" name="radioButton_regfileStarSelector">
-         <property name="text">
-          <string>Load from File</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_starSelector</string>
-         </attribute>
-        </widget>
-       </item>
-      </layout>
-      <zorder>groupBox_imageConverter</zorder>
-      <zorder>groupBox_imageConverter</zorder>
-      <zorder>checkBox_globalAlignment</zorder>
-      <zorder>groupBox_imageConverter</zorder>
-      <zorder>radioButton_starSelectorGUI</zorder>
-      <zorder>radioButton_regfileStarSelector</zorder>
-      <zorder>lineEdit_regfileStarSelector</zorder>
-      <zorder>pushButton_regfileStarSelector</zorder>
      </widget>
     </item>
     <item row="3" column="0" colspan="2">
@@ -678,6 +647,18 @@ p, li { white-space: pre-wrap; }
       <zorder>checkBox_rewritePRC</zorder>
      </widget>
     </item>
+    <item row="5" column="0">
+     <widget class="QPushButton" name="pushButton_run">
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+	background-color: rgb(90, 190, 125);
+}</string>
+      </property>
+      <property name="text">
+       <string>Run</string>
+      </property>
+     </widget>
+    </item>
     <item row="4" column="0" colspan="2">
      <widget class="QGroupBox" name="groupBox_segmentGuiding">
       <property name="sizePolicy">
@@ -755,28 +736,80 @@ p, li { white-space: pre-wrap; }
       </layout>
      </widget>
     </item>
-    <item row="5" column="0">
-     <widget class="QPushButton" name="pushButton_run">
+    <item row="2" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_starSelector">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-	background-color: rgb(90, 190, 125);
-}</string>
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
       </property>
-      <property name="text">
-       <string>Run</string>
+      <property name="title">
+       <string>Star Selector</string>
       </property>
-     </widget>
-    </item>
-    <item row="5" column="1">
-     <widget class="QPushButton" name="pushButton_quit">
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-	background-color: rgb(255, 102, 102);
-}</string>
+      <property name="checkable">
+       <bool>true</bool>
       </property>
-      <property name="text">
-       <string>Quit</string>
-      </property>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkBox_globalAlignment">
+         <property name="text">
+          <string>Non-Standard PSFs (e.g. Global Alignment, unphased image array)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QPushButton" name="pushButton_regfileStarSelector">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="QRadioButton" name="radioButton_starSelectorGUI">
+         <property name="text">
+          <string>Click-to-Select (GUI)</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_starSelector</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="lineEdit_regfileStarSelector">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QRadioButton" name="radioButton_regfileStarSelector">
+         <property name="text">
+          <string>Load from File</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_starSelector</string>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+      <zorder>groupBox_imageConverter</zorder>
+      <zorder>groupBox_imageConverter</zorder>
+      <zorder>checkBox_globalAlignment</zorder>
+      <zorder>groupBox_imageConverter</zorder>
+      <zorder>radioButton_starSelectorGUI</zorder>
+      <zorder>radioButton_regfileStarSelector</zorder>
+      <zorder>lineEdit_regfileStarSelector</zorder>
+      <zorder>pushButton_regfileStarSelector</zorder>
      </widget>
     </item>
    </layout>
@@ -791,8 +824,8 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>271</x>
-     <y>725</y>
+     <x>279</x>
+     <y>766</y>
     </hint>
     <hint type="destinationlabel">
      <x>271</x>
@@ -807,8 +840,8 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>271</x>
-     <y>725</y>
+     <x>279</x>
+     <y>766</y>
     </hint>
     <hint type="destinationlabel">
      <x>271</x>
@@ -823,12 +856,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>271</x>
-     <y>725</y>
+     <x>279</x>
+     <y>766</y>
     </hint>
     <hint type="destinationlabel">
-     <x>271</x>
-     <y>464</y>
+     <x>279</x>
+     <y>505</y>
     </hint>
    </hints>
   </connection>
@@ -839,8 +872,8 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>667</y>
+     <x>283</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
      <x>271</x>
@@ -855,12 +888,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>667</y>
+     <x>283</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
-     <x>271</x>
-     <y>464</y>
+     <x>279</x>
+     <y>505</y>
     </hint>
    </hints>
   </connection>
@@ -871,12 +904,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>667</y>
+     <x>283</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
-     <x>271</x>
-     <y>725</y>
+     <x>279</x>
+     <y>766</y>
     </hint>
    </hints>
   </connection>
@@ -887,12 +920,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>667</y>
+     <x>283</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
-     <x>311</x>
-     <y>648</y>
+     <x>333</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>
@@ -903,12 +936,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>667</y>
+     <x>283</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
-     <x>428</x>
-     <y>648</y>
+     <x>458</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>
@@ -919,12 +952,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>667</y>
+     <x>283</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
-     <x>72</x>
-     <y>648</y>
+     <x>80</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>
@@ -935,12 +968,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>667</y>
+     <x>283</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
-     <x>191</x>
-     <y>648</y>
+     <x>206</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>
@@ -951,12 +984,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>667</y>
+     <x>283</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
-     <x>547</x>
-     <y>648</y>
+     <x>584</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>
@@ -967,12 +1000,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>215</x>
-     <y>317</y>
+     <x>223</x>
+     <y>354</y>
     </hint>
     <hint type="destinationlabel">
-     <x>96</x>
-     <y>343</y>
+     <x>104</x>
+     <y>381</y>
     </hint>
    </hints>
   </connection>
@@ -983,12 +1016,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>215</x>
-     <y>317</y>
+     <x>223</x>
+     <y>354</y>
     </hint>
     <hint type="destinationlabel">
-     <x>262</x>
-     <y>344</y>
+     <x>270</x>
+     <y>382</y>
     </hint>
    </hints>
   </connection>
@@ -999,12 +1032,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>234</x>
-     <y>534</y>
+     <x>242</x>
+     <y>575</y>
     </hint>
     <hint type="destinationlabel">
-     <x>293</x>
-     <y>564</y>
+     <x>301</x>
+     <y>605</y>
     </hint>
    </hints>
   </connection>
@@ -1015,12 +1048,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>234</x>
-     <y>534</y>
+     <x>242</x>
+     <y>575</y>
     </hint>
     <hint type="destinationlabel">
-     <x>575</x>
-     <y>565</y>
+     <x>619</x>
+     <y>606</y>
     </hint>
    </hints>
   </connection>
@@ -1031,12 +1064,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>234</x>
-     <y>785</y>
+     <x>242</x>
+     <y>826</y>
     </hint>
     <hint type="destinationlabel">
-     <x>330</x>
-     <y>752</y>
+     <x>338</x>
+     <y>793</y>
     </hint>
    </hints>
   </connection>
@@ -1047,12 +1080,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>234</x>
-     <y>785</y>
+     <x>242</x>
+     <y>826</y>
     </hint>
     <hint type="destinationlabel">
-     <x>575</x>
-     <y>754</y>
+     <x>619</x>
+     <y>795</y>
     </hint>
    </hints>
   </connection>
@@ -1063,12 +1096,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>319</x>
-     <y>295</y>
+     <x>327</x>
+     <y>331</y>
     </hint>
     <hint type="destinationlabel">
-     <x>96</x>
-     <y>317</y>
+     <x>104</x>
+     <y>354</y>
     </hint>
    </hints>
   </connection>
@@ -1079,12 +1112,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>319</x>
-     <y>295</y>
+     <x>327</x>
+     <y>331</y>
     </hint>
     <hint type="destinationlabel">
-     <x>236</x>
-     <y>317</y>
+     <x>234</x>
+     <y>354</y>
     </hint>
    </hints>
   </connection>
@@ -1095,12 +1128,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>376</x>
-     <y>294</y>
+     <x>384</x>
+     <y>330</y>
     </hint>
     <hint type="destinationlabel">
-     <x>381</x>
-     <y>321</y>
+     <x>317</x>
+     <y>358</y>
     </hint>
    </hints>
   </connection>
@@ -1111,12 +1144,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>358</x>
-     <y>293</y>
+     <x>366</x>
+     <y>329</y>
     </hint>
     <hint type="destinationlabel">
-     <x>135</x>
-     <y>347</y>
+     <x>143</x>
+     <y>385</y>
     </hint>
    </hints>
   </connection>
@@ -1127,12 +1160,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>166</x>
-     <y>297</y>
+     <x>174</x>
+     <y>333</y>
     </hint>
     <hint type="destinationlabel">
-     <x>219</x>
-     <y>347</y>
+     <x>227</x>
+     <y>385</y>
     </hint>
    </hints>
   </connection>
@@ -1143,12 +1176,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>131</x>
-     <y>293</y>
+     <x>139</x>
+     <y>329</y>
     </hint>
     <hint type="destinationlabel">
-     <x>92</x>
-     <y>430</y>
+     <x>100</x>
+     <y>470</y>
     </hint>
    </hints>
   </connection>
@@ -1159,12 +1192,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>219</x>
-     <y>295</y>
+     <x>227</x>
+     <y>331</y>
     </hint>
     <hint type="destinationlabel">
-     <x>242</x>
-     <y>413</y>
+     <x>250</x>
+     <y>453</y>
     </hint>
    </hints>
   </connection>
@@ -1175,12 +1208,44 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>424</x>
-     <y>301</y>
+     <x>432</x>
+     <y>337</y>
     </hint>
     <hint type="destinationlabel">
-     <x>486</x>
-     <y>422</y>
+     <x>530</x>
+     <y>462</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_normalize</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_normalize</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>197</x>
+     <y>415</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>414</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_normalize</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBox_normalize</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>418</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>532</x>
+     <y>414</y>
     </hint>
    </hints>
   </connection>
