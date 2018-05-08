@@ -21,7 +21,7 @@ an FGS image that it is passed by the user, and allow the user to choose
 the guide star and reference stars using a GUI.
 
 
-### 3. Flight software file creation (``fsw_file_writer``)
+### 3. Flight Software File Writer (``fsw_file_writer``)
 This module requires an FGS image and a file that includes a list of the
 coordinates of the guide star and reference stars, along with their count
 rates. This tool will create all files necessary to test this image different
@@ -40,36 +40,31 @@ Installation notes
 ------------------
 This package was developed in a python 3.5 environment. Python 2.7 is not yet supported.
 
-The following supplemental packages are required:
-* pysiaf
-* photutils
+The following supplemental packages are required, and are available for easily installation with `pip`:
+* `pysiaf`
+* `photutils`
 
-#### To install:
+##### To install:
 
 1) Clone the gitlab repository to your local machine
 
-	`git clone git@grit.stsci.edu:wfsc/tools.git`
+	git clone git@grit.stsci.edu:wfsc/tools.git
 
-2) Install the jwst_fgs_commissioning_tools package:
+2) Install the `jwst_fgs_commissioning_tools` package:
 
-	`cd tools/fgs-commissioning`
+	cd tools/fgs-commissioning
 
-	`pip install -e .`
+	pip install -e .a
 
 
 
 Running the Tools
 -----------------
-These tools are best run in IPython terminal.
+These tools are best run in the IPython terminal. Simply launch the GUI with the following steps:
 
-#### IPython
-In IPython, execute the following steps:
+    In[1]: import jwst_fgs_commissioning_tools
 
-```
-In[1]: import jwst_fgs_commissioning_tools
-
-In[2]: jwst_fgs_commissioning_tools.run_tool_GUI()
-```
+    In[2]: jwst_fgs_commissioning_tools.run_tool_GUI()
 
 
 Tutorial
