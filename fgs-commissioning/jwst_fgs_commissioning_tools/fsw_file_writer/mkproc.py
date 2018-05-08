@@ -91,9 +91,6 @@ class Mkproc(object):
         '''
         eol = '\n'
         nref = len(xarr)-1
-        print('Number of reference stars: {}'.format(nref))
-        #sgid='_G{}'.format(guider)
-
         dhas_filename = os.path.join(self.out_dir, 'dhas',
                                      '{0}_G{1}_ID.prc'.format(root, guider))
 
