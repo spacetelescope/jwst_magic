@@ -358,7 +358,7 @@ class MasterGui(QMainWindow):
         else:
             raise ValueError('bfdlfsjdf')
 
-        filename = self.open_filename_dialog('In/Reg file', file_type="regfile (*.txt)")
+        filename = self.open_filename_dialog('In/Reg file', file_type="regfile (*.txt, *.incat)")
         to_text.setText(filename)
         return filename
 

@@ -298,7 +298,10 @@ def countrate_3x3(x, y, data):
 
 def get_guider(header, guider=None, log=None):
     '''Read the guider information from the FITS header'''
-    hdr_guider = int(header['DETECTOR'][-1])
+    try:
+        hdr_guider = int(header['DETECTOR'][-1])
+    except KeyError:
+        return
 
     # Handle NIRCam images being passed if the guider hasn't been commanded
     if not guider and not header['DETECTOR'].startswith('GUIDER'):
