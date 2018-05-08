@@ -279,14 +279,15 @@ def write_prc(obj):
     if obj.step == 'ID':
         step = 'ID'
         acq1_imgsize = None
-        acq1_imgsize = None
+        acq2_imgsize = None
 
-    if obj.step == 'ACQ1':
+    elif obj.step == 'ACQ1':
         step = 'ACQ'
         acq1_imgsize = obj.acq1_imgsize
         acq2_imgsize = obj.acq2_imgsize
 
     else:
+        raise ValueError('Unknown step {}; cannot write .prc file.'.format(obj.step))
         return
 
     mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,

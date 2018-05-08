@@ -94,8 +94,10 @@ class Mkproc(object):
         print('Number of reference stars: {}'.format(nref))
         #sgid='_G{}'.format(guider)
 
-        with open(os.path.join(self.out_dir, 'dhas',
-                               '{0}_G{1}_ID.prc'.format(root, guider)), 'w') as file_out:
+        dhas_filename = os.path.join(self.out_dir, 'dhas',
+                                     '{0}_G{1}_ID.prc'.format(root, guider))
+
+        with open(dhas_filename, 'w') as file_out:
             write_from_template(self.template_hdr, file_out)
 
             file_out.write('PROC {0}_G{1}_ID'.format(root, guider))
@@ -154,10 +156,13 @@ class Mkproc(object):
             write_from_template(self.template_f, file_out)
 
         file_out.close()
-        print("Successfully wrote: {0}_G{1}_ID.prc".format(root, guider))
-        shutil.copy2(os.path.join(self.out_dir, 'dhas', '{0}_G{1}_ID.prc'.format(root,
-                                                                                 guider)),
+        print("Successfully wrote: {}".format(dhas_filename))
+        shutil.copy2(dhas_filename,
                      os.path.join(self.out_dir, 'ground_system'))
+        print("Successfully wrote: {}".format(os.path.join(self.out_dir,
+                                                           'ground_system',
+                                                           '{0}_G{1}_ID.prc'.
+                                                           format(root, guider))))
 
 
     def create_acq_proc_file(self, root, guider, xarr, yarr, counts,
@@ -179,8 +184,10 @@ class Mkproc(object):
         # Get threshold from countrate (not from STC file)
         threshgs = 0.50 * counts
 
-        with open(os.path.join(self.out_dir, 'dhas',
-                               '{0}_G{1}_ACQ.prc'.format(root, guider)), 'w') as file_out:
+        dhas_filename = os.path.join(self.out_dir, 'dhas',
+                                     '{0}_G{1}_ACQ.prc'.format(root, guider))
+
+        with open(dhas_filename, 'w') as file_out:
             write_from_template(self.template_hdr, file_out)
 
             file_out.write('PROC {0}_G{1}_ACQ'.format(root, guider))
@@ -216,10 +223,13 @@ class Mkproc(object):
 
             write_from_template(self.template_d, file_out)
         file_out.close()
-        print("Successfully wrote: {0}_G{1}_ACQ.prc".format(root, guider))
-        shutil.copy2(os.path.join(self.out_dir, 'dhas', '{0}_G{1}_ACQ.prc'.format(root,
-                                                                                  guider)),
+        print("Successfully wrote: {}".format(dhas_filename))
+        shutil.copy2(dhas_filename,
                      os.path.join(self.out_dir, 'ground_system'))
+        print("Successfully wrote: {}".format(os.path.join(self.out_dir,
+                                              'ground_system',
+                                              '{0}_G{1}_ACQ.prc'.format(root,
+                                                                        guider))))
 
 def write_from_template(template, file_out):
     '''
