@@ -12,7 +12,7 @@ from __future__ import (absolute_import, division,
 from setuptools import setup, find_packages
 
 setup(name='jwst_fgs_commissioning_tools',
-      version='0.1',
+      version='0.0',
       description='Tools for the fine guidance sensor to use during commissioning of JWST.',
       # long_description='Really, the funniest around.',
       classifiers=[
@@ -33,8 +33,11 @@ setup(name='jwst_fgs_commissioning_tools',
           'astropy',
           'matplotlib',
           'PyQt5',
-          # 'jwxml'  # should by pysiaf
           'pysiaf',
+          'pyyaml',
+          'requests',
+          'pytest',
+          'photutils'
       ],
       include_package_data=True,
       zip_safe=False)
