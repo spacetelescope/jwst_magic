@@ -48,6 +48,7 @@ calling the QApplication instance to run a window/dialog/GUI.
 # Standard Library
 from __future__ import unicode_literals
 import sys
+import os
 
 # Third Party
 import numpy as np
@@ -56,18 +57,17 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
-                             QLabel, QTextEdit, QRadioButton, QGroupBox, QFrame,
-                             QSizePolicy, QGridLayout, QDialog, QMessageBox)
-from PyQt5.QtCore import pyqtSlot
+from PyQt5 import QtCore, uic
+from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
+                             QTableWidgetItem)
+from PyQt5.QtCore import pyqtSlot, QSize
+from PyQt5.QtGui import QIcon
 
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['font.weight'] = 'light'
 matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
-GROUPBOX_TITLE_STYLESHEET = 'QGroupBox { font-size: 14px; font-weight: bold; margin-top: 30px } QGroupBox::title { top: -20px }'
-
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 class StarClickerMatplotlibCanvas(FigureCanvas):
     """Creates a matplotlib canvas as a PyQt widget to plot an FGS image.
@@ -95,7 +95,8 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
     """
 
     def __init__(self, parent=None, width=None, height=None, dpi=100, data=None,
-                 x=None, y=None, left=None, right=None, bottom=0.05, top=0.95):
+                 x=None, y=None, left=None, right=None, bottom=0.05, top=0.95,
+                 profile=False):
 
         self.data = data
         self.x = x
@@ -111,8 +112,11 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.cbar = []
         self.peaks = []
 
+        self.profile = profile
+
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def compute_initial_figure(self, fig, data, x, y,
                                xlabel='Raw FGS X (–V3) [pixels]',
@@ -165,6 +169,15 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.axes.set_xlim(max(0, y_mid - ax_range / 2),
                            min(2048, y_mid + ax_range / 2))
         self.draw()
+
+    def sizeHint(self):
+        if self.profile == True:
+            return QSize(200, 250)
+        else:
+            return QSize(800, 800)
+
+    def hasHeightForWidth(self):
+        return self.profile == False
 
 
 class StarSelectorWindow(QDialog):
@@ -255,333 +268,149 @@ class StarSelectorWindow(QDialog):
         self.inds = []
         self.inds_of_inds = []
         self.epsilon = dist
+        self.n_stars_max = 11
 
         self.in_master_GUI = in_master_GUI
+        self.currentRow = -1
 
         # Initialize dialog object
         QDialog.__init__(self, modal=True)
 
-        # Initialize user interface
-        self.initUI()
+        # Import .ui file
+        uic.loadUi(os.path.join(__location__, 'SelectStarsGUI.ui'), self)
 
-    def initUI(self):
-        '''Sets up interactive graphical user interface.
+        # Create and load GUI session
+        self.setWindowTitle('FGS Commissioning Tools - Guide and Reference Star Selector')
+        self.init_matplotlib()
+        self.define_GUI_connections()
+        self.show()
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # GUI CONSTRUCTION
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def init_matplotlib(self):
+        '''Set up the two matplotlib canvases that will preview the
+        input image and converted image in the "Image Preview" section.
         '''
 
-        # Set up star selector dialog window
-        self.setWindowTitle("FGS Guide & Reference Star Selector")
-        mainGrid = QGridLayout()  # set grid layout
-        self.setLayout(mainGrid)
-        self.setFocus()
-
-        # Add plot - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        sc = StarClickerMatplotlibCanvas(self, width=5, height=4, dpi=100,
-                         data=self.data, x=self.x, y=self.y, left=0.1, right=0.9)
-        self.canvas = sc
+        # Connect main matplotlib canvas and add to layout
+        self.canvas = StarClickerMatplotlibCanvas(
+            parent=self.frame_canvas,  data=self.data, x=self.x, dpi=100,
+            y=self.y, left=0.1, right=0.93)
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
                                            self.y)
         self.canvas.zoom_to_crop()
-        mainGrid.addWidget(sc, 0, 0, 5, 1)
-        self.canvas.setMinimumSize(self.image_dim, self.image_dim)
+        self.update_textboxes()
+        self.frame_canvas.layout().insertWidget(0, self.canvas)
 
-        # Add cursor-tracking
-        cursorFrame = self.create_cursor_section()
-        mainGrid.addWidget(cursorFrame, 4, 0, 1, 1, alignment=QtCore.Qt.AlignHCenter)
+        # Connect profile matplotlib canvas and add to layout
+        self.canvas_profile = StarClickerMatplotlibCanvas(
+            parent=self.frame_profile, data=self.data, dpi=100, profile=True,
+            left=0.2, bottom=0.15, right=0.95, top=0.98)
+        self.canvas_profile.init_profile()
+        self.frame_profile.layout().insertWidget(0, self.canvas_profile)
 
-        # Update cursor position and pixel value under cursor
-        self.canvas.mpl_connect('motion_notify_event',
-                                self.update_cursor_position)
 
-        # Star selection!
-        self.canvas.mpl_connect('button_press_event',
-                                self.button_press_callback)
+    def define_GUI_connections(self):
+        # Main dialog widgets
+        self.pushButton_done.clicked.connect(self.fileQuit)
+        self.pushButton_cancel.clicked.connect(self.cancel)
 
-        # Add other widgets  - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        # Make Group Box to put the label in, because it will misbehave
-        instructionsGroupBox = QGroupBox('Instructions', self)
-        instructionsGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
-        vBox = QVBoxLayout()
-
-        self.instructions = QLabel('''Click as near to the center of the star \
-        as possible. The first star that is choosen will be the <span style=\
-        "background-color: #FFFF00">guide star</span>. All additional stars that are \
-        clicked on are the <span style="background-color: #FFA500">reference stars\
-        </span>. Star locations will appear in the list at right as they are selected; \
-        the guide star can be re-selected using the radio buttons. Errors will be shown\
-        in the output box below.''', self)
-        # self.instructions.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-
-        self.instructions.setWordWrap(True)
-
-        vBox.addWidget(self.instructions)
-        instructionsGroupBox.setLayout(vBox)
-        instructionsGroupBox.setSizePolicy(QSizePolicy.Preferred,
-                                           QSizePolicy.Maximum)
-        mainGrid.addWidget(instructionsGroupBox, 0, 1, 1, 3,
-                           alignment=QtCore.Qt.AlignTop)
-
-        # Log to update
-        self.log_textbox = QTextEdit(self)
-        self.log_textbox.setPlaceholderText('No stars selected.')
-        # self.log_textbox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
-        self.log_textbox.setMinimumSize(10, 300)
-        mainGrid.addWidget(self.log_textbox, 1, 1, 1, 2,
-                           alignment=QtCore.Qt.AlignTop)
-
-        # Plot slice of profile under cursor
-        prof = StarClickerMatplotlibCanvas(self, width=4, height=3, dpi=100,
-                                           data=self.data, left=0.2, right=0.95,
-                                           bottom=0.2)
-        prof.init_profile()
-        self.profile = prof
+        # Main matplotlib canvas widget
+            # Update cursor position and pixel value under cursor
+        self.canvas.mpl_connect('motion_notify_event', self.update_cursor_position)
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
-        mainGrid.addWidget(self.profile, 2, 1, 1, 2,
-                           alignment=QtCore.Qt.AlignVCenter)
+            # Star selection!
+        self.canvas.mpl_connect('button_press_event', self.button_press_callback)
 
-        # Create colorbar-updating section
-        cbarGroupBox = self.create_colorbar_section(sc)
-        cbarGroupBox.setMaximumSize(200, 150)
-        mainGrid.addWidget(cbarGroupBox, 3, 1, 2, 1,
-                           alignment=QtCore.Qt.AlignTop|QtCore.Qt.AlignHCenter)
+        # Colorbar widgets
+        self.pushButton_colorbar.clicked.connect(self.update_cbar)
 
-        # Create axes-updating section
-        axGroupBox = self.create_axes_section(sc)
-        axGroupBox.setMinimumSize(200, 150)
-        mainGrid.addWidget(axGroupBox, 3, 2, 2, 1,
-                           alignment=QtCore.Qt.AlignTop|QtCore.Qt.AlignHCenter)
+        # Axis limits widgets
+        self.pushButton_updateAxes.clicked.connect(self.update_axes)
+        self.pushButton_zoomFit.clicked.connect(self.canvas.zoom_to_fit)
+        self.pushButton_zoomFit.clicked.connect(self.update_textboxes)
+        self.pushButton_cropToData.clicked.connect(self.canvas.zoom_to_crop)
+        self.pushButton_cropToData.clicked.connect(self.update_textboxes)
 
-        # Create selected stars section
-        starsGroupBox = self.create_selectedstars_section()
-        mainGrid.addWidget(starsGroupBox, 1, 3, 2, 1)
+        # Star selection widgets
+        self.pushButton_makeGuideStar.clicked.connect(self.set_guidestar)
+        self.pushButton_deleteStar.clicked.connect(self.remove_star)
+        self.pushButton_deleteStar.installEventFilter(self)
+        self.tableWidget_selectedStars.viewport().installEventFilter(self)
 
-        # Buttons to close the GUI
-        closeButtonsFrame = self.create_closebuttons_section()
-        mainGrid.addWidget(closeButtonsFrame, 3, 3, 2, 1)
-
-        # Show GUI - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        self.show()
-
-    def create_cursor_section(self):
-        cursorFrame = QFrame(self)
-        cursorGrid = QGridLayout()
-        cursorFrame.setLayout(cursorGrid)
-        cursorFrame.setMaximumSize(600, 60)
-        cursorFrame.setFrameStyle(QFrame.NoFrame)
-
-        # Show current cursor position
-        self.cursor_label = QLabel('Cursor Position:', self,
-                                   alignment=QtCore.Qt.AlignRight)
-        cursorGrid.addWidget(self.cursor_label, 0, 0,
-                             alignment=QtCore.Qt.AlignVCenter)
-
-        self.cursor_textbox = QLineEdit(self)
-        self.cursor_textbox.setPlaceholderText('Move cursor into axes')
-        self.cursor_textbox.setFixedSize(150, 20)
-        cursorGrid.addWidget(self.cursor_textbox, 0, 1)
-
-        self.canvas.mpl_connect('motion_notify_event',
-                                self.update_cursor_position)
-
-        # Show value under cursor
-        self.pixel_label = QLabel('Pixel Value:', self,
-                                  alignment=QtCore.Qt.AlignRight)
-        cursorGrid.addWidget(self.pixel_label, 0, 2,
-                             alignment=QtCore.Qt.AlignVCenter)
-
-        self.pixel_textbox = QLineEdit(self)
-        self.pixel_textbox.setPlaceholderText('Move cursor into axes')
-        self.pixel_textbox.setFixedSize(150, 20)
-        cursorGrid.addWidget(self.pixel_textbox, 0, 3)
-
-        return cursorFrame
-
-    def create_axes_section(self, sc):
-        # Create axis-updating section
-        axGroupBox = QGroupBox('Axes Limits', self)
-        axGrid = QGridLayout()
-        axGroupBox.setLayout(axGrid)
-        axGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
-
-        axGrid.addWidget(QLabel('X: ( ', self), 0, 0, 1, 1)
-        axGrid.addWidget(QLabel(',', self), 0, 2, 1, 1)
-        axGrid.addWidget(QLabel(' )', self), 0, 4, 1, 1)
-
-        axGrid.addWidget(QLabel('Y: ( ', self), 1, 0, 1, 1)
-        axGrid.addWidget(QLabel(',', self), 1, 2, 1, 1)
-        axGrid.addWidget(QLabel(' )', self), 1, 4, 1, 1)
-
-        self.x1_textbox = QLineEdit(str(sc.axes.get_xlim()[0]), self)
-        self.x1_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.x1_textbox, 0, 1, 1, 1)
-
-        self.x2_textbox = QLineEdit(str(sc.axes.get_xlim()[1]), self)
-        self.x2_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.x2_textbox, 0, 3, 1, 1)
-
-        self.y1_textbox = QLineEdit(str(sc.axes.get_ylim()[1]), self)
-        self.y1_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.y1_textbox, 1, 1, 1, 1)
-
-        self.y2_textbox = QLineEdit(str(sc.axes.get_ylim()[0]), self)
-        self.y2_textbox.setFixedSize(80, 20)
-        axGrid.addWidget(self.y2_textbox, 1, 3, 1, 1)
-
-        self.axlims_button = QPushButton('Update axis limits', self)
-        self.axlims_button.clicked.connect(self.update_axes)
-        self.axlims_button.setFixedSize(150, 25)
-        axGrid.addWidget(self.axlims_button, 2, 0, 1, 5,
-                         alignment=QtCore.Qt.AlignHCenter)
-
-        # Add "Zoom Fit" button
-        self.zoom_button = QPushButton('Zoom Fit', self)
-        self.zoom_button.setToolTip('Zoom to encompass all data')
-        self.zoom_button.clicked.connect(sc.zoom_to_fit)
-        self.zoom_button.clicked.connect(self.update_textboxes)
-        self.zoom_button.setFixedSize(150, 25)
-        axGrid.addWidget(self.zoom_button, 3, 0, 1, 5,
-                         alignment=QtCore.Qt.AlignHCenter)
-
-        # Add "Crop to Data" button
-        self.crop_button = QPushButton('Crop to Data', self)
-        self.crop_button.setToolTip('Zoom crop to data')
-        self.crop_button.clicked.connect(sc.zoom_to_crop)
-        self.crop_button.clicked.connect(self.update_textboxes)
-        self.crop_button.setFixedSize(150, 25)
-        axGrid.addWidget(self.crop_button, 4, 0, 1, 5,
-                         alignment=QtCore.Qt.AlignHCenter)
-
-        return axGroupBox
-
-    def create_colorbar_section(self, sc):
-        # Create colorbar-updating section
-        cbarGroupBox = QGroupBox('Colorbar Limits', self)
-        cbarGrid = QGridLayout()
-        cbarGroupBox.setLayout(cbarGrid)
-        cbarGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
-
-        cbarGrid.addWidget(QLabel('Min Value:  ', self), 0, 0)
-        cbarGrid.addWidget(QLabel('Max Value:  ', self), 1, 0)
-
-        self.vmin_textbox = QLineEdit(str(sc.fitsplot.get_clim()[0]), self)
-        self.vmin_textbox.setFixedSize(80, 20)
-        cbarGrid.addWidget(self.vmin_textbox, 0, 1)
-
-        self.vmax_textbox = QLineEdit(str(sc.fitsplot.get_clim()[1]), self)
-        self.vmax_textbox.setFixedSize(80, 20)
-        cbarGrid.addWidget(self.vmax_textbox, 1, 1)
-
-        self.cbarlims_button = QPushButton('Update colorbar limits', self)
-        self.cbarlims_button.setStyleSheet('QPushButton {color: black}')
-        self.cbarlims_button.clicked.connect(self.update_cbar)
-        self.cbarlims_button.setFixedSize(170, 25)
-        cbarGrid.addWidget(self.cbarlims_button, 2, 0, 1, 2,
-                           alignment=QtCore.Qt.AlignHCenter)
-
-        return cbarGroupBox
-
-    def create_selectedstars_section(self):
-        starsGroupBox = QGroupBox('Selected Guide and Reference Stars', self)
-        selectStarsGrid = QGridLayout()
-        starsGroupBox.setLayout(selectStarsGrid)
-        starsGroupBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        starsGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
-
-        # Show selected stars
-        guide_label = QLabel('Guide\nStar?', self)
-        guide_label.setMinimumSize(40, 40)
-        # guide_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        selectStarsGrid.addWidget(guide_label, 0, 0,
-                                  alignment=QtCore.Qt.AlignVCenter)
-        selectStarsGrid.addWidget(QLabel('Star Position', self), 0, 1)
-        # selectStarsGrid.setColumnMinimumWidth(0, 50)
-        # selectStarsGrid.setColumnMinimumWidth(1, 120)
-
-        self.nStars = 11
-        for n in range(self.nStars):
-            # Create radio buttons
-            guidestar_button = QRadioButton(starsGroupBox)
-            if n == 0: guidestar_button.setChecked(True)
-            guidestar_button.released.connect(self.make_setguidestar(guidestar_button))
-            if n == 0: guidestar_button.setEnabled(False)
-            if n != 0: guidestar_button.setCheckable(False)
-
-            # Create star position textboxes
-            star_position = QLineEdit(starsGroupBox)
-            star_position.setMinimumSize(170, 20)
-            if n == 0: star_position.setPlaceholderText('No stars selected')
-
-            # Create 'remove' buttons
-            remove_button = QPushButton('Delete', starsGroupBox)
-            remove_button.clicked.connect(self.make_removestar(remove_button))
-            remove_button.installEventFilter(self)
-            remove_button.setEnabled(False)
-
-            # Add to starsGroupBox grid layout
-            selectStarsGrid.addWidget(guidestar_button, n + 1, 0)
-            selectStarsGrid.addWidget(star_position, n + 1, 1)
-            selectStarsGrid.addWidget(remove_button, n + 1, 2)
-
-        self.star_positions = [child for child in starsGroupBox.findChildren(QLineEdit)]
-        self.guidestar_buttons = [child for child in starsGroupBox.findChildren(QRadioButton)]
-        self.remove_buttons = [child for child in starsGroupBox.findChildren(QPushButton)]
-
-        return starsGroupBox
-
-    def create_closebuttons_section(self):
-        closeButtonsFrame = QFrame(self)
-        closeButtonsGrid = QGridLayout()
-        closeButtonsFrame.setLayout(closeButtonsGrid)
-        closeButtonsFrame.setFrameStyle(QFrame.NoFrame)
-
-        # Add "Done" button
-        self.done_button = QPushButton('Done', self)
-        self.done_button.setToolTip('Close the window')
-        self.done_button.clicked.connect(self.fileQuit)
-        self.done_button.setMinimumSize(150, 50)
-        closeButtonsGrid.addWidget(self.done_button, 0, 0,
-                                   alignment=QtCore.Qt.AlignBottom)
-
-        # Add "Cancel" button
-        self.cancel_button = QPushButton('Cancel', self)
-        self.cancel_button.setToolTip('Close the window and discard changes')
-        self.cancel_button.clicked.connect(self.cancel)
-        self.cancel_button.setMinimumSize(150, 50)
-        closeButtonsGrid.addWidget(self.cancel_button, 1, 0,
-                                   alignment=QtCore.Qt.AlignTop)
-
-        return closeButtonsFrame
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # WIDGET CONNECTIONS
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     @pyqtSlot()
-    def eventFilter(self, remove_button, event):
-        '''Parse out the cursor moving in or out of a star deletion button, and
-        updating the matplotlib axis with a red highlighted circle accordingly'''
-        if event.type() == QtCore.QEvent.Enter:
-            if remove_button.isEnabled():
-                # Determine index of star corresponding to button
-                star_ind = self.remove_buttons.index(remove_button)
-                ind_of_star_ind = self.inds_of_inds.index(star_ind)
+    def eventFilter(self, source, event):
+        '''Event filter for "Delete Star" button and selected stars table
+        '''
+        if hasattr(self, 'pushButton_deleteStar') and hasattr(self, 'tableWidget_selectedStars'):
+            # Parse out the cursor moving in or out of a star deletion button,
+            # and updating the matplotlib axis with a red highlighted circle
+            # accordingly
+            if source == self.pushButton_deleteStar:
+                if event.type() == QtCore.QEvent.Enter and len(self.inds) > 0:
+                    # Determine index of star corresponding to button
+                    star_ind = self.tableWidget_selectedStars.currentRow()
 
-                # Re-draw selected star as red
-                self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('red')
+                    # Re-draw selected star as red
+                    self.canvas.axes.lines[star_ind].set_markeredgecolor('red')
 
-                self.canvas.draw()
-            return True
+                    self.canvas.draw()
+                    return True
 
-        if event.type() == QtCore.QEvent.Leave:
-            if remove_button.isEnabled():
-                # Determine index of star corresponding to button
-                star_ind = self.remove_buttons.index(remove_button)
-                ind_of_star_ind = self.inds_of_inds.index(star_ind)
+                if event.type() == QtCore.QEvent.Leave and len(self.inds) > 0:
+                    # Determine index of star corresponding to button
+                    star_ind = self.tableWidget_selectedStars.currentRow()
 
-                # Re-draw selected star as original color
-                if ind_of_star_ind == 0:
-                    self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('yellow')
+                    # Re-draw selected star as original color
+                    if star_ind == self.gs_ind:
+                        self.canvas.axes.lines[star_ind].set_markeredgecolor('yellow')
+                    else:
+                        self.canvas.axes.lines[star_ind].set_markeredgecolor('darkorange')
+
+                    self.canvas.draw()
+                    return True
+
+            # Parse any mouse clicks within the table widget, and update the
+            # matplotlib axis with a blue highlighted circle to represent the
+            # rows that is selected
+            if source == self.tableWidget_selectedStars.viewport() and\
+               event.type() == QtCore.QEvent.MouseButtonPress:
+                # Record the previous row that was selected
+                previousRow = self.currentRow
+
+                # Determine where the click happened
+                if self.tableWidget_selectedStars.itemAt(event.pos()) is None:
+                    currentRow = -1
                 else:
-                    self.canvas.axes.lines[ind_of_star_ind].set_markeredgecolor('darkorange')
+                    currentRow = self.tableWidget_selectedStars.itemAt(event.pos()).row()
+
+                # Re-draw the newly selected star as blue
+                if currentRow >= 0:
+                    self.canvas.axes.lines[currentRow].set_markeredgecolor('cornflowerblue')
+
+                # Update the table to show the selection
+                self.tableWidget_selectedStars.setCurrentCell(currentRow, 0)
+
+                # Put the previously selected star back to normal
+                if previousRow == currentRow:
+                    pass
+                elif previousRow == self.gs_ind:
+                    self.canvas.axes.lines[previousRow].set_markeredgecolor('yellow')
+                elif previousRow >= 0:
+                    self.canvas.axes.lines[previousRow].set_markeredgecolor('darkorange')
+
+                # Update current row to be the newly clicked one
+                self.currentRow = currentRow
 
                 self.canvas.draw()
-            return True
+                return True
+
 
         return False
 
@@ -589,10 +418,10 @@ class StarSelectorWindow(QDialog):
         '''Changes the axes limits of the matplotlib canvas to the current
         values of the axis limit textboxes
         '''
-        self.canvas.axes.set_xlim(float(self.x1_textbox.text()),
-                                  float(self.x2_textbox.text()))
-        self.canvas.axes.set_ylim(float(self.y2_textbox.text()),
-                                  float(self.y1_textbox.text()))
+        self.canvas.axes.set_xlim(float(self.lineEdit_xmin.text()),
+                                  float(self.lineEdit_xmax.text()))
+        self.canvas.axes.set_ylim(float(self.lineEdit_ymax.text()),
+                                  float(self.lineEdit_ymin.text()))
         self.canvas.fig.subplots_adjust(top=.95, left=.07)
         self.canvas.draw()
 
@@ -600,58 +429,56 @@ class StarSelectorWindow(QDialog):
         '''Changes the limits of the colorbar to the current values of the
         colorbar limit textboxes
         '''
-        self.canvas.fitsplot.set_clim(float(self.vmin_textbox.text()),
-                                      float(self.vmax_textbox.text()))
+        self.canvas.fitsplot.set_clim(float(self.lineEdit_vmin.text()),
+                                      float(self.lineEdit_vmax.text()))
         self.canvas.draw()
 
     def update_textboxes(self):
         '''Changes the values of the axis limit textboxes to the current axis
         limits of the matplotlib canvas'''
-        self.x1_textbox.setText(str(self.canvas.axes.get_xlim()[0]))
-        self.x2_textbox.setText(str(self.canvas.axes.get_xlim()[1]))
-        self.y1_textbox.setText(str(self.canvas.axes.get_ylim()[1]))
-        self.y2_textbox.setText(str(self.canvas.axes.get_ylim()[0]))
+        self.lineEdit_xmin.setText(str(self.canvas.axes.get_xlim()[0]))
+        self.lineEdit_xmax.setText(str(self.canvas.axes.get_xlim()[1]))
+        self.lineEdit_ymax.setText(str(self.canvas.axes.get_ylim()[0]))
+        self.lineEdit_ymin.setText(str(self.canvas.axes.get_ylim()[1]))
+
+        self.lineEdit_vmin.setText(str(self.canvas.fitsplot.get_clim()[0]))
+        self.lineEdit_vmax.setText(str(self.canvas.fitsplot.get_clim()[1]))
 
     def update_cursor_position(self, event):
         '''Updates the cursor position textbox when the cursor moves within the
         matplotlib axis'''
         if event.inaxes:
-            self.cursor_textbox.setText('({:.0f}, {:.0f})'.format(event.xdata,
+            self.lineEdit_cursorPosition.setText('({:.0f}, {:.0f})'.format(event.xdata,
                                                                   event.ydata))
-            self.pixel_textbox.setText('{:.0f}'.format(self.data[int(event.ydata),
+            self.lineEdit_cursorValue.setText('{:.0f}'.format(self.data[int(event.ydata),
                                                                  int(event.xdata)]))
 
     def update_profile(self, event):
         '''Updates the profile plot when the cursor moves within the matplotlib axis'''
         if event.inaxes:
+            # Determine profile under the cursor
             x = np.arange(max(0, np.floor(event.xdata - self.epsilon)),
                           min(2047, np.ceil(event.xdata + self.epsilon))).astype(int)
             y = self.data[int(event.ydata), x]
 
             # Make previous lines white so only the current profile is visible
-            for line in self.profile.axes.lines:
+            for line in self.canvas_profile.axes.lines:
                 line.set_color('white')
 
-            # self.profile_line[0].set_color('white')
-            # self.profile_line = self.profile.lines[int(event.ydata)]
-            # self.profile_line[0].set_color('cornflowerblue')
-            # self.profile_line[0].set_zorder(2050)
-            self.profile.axes.plot(x, y, c='cornflowerblue')
-            self.profile.axes.set_xlim(int(np.floor(event.xdata - self.epsilon)),
+            # Plot the new line and update axis limits
+            self.canvas_profile.axes.plot(x, y, c='cornflowerblue')
+            self.canvas_profile.axes.set_xlim(int(np.floor(event.xdata - self.epsilon)),
                                        int(np.ceil(event.xdata + self.epsilon)))
 
+            # Update countrate indicator
             countrate = np.sum(self.data[int(event.ydata) - 1:int(event.ydata) + 2,
                                          int(event.xdata) - 1:int(event.xdata) + 2])
-            # self.profile.axes.text(0.02, 0.9, '3 x 3 countrate: {:.1f}'.format(countrate),
-            #                        transform=self.profile.axes.transAxes)
+            self.canvas_profile.countrate_label.set_text('3 x 3 countrate: {:.0f}'.format(countrate))
 
-            # print(dir(self.profile.countrate_label))
-            self.profile.countrate_label.set_text('3 x 3 countrate: {:.0f}'.format(countrate))
-
-            self.profile.draw()
+            self.canvas_profile.draw()
 
     def button_press_callback(self, event):
-        '''Whenever a mouse button is pressed, determines if a button press is
+        '''Whenever the mouse is clicked, determines if the click is
         within the matplotlib axis; if so calls get_ind_under_point'''
         if not event.inaxes:
             return
@@ -659,164 +486,74 @@ class StarSelectorWindow(QDialog):
             return
         self._ind = self.get_ind_under_point(event)
 
-    def get_ind_under_point(self, event):
-        '''If user clicks within one epsilon of an identified star, appends that
-        star's position to inds; notifies user if no star is nearby or if
-        selected star is already selected'''
+    def set_guidestar(self):
+        '''
+        Change order of self.inds to reflect the new guide star
+        Update list of original index order
+        Update GUI plotted circles
+        '''
+        # Determine index of old guide star
+        ind_of_OLD_GS = self.gs_ind
 
-        d = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
-        # i = np.unravel_index(np.nanargmin(d), d.shape)
-        indseq = np.nonzero(np.equal(d, np.amin(d)))[0]
-        ind = indseq[0]
+        # Re-draw old guide star as regular star
+        self.canvas.axes.lines[ind_of_OLD_GS].set_markeredgecolor('darkorange')
 
-        if len(self.inds) == self.nStars:
-            if self.print_output:
-                print('Maximum number of stars, {}, already selected.'.format(self.nStars))
+        # Determine index of new guide star
+        guide_ind = self.tableWidget_selectedStars.currentRow()
+        self.gs_ind = guide_ind
 
-            redText = "<br/><span style=\" color:#ff0000;\" >"
-            redText += 'Maximum number of stars, {}, already selected.'.format(self.nStars)
-            redText += "</span>"
+        # Re-draw new guide star as guide star
+        self.canvas.axes.lines[guide_ind].set_markeredgecolor('yellow')
 
-            self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
+        # Move the guide star icon
+        self.tableWidget_selectedStars.setItem(ind_of_OLD_GS, 0, QTableWidgetItem(''))
+        self.tableWidget_selectedStars.setItem(guide_ind, 0, QTableWidgetItem(QIcon(os.path.join(__location__, 'gs_icon.png')), ''))
+
+        self.canvas.draw()
+
+
+    def remove_star(self):
+        '''
+        Remove star and update inds list
+        '''
+
+        # Determine index of star being removed
+        star_ind = self.tableWidget_selectedStars.currentRow()
+
+        # If user tries to delete guide star, don't let them
+        if star_ind == self.gs_ind:
+            redText = "<span style=\" color:#ff0000;\" >"
+            redText += 'The guide star cannot be deleted. Please choose \
+                        another star or change the guide star.'
+            redText += "</span><br>"
+            self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
             return
 
-        if d[ind] >= self.epsilon:
-            if self.print_output:
-                print('No star within {} pixels. No star selected.'.format(self.epsilon))
+        # Un-draw circle
+        l_rem = self.canvas.axes.lines.pop(star_ind)
+        del l_rem
 
-            redText = "<br/><span style=\" color:#ff0000;\" >"
-            redText += 'No star within {} pixels. No star selected.'.format(self.epsilon)
-            redText += "</span>"
+        # Send deletion message to output
+        ind_of_ind = int(self.tableWidget_selectedStars.item(star_ind, 1).text()) - 1
+        remstar_string = 'Deleted star at: x={:.1f}, y={:.1f}'.format(self.x[ind_of_ind],
+                                                                      self.y[ind_of_ind])
+        redText = "<span style=\" color:#ff0000;\" >" + \
+                  remstar_string + "</span><br>"
+        self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+        if self.print_output:
+            print(remstar_string)
 
-            self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
+        # Update inds list
+        self.inds.pop(star_ind)
 
-        elif ind in self.inds:
-            if self.print_output:
-                print('Star already selected, please choose another star')
+        # Update guide star index
+        if star_ind < self.gs_ind:
+            self.gs_ind -= 1
 
-            redText = "<br/><span style=\" color:#ff0000;\" >"
-            redText += 'Star already selected, please choose another star'
-            redText += "</span>"
+        # Update table
+        self.tableWidget_selectedStars.removeRow(star_ind)
 
-            self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
-
-        else:
-            if len(self.inds) == 0:  # First star selected
-                c = 'yellow'
-                newstar_string = '1 star selected: x={:.1f}, y={:.1f}'.format(self.x[ind],
-                                                                              self.y[ind])
-                self.guidestar_buttons[0].setEnabled(True)
-            else:  # >= second star selected
-                c = 'darkorange'
-                newstar_string = '{} stars selected: x={:.1f}, y={:.1f}'.format(len(self.inds) + 1,
-                                                                                self.x[ind],
-                                                                                self.y[ind])
-
-            if self.print_output:
-                print(newstar_string)
-
-            self.log_textbox.setHtml('<br/>' + newstar_string + self.log_textbox.toHtml())
-            self.star_positions[len(self.inds)].setText('x={:.1f}, y={:.1f}'.format(self.x[ind],
-                                                                                    self.y[ind]))
-            self.guidestar_buttons[len(self.inds)].setCheckable(True)
-            self.remove_buttons[len(self.inds)].setEnabled(True)
-            self.inds_of_inds.append(len(self.inds))
-
-            self.canvas.axes.plot(self.x[ind], self.y[ind], 'o', ms=25,
-                                  mfc='none', mec=c, mew=2, lw=0)
-            self.canvas.draw()
-            self.inds.append(ind)
-
-        return ind
-
-    def make_setguidestar(self, button):
-        # Have to define second function inside to return a function to the toggle.connect method
-        def setguidestar():
-            '''
-            Change order of self.inds to reflect the new guide star
-            Update list of original index order
-            Update GUI plotted circles
-            '''
-
-            # Determine index of old guide star
-            ind_of_OLD_guide = self.inds_of_inds[0]
-
-            # Re-draw old guide star as regular star
-            self.canvas.axes.lines[ind_of_OLD_guide].set_markeredgecolor('darkorange')
-
-            # Determine index of new guide star
-            guide_ind = self.guidestar_buttons.index(button)
-            ind_of_guide_ind = self.inds_of_inds.index(guide_ind)
-
-            self.inds.insert(0, self.inds.pop(ind_of_guide_ind))
-            self.inds_of_inds.insert(0, self.inds_of_inds.pop(ind_of_guide_ind))
-
-            # Re-draw new guide star as guide star
-            self.canvas.axes.lines[guide_ind].set_markeredgecolor('yellow')
-
-            self.canvas.draw()
-
-        return setguidestar
-
-    def make_removestar(self, button):
-        # Have to define second function inside to return a function to the toggle.connect method
-        def removestar():
-            '''
-            Remove star and update inds list
-            '''
-
-            # Determine index of star being removed
-            star_ind = self.remove_buttons.index(button)
-            ind_of_star_ind = self.inds_of_inds.index(star_ind)
-
-            # If user tries to delete guide star, don't let them
-            if self.guidestar_buttons[star_ind].isChecked():
-                redText = "<br/><span style=\" color:#ff0000;\" >"
-                redText += 'The guide star cannot be deleted. Please choose \
-                            another star or change the guide star.'
-                redText += "</span>"
-                self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
-                return
-
-            # Un-draw circle
-            l_rem = self.canvas.axes.lines.pop(star_ind)
-            del l_rem
-
-            # Send deletion message to output
-            remstar_string = 'Deleted star at: x={:.1f}, y={:.1f}'.format(self.x[self.inds[ind_of_star_ind]],
-                                                                          self.y[self.inds[ind_of_star_ind]])
-            redText = "<br/><span style=\" color:#ff0000;\" >" + \
-                      remstar_string + "</span>"
-            self.log_textbox.setHtml(redText + self.log_textbox.toHtml())
-            if self.print_output:
-                print(remstar_string)
-
-            # Update inds list
-            self.inds.pop(ind_of_star_ind)
-            removed_ind = len(self.inds)
-
-            # Update inds of inds list
-            self.inds_of_inds.pop(ind_of_star_ind)
-            for i in range(len(self.inds_of_inds)):
-                if self.inds_of_inds[i] > star_ind:
-                    self.inds_of_inds[i] -= 1
-
-            # Update star position textboxes
-            for n in np.arange(star_ind, removed_ind):
-                self.star_positions[n].setText(self.star_positions[n + 1].text())
-            self.star_positions[removed_ind].setText('')
-
-            # Update guide star radio buttons
-            ind_of_guide = self.inds_of_inds[0]
-            self.guidestar_buttons[removed_ind].setCheckable(False)
-            self.guidestar_buttons[ind_of_guide].setChecked(True)
-
-            # Update remove buttons
-            self.remove_buttons[removed_ind].setEnabled(False)
-
-            self.canvas.draw()
-
-        return removestar
+        self.canvas.draw()
 
     def fileQuit(self):
         '''Closes the star selector window'''
@@ -833,16 +570,15 @@ class StarSelectorWindow(QDialog):
 
         # If they do, then quit.
         if self.answer:
+            # Save out the indices, applying guide star information
+            self.save_indices()
+
             # If not being called from the master GUI, exit the whole application
             if not self.in_master_GUI:
                 self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
 
             # Close the star selector dialog window
             self.close()
-
-    def nostars_dialog(self, button):
-        if 'No' in button.text():
-            self.answer = False
 
     def cancel(self):
         '''Closes the star selector window and clears indices'''
@@ -857,7 +593,116 @@ class StarSelectorWindow(QDialog):
         # Close the star selector dialog window
         self.close()
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # HELPER FUNCTIONS
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def get_ind_under_point(self, event):
+        '''If user clicks within one epsilon of an identified star, appends that
+        star's position to inds; notifies user if no star is nearby or if
+        selected star is already selected'''
+
+        dist = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
+        indseq = np.nonzero(np.equal(dist, np.amin(dist)))[0]
+        ind = indseq[0]
+        n_stars = len(self.inds)
+
+        # If the user has already selected the maximum number of stars
+        if len(self.inds) == self.n_stars_max:
+            if self.print_output:
+                print('Maximum number of stars, {}, already selected.'.format(self.n_stars_max))
+
+            redText = "<span style=\" color:#ff0000;\" >"
+            redText += 'Maximum number of stars, {}, already selected.'.format(self.n_stars_max)
+            redText += "</span><br>"
+
+            self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+            return
+
+        # If there is no star within ``dist`` of the mouse click
+        elif dist[ind] >= self.epsilon:
+            if self.print_output:
+                print('No star within {} pixels. No star selected.'.format(self.epsilon))
+
+            redText = "<span style=\" color:#ff0000;\" >"
+            redText += 'No star within {} pixels. No star selected.'.format(self.epsilon)
+            redText += "</span><br>"
+
+            self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+
+        # If the user clicked on a star that already exists
+        elif ind in self.inds:
+            if self.print_output:
+                print('Star already selected, please choose another star')
+
+            redText = "<span style=\" color:#ff0000;\" >"
+            redText += 'Star already selected, please choose another star'
+            redText += "</span><br>"
+
+            self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+
+        # Otherwise, actually add the star to the list!
+        else:
+            gs = len(self.inds) == 0
+            if gs:  # First star selected
+                c = 'yellow'
+                newstar_string = '1 star selected: x={:.1f}, y={:.1f}'.format(self.x[ind],
+                                                                              self.y[ind])
+                self.gs_ind = 0
+            else:  # >= second star selected
+                c = 'darkorange'
+                newstar_string = '{} stars selected: x={:.1f}, y={:.1f}'.format(len(self.inds) + 1,
+                                                                                self.x[ind],
+                                                                                self.y[ind])
+
+            # Update log
+            if self.print_output:
+                print(newstar_string)
+            self.textEdit_output.setHtml(newstar_string + '<br>' + self.textEdit_output.toHtml())
+
+            # Add to list
+            # Add empty row
+            if not gs:
+                self.tableWidget_selectedStars.insertRow(self.tableWidget_selectedStars.rowCount())
+            n_rows = self.tableWidget_selectedStars.rowCount()
+            # Set value of row
+            countrate = np.sum(self.data[int(self.y[ind] - 1):int(self.y[ind] + 2),
+                                         int(self.x[ind] - 1):int(self.x[ind] + 2)])
+            # Populate row with data
+            values = ['', str(ind + 1), str(int(self.x[ind])), str(int(self.y[ind])), str(int(countrate))]
+            for i_col, value in enumerate(values):
+                if gs and i_col == 0:
+                    item = QTableWidgetItem(QIcon(os.path.join(__location__, 'gs_icon.png')), '')
+                else:
+                    item = QTableWidgetItem(value)
+                item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+                self.tableWidget_selectedStars.setItem(n_rows - 1, i_col, item)
+
+            # Plot the new star on the canvas
+            self.canvas.axes.plot(self.x[ind], self.y[ind], 'o', ms=25,
+                                  mfc='none', mec=c, mew=2, lw=0)
+            self.canvas.draw()
+
+            # Add to the list of indices
+            self.inds.append(ind)
+
+        return ind
+
+    def save_indices(self):
+        print(self.gs_ind)
+        gs_ID = self.inds[self.gs_ind]
+        print(self.inds)
+        self.inds.pop(self.gs_ind)
+        inds_final = [gs_ID] + self.inds
+        self.inds = inds_final
+        print(self.inds)
+
+    def nostars_dialog(self, button):
+        if 'No' in button.text():
+            self.answer = False
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# MAIN FUNCTION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
     '''Calls a PyQt GUI to allow interactive user selection of guide and reference stars.
