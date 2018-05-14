@@ -59,7 +59,7 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
-                             QTableWidgetItem)
+                             QTableWidgetItem, QWidget, QVBoxLayout)
 from PyQt5.QtCore import pyqtSlot, QSize
 from PyQt5.QtGui import QIcon
 
@@ -253,36 +253,46 @@ class StarSelectorWindow(QDialog):
         Closes the application
     """
     def __init__(self, data, x, y, dist, qApp, in_master_GUI,
-                 print_output=False):
+                 print_output=False, in_SGT_GUI=False):
         '''Defines attributes; calls initUI() method to set up user interface.'''
+        # Initialize runtime attributes
         self.qApp = qApp
         self.print_output = print_output
+        self.in_master_GUI = in_master_GUI
 
+        # Initialize construction attributes
         self.image_dim = 800
 
+        # Initialize data attributes
         self.data = data
         self.x = x
         self.y = y
-
+        self.epsilon = dist
         self._ind = None
         self.inds = []
         self.inds_of_inds = []
-        self.epsilon = dist
         self.n_stars_max = 11
-
-        self.in_master_GUI = in_master_GUI
+        self.gs_ind = None
         self.currentRow = -1
-
-        # Initialize dialog object
-        QDialog.__init__(self, modal=True)
+        self.circles = []
 
         # Import .ui file
-        uic.loadUi(os.path.join(__location__, 'SelectStarsGUI.ui'), self)
+        # (It is imported as a widget, rather than a QDialog window, so that it
+        # can also be imported into the SegmentGuidingGUI module)
+        self.central_widget = QWidget()
+        uic.loadUi(os.path.join(__location__, 'SelectStarsGUI.ui'), self.central_widget)
+        self.__dict__.update(self.central_widget.__dict__)
+
+        # Initialize dialog object and add imported UI
+        if not in_SGT_GUI:
+            QDialog.__init__(self, modal=True)
+            self.setLayout(QVBoxLayout())
+            self.layout().addWidget(self.central_widget)
 
         # Create and load GUI session
         self.setWindowTitle('FGS Commissioning Tools - Guide and Reference Star Selector')
         self.init_matplotlib()
-        self.define_GUI_connections()
+        self.define_StarSelectionGUI_connections()
         self.show()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -311,17 +321,16 @@ class StarSelectorWindow(QDialog):
         self.canvas_profile.init_profile()
         self.frame_profile.layout().insertWidget(0, self.canvas_profile)
 
-
-    def define_GUI_connections(self):
+    def define_StarSelectionGUI_connections(self):
         # Main dialog widgets
         self.pushButton_done.clicked.connect(self.fileQuit)
         self.pushButton_cancel.clicked.connect(self.cancel)
 
         # Main matplotlib canvas widget
-            # Update cursor position and pixel value under cursor
+        #   Update cursor position and pixel value under cursor
         self.canvas.mpl_connect('motion_notify_event', self.update_cursor_position)
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
-            # Star selection!
+        #   Star selection!
         self.canvas.mpl_connect('button_press_event', self.button_press_callback)
 
         # Colorbar widgets
@@ -337,7 +346,9 @@ class StarSelectorWindow(QDialog):
         # Star selection widgets
         self.pushButton_makeGuideStar.clicked.connect(self.set_guidestar)
         self.pushButton_deleteStar.clicked.connect(self.remove_star)
+        self.pushButton_clearStars.clicked.connect(self.clear_selected_stars)
         self.pushButton_deleteStar.installEventFilter(self)
+        self.pushButton_clearStars.installEventFilter(self)
         self.tableWidget_selectedStars.viewport().installEventFilter(self)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -346,9 +357,12 @@ class StarSelectorWindow(QDialog):
 
     @pyqtSlot()
     def eventFilter(self, source, event):
-        '''Event filter for "Delete Star" button and selected stars table
+        '''Event filter for "Delete Star" button, "Clear Selection"
+        button, and selected stars table.
         '''
-        if hasattr(self, 'pushButton_deleteStar') and hasattr(self, 'tableWidget_selectedStars'):
+        if hasattr(self, 'pushButton_deleteStar') and \
+           hasattr(self, 'tableWidget_selectedStars') and \
+           hasattr(self, 'pushButton_clearStars'):
             # Parse out the cursor moving in or out of a star deletion button,
             # and updating the matplotlib axis with a red highlighted circle
             # accordingly
@@ -358,8 +372,7 @@ class StarSelectorWindow(QDialog):
                     star_ind = self.tableWidget_selectedStars.currentRow()
 
                     # Re-draw selected star as red
-                    self.canvas.axes.lines[star_ind].set_markeredgecolor('red')
-
+                    self.circles[star_ind].set_markeredgecolor('red')
                     self.canvas.draw()
                     return True
 
@@ -369,18 +382,42 @@ class StarSelectorWindow(QDialog):
 
                     # Re-draw selected star as original color
                     if star_ind == self.gs_ind:
-                        self.canvas.axes.lines[star_ind].set_markeredgecolor('yellow')
+                        self.circles[star_ind].set_markeredgecolor('yellow')
                     else:
-                        self.canvas.axes.lines[star_ind].set_markeredgecolor('darkorange')
+                        self.circles[star_ind].set_markeredgecolor('darkorange')
 
+                    self.canvas.draw()
+                    return True
+
+            # Parse out the cursor moving in or out of the "clear selection"
+            # button, and updating the matplotlib axis with red highlighted
+            # circles accordingly
+            elif source == self.pushButton_clearStars:
+                n_stars = len(self.inds)
+                if event.type() == QtCore.QEvent.Enter and n_stars > 0:
+                    # Re-draw all stars as red
+                    for i in range(n_stars):
+                        self.circles[i].set_markeredgecolor('red')
+                    self.canvas.draw()
+                    return True
+
+                if event.type() == QtCore.QEvent.Leave and n_stars > 0:
+                    # Re-draw all stars as original color
+                    for i in range(n_stars):
+                        # Set the guide star back to yellow
+                        if i == self.gs_ind:
+                            self.circles[i].set_markeredgecolor('yellow')
+                        # Set the reference stars back to orange
+                        else:
+                            self.circles[i].set_markeredgecolor('darkorange')
                     self.canvas.draw()
                     return True
 
             # Parse any mouse clicks within the table widget, and update the
             # matplotlib axis with a blue highlighted circle to represent the
             # rows that is selected
-            if source == self.tableWidget_selectedStars.viewport() and\
-               event.type() == QtCore.QEvent.MouseButtonPress:
+            elif source == self.tableWidget_selectedStars.viewport() and \
+                 event.type() == QtCore.QEvent.MouseButtonPress:
                 # Record the previous row that was selected
                 previousRow = self.currentRow
 
@@ -392,7 +429,7 @@ class StarSelectorWindow(QDialog):
 
                 # Re-draw the newly selected star as blue
                 if currentRow >= 0:
-                    self.canvas.axes.lines[currentRow].set_markeredgecolor('cornflowerblue')
+                    self.circles[currentRow].set_markeredgecolor('cornflowerblue')
 
                 # Update the table to show the selection
                 self.tableWidget_selectedStars.setCurrentCell(currentRow, 0)
@@ -401,16 +438,15 @@ class StarSelectorWindow(QDialog):
                 if previousRow == currentRow:
                     pass
                 elif previousRow == self.gs_ind:
-                    self.canvas.axes.lines[previousRow].set_markeredgecolor('yellow')
+                    self.circles[previousRow].set_markeredgecolor('yellow')
                 elif previousRow >= 0:
-                    self.canvas.axes.lines[previousRow].set_markeredgecolor('darkorange')
+                    self.circles[previousRow].set_markeredgecolor('darkorange')
 
                 # Update current row to be the newly clicked one
                 self.currentRow = currentRow
 
                 self.canvas.draw()
                 return True
-
 
         return False
 
@@ -449,9 +485,9 @@ class StarSelectorWindow(QDialog):
         matplotlib axis'''
         if event.inaxes:
             self.lineEdit_cursorPosition.setText('({:.0f}, {:.0f})'.format(event.xdata,
-                                                                  event.ydata))
+                                                                           event.ydata))
             self.lineEdit_cursorValue.setText('{:.0f}'.format(self.data[int(event.ydata),
-                                                                 int(event.xdata)]))
+                                                                        int(event.xdata)]))
 
     def update_profile(self, event):
         '''Updates the profile plot when the cursor moves within the matplotlib axis'''
@@ -496,21 +532,20 @@ class StarSelectorWindow(QDialog):
         ind_of_OLD_GS = self.gs_ind
 
         # Re-draw old guide star as regular star
-        self.canvas.axes.lines[ind_of_OLD_GS].set_markeredgecolor('darkorange')
+        self.circles[ind_of_OLD_GS].set_markeredgecolor('darkorange')
 
         # Determine index of new guide star
         guide_ind = self.tableWidget_selectedStars.currentRow()
         self.gs_ind = guide_ind
 
         # Re-draw new guide star as guide star
-        self.canvas.axes.lines[guide_ind].set_markeredgecolor('yellow')
+        self.circles[guide_ind].set_markeredgecolor('yellow')
 
         # Move the guide star icon
         self.tableWidget_selectedStars.setItem(ind_of_OLD_GS, 0, QTableWidgetItem(''))
         self.tableWidget_selectedStars.setItem(guide_ind, 0, QTableWidgetItem(QIcon(os.path.join(__location__, 'gs_icon.png')), ''))
 
         self.canvas.draw()
-
 
     def remove_star(self):
         '''
@@ -530,7 +565,7 @@ class StarSelectorWindow(QDialog):
             return
 
         # Un-draw circle
-        l_rem = self.canvas.axes.lines.pop(star_ind)
+        l_rem = self.circles.pop(star_ind)
         del l_rem
 
         # Send deletion message to output
@@ -555,6 +590,31 @@ class StarSelectorWindow(QDialog):
 
         self.canvas.draw()
 
+    def clear_selected_stars(self):
+        # Reset table
+        self.tableWidget_selectedStars.setRowCount(0)
+
+        # Add back empty row
+        self.tableWidget_selectedStars.insertRow(0)
+
+        # Reset matplotlib canvas
+        for circle in self.circles:
+            self.canvas.axes.lines.remove(circle)
+        self.canvas.draw()
+
+        # Reset index list, guide star index, and circle list
+        self.inds = []
+        self.gs_ind = None
+        self.circles = []
+
+        # Send deletion message to output
+        remstar_string = 'Cleared all selected stars.'
+        redText = "<span style=\" color:#ff0000;\" >" + \
+                  remstar_string + "</span><br>"
+        self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+        if self.print_output:
+            print(remstar_string)
+
     def fileQuit(self):
         '''Closes the star selector window'''
 
@@ -571,7 +631,7 @@ class StarSelectorWindow(QDialog):
         # If they do, then quit.
         if self.answer:
             # Save out the indices, applying guide star information
-            self.save_indices()
+            self.reorder_indices()
 
             # If not being called from the master GUI, exit the whole application
             if not self.in_master_GUI:
@@ -678,8 +738,8 @@ class StarSelectorWindow(QDialog):
                 self.tableWidget_selectedStars.setItem(n_rows - 1, i_col, item)
 
             # Plot the new star on the canvas
-            self.canvas.axes.plot(self.x[ind], self.y[ind], 'o', ms=25,
-                                  mfc='none', mec=c, mew=2, lw=0)
+            self.circles += self.canvas.axes.plot(self.x[ind], self.y[ind], 'o', ms=25,
+                                                 mfc='none', mec=c, mew=2, lw=0)
             self.canvas.draw()
 
             # Add to the list of indices
@@ -687,7 +747,7 @@ class StarSelectorWindow(QDialog):
 
         return ind
 
-    def save_indices(self):
+    def reorder_indices(self):
         print(self.gs_ind)
         gs_ID = self.inds[self.gs_ind]
         print(self.inds)

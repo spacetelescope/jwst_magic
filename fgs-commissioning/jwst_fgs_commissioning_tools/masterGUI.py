@@ -95,7 +95,7 @@ class MasterGui(QMainWindow):
         # Create and load GUI session
         self.setWindowTitle('FGS Commissioning Tools')
         self.init_matplotlib()
-        self.define_GUI_connections()
+        self.define_MainGUI_connections()
         self.show()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -124,7 +124,7 @@ class MasterGui(QMainWindow):
         self.canvas_converted_slot.setMinimumSize(max_dim, max_dim)
         self.canvas_converted.setMinimumSize(max_dim, max_dim)
 
-    def define_GUI_connections(self):
+    def define_MainGUI_connections(self):
         # Main window widgets
         self.pushButton_run.clicked.connect(self.run_tool)
         self.pushButton_quit.clicked.connect(self.close_application)
