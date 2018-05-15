@@ -249,7 +249,7 @@ class SegmentGuidingCalculator:
                         orientations.append(new_seg)
                         guide_segments.append(new_seg[0])
 
-            # If not, use all 18 segments
+            # If not, use all 18 segments as default
             except AttributeError:
                 orientations = np.array([np.linspace(1, nseg, nseg).astype(int)])
 
@@ -263,6 +263,7 @@ class SegmentGuidingCalculator:
 
             # Write the commands for each orientation
             for i_o, orientation in enumerate(orientations):
+                print(orientation)
                 guide_seg_id = orientation[0]
 
                 label = 'star'
@@ -276,9 +277,9 @@ class SegmentGuidingCalculator:
 
                 # Format segment properties (ID, RA, Dec, countrate, uncertainty)
                 star_string = ' -%s%d = %d, %.6f, %.6f, %.1f, %.1f' % (
-                    label, seg, guide_seg_id + 1, self.SegRA[guide_seg_id - 1],
-                    self.SegDec[guide_seg_id - 1], rate[guide_seg_id - 1],
-                    uncertainty[guide_seg_id - 1])
+                    label, seg, guide_seg_id + 1, self.SegRA[guide_seg_id],
+                    self.SegDec[guide_seg_id], rate[guide_seg_id],
+                    uncertainty[guide_seg_id])
 
                 if not self.refonly or (self.refonly and label == 'star'):
                     # Add list of segment IDs for all reference stars
