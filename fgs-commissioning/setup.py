@@ -31,6 +31,7 @@ setup(name='jwst_fgs_commissioning_tools',
       install_requires=[
           'numpy',
           'astropy',
+          'ipython',
           'matplotlib',
           'PyQt5',
           'pysiaf',
