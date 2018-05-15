@@ -28,7 +28,11 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3"/>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="margin">
+       <number>0</number>
+      </property>
+     </layout>
     </widget>
    </item>
    <item>
@@ -128,7 +132,7 @@
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Once you are happy with your selections at left, click the &amp;quot;Save Command&amp;quot; button below to save the stars you have selected as a segment guiding override command. You will see it appear in the table below. If you want to select multiple orientations to guide on, repeat the star selection process and again click &amp;quot;Save Command&amp;quot; when you are done. Segment override commands can be deleted, and the order in which they will be commanded can be altered using the buttons in the &amp;quot;Segment Override Commands&amp;quot; box. &lt;br /&gt;The center of the segment override pointing (i.e. the location that will match the guide star RA and Dec) can be aligned with either the center of the segment array or with a specific segment by setting the &amp;quot;Center of Override Pointing&amp;quot; parameters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Once you are happy with your selections at left, click the &amp;quot;Save Command&amp;quot; button below to save the stars you have selected as a segment guiding override command. You will see it appear in the table below. If you want to select multiple orientations to guide on, repeat the star selection process and again click &amp;quot;Save Command&amp;quot; when you are done. Segment override commands can be deleted, and the order in which they will be commanded can be altered using the buttons in the &amp;quot;Override Commands&amp;quot; box. &lt;br /&gt;The center of the segment override pointing (i.e. the location that will match the commanded guide star RA and Dec) can be aligned with either the center of the segment array or with a specific segment by setting the &amp;quot;Center of Override Pointing&amp;quot; parameters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="wordWrap">
                <bool>true</bool>
@@ -152,6 +156,9 @@ p, li { white-space: pre-wrap; }
           <width>0</width>
           <height>45</height>
          </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {color: black}</string>
         </property>
         <property name="text">
          <string>Save Command</string>
@@ -322,6 +329,12 @@ p, li { white-space: pre-wrap; }
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="QCheckBox" name="checkBox_meanCenter">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>30</height>
+            </size>
+           </property>
            <property name="text">
             <string>Use Center of Segment Array
 (segNum = 0)</string>
