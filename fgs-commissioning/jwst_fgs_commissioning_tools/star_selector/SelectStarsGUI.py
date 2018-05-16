@@ -69,6 +69,7 @@ matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
+
 class StarClickerMatplotlibCanvas(FigureCanvas):
     """Creates a matplotlib canvas as a PyQt widget to plot an FGS image.
 
@@ -748,13 +749,10 @@ class StarSelectorWindow(QDialog):
         return ind
 
     def reorder_indices(self):
-        print(self.gs_ind)
         gs_ID = self.inds[self.gs_ind]
-        print(self.inds)
         self.inds.pop(self.gs_ind)
         inds_final = [gs_ID] + self.inds
         self.inds = inds_final
-        print(self.inds)
 
     def nostars_dialog(self, button):
         if 'No' in button.text():

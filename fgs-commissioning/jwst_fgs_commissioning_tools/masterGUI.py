@@ -390,7 +390,7 @@ class MasterGui(QMainWindow):
                          'catalog': 'from a GSC query'}
 
         if isinstance(self.bkgd_stars, dict):
-            self.textEdit_backgroundStars.setText('{} background stars sdded {}'.\
+            self.textEdit_backgroundStars.setText('{} background stars added {}'.\
                 format(len(self.bkgd_stars['x']), method_adverb[method]))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
