@@ -4,12 +4,6 @@ Authors
 -------
     - Lauren Chambers
 
-
-References
-----------
-For matplotlib canvas example, see:
-    https://matplotlib.org/examples/user_interfaces/embedding_in_qt5.html
-
 Notes
 -----
 1. For the GUI to run successfully, the QtAgg matplotlib backend should
@@ -30,17 +24,18 @@ of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
 
-# Standard Library
+# Standard Library Imports
 from __future__ import unicode_literals
 import sys
 import os
 
-# Third Party
+# Third Party Imports
 import numpy as np
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QTableWidgetItem)
 from PyQt5.QtGui import QIcon
 
+# Local Imports
 from ..star_selector.SelectStarsGUI import StarSelectorWindow
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
