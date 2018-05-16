@@ -516,7 +516,6 @@ Image:</string>
                <height>600</height>
               </size>
              </property>
-             <zorder>groupBox_imageConverter</zorder>
             </widget>
            </item>
            <item row="0" column="1">
@@ -638,7 +637,6 @@ Image:</string>
         </widget>
        </item>
       </layout>
-      <zorder>groupBox_starSelector</zorder>
       <zorder>checkBox_CAL</zorder>
       <zorder>checkBox_ID</zorder>
       <zorder>checkBox_ACQ1</zorder>
@@ -802,10 +800,7 @@ Image:</string>
         </widget>
        </item>
       </layout>
-      <zorder>groupBox_imageConverter</zorder>
-      <zorder>groupBox_imageConverter</zorder>
       <zorder>checkBox_globalAlignment</zorder>
-      <zorder>groupBox_imageConverter</zorder>
       <zorder>radioButton_starSelectorGUI</zorder>
       <zorder>radioButton_regfileStarSelector</zorder>
       <zorder>lineEdit_regfileStarSelector</zorder>
@@ -872,8 +867,8 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>708</y>
+     <x>314</x>
+     <y>687</y>
     </hint>
     <hint type="destinationlabel">
      <x>271</x>
@@ -888,8 +883,8 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>708</y>
+     <x>314</x>
+     <y>687</y>
     </hint>
     <hint type="destinationlabel">
      <x>279</x>
@@ -904,8 +899,8 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>708</y>
+     <x>314</x>
+     <y>687</y>
     </hint>
     <hint type="destinationlabel">
      <x>279</x>
@@ -920,12 +915,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>708</y>
+     <x>314</x>
+     <y>687</y>
     </hint>
     <hint type="destinationlabel">
-     <x>333</x>
-     <y>689</y>
+     <x>407</x>
+     <y>668</y>
     </hint>
    </hints>
   </connection>
@@ -936,12 +931,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>708</y>
+     <x>314</x>
+     <y>687</y>
     </hint>
     <hint type="destinationlabel">
-     <x>458</x>
-     <y>689</y>
+     <x>533</x>
+     <y>668</y>
     </hint>
    </hints>
   </connection>
@@ -952,12 +947,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>708</y>
+     <x>314</x>
+     <y>687</y>
     </hint>
     <hint type="destinationlabel">
-     <x>80</x>
-     <y>689</y>
+     <x>111</x>
+     <y>668</y>
     </hint>
    </hints>
   </connection>
@@ -968,12 +963,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>708</y>
+     <x>314</x>
+     <y>687</y>
     </hint>
     <hint type="destinationlabel">
-     <x>206</x>
-     <y>689</y>
+     <x>281</x>
+     <y>668</y>
     </hint>
    </hints>
   </connection>
@@ -984,12 +979,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>708</y>
+     <x>314</x>
+     <y>687</y>
     </hint>
     <hint type="destinationlabel">
-     <x>584</x>
-     <y>689</y>
+     <x>659</x>
+     <y>668</y>
     </hint>
    </hints>
   </connection>
@@ -1000,12 +995,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>223</x>
-     <y>354</y>
+     <x>234</x>
+     <y>349</y>
     </hint>
     <hint type="destinationlabel">
-     <x>104</x>
-     <y>381</y>
+     <x>137</x>
+     <y>376</y>
     </hint>
    </hints>
   </connection>
@@ -1016,12 +1011,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>223</x>
-     <y>354</y>
+     <x>234</x>
+     <y>349</y>
     </hint>
     <hint type="destinationlabel">
-     <x>270</x>
-     <y>382</y>
+     <x>452</x>
+     <y>380</y>
     </hint>
    </hints>
   </connection>
@@ -1032,12 +1027,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>242</x>
-     <y>575</y>
+     <x>273</x>
+     <y>560</y>
     </hint>
     <hint type="destinationlabel">
-     <x>301</x>
-     <y>605</y>
+     <x>450</x>
+     <y>591</y>
     </hint>
    </hints>
   </connection>
@@ -1048,12 +1043,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>242</x>
-     <y>575</y>
+     <x>273</x>
+     <y>560</y>
     </hint>
     <hint type="destinationlabel">
-     <x>619</x>
-     <y>606</y>
+     <x>656</x>
+     <y>598</y>
     </hint>
    </hints>
   </connection>
@@ -1064,12 +1059,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>242</x>
-     <y>826</y>
+     <x>273</x>
+     <y>799</y>
     </hint>
     <hint type="destinationlabel">
-     <x>338</x>
-     <y>793</y>
+     <x>557</x>
+     <y>767</y>
     </hint>
    </hints>
   </connection>
@@ -1080,12 +1075,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>242</x>
-     <y>826</y>
+     <x>273</x>
+     <y>799</y>
     </hint>
     <hint type="destinationlabel">
-     <x>619</x>
-     <y>795</y>
+     <x>656</x>
+     <y>775</y>
     </hint>
    </hints>
   </connection>
@@ -1096,12 +1091,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>327</x>
-     <y>331</y>
+     <x>358</x>
+     <y>327</y>
     </hint>
     <hint type="destinationlabel">
-     <x>104</x>
-     <y>354</y>
+     <x>137</x>
+     <y>346</y>
     </hint>
    </hints>
   </connection>
@@ -1112,12 +1107,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>327</x>
-     <y>331</y>
+     <x>358</x>
+     <y>327</y>
     </hint>
     <hint type="destinationlabel">
      <x>234</x>
-     <y>354</y>
+     <y>349</y>
     </hint>
    </hints>
   </connection>
@@ -1128,12 +1123,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>384</x>
-     <y>330</y>
+     <x>415</x>
+     <y>327</y>
     </hint>
     <hint type="destinationlabel">
-     <x>317</x>
-     <y>358</y>
+     <x>476</x>
+     <y>349</y>
     </hint>
    </hints>
   </connection>
@@ -1144,12 +1139,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>366</x>
-     <y>329</y>
+     <x>397</x>
+     <y>327</y>
     </hint>
     <hint type="destinationlabel">
-     <x>143</x>
-     <y>385</y>
+     <x>176</x>
+     <y>376</y>
     </hint>
    </hints>
   </connection>
@@ -1160,12 +1155,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>174</x>
-     <y>333</y>
+     <x>205</x>
+     <y>327</y>
     </hint>
     <hint type="destinationlabel">
-     <x>227</x>
-     <y>385</y>
+     <x>409</x>
+     <y>380</y>
     </hint>
    </hints>
   </connection>
@@ -1176,12 +1171,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>139</x>
-     <y>329</y>
+     <x>170</x>
+     <y>327</y>
     </hint>
     <hint type="destinationlabel">
-     <x>100</x>
-     <y>470</y>
+     <x>133</x>
+     <y>461</y>
     </hint>
    </hints>
   </connection>
@@ -1192,8 +1187,8 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>227</x>
-     <y>331</y>
+     <x>258</x>
+     <y>327</y>
     </hint>
     <hint type="destinationlabel">
      <x>250</x>
@@ -1208,12 +1203,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>432</x>
-     <y>337</y>
+     <x>463</x>
+     <y>327</y>
     </hint>
     <hint type="destinationlabel">
-     <x>530</x>
-     <y>462</y>
+     <x>656</x>
+     <y>459</y>
     </hint>
    </hints>
   </connection>
@@ -1224,12 +1219,12 @@ Image:</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>197</x>
-     <y>415</y>
+     <x>284</x>
+     <y>406</y>
     </hint>
     <hint type="destinationlabel">
-     <x>373</x>
-     <y>414</y>
+     <x>476</x>
+     <y>407</y>
     </hint>
    </hints>
   </connection>
@@ -1240,20 +1235,100 @@ Image:</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>418</y>
+     <x>284</x>
+     <y>406</y>
     </hint>
     <hint type="destinationlabel">
-     <x>532</x>
-     <y>414</y>
+     <x>653</x>
+     <y>410</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_detector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>95</x>
+     <y>319</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>71</x>
+     <y>373</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_normalize</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>317</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>45</x>
+     <y>388</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox_normalize</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>76</x>
+     <y>319</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>243</x>
+     <y>402</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_normalize</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>95</x>
+     <y>316</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>347</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBox_normalize</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>152</x>
+     <y>320</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>557</x>
+     <y>397</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_guider"/>
   <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_starSelector"/>
+  <buttongroup name="buttonGroup_guider"/>
   <buttongroup name="buttonGroup_segmentGuiding"/>
+  <buttongroup name="buttonGroup_starSelector"/>
  </buttongroups>
 </ui>

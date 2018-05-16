@@ -404,8 +404,8 @@ def pad_data(data, padding, fgs_pix):
         # If something else is going on....
         else:
             raise ValueError('Padded image not of proper size (should be 2040): {}'.format(padded_size))
-    avg_signal = np.mean(data)
-    padded_data = np.full((padded_size, padded_size), avg_signal)
+    mean_signal = np.median(data)
+    padded_data = np.full((padded_size, padded_size), mean_signal)
 
     # Replace center of array with real data
     padded_data[padding:padding + size, padding:padding + size] = data

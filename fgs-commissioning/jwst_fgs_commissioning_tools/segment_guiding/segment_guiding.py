@@ -444,7 +444,7 @@ class SegmentGuidingCalculator:
             for i_seg in range(n_segs):
                 if coords[0]['V2Seg'] == self.V2SegArray[i_seg] and \
                    coords[0]['V3Seg'] == self.V3SegArray[i_seg]:
-                    selected_segs_ids.append(i_seg + 1)
+                    selected_segs_ids.append(i_seg)
         if len(selected_segs_ids) == 0:
             raise TypeError('Coordinates of selected segments file do not match those of the provided input file.')
 
