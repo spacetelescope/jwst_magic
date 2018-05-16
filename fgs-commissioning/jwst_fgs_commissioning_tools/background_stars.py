@@ -1,28 +1,52 @@
-# Add background stars to an FGS image by copying current image
+"""Add background stars to an FGS image by repeating the current image
+
+Authors
+-------
+    - Lauren Chambers
+
+Notes
+-----
+1. For the GUI to run successfully, the QtAgg matplotlib backend should
+be used. This can be set by declaring:
+    ::
+    import matplotlib
+    matplotlib.use('Qt5Agg')
+
+Note that this declaration must occur before pyplot or any other
+matplotlib-dependent packages are imported.
+
+2. Because this code is run in a suite that also uses pyplot, there
+will already by instances of the QApplication object floating around
+when this GUI is called. However, only one instance of QApplication can
+be run at once without things crashing terribly. In all GUIs within the
+FGS Commissioning Tools package, be sure to use the existing instance
+of QApplication (access it at QtCore.QCoreApplication.instance()) when
+calling the QApplication instance to run a window/dialog/GUI.
+"""
+
+# Standard Library Imports
 import random
 import logging
 import requests
+import sys
+import os
 
+# Third Party Imports
 import numpy as np
-from astropy.stats import sigma_clipped_stats
+import matplotlib as mpl
 from astropy import units as u
+from astropy.stats import sigma_clipped_stats
 from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QPushButton, QLineEdit,
-                             QLabel, QTextEdit, QRadioButton, QGroupBox, QFrame,
-                             QSizePolicy, QGridLayout, QDialog, QMessageBox,
-                             QTableWidget, QComboBox)
-from PyQt5.QtCore import pyqtSlot, QObject
-import matplotlib as mpl
-from matplotlib.cm import viridis_r
-from astroquery.vizier import Vizier
+from PyQt5 import QtCore, uic
+from PyQt5.QtWidgets import QApplication, QDialog
 
+# Local Imports
 from . import coordinate_transforms
 from .convert_image import counts_to_jmag
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
-GROUPBOX_TITLE_STYLESHEET = 'QGroupBox { font-size: 18px; font-weight: bold; margin-top: 40px } QGroupBox::title { top: -30px }'
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
@@ -31,37 +55,55 @@ LOGGER = logging.getLogger(__name__)
 class BackgroundStarsWindow(QDialog):
 
     def __init__(self, guider, jmag, qApp, in_master_GUI):
-        '''Defines attributes; calls initUI() method to set up user interface.'''
+        '''Defines attributes; calls initUI() method to set up user interface.
+        '''
+        # Initialize general attributes
         self.qApp = qApp
         self.guider = guider
         self.jmag = jmag
         self.image_dim = 400
         self.in_master_GUI = in_master_GUI
         self.method = None
-
         self.extended = None
+        self.x = []
+        self.y = []
+        self.jmags = []
+
+        # Initialize matplotlib plotting attributes
+        self.cbar_vmin_line = None
+        self.cbar_vmax_line = None
+        self.random_stars = None
+        self.defined_stars = None
+        self.catalog_stars = None
+        self.masked_catalog_stars = None
+        self.legend = None
 
         # Initialize dialog object
         QDialog.__init__(self, modal=True)
 
-        # Initialize user interface
-        self.initUI()
+        # Import .ui file
+        uic.loadUi(os.path.join(__location__, 'background_stars.ui'), self)
 
-    def initUI(self):
-        '''Sets up interactive graphical user interface.
-        '''
-
-        # Set up star selector dialog window
+        # Create and load background stars dialog GUI session
         self.setWindowTitle("Add Background Stars")
-        mainGrid = QGridLayout()  # set grid layout
-        self.setLayout(mainGrid)
-        self.setFocus()
+        self.init_matplotlib()
+        self.define_GUI_connections()
+        self.show()
 
-        # Add plot - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        sc = StarClickerMatplotlibCanvas(self, width=5, height=4, dpi=100,
-                         data=None, x=None, y=None, bottom=0.23, left=0.15)
-        self.canvas = sc
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # GUI CONSTRUCTION
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    def init_matplotlib(self):
+        '''Set up the matplotlib canvas that will preview the locations
+        and magnitudes of the background stars relative to the guide
+        star.
+        '''
+        # Connect main matplotlib canvas and add to layout
+        self.canvas = StarClickerMatplotlibCanvas(
+            parent=self.frame_canvas,  data=None, x=None, dpi=100,
+            y=None, bottom=0.23, left=0.15)
+        self.frame_canvas.layout().insertWidget(0, self.canvas)
         self.canvas.axes.set_xlim(0, 2048)
         self.canvas.axes.set_ylim(2048, 0)
         self.canvas.axes.set_xlabel('X [pixels]')
@@ -69,156 +111,49 @@ class BackgroundStarsWindow(QDialog):
 
         # Plot guide star
         self.vmin, self.vmax = (self.jmag + 8, self.jmag - 1)
-        self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*', s=500, c=self.jmag,
-                                 cmap=viridis_r,  vmin=self.vmax, vmax=self.vmin)
+        self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*',
+                                                   s=500, c=self.jmag,
+                                                   cmap='viridis_r',
+                                                   vmin=self.vmax,
+                                                   vmax=self.vmin)
 
         # Add colorbar
         self.canvas.cbar_ax = self.canvas.fig.add_axes([0.05, 0.1, 0.9, 0.03])
         norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
         self.canvas.cbar = mpl.colorbar.ColorbarBase(self.canvas.cbar_ax,
-                                                     norm=norm, cmap=viridis_r,
+                                                     norm=norm, cmap='viridis_r',
                                                      orientation='horizontal')
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.cbar.set_label('J Magnitude')
 
-        self.canvas.setMinimumSize(self.image_dim, self.image_dim)
-        mainGrid.addWidget(sc, 0, 1, 3, 1)
+    def define_GUI_connections(self):
+        # Main dialog widgets
+        self.pushButton_done.clicked.connect(self.quit)
+        self.pushButton_cancel.clicked.connect(self.quit)
 
-        # Add other widgets  - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Build the random stars section
-        randomGroupBox = self.create_random_section()
-        mainGrid.addWidget(randomGroupBox, 0, 0, 1, 1)
+        # Randomly added stars widgets
+        self.groupBox_random.toggled.connect(self.on_check_section)
+        self.lineEdit_nStars.editingFinished.connect(self.draw_random_stars)
+        self.lineEdit_magMin.editingFinished.connect(self.draw_random_stars)
+        self.lineEdit_magMax.editingFinished.connect(self.draw_random_stars)
 
-        # Build the defined stars section
-        definedGroupBox = self.create_defined_section()
-        mainGrid.addWidget(definedGroupBox, 1, 0, 1, 1)
-
-        # Build the random stars section
-        catalogGroupBox = self.create_catalog_section()
-        mainGrid.addWidget(catalogGroupBox, 2, 0, 1, 1)
-
-        # Add done button
-        button_done = QPushButton("Done", self)
-        button_done.clicked.connect(self.quit)
-        button_done.setMinimumSize(150, 50)
-        mainGrid.addWidget(button_done, 3, 0, 1, 2,
-                           alignment=QtCore.Qt.AlignHCenter)
-
-        # Show GUI - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        self.show()
-
-    def create_random_section(self):
-        '''
-        '''
-        # Set up group box
-        self.randomGroupBox = QGroupBox('Add Stars Randomly', self)
-        self.randomGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
-        self.randomGroupBox.setCheckable(True)
-        randomGrid = QGridLayout()
-        self.randomGroupBox.setLayout(randomGrid)
-        self.randomGroupBox.setChecked(True)
-        self.randomGroupBox.toggled.connect(self.on_check_section)
-
-        # Add number of stars textbox
-        randomGrid.addWidget(QLabel('Number of Stars: ', self), 0, 0, 1, 2)
-        self.textbox_n_stars = QLineEdit('5', self)
-        self.textbox_n_stars.setMaximumSize(30, 20)
-        self.textbox_n_stars.editingFinished.connect(self.draw_random_stars)
-        randomGrid.addWidget(self.textbox_n_stars, 0, 2)
-
-        # Add magnitude range texboxes
-        # randomGrid.addWidget(QLabel('Magnitudes Dimmer than Guide Star: ', self), 1, 0, 1, 5)
-        randomGrid.addWidget(QLabel('From', self), 2, 0)
-        self.textbox_jmag_min = QLineEdit('7', self)
-        self.textbox_jmag_min.setMaximumSize(30, 20)
-        self.textbox_jmag_min.editingFinished.connect(self.draw_random_stars)
-        randomGrid.addWidget(self.textbox_jmag_min, 2, 1)
-        randomGrid.addWidget(QLabel('mag dimmer to', self), 2, 2)
-        self.textbox_jmag_max = QLineEdit('3', self)
-        self.textbox_jmag_max.setMaximumSize(30, 20)
-        self.textbox_jmag_min.editingFinished.connect(self.draw_random_stars)
-        randomGrid.addWidget(self.textbox_jmag_max, 2, 3)
-        randomGrid.addWidget(QLabel('mag dimmer than the guide star', self), 2, 4)
-
-        self.draw_random_stars()
-
-
-        return self.randomGroupBox
-
-    def create_defined_section(self):
-        '''
-        '''
-        # Set up group box
-        self.definedGroupBox = QGroupBox('Define Stars to Add', self)
-        self.definedGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
-        self.definedGroupBox.setCheckable(True)
-        definedGrid = QGridLayout()
-        self.definedGroupBox.setLayout(definedGrid)
-        self.definedGroupBox.setChecked(False)
-        self.definedGroupBox.toggled.connect(self.on_check_section)
-
-        # Add table of parameters
-        self.tableWidget = QTableWidget(self)
-        self.tableWidget.setColumnCount(3)
-        self.tableWidget.setRowCount(1)
-        self.tableWidget.setHorizontalHeaderLabels(['x [pixels]', 'y [pixels]', 'Jmag'])
-        self.tableWidget.setMaximumSize(320, 500)
-        definedGrid.addWidget(self.tableWidget, 0, 0)
-
+        # User-defined stars widgets
+        self.groupBox_defined.toggled.connect(self.on_check_section)
         self.tableWidget.cellChanged.connect(self.draw_defined_stars)
+        self.pushButton_addStar.clicked.connect(self.add_star)
+        self.pushButton_deleteStar.clicked.connect(self.delete_star)
 
-        # Add button to add another star
-        self.button_add_star = QPushButton('Add Another Star', self)
-        self.button_add_star.clicked.connect(self.add_star)
-        definedGrid.addWidget(self.button_add_star, 1, 0)
+        # Catalog query stars widgets
+        self.groupBox_catalog.toggled.connect(self.on_check_section)
+        self.pushButton_queryGSC.clicked.connect(self.draw_catalog_stars)
 
-        # Add button to deleted star
-        self.button_add_star = QPushButton('Delete Star', self)
-        self.button_add_star.clicked.connect(self.delete_star)
-        definedGrid.addWidget(self.button_add_star, 2, 0)
-
-        return self.definedGroupBox
-
-    def create_catalog_section(self):
-        '''
-        '''
-        # Set up group box
-        self.catalogGroupBox = QGroupBox('Add Stars from Guide Star Catalog 2.4.1', self)
-        self.catalogGroupBox.setStyleSheet(GROUPBOX_TITLE_STYLESHEET)
-        self.catalogGroupBox.setCheckable(True)
-        catalogGrid = QGridLayout()
-        self.catalogGroupBox.setLayout(catalogGrid)
-        self.catalogGroupBox.setChecked(False)
-        self.catalogGroupBox.toggled.connect(self.on_check_section)
-
-        # Add RA and Dec text boxes
-        catalogGrid.addWidget(QLabel('RA: ', self), 0, 0, alignment=QtCore.Qt.AlignRight)
-        self.textbox_RA = QLineEdit(self)
-        self.textbox_RA.setMaximumSize(150, 20)
-        catalogGrid.addWidget(self.textbox_RA, 0, 1)
-
-        catalogGrid.addWidget(QLabel('Dec: ', self), 1, 0, alignment=QtCore.Qt.AlignRight)
-        self.textbox_Dec = QLineEdit(self)
-        self.textbox_Dec.setMaximumSize(150, 20)
-        catalogGrid.addWidget(self.textbox_Dec, 1, 1)
-
-        # Add units
-        self.cb_RAUnits = QComboBox(self)
-        self.cb_RAUnits.addItem("-Select-")
-        self.cb_RAUnits.addItem("Hours")
-        self.cb_RAUnits.addItem("Degrees")
-        catalogGrid.addWidget(self.cb_RAUnits, 0, 2)
-        catalogGrid.addWidget(QLabel('Degrees', self), 1, 2)
-
-        # Add "query" button
-        self.button_query = QPushButton('Query GSC', self)
-        self.button_query.clicked.connect(self.draw_catalog_stars)
-        catalogGrid.addWidget(self.button_query, 0, 3, 2, 1)
-
-        return self.catalogGroupBox
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # WIDGET CONNECTIONS
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def on_check_section(self):
-        sections = [self.randomGroupBox, self.catalogGroupBox, self.definedGroupBox]
+        sections = [self.groupBox_random, self.groupBox_catalog,
+                    self.groupBox_defined]
         if self.sender().isChecked():
             for section in sections:
                 if section != self.sender():
@@ -226,17 +161,17 @@ class BackgroundStarsWindow(QDialog):
 
     def draw_random_stars(self):
         # Only draw new stars if all the needed parameters exist
-        if self.textbox_jmag_min.text() == '' or\
-           self.textbox_jmag_max.text() == '' or\
-           self.textbox_n_stars.text() == '':
+        if self.lineEdit_magMin.text() == '' or\
+           self.lineEdit_magMax.text() == '' or\
+           self.lineEdit_nStars.text() == '':
             return
 
         # Randomly generate x, y, and jmags
         jmag = self.jmag
         size = 2048
-        nstars_random = int(self.textbox_n_stars.text())
-        vmin = jmag + float(self.textbox_jmag_min.text())
-        vmax = jmag + float(self.textbox_jmag_max.text())
+        nstars_random = int(self.lineEdit_nStars.text())
+        vmin = jmag + float(self.lineEdit_magMin.text())
+        vmax = jmag + float(self.lineEdit_magMax.text())
         self.x = random.sample(range(size), nstars_random)
         self.y = random.sample(range(size), nstars_random)
         self.jmags = random.sample(
@@ -251,8 +186,6 @@ class BackgroundStarsWindow(QDialog):
             norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
             self.canvas.cbar.set_clim(self.vmax, self.vmin)
             self.canvas.cbar.set_norm(norm)
-
-
             self.guide_star.set_clim(self.vmax, self.vmin)
 
         # Remove other stars and lines, if they have already been plotted
@@ -264,12 +197,11 @@ class BackgroundStarsWindow(QDialog):
         self.cbar_vmin_line = self.canvas.cbar.ax.axvline(cbar_vmin, c='w')
         self.cbar_vmax_line = self.canvas.cbar.ax.axvline(cbar_vmax, c='w')
 
-
         # Plot every star
         self.random_stars = self.canvas.axes.scatter(
-            self.x, self.y, c=self.jmags, marker='*', s=500, cmap=viridis_r,
+            self.x, self.y, c=self.jmags, marker='*', s=500, cmap='viridis_r',
             vmin=self.vmax, vmax=self.vmin
-            )
+        )
 
         # Record what method was used
         self.method = "random"
@@ -288,18 +220,18 @@ class BackgroundStarsWindow(QDialog):
                 elif self.tableWidget.item(i_row, i_col).text() == '':
                     return
                 elif not self.tableWidget.item(i_row, i_col).text().isnumeric():
-                    print('There is a cell with non-numeric contents')
+                    LOGGER.warbubg('Background Stars: There is a cell with non-numeric contents')
                     return
 
         # Alert user if the coordinates are out of bounds
         for i_row in range(self.tableWidget.rowCount()):
             if 0 > float(self.tableWidget.item(i_row, 0).text()) or\
                float(self.tableWidget.item(i_row, 0).text()) > 2048:
-                print('X Location out of bounds.')
+                LOGGER.warning('Background Stars: X Location out of bounds.')
                 return
             if 0 > float(self.tableWidget.item(i_row, 1).text()) or\
-               float(self.tableWidget.item(i_row, 1).text())> 2048:
-                print('Y Location out of bounds.')
+               float(self.tableWidget.item(i_row, 1).text()) > 2048:
+                LOGGER.warning('Background Stars: Y Location out of bounds.')
                 return
 
         # Remove other stars and lines, if they have already been plotted
@@ -319,7 +251,7 @@ class BackgroundStarsWindow(QDialog):
 
         # Plot every star
         self.defined_stars = self.canvas.axes.scatter(
-            self.x, self.y, c=self.jmags, marker='*', s=500, cmap=viridis_r,
+            self.x, self.y, c=self.jmags, marker='*', s=500, cmap='viridis_r',
             vmin=self.vmax, vmax=self.vmin
             )
 
@@ -333,8 +265,8 @@ class BackgroundStarsWindow(QDialog):
 
     def draw_catalog_stars(self):
         # Only draw new stars if all the needed parameters exist
-        if self.textbox_RA.text() == '' or\
-           self.textbox_Dec.text() == '':
+        if self.lineEdit_RA.text() == '' or\
+           self.lineEdit_Dec.text() == '':
             return
 
         # Remove other stars and lines, if they have already been plotted
@@ -342,10 +274,11 @@ class BackgroundStarsWindow(QDialog):
 
         # Query guide star catalog (GSC) to find stars around given pointing
         # Convert from RA & Dec to pixel coordinates
-        RAunit_index = int(self.cb_RAUnits.currentIndex())
+        RAunit_index = int(self.comboBox_RAUnits.currentIndex())
         unit_RA = [None, u.hourangle, u.deg][RAunit_index]
         unit_Dec = u.deg
-        coordinates = SkyCoord(self.textbox_RA.text(), self.textbox_Dec.text(), unit=(unit_RA, unit_Dec))
+        coordinates = SkyCoord(self.lineEdit_RA.text(), self.lineEdit_Dec.text(),
+                               unit=(unit_RA, unit_Dec))
         queried_catalog = self.query_gsc(coordinates, self.guider)
 
         # Plot every star
@@ -353,8 +286,8 @@ class BackgroundStarsWindow(QDialog):
         # Plot stars with known jmags
         self.catalog_stars = self.canvas.axes.scatter(
             self.x[~mask], self.y[~mask], c=self.jmags[~mask], marker='*',
-            s=500, cmap=viridis_r, vmin=self.vmax, vmax=self.vmin,
-            label = None
+            s=500, cmap='viridis_r', vmin=self.vmax, vmax=self.vmin,
+            label=None
             )
         # Plot stars with unknown jmags
         if len(self.x[mask]) > 0:
@@ -367,11 +300,11 @@ class BackgroundStarsWindow(QDialog):
         # # Plot extended sources
         # if self.extended:
         #     self.masked_catalog_stars = self.canvas.axes.scatter(
-        #         self.extended['x'], self.y[mask], c='white', marker='galaxy_icon.jpg', s=500,
+        #         self.extended['x'], self.y[mask], c='white',
+        #         marker='galaxy_icon.jpg', s=500,
         #         edgecolors='red', label='Extended source'
         #         )
         #     self.legend = self.canvas.axes.legend()
-
 
         # Record what method was used
         self.method = "catalog"
@@ -381,53 +314,45 @@ class BackgroundStarsWindow(QDialog):
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.draw()
 
-
-    def clear_plot(self):
-        # Remove random stars and lines, if they have already been plotted
-        try:
-            self.random_stars.remove()
-            self.cbar_vmin_line.remove()
-            self.cbar_vmax_line.remove()
-            self.random_stars = None
-        except (AttributeError, ValueError) as e:
-            pass
-
-        # Remove defined stars, if they have already been plotted
-        try:
-            self.defined_stars.remove()
-        except (AttributeError, ValueError) as e:
-            pass
-
-        # Remove catalog stars, if they have already been plotted
-        try:
-            self.catalog_stars.remove()
-        except (AttributeError, ValueError) as e:
-            pass
-        # Remove masekd catalog stars, if they have already been plotted
-        try:
-            self.masked_catalog_stars.remove()
-            self.legend.remove()
-        except (AttributeError, ValueError) as e:
-            pass
-
     def add_star(self):
         n_rows = self.tableWidget.rowCount()
         self.tableWidget.insertRow(n_rows)
 
     def delete_star(self):
         # Determine which row is highlighted
-        i_row = self.tableWidget.selectedItems()[0].row()
+        i_row = self.tableWidget.currentRow()
 
-        # Remove that row's x, y, jmag from list of parameters
-        self.x.remove(float(self.tableWidget.item(i_row, 0).text()))
-        self.y.remove(float(self.tableWidget.item(i_row, 1).text()))
-        self.jmags.remove(float(self.tableWidget.item(i_row, 2).text()))
+        # If the row is not empty, remove that row's x, y, jmag from
+        # list of parameters
+        try:
+            self.x.remove(float(self.tableWidget.item(i_row, 0).text()))
+            self.y.remove(float(self.tableWidget.item(i_row, 1).text()))
+            self.jmags.remove(float(self.tableWidget.item(i_row, 2).text()))
+        except (ValueError, AttributeError) as e:
+            pass
 
         # Remove that row from the table
         self.tableWidget.removeRow(i_row)
 
         # Redraw the defined stars
         self.draw_defined_stars()
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # HELPER FUNCTIONS
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def clear_plot(self):
+        # Remove stars and lines, if they have already been plotted
+        names = ['random_stars', 'cbar_vmin_line', 'cbar_vmax_line',
+                 'defined_stars', 'catalog_stars', 'masked_catalog_stars',
+                 'legend']
+
+        for name in names:
+            if getattr(self, name) is not None:
+                try:
+                    getattr(self, name).remove()
+                    setattr(self, name, None)
+                except ValueError:
+                    print('could not remove')
 
     def query_gsc(self, coordinates, guider):
         '''Create and parse a web query to GSC 2.4.1 to determine the
@@ -443,9 +368,9 @@ class BackgroundStarsWindow(QDialog):
         Dec = coordinates.dec.degree
 
         # Query MAST to get GSC 2.4.1 results in CSV form
-        radius = 1.6 / 60 # 1.6 arcmin in degrees
+        radius = 1.6 / 60  # 1.6 arcmin in degrees
         web_query = "http://gsss.stsci.edu/webservices/vo/CatalogSearch.aspx?RA={:f}&DEC={:f}&DSN=+&FORMAT=CSV&CAT=GSC241&SR={:f}&".format(RA, Dec, radius)
-        print(web_query)
+        LOGGER.info('Background Stars: Querying GSC 2.4.1 at', web_query)
         page = requests.get(web_query)
         csv_data = page.text
         table = asc.read(csv_data)
@@ -456,7 +381,7 @@ class BackgroundStarsWindow(QDialog):
         Decs = table['dec']
         jmag = table['tmassJmag']
 
-        print('Finshed query; found {} sources.'.format(len(RAs)))
+        LOGGER.info('Background Stars: Finshed query; found {} sources.'.format(len(RAs)))
 
         # Only select sources that are stars
         mask_pointSources = [c == 0 for c in queried_catalog['classification']]
@@ -470,20 +395,18 @@ class BackgroundStarsWindow(QDialog):
         # (Assume that is the star closest to the center, if there is a star
         # within 1" of the pointing)
         distances = [np.sqrt((ra - RA)**2 + (dec - Dec)**2) for (ra, dec) in zip(RAs, Decs)]
-        i_mindist = np.where(min(distances))[0][0] # probably just zero
-        print(distances)
-        print(i_mindist, distances[i_mindist])
+        i_mindist = np.where(min(distances))[0][0]
         if distances[i_mindist] < 1/60/60:
-            print('Removing assumed guide star at {}, {}'.format(RAs[i_mindist], Decs[i_mindist]))
+            LOGGER.info('Background Stars: Removing assumed guide star at {}, {}'.format(RAs[i_mindist], Decs[i_mindist]))
             np.delete(RAs, i_mindist)
             np.delete(Decs, i_mindist)
             np.delete(jmag, i_mindist)
         else:
-            print('No guide star found within 1 arcsec of the pointing.')
+            LOGGER.warning('Background Stars: No guide star found within 1 arcsec of the pointing.')
 
         # Convert RA/Dec to X/Y pixels
-        V2 = (RAs - RA) *60 * 60
-        V3 = (Decs - Dec) *60 * 60
+        V2 = (RAs - RA) * 60 * 60
+        V3 = (Decs - Dec) * 60 * 60
         x_dhas, y_dhas = coordinate_transforms.Idl2DHAS(-V2, V3)
         x_raw, y_raw = coordinate_transforms.DHAS2Raw(x_dhas, y_dhas, guider)
 
@@ -495,19 +418,22 @@ class BackgroundStarsWindow(QDialog):
             else:
                 in_detector_frame.append(False)
 
-
         self.x = x_raw[in_detector_frame]
         self.y = y_raw[in_detector_frame]
         self.jmags = jmag[in_detector_frame]
 
-
-
-
-        print('Found {} sources in detector FOV.'.format(len(self.x)))
+        LOGGER.info('Background Stars: Found {} sources in GUIDER{} FOV.'.format(len(self.x), self.guider))
 
         return queried_catalog
 
     def quit(self):
+        # If "cancel" was selected, don't save the data
+        if self.sender() == self.pushButton_cancel:
+            self.x = []
+            self.y = []
+            self.jmags = []
+            self.method = None
+
         # If not being called from the master GUI, exit the whole application
         if not self.in_master_GUI:
             self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
@@ -523,14 +449,14 @@ class BackgroundStarsWindow(QDialog):
 
 def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
     # RUN GUI
-    if masterGUIapp:
+    in_master_GUI = masterGUIapp is not None
+
+    if in_master_GUI:
         qApp = masterGUIapp
-        in_master_GUI = True
     else:
         qApp = QtCore.QCoreApplication.instance()
         if qApp is None:
             qApp = QApplication(sys.argv)
-        in_master_GUI = False
 
     window = BackgroundStarsWindow(guider, jmag, qApp=qApp, in_master_GUI=in_master_GUI)
 
@@ -589,7 +515,7 @@ def add_background_stars(image, stars, jmag, fgs_counts, guider):
         jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
 
     # If the flag is simply set to "True", randomly place 5 stars on the image
-    if stars == True:
+    if stars is True:
         x_back = random.sample(range(size), nstars_random)
         y_back = random.sample(range(size), nstars_random)
         # Create the new stars 5 mags or more dimmer
@@ -601,8 +527,8 @@ def add_background_stars(image, stars, jmag, fgs_counts, guider):
         input_lengths = [len(stars[key]) for key in stars.keys()]
         if len(set(input_lengths)) != 1:
             raise ValueError('Invalid dictionary provided for background star '
-                'positions and magnitudes. Ensure the same number of entries is '
-                'provided for all fields.')
+                             'positions and magnitudes. Ensure the same number '
+                             'of entries is provided for all fields.')
 
         x_back = stars['x']
         y_back = stars['y']

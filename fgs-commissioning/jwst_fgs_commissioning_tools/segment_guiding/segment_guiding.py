@@ -9,24 +9,23 @@ Created by Colin Cox on 2017-05-01.
 Modified by Lauren Chambers January 2018
 """
 
+# Standard Library Imports
 import os
 import logging
 
+# Third Party Imports
 # Work out backend business
 import matplotlib
 backend = matplotlib.get_backend()
 matplotlib.use("Qt5Agg")
-
 import matplotlib.pyplot as plt
 import pysiaf
 from pysiaf.utils import rotations
-from tkinter import Tk, StringVar, Radiobutton, Label, Entry, Button
 import numpy as np
 from astropy.io import ascii as asc
-from astropy.io import fits
 from astropy.table import Table
-from functools import partial
 
+# Local Imports
 from .. import coordinate_transforms, utils
 from ..segment_guiding import SegmentGuidingGUI
 
@@ -40,6 +39,7 @@ FGS_SIAF = pysiaf.Siaf('FGS')
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
+
 
 class SegmentGuidingCalculator:
     def __init__(self, segment_infile, program_id, observation_num, visit_num,
@@ -125,7 +125,6 @@ class SegmentGuidingCalculator:
 
         # Convert to Ideal coordinates
         self.xIdl, self.yIdl = self.fgs_siaf_aperture.tel_to_idl(self.V2Aim, self.V3Aim)
-
 
     def FGSsetup(self, *args):
         '''Taking the current guider number (per the radio buttons on the GUI),
@@ -263,7 +262,6 @@ class SegmentGuidingCalculator:
 
             # Write the commands for each orientation
             for i_o, orientation in enumerate(orientations):
-                print(orientation)
                 guide_seg_id = orientation[0]
 
                 label = 'star'
@@ -390,15 +388,15 @@ class SegmentGuidingCalculator:
         LOGGER.info('Segment Guiding: ' + '{} segment coordinates read from {}'.format(len(self.SegIDArray), segment_infile))
 
     def get_selected_segs(self, selected_segs):
-        # If a list of selected segments has been provided, figure that out
+        '''If a list of selected segments has been provided, figure that out
+        '''
 
         # If the selected segments are an array of lists (passed from GUI)
         if isinstance(selected_segs, np.ndarray):
             # If there is more than one orientation provided
             if isinstance(selected_segs[0], list):
-                self.selected_segment_ids = []
                 for i, orientation in enumerate(selected_segs):
-                    self.selected_segment_ids[i] = [s - 1 for s in selected_segs]
+                    self.selected_segment_ids = [s - 1 for s in orientation]
 
             # If there is only one
             else:
