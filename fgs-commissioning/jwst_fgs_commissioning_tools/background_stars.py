@@ -283,6 +283,7 @@ class BackgroundStarsWindow(QDialog):
 
         # Plot every star
         mask = np.array([j is np.ma.masked for j in self.jmags])
+        LOGGER.info('Background Stars: Plotting {} stars onto GUIDER{} FOV.'.format(len(self.x[~mask]), self.guider))
         # Plot stars with known jmags
         self.catalog_stars = self.canvas.axes.scatter(
             self.x[~mask], self.y[~mask], c=self.jmags[~mask], marker='*',
@@ -370,7 +371,7 @@ class BackgroundStarsWindow(QDialog):
         # Query MAST to get GSC 2.4.1 results in CSV form
         radius = 1.6 / 60  # 1.6 arcmin in degrees
         web_query = "http://gsss.stsci.edu/webservices/vo/CatalogSearch.aspx?RA={:f}&DEC={:f}&DSN=+&FORMAT=CSV&CAT=GSC241&SR={:f}&".format(RA, Dec, radius)
-        LOGGER.info('Background Stars: Querying GSC 2.4.1 at', web_query)
+        LOGGER.info('Background Stars: Querying GSC 2.4.1 at ' + web_query)
         page = requests.get(web_query)
         csv_data = page.text
         table = asc.read(csv_data)
@@ -395,12 +396,13 @@ class BackgroundStarsWindow(QDialog):
         # (Assume that is the star closest to the center, if there is a star
         # within 1" of the pointing)
         distances = [np.sqrt((ra - RA)**2 + (dec - Dec)**2) for (ra, dec) in zip(RAs, Decs)]
-        i_mindist = np.where(min(distances))[0][0]
+        i_mindist = np.where(min(distances))[0][0]  # Probably 0
         if distances[i_mindist] < 1/60/60:
             LOGGER.info('Background Stars: Removing assumed guide star at {}, {}'.format(RAs[i_mindist], Decs[i_mindist]))
-            np.delete(RAs, i_mindist)
-            np.delete(Decs, i_mindist)
-            np.delete(jmag, i_mindist)
+            mask_guidestar = [i != i_mindist for i in range(len(RAs))]
+            RAs = RAs[mask_guidestar]
+            Decs = Decs[mask_guidestar]
+            jmag = jmag[mask_guidestar]
         else:
             LOGGER.warning('Background Stars: No guide star found within 1 arcsec of the pointing.')
 
@@ -497,9 +499,6 @@ def add_background_stars(image, stars, jmag, fgs_counts, guider):
     add_data: numpy array
         Image array with original star and additional stars
     """
-    # (Try to) only use the data, not the noise
-    mean, median, std = sigma_clipped_stats(image, sigma=0, iters=0)
-    image[image < mean] = 0
 
     # Randomly create 5 locations on the image
     size = 2048
@@ -538,30 +537,36 @@ def add_background_stars(image, stars, jmag, fgs_counts, guider):
         raise TypeError('Unfamiliar value passed to bkgd_stars: {} Please pass boolean or dictionary of background star x, y, jmag.'.format(stars))
 
     # Add stars to image
+    # Copy original data array
     add_data = np.copy(image)
-    for x, y, jmag in zip(x_back, y_back, jmags_back):
-        star_fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-        scale_factor = star_fgs_counts / fgs_counts
 
-        star_data = image * scale_factor
-        psfx = psfy = 2048
+    # (Try to) only use the data for added stars, not the noise
+    mean, median, std = sigma_clipped_stats(image, sigma=0, iters=0)
+    image[image < mean] = 0
+    for x, y, jmag_back in zip(x_back, y_back, jmags_back):
+        if not isinstance(jmag_back, np.ma.core.MaskedConstant):
+            star_fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag_back, guider)
+            scale_factor = star_fgs_counts / fgs_counts
 
-        x1 = max(0, int(x) - int(psfx / 2))
-        x2 = min(2048, int(x) + int(psfx / 2) + 1)
-        y1 = max(0, int(y) - int(psfy / 2))
-        y2 = min(2048, int(y) + int(psfy / 2) + 1)
+            star_data = image * scale_factor
+            psfx = psfy = 2048
 
-        if x > 1024:
-            star_data = star_data[:x2 - x1]
-        else:
-            star_data = star_data[2048 - (x2 - x1):]
-        if y > 1024:
-            star_data = star_data[:, :y2 - y1]
-        else:
-            star_data = star_data[:, 2048 - (y2 - y1):]
+            # Crop the image to fit on the array at the specified location
+            x1 = max(0, int(x) - int(psfx / 2))
+            x2 = min(2048, int(x) + int(psfx / 2) + 1)
+            y1 = max(0, int(y) - int(psfy / 2))
+            y2 = min(2048, int(y) + int(psfy / 2) + 1)
+            if x > 1024:
+                star_data = star_data[:x2 - x1]
+            else:
+                star_data = star_data[2048 - (x2 - x1):]
+            if y > 1024:
+                star_data = star_data[:, :y2 - y1]
+            else:
+                star_data = star_data[:, 2048 - (y2 - y1):]
 
-        # print('Adding background star with magnitude {:.1f} at location ({}, {}).'.format(jmag,
-        #                                                                                   x, y))
-        add_data[x1:x2, y1:y2] += star_data
+            LOGGER.info('Background Stars: Adding background star with magnitude {:.1f} at location ({}, {}).'.format(jmag_back,
+                                                                                              x, y))
+            add_data[x1:x2, y1:y2] += star_data
 
     return add_data

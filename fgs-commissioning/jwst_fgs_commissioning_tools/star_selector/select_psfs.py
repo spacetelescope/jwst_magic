@@ -372,7 +372,7 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     # Call the GUI to pick PSF indices
     if not testing:
         gui_data = data.copy()
-        gui_data[data == 0] = 0.1  # Alter null pixel values for LogNorm imshow
+        gui_data[data == 0] = 1  # Alter null pixel values for LogNorm imshow
         inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
                                               print_output=False,
                                               masterGUIapp=masterGUIapp)
