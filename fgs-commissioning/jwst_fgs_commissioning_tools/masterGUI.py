@@ -248,6 +248,7 @@ class MasterGui(QMainWindow):
 
             # Update converted image preview
             self.update_converted_image_preview()
+            self.update_filepreview()
             return
 
         # Segment guiding
@@ -301,6 +302,7 @@ class MasterGui(QMainWindow):
 
             # Update converted image preview
             self.update_converted_image_preview()
+            self.update_filepreview()
             return
 
         if convert_im or star_selection or file_writer:
@@ -315,6 +317,7 @@ class MasterGui(QMainWindow):
 
             # Update converted image preview
             self.update_converted_image_preview()
+            self.update_filepreview()
 
     def on_click_input(self):
         ''' Using the Input Image Open button (open file)
@@ -359,10 +362,8 @@ class MasterGui(QMainWindow):
             to_text = self.lineEdit_regfileStarSelector
         elif self.sender() == self.pushButton_regfileSegmentGuiding:
             to_text = self.lineEdit_regfileSegmentGuiding
-        else:
-            raise ValueError('bfdlfsjdf')
 
-        filename = self.open_filename_dialog('In/Reg file', file_type="regfile (*.txt, *.incat)")
+        filename = self.open_filename_dialog('In/Reg file', file_type="Input file (*.txt *.incat);;All files (*.*)")
         to_text.setText(filename)
         return filename
 
@@ -426,10 +427,10 @@ class MasterGui(QMainWindow):
 
     def open_filename_dialog(self, title, file_type="All Files (*)"):
         ''' Dialog box for opening a NIRCam of FGS image'''
-        options = QFileDialog.Options()
+        # options = QFileDialog.Options()
         fileName, _ = QFileDialog.getOpenFileName(self, "Open {}".format(title),
-                                                  "", file_type,
-                                                  options=options)
+                                                  "", file_type)
+                                                  # options=options)
         if fileName:
             return fileName
 

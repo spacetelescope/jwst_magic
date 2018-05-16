@@ -131,7 +131,6 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
                                                      out_dir=out_dir,
                                                      logger_passed=True,
                                                      normalize=normalize)
-
         if bkgd_stars:
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, jmag, fgs_counts, guider)
 
