@@ -57,18 +57,17 @@ Notes
 
 '''
 
-# STDLIB
-from glob import glob
+# Standard Libaray Imports
 import itertools
 import os
 import logging
 
-# THIRD PARTY
+# Third Party Imports
 import numpy as np
 from astropy.io import fits
 from scipy import signal
 
-# LOCAL
+# Local Imports
 from .. import utils
 from ..convert_image import counts_to_jmag
 
@@ -84,20 +83,17 @@ NIRCAM_LW_SCALE = 0.063  # NIRCam LW pixel scale (arcsec/pixel)
 FGS_PIXELS = 2048  # FGS image size in pixels
 FGS_PLATE_SIZE = 2.4  # FGS image size in arcseconds
 
-# Constants to change
-BAD_PIXEL_THRESH = 2000  # Bad pixel threshold
-
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
-# -------------------------------------------------------------------------------
+
 def bad_pixel_correction(data, bp_thresh):
     '''Finds bad pixels that are above a threshold; smooths them with a
     median filter.
 
     Parameters
     ----------
-    data : 2-Dnumpy array
+    data : 2-D numpy array
         Image data
     bp_thresh : int
         Threshold above which pixels are considered "bad" and smoothed
@@ -131,6 +127,7 @@ def bad_pixel_correction(data, bp_thresh):
     data = np.uint16(data)
 
     return data
+
 
 def correct_nircam_dq(image, dq_array, bit_arr=None):
     '''Apply a data quality array correction to an input NIRCam image.
@@ -191,6 +188,7 @@ def correct_nircam_dq(image, dq_array, bit_arr=None):
                                        ind[1] - 2:ind[1] + 2])
 
     return im_copy
+
 
 def fgs_add_dq(image, guider):
     '''Apply a data quality array correction to an FGS image.
@@ -270,11 +268,11 @@ def nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
             image = np.swapaxes(image, 0, 1)
 
     else:
-        raise ValueError('Unfamiliar NIRCam detector provided. Check the header keyword' +
-                  ' "DETECTOR" for the NIRCAM module, then re-run using the ' +
-                  '"nircam_det" keyword to bypass the header query.')
-
+        raise ValueError('Unfamiliar NIRCam detector provided. Check the header '
+                         'keyword "DETECTOR" for the NIRCAM module, then re-run '
+                         'using the "nircam_det" keyword to bypass the header query.')
     return image
+
 
 def sci_to_fgs_raw(image, fgs_guider):
     '''Rotate NIRCam or FGS image from DMS/science coordinate frame
@@ -305,6 +303,7 @@ def sci_to_fgs_raw(image, fgs_guider):
         image = np.rot90(image, k=1)
 
     return image
+
 
 def rotate_nircam_image(image, fgs_guider, header, nircam_det,
                         nircam_coord_frame='sci'):
@@ -337,13 +336,12 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
         The rotated NIRCam image
     '''
 
-    # The Dectector keyword retruns 'NRCA*' or 'NRCB*' so to simplify matters
-    # I just pull out the 4th character in the string
+    # The Dectector keyword retruns 'NRCA*' or 'NRCB*', so to simplify matters
+    # just pull out the 4th character in the string
     if nircam_det not in [None, "-Parse from Header-"]:
         detector = nircam_det
     else:
         detector = header['DETECTOR'][3:].strip()
-
     LOGGER.info("Image Conversion: NIRCAM Detector = {}".format(detector))
 
     # Determine whether the NIRCam image is short- or long-wave to determine
@@ -357,8 +355,10 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
 
     # Perform the rotation
     if nircam_coord_frame == 'sci':
+        LOGGER.info("Image Conversion: Input image in SCI coordinate frame.")
         image = sci_to_fgs_raw(image, fgs_guider)
     elif nircam_coord_frame == 'raw' or nircam_coord_frame == 'det':
+        LOGGER.info("Image Conversion: Input image in RAW/DET coordinate frame.")
         image = nircam_raw_to_fgs_raw(image, detector, fgs_guider)
     else:
         raise ValueError('Unrecognized coordinate frame name.')
@@ -392,7 +392,7 @@ def pad_data(data, padding, fgs_pix):
         the padding width does not match the size of the input image
         data)
     """
-
+    # Determine the size of the data array
     size = np.shape(data)[0]
 
     # Create an array of size (binned data + 2*padding), filled with the mean data value
@@ -414,6 +414,7 @@ def pad_data(data, padding, fgs_pix):
     padded_data = utils.correct_image(padded_data, 65000, 0)
 
     return padded_data
+
 
 def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
     '''Resize a NIRCam image to the expected FGS size and pixel scale
