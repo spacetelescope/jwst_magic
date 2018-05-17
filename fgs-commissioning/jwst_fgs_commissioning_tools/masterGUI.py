@@ -182,11 +182,11 @@ class MasterGui(QMainWindow):
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
         normalize = self.checkBox_normalize.isChecked()
-        if self.comboBox_normalize.currentText()=='FGS counts':
+        if self.comboBox_normalize.currentText() =='FGS counts':
             fgs_counts = float(self.lineEdit_normalize.text())
         else:
             fgs_counts = None
-        if self.comboBox_normalize.currentText()=='J Magnitude':
+        if self.comboBox_normalize.currentText() =='J Magnitude':
             jmag = float(self.lineEdit_normalize.text())
         else:
             jmag = None
@@ -229,7 +229,13 @@ class MasterGui(QMainWindow):
             # Open converted FGS file
             fgs_filename = os.path.join(out_dir, 'out', root, 'FGS_imgs',
                                         '{}_G{}.fits'.format(root, guider))
-            data = fits.open(fgs_filename)[0].data
+            with fits.open(fgs_filename) as hdulist:
+                if len(hdulist) > 1:
+                    data = hdulist[1].data
+                else:
+                    data = hdulist[0].data
+
+            # Update array for showing in LogNorm
             data[data <= 0] = 1
 
             # Open ALLpsfs.txt (list of all identified segments)
@@ -246,7 +252,7 @@ class MasterGui(QMainWindow):
 
             # Rewrite the id.prc and acq.prc files
             rewrite_prc.rewrite_prc(order, guider, root, out_dir)
-            print("** Run Complete **")
+            print("** Run Complete **\n\n")
 
             # Update converted image preview
             self.update_converted_image_preview()
@@ -278,11 +284,15 @@ class MasterGui(QMainWindow):
             visit_num = SGT_dialog.lineEdit_visitNumber.text()
             ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
 
-            if nircam:
-                fgs_image = self.converted_im_file
+            if os.path.exists(self.converted_im_file):
+                fgs_filename = self.converted_im_file
             else:
-                fgs_image = input_image
-            data = fits.open(fgs_image)[0].data
+                fgs_filename = input_image
+            with fits.open(fgs_filename) as hdulist:
+                if len(hdulist) > 1:
+                    data = hdulist[1].data
+                else:
+                    data = hdulist[0].data
 
             # Determine whether to load regfile or run GUI
             if self.radioButton_regfileSegmentGuiding.isChecked():
