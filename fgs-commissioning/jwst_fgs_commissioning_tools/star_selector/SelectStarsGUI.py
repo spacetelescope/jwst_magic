@@ -373,19 +373,18 @@ class StarSelectorWindow(QDialog):
                     star_ind = self.tableWidget_selectedStars.currentRow()
 
                     # Re-draw selected star as red
-                    self.circles[star_ind].set_markeredgecolor('red')
-                    self.canvas.draw()
+                    if star_ind != -1:
+                        self.circles[star_ind].set_markeredgecolor('red')
+                        self.canvas.draw()
                     return True
 
                 if event.type() == QtCore.QEvent.Leave and len(self.inds) > 0:
                     # Determine index of star corresponding to button
                     star_ind = self.tableWidget_selectedStars.currentRow()
 
-                    # Re-draw selected star as original color
-                    if star_ind == self.gs_ind:
-                        self.circles[star_ind].set_markeredgecolor('yellow')
-                    else:
-                        self.circles[star_ind].set_markeredgecolor('darkorange')
+                    # Re-draw selected star as selected color
+                    if star_ind != -1:
+                        self.circles[star_ind].set_markeredgecolor('cornflowerblue')
 
                     self.canvas.draw()
                     return True
@@ -566,8 +565,8 @@ class StarSelectorWindow(QDialog):
             return
 
         # Un-draw circle
-        l_rem = self.circles.pop(star_ind)
-        del l_rem
+        delete_circle = self.circles.pop(star_ind)
+        self.canvas.axes.lines.remove(delete_circle)
 
         # Send deletion message to output
         ind_of_ind = int(self.tableWidget_selectedStars.item(star_ind, 1).text()) - 1
@@ -588,6 +587,10 @@ class StarSelectorWindow(QDialog):
 
         # Update table
         self.tableWidget_selectedStars.removeRow(star_ind)
+
+        # Update which row is highlighted:
+        self.currentRow = self.tableWidget_selectedStars.currentRow()
+        self.circles[self.currentRow].set_markeredgecolor('cornflowerblue')
 
         self.canvas.draw()
 

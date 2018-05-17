@@ -579,20 +579,20 @@ Image:</string>
        <bool>true</bool>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="1" column="0" colspan="5">
-        <widget class="QCheckBox" name="checkBox_rewritePRC">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="text">
-          <string>Only write ID.prc, ACQ.prc, and regfile.txt (for iterative DHAS testing)</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0">
         <widget class="QCheckBox" name="checkBox_CAL">
          <property name="text">
           <string>CAL</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QCheckBox" name="checkBox_ID">
+         <property name="text">
+          <string>ID</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -626,13 +626,23 @@ Image:</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QCheckBox" name="checkBox_ID">
+       <item row="0" column="5">
+        <widget class="QCheckBox" name="checkBox_LOSTRK">
          <property name="text">
-          <string>ID</string>
+          <string>LOSTRK</string>
          </property>
          <property name="checked">
           <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="4">
+        <widget class="QCheckBox" name="checkBox_rewritePRC">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Only write ID.prc, ACQ.prc, and regfile.txt (for iterative DHAS testing)</string>
          </property>
         </widget>
        </item>
@@ -643,6 +653,7 @@ Image:</string>
       <zorder>checkBox_ACQ2</zorder>
       <zorder>checkBox_TRK</zorder>
       <zorder>checkBox_rewritePRC</zorder>
+      <zorder>checkBox_LOSTRK</zorder>
      </widget>
     </item>
     <item row="5" column="0">
