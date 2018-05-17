@@ -220,6 +220,8 @@ class MasterGui(QMainWindow):
         if self.checkBox_ACQ2.isChecked():
             steps.append('ACQ2')
         if self.checkBox_TRK.isChecked():
+            steps.append('TRK')
+        if self.checkBox_LOSTRK.isChecked():
             steps.append('LOSTRK')
 
         # Rewrite .prc and regfile.txt ONLY
