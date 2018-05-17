@@ -39,7 +39,7 @@ from astropy.stats import sigma_clipped_stats
 from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from PyQt5 import QtCore, uic
-from PyQt5.QtWidgets import QApplication, QDialog
+from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QTableWidgetItem
 
 # Local Imports
 from . import coordinate_transforms
@@ -142,6 +142,7 @@ class BackgroundStarsWindow(QDialog):
         self.tableWidget.cellChanged.connect(self.draw_defined_stars)
         self.pushButton_addStar.clicked.connect(self.add_star)
         self.pushButton_deleteStar.clicked.connect(self.delete_star)
+        self.pushButton_definedFile.clicked.connect(self.load_file)
 
         # Catalog query stars widgets
         self.groupBox_catalog.toggled.connect(self.on_check_section)
@@ -158,6 +159,39 @@ class BackgroundStarsWindow(QDialog):
             for section in sections:
                 if section != self.sender():
                     section.setChecked(False)
+
+    def load_file(self):
+        '''Raise a dialog box to load and parse a file listing
+        background star positions and magnitudes; auto-populate the
+        table and plot each star.
+
+        Returns
+        -------
+        filename : str
+            Name of the file cataloging background stars
+        '''
+        filename, _ = QFileDialog.getOpenFileName(self,
+                                                 'Open Background Stars Input File',
+                                                  "",
+                                                  "Input file (*.txt);;All files (*.*)")
+        if filename:
+            self.lineEdit_definedFile.setText(filename)
+
+            # Parse the file
+            tab = asc.read(filename)
+            print(tab)
+            for i_row, row in enumerate(tab):
+                if i_row + 1 > self.tableWidget.rowCount():
+                    self.tableWidget.insertRow(i_row)
+                for i_col, value in enumerate(row):
+                    item = QTableWidgetItem(str(value))
+                    print(i_row, i_col, value, type(value), item)
+                    self.tableWidget.setItem(i_row, i_col, item)
+            print('through the looop')
+
+            self.draw_defined_stars()
+
+            return filename
 
     def draw_random_stars(self):
         # Only draw new stars if all the needed parameters exist
