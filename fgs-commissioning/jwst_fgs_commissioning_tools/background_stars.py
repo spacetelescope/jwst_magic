@@ -214,14 +214,9 @@ class BackgroundStarsWindow(QDialog):
             nstars_random
             )
 
-        # If the new jmag_min is less than the current colorbar, extend
-        # print(self.canvas.cbar.get_clim(), self.vmax, self.vmin)
-        if vmin > self.vmin:
-            self.vmin = vmin + 1
-            norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
-            self.canvas.cbar.set_clim(self.vmax, self.vmin)
-            self.canvas.cbar.set_norm(norm)
-            self.guide_star.set_clim(self.vmax, self.vmin)
+        # Check if the star magnitudes are outside the colorbar limits
+        self.check_colorbar_limits(vmin)
+        self.check_colorbar_limits(vmax)
 
         # Remove other stars and lines, if they have already been plotted
         self.clear_plot()
@@ -283,6 +278,7 @@ class BackgroundStarsWindow(QDialog):
             self.x.append(x)
             self.y.append(y)
             self.jmags.append(jmag)
+            self.check_colorbar_limits(jmag)
 
         # Plot every star
         self.defined_stars = self.canvas.axes.scatter(
@@ -331,6 +327,11 @@ class BackgroundStarsWindow(QDialog):
         # Plot every star
         mask = np.array([j is np.ma.masked for j in self.jmags])
         LOGGER.info('Background Stars: Plotting {} stars onto GUIDER{} FOV.'.format(len(self.x[~mask]), self.guider))
+
+        # Check if the star magnitudes are outside the colorbar limits
+        for jmag in self.jmags[~mask]:
+            self.check_colorbar_limits(jmag)
+
         # Plot stars with known jmags
         self.catalog_stars = self.canvas.axes.scatter(
             self.x[~mask], self.y[~mask], c=self.jmags[~mask], marker='*',
@@ -388,6 +389,28 @@ class BackgroundStarsWindow(QDialog):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # HELPER FUNCTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def check_colorbar_limits(self, j_magnitude):
+        '''Check if a certain magnitude is within the current colorbar
+        limits. If not, extend the limits.
+        '''
+
+        # If the new jmag_min is less than the current colorbar, extend
+        if j_magnitude > self.vmin:
+            self.vmin = j_magnitude + 1
+
+        # If the new jmag_max is more than the current colorbar, extend
+        if j_magnitude < self.vmax:
+            self.vmax = j_magnitude - 1
+
+        norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
+        self.canvas.cbar.set_clim(self.vmax, self.vmin)
+        self.canvas.cbar.set_norm(norm)
+        self.guide_star.set_clim(self.vmax, self.vmin)
+
+        # Redraw the colorbar
+        self.canvas.cbar.draw_all()
+        self.canvas.cbar.ax.invert_xaxis()
+
     def clear_plot(self):
         # Remove stars and lines, if they have already been plotted
         names = ['random_stars', 'cbar_vmin_line', 'cbar_vmax_line',
