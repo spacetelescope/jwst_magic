@@ -39,7 +39,8 @@ from astropy.stats import sigma_clipped_stats
 from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from PyQt5 import QtCore, uic
-from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QTableWidgetItem, QMessageBox
+import pysiaf
 
 # Local Imports
 from . import coordinate_transforms
@@ -306,6 +307,18 @@ class BackgroundStarsWindow(QDialog):
         # Remove other stars and lines, if they have already been plotted
         self.clear_plot()
 
+        # Read position angle from GUI
+        position_angle = self.lineEdit_PA.text()
+        if position_angle == '':
+            no_PA_dialog = QMessageBox()
+            no_PA_dialog.setText('No PA entered' + ' ' * 50)
+            no_PA_dialog.setInformativeText('It is not possible to place results of a GSC query onto the detector without specifying the position angle (roll angle).')
+            no_PA_dialog.setStandardButtons(QMessageBox.Ok)
+            no_PA_dialog.exec()
+            return
+        else:
+            position_angle = float(position_angle)
+
         # Query guide star catalog (GSC) to find stars around given pointing
         # Convert from RA & Dec to pixel coordinates
         RAunit_index = int(self.comboBox_RAUnits.currentIndex())
@@ -313,7 +326,7 @@ class BackgroundStarsWindow(QDialog):
         unit_Dec = u.deg
         coordinates = SkyCoord(self.lineEdit_RA.text(), self.lineEdit_Dec.text(),
                                unit=(unit_RA, unit_Dec))
-        queried_catalog = self.query_gsc(coordinates, self.guider)
+        queried_catalog = self.query_gsc(coordinates, self.guider, position_angle)
 
         # Plot every star
         mask = np.array([j is np.ma.masked for j in self.jmags])
@@ -389,7 +402,7 @@ class BackgroundStarsWindow(QDialog):
                 except ValueError:
                     print('could not remove')
 
-    def query_gsc(self, coordinates, guider):
+    def query_gsc(self, coordinates, guider, position_angle):
         '''Create and parse a web query to GSC 2.4.1 to determine the
         positions and magnitudes of objects around the guide star.
 
@@ -440,11 +453,16 @@ class BackgroundStarsWindow(QDialog):
         else:
             LOGGER.warning('Background Stars: No guide star found within 1 arcsec of the pointing.')
 
-        # Convert RA/Dec to X/Y pixels
-        V2 = (RAs - RA) * 60 * 60
-        V3 = (Decs - Dec) * 60 * 60
-        x_dhas, y_dhas = coordinate_transforms.Idl2DHAS(-V2, V3)
-        x_raw, y_raw = coordinate_transforms.DHAS2Raw(x_dhas, y_dhas, guider)
+        # Convert RA/Dec (sky frame) to X/Y pixels (raw frame)
+        siaf = pysiaf.Siaf('FGS')
+        guider = siaf['FGS{}_FULL'.format(guider)]
+        V2ref_arcsec = guider.V2Ref
+        V3ref_arcsec = guider.V3Ref
+
+        attitude_ref = pysiaf.utils.rotations.attitude(V2ref_arcsec, V3ref_arcsec, RA, Dec, position_angle)
+        V2, V3 = pysiaf.utils.rotations.getv2v3(attitude_ref, RAs, Decs)
+        x_det, y_det = guider.tel_to_det(V2, V3)
+        x_raw, y_raw = y_det, x_det
 
         # Only select the sources within the detector frame
         in_detector_frame = []
