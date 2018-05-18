@@ -338,6 +338,19 @@ def get_guider(header, guider=None, log=None):
 
     return hdr_guider
 
+def get_data_and_header(filename):
+    '''Open a FITS file, get the data from either the SCI or PRIMARY
+    extension, and get the header from the PRIMARY extension.
+    '''
+    with fits.open(filename) as hdulist:
+        if len(hdulist) > 1:
+            data = hdulist[1].data
+        else:
+            data = hdulist[0].data
+        header = hdulist[0].header
+
+    return data, header
+
 def make_root(root, filename):
     '''If no root has been provided, extract from base filename'''
     if root is None:

@@ -47,11 +47,11 @@ from PyQt5.QtCore import Qt
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
-from astropy.io import fits
 from astropy.io import ascii as asc
 import numpy as np
 
 from . import run_fgs_commissioning_tool, utils, background_stars
+from .convert_image import counts_to_jmag
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
@@ -229,11 +229,7 @@ class MasterGui(QMainWindow):
             # Open converted FGS file
             fgs_filename = os.path.join(out_dir, 'out', root, 'FGS_imgs',
                                         '{}_G{}.fits'.format(root, guider))
-            with fits.open(fgs_filename) as hdulist:
-                if len(hdulist) > 1:
-                    data = hdulist[1].data
-                else:
-                    data = hdulist[0].data
+            data, _ = utils.get_data_and_header(fgs_filename)
 
             # Update array for showing in LogNorm
             data[data <= 0] = 1
@@ -288,11 +284,7 @@ class MasterGui(QMainWindow):
                 fgs_filename = self.converted_im_file
             else:
                 fgs_filename = input_image
-            with fits.open(fgs_filename) as hdulist:
-                if len(hdulist) > 1:
-                    data = hdulist[1].data
-                else:
-                    data = hdulist[0].data
+            data, _ = utils.get_data_and_header(fgs_filename)
 
             # Determine whether to load regfile or run GUI
             if self.radioButton_regfileSegmentGuiding.isChecked():
@@ -399,7 +391,20 @@ class MasterGui(QMainWindow):
         self.textEdit_backgroundStars.setEnabled(True)
 
         guider = int(self.buttonGroup_guider.checkedButton().text())
-        jmag = float(self.lineEdit_normalize.text())
+
+        # Determine what the JMag of the original star is
+        if self.checkBox_normalize.isChecked():
+            jmag = float(self.lineEdit_normalize.text())
+        else:
+            # Determine what the FGS counts of the image is
+            # if self.checkBox_useConvertedImage.isChecked():
+            #     data, _ = utils.get_data_and_header(self.convert_im_file)
+            # else:
+            input_image = self.lineEdit_inputImage.text()
+            data, _ = utils.get_data_and_header(input_image)
+            fgs_counts = np.sum(data[data > np.median(data)])
+            jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
+
         self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
 
         method_adverb = {'random': 'randomly',
@@ -484,12 +489,7 @@ class MasterGui(QMainWindow):
             self.tabWidget.setCurrentIndex(0)
 
             # Load data and prep for showing on log scale
-            with fits.open(filename) as hdulist:
-                if len(hdulist) > 1:
-                    data = hdulist[1].data
-                else:
-                    data = hdulist[0].data
-                header = hdulist[0].header
+            data, header = utils.get_data_and_header(filename)
             data[data <= 0] = 1
 
             # Try to get information out of the header
@@ -519,8 +519,7 @@ class MasterGui(QMainWindow):
 
     def parse_header(self, filename):
         # Open the header
-        with fits.open(filename) as hdulist:
-            header = hdulist[0].header
+        _, header = utils.get_data_and_header(filename)
 
         # Parse instrument
         try:
@@ -617,11 +616,7 @@ class MasterGui(QMainWindow):
             self.checkBox_showStars.setEnabled(True)
 
             # Load data
-            with fits.open(self.converted_im_file) as hdulist:
-                if len(hdulist) > 1:
-                    data = hdulist[1].data
-                else:
-                    data = hdulist[0].data
+            data, _ = utils.get_data_and_header(self.converted_im_file)
             data[data <= 0] = 1
 
             # Load ALLpsfs.text
