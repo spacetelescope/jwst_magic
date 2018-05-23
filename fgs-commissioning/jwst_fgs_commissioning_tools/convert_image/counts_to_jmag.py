@@ -9,6 +9,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Kathryn St.Laurent
 
 Use
 ---
@@ -71,24 +72,24 @@ def e_to_counts(electrons, guider):
     conversion = find_conversion(guider)
     return electrons/conversion
 
-def jab_to_jmag(jab):
-    '''Convert J ab to J magnitude'''
-    return jab-0.90
+def fgs_mag_to_jmag(fgs_mag):
+    '''Convert FGS magnitude to J magnitude'''
+    return fgs_mag-0.90
 
 def jmag_to_jab(jmag):
-    '''Convert J magnitude to  J ab '''
+    '''Convert J magnitude to  FGS magnitude '''
     return jmag+0.90
 
-def fgs_counts_to_jmag(countrate, guider):
+def fgs_counts_to_fgs_mag(countrate, guider):
     '''Convert FGS counts to J magnitude given the count rate'''
     electrons = countrate_to_e(countrate, guider)
-    jab = -2.5 * np.log10(electrons/3.1418185) + 29.057
-    return  jab_to_jmag(jab)
+    fgs_mag = -2.5 * np.log10(electrons/3.1418185) + 29.057
+    return  fgs_mag_to_jmag(fgs_mag)
 
 def jmag_to_fgs_counts(jmag, guider):
     '''Convert J magnitude to FGS counts given the J magnitude'''
-    jab = jmag_to_jab(jmag)
-    electrons = 10**((jab - 29.057)/-2.5) * 3.1418185
+    fgs_mag = jmag_to_jab(jmag)
+    electrons = 10**((fgs_mag - 29.057)/-2.5) * 3.1418185
     return e_to_counts(electrons, guider)
 
 def plot_jmag_v_counts(jmags=None):
