@@ -67,6 +67,7 @@ import logging
 import numpy as np
 from astropy.io import fits
 from scipy import signal
+from scipy.ndimage.filters import gaussian_filter
 
 # LOCAL
 from .. import utils
@@ -81,6 +82,7 @@ DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 # Constants
 NIRCAM_SW_SCALE = 0.031  # NIRCam SW pixel scale (arcsec/pixel)
 NIRCAM_LW_SCALE = 0.063  # NIRCam LW pixel scale (arcsec/pixel)
+FGS_SCALE = 0.069  # FGS pixel scale (arcsec/pixel)
 FGS_PIXELS = 2048  # FGS image size in pixels
 FGS_PLATE_SIZE = 2.4  # FGS image size in arcseconds
 
@@ -90,7 +92,33 @@ BAD_PIXEL_THRESH = 2000  # Bad pixel threshold
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
-# -------------------------------------------------------------------------------
+
+def apply_coarse_pointing_filter(data, jitter_rate_arcsec, pixel_scale):
+    '''Apply a Gaussian filter to simulate coarse pointing
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    jitter_rate_arcsec : float
+        The rate of jitter of the telescope (arcsec/sec)
+    pixel_scale : float
+        The pixel scale of the detector (arcsec/pixel)
+
+    Returns
+    -------
+    data_gauss: 2-D numpy array
+        Image data with coarse pointing filter applied
+    '''
+    t_fullframe_read = 10.7  # sec
+    jitter_rate = jitter_rate_arcsec / pixel_scale  # pixel/sec
+    sigma = jitter_rate * t_fullframe_read / 3  # pixel
+
+    data_gauss = gaussian_filter(data, sigma)
+
+    return data_gauss
+
+
 def bad_pixel_correction(data, bp_thresh):
     '''Finds bad pixels that are above a threshold; smooths them with a
     median filter.
@@ -512,7 +540,8 @@ def remove_pedestal(data):
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
-               nircam_det=None, out_dir=None, logger_passed=False, normalize=True):
+               nircam_det=None, out_dir=None, logger_passed=False,
+               normalize=True, coarse_pointing=False, jitter_rate_arcsec=None):
     '''Takes NIRCam or FGS image; turns it into an FGS-like image and
     saves FITS file
 
@@ -617,6 +646,13 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
                     data = sci_to_fgs_raw(data, guider)
             except KeyError:
                 pass
+
+        # Apply Gaussian filter to simulate coarse pointing
+        if coarse_pointing:
+            pixel_scale = nircam_scale if nircam else FGS_SCALE
+
+            data = apply_coarse_pointing_filter(data, jitter_rate_arcsec, pixel_scale)
+            LOGGER.info("Image Conversion: Applied Gaussian filter to simulate coarse pointing with jitter of {:.3f} arcsec/sec".format(jitter_rate_arcsec))
 
         # Normalize the image, if the "normalize" flag is True
         if normalize:
