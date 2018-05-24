@@ -1,4 +1,4 @@
-""" Common utilities for the FGS commissioning tool"""
+""" Common utilities for the JWST MaGIC package"""
 # STDLIB
 import csv
 import itertools

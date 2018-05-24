@@ -1,6 +1,6 @@
-"""GUI interface to FGS Commissioning Tools
+"""GUI interface to JWST MaGIC
 
-The primary interface to the FGS Commissioning Tools, from which almost
+The primary interface to the JWST MaGIC, from which almost
 all of the tool functions can be operated.
 
 Authors
@@ -12,8 +12,8 @@ Use
 ---
 This GUI can be run in the python shell as such:
     ::
-    import jwst_fgs_commissioning_tools
-    jwst_fgs_commissioning_tools.run_tool_GUI()
+    import jwst_magic
+    jwst_magic.run_tool_GUI()
 
 
 Notes
@@ -31,7 +31,7 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-FGS Commissioning Tools package, be sure to use the existing instance
+JWST MaGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
@@ -50,7 +50,7 @@ if matplotlib.get_backend() != 'Qt5Agg':
 from astropy.io import ascii as asc
 import numpy as np
 
-from . import run_fgs_commissioning_tool, utils, background_stars
+from . import run_magic, utils, background_stars
 from .convert_image import counts_to_jmag
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
@@ -93,7 +93,7 @@ class MasterGui(QMainWindow):
         uic.loadUi(os.path.join(__location__, 'masterGUI.ui'), self)
 
         # Create and load GUI session
-        self.setWindowTitle('FGS Commissioning Tools')
+        self.setWindowTitle('JWST MaGIC')
         self.init_matplotlib()
         self.define_MainGUI_connections()
         self.show()
@@ -160,7 +160,7 @@ class MasterGui(QMainWindow):
 
     def run_tool(self):
         '''
-        Takes inputs provided by user and runs run_fgs_commissioning_tool
+        Takes inputs provided by user and runs run_magic
         '''
         # Required
         if self.lineEdit_inputImage.text() == "":
@@ -310,13 +310,13 @@ class MasterGui(QMainWindow):
             return
 
         if convert_im or star_selection or file_writer:
-            run_fgs_commissioning_tool.run_all(input_image, guider, root,
-                                               fgs_counts, jmag, nircam_det,
-                                               nircam, global_alignment,
-                                               steps, in_file, bkgd_stars,
-                                               out_dir, convert_im, star_selection,
-                                               star_selectiongui, file_writer,
-                                               self.app, copy_original, normalize)
+            run_magic.run_all(input_image, guider, root,
+                               fgs_counts, jmag, nircam_det,
+                               nircam, global_alignment,
+                               steps, in_file, bkgd_stars,
+                               out_dir, convert_im, star_selection,
+                               star_selectiongui, file_writer,
+                               self.app, copy_original, normalize)
             print("** Run Complete **")
 
             # Update converted image preview

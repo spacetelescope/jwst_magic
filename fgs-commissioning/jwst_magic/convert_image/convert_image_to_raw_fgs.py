@@ -16,7 +16,7 @@ Use
 ---
     This module can be executed in a Python shell as such:
     ::
-        from jwst_fgs_commissioning_tools.convert_image import convert_image_to_raw_fgs
+        from jwst_magic.convert_image import convert_image_to_raw_fgs
         convert_image_to_raw_fgs.convert_im(input_im, guider, root,
             nircam=True, nircam_det=None, fgs_counts=None, jmag=None,
             out_dir=None):
