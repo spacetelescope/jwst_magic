@@ -17,7 +17,7 @@ Use
 ---
 This GUI can be run in the python shell or as a module, as such:
     ::
-    from jwst_fgs_commissioning_tools.star_selector import SelectStarsGUI
+    from jwst_magic.star_selector import SelectStarsGUI
     inds = SelectStarsGUI.run_SelectStars(data_array, x_list, y_list, dist)
 
 References
@@ -40,7 +40,7 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-FGS Commissioning Tools package, be sure to use the existing instance
+JWST MaGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
@@ -291,7 +291,7 @@ class StarSelectorWindow(QDialog):
             self.layout().addWidget(self.central_widget)
 
         # Create and load GUI session
-        self.setWindowTitle('FGS Commissioning Tools - Guide and Reference Star Selector')
+        self.setWindowTitle('JWST MaGIC - Guide and Reference Star Selector')
         self.init_matplotlib()
         self.define_StarSelectionGUI_connections()
         self.show()
