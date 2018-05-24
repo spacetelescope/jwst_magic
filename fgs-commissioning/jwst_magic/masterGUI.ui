@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1432</width>
-    <height>874</height>
+    <width>1393</width>
+    <height>908</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,6 +36,58 @@
        <bool>false</bool>
       </property>
       <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="4">
+        <widget class="QPushButton" name="pushButton_inputImage">
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="4">
+        <widget class="QPushButton" name="pushButton_out">
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_input">
+         <property name="text">
+          <string>&lt;b&gt;Input Image*&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="2">
+        <widget class="QLabel" name="label_requiredParameter">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;* - Required Parameter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1" colspan="3">
+        <widget class="QLineEdit" name="lineEdit_root"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_guider">
+         <property name="text">
+          <string>&lt;b&gt;Guider*&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="QPushButton" name="pushButton_root">
+         <property name="text">
+          <string>Use Default</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_root">
+         <property name="text">
+          <string>&lt;b&gt;Root&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
        <item row="3" column="1" colspan="3">
         <widget class="QTextEdit" name="textEdit_out">
          <property name="sizePolicy">
@@ -58,85 +110,6 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="4">
-        <widget class="QPushButton" name="pushButton_root">
-         <property name="text">
-          <string>Use Default</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_root">
-         <property name="text">
-          <string>&lt;b&gt;Root&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_guider">
-         <property name="text">
-          <string>&lt;b&gt;Guider*&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1" colspan="3">
-        <widget class="QLineEdit" name="lineEdit_root"/>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_input">
-         <property name="text">
-          <string>&lt;b&gt;Input Image*&lt;/b&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="4">
-        <widget class="QPushButton" name="pushButton_out">
-         <property name="text">
-          <string>Open</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="4">
-        <widget class="QPushButton" name="pushButton_inputImage">
-         <property name="text">
-          <string>Open</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="2">
-        <widget class="QLabel" name="label_requiredParameter">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;* - Required Parameter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QRadioButton" name="radioButton_G2">
-         <property name="text">
-          <string>2</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_guider</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_out">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Out Directory&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QRadioButton" name="radioButton_G1">
-         <property name="text">
-          <string>1</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_guider</string>
-         </attribute>
-        </widget>
-       </item>
        <item row="1" column="3">
         <spacer name="horizontalSpacer">
          <property name="orientation">
@@ -150,241 +123,33 @@
          </property>
         </spacer>
        </item>
+       <item row="1" column="1">
+        <widget class="QRadioButton" name="radioButton_G1">
+         <property name="text">
+          <string>1</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_guider</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QRadioButton" name="radioButton_G2">
+         <property name="text">
+          <string>2</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_guider</string>
+         </attribute>
+        </widget>
+       </item>
        <item row="0" column="1" colspan="3">
         <widget class="QLineEdit" name="lineEdit_inputImage"/>
        </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="1" column="0" colspan="2">
-     <widget class="QGroupBox" name="groupBox_imageConverter">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="toolTip">
-       <string>Convert input image into a raw FGS image</string>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
-      </property>
-      <property name="title">
-       <string>Image Converter</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0" colspan="4">
-        <widget class="QCheckBox" name="checkBox_useConvertedImage">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Use existing converted image (shown at right) rather than input image</string>
-         </property>
-         <property name="checked">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_instrument">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QRadioButton" name="radioButton_FGS">
-         <property name="text">
-          <string>FGS</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_instrument</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="1" column="2" colspan="2">
-        <widget class="QRadioButton" name="radioButton_NIRCam">
-         <property name="text">
-          <string>NIRCam</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">buttonGroup_instrument</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_detector">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1" colspan="3">
-        <widget class="QComboBox" name="comboBox_detector">
-         <item>
-          <property name="text">
-           <string>- Parse from header -</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A1</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A2</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A3</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A4</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>A5 - long wave</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B1</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B2</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B3</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B4</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>B5 - long wave</string>
-          </property>
-         </item>
-        </widget>
-       </item>
        <item row="3" column="0">
-        <widget class="QLabel" name="label_normalize">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
+        <widget class="QLabel" name="label_out">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1" colspan="2">
-        <widget class="QCheckBox" name="checkBox_normalize">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="text">
-          <string>Normalize to:</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="3">
-        <widget class="QLineEdit" name="lineEdit_normalize">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">.QLineEdit:disabled {color: grey}</string>
-         </property>
-         <property name="text">
-          <string>11.0</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="4">
-        <widget class="QComboBox" name="comboBox_normalize">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="currentIndex">
-          <number>2</number>
-         </property>
-         <item>
-          <property name="text">
-           <string>- Select units -</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>FGS counts</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>J Magnitude</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_backgroundStars">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1" colspan="3">
-        <widget class="QTextEdit" name="textEdit_backgroundStars">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>40</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QTextEdit { background-color : #ECECEC }
-\</string>
-         </property>
-         <property name="html">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="4">
-        <widget class="QPushButton" name="pushButton_backgroundStars">
-         <property name="text">
-          <string>Add Background Stars</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Out Directory&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -818,6 +583,346 @@ Image:</string>
       <zorder>pushButton_regfileStarSelector</zorder>
      </widget>
     </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_imageConverter">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="toolTip">
+       <string>Convert input image into a raw FGS image</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+      </property>
+      <property name="title">
+       <string>Image Converter</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0" colspan="5">
+        <widget class="QCheckBox" name="checkBox_useConvertedImage">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Use existing converted image (shown at right) rather than input image</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_instrument_2">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coarse Pointing&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" colspan="2">
+        <widget class="QCheckBox" name="checkBox_coarsePointing">
+         <property name="text">
+          <string>Add jitter rate (arcsec/sec):</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_instrument">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QRadioButton" name="radioButton_FGS">
+         <property name="text">
+          <string>FGS</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_instrument</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="2" column="2" colspan="2">
+        <widget class="QRadioButton" name="radioButton_NIRCam">
+         <property name="text">
+          <string>NIRCam</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_instrument</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_detector">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1" colspan="4">
+        <widget class="QComboBox" name="comboBox_detector">
+         <item>
+          <property name="text">
+           <string>- Parse from header -</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A2</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A3</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A4</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A5 - long wave</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B2</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B3</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B4</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B5 - long wave</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1" colspan="2">
+        <widget class="QCheckBox" name="checkBox_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Normalize to:</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="3" colspan="2">
+        <widget class="QLineEdit" name="lineEdit_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">.QLineEdit:disabled {color: grey}</string>
+         </property>
+         <property name="text">
+          <string>11.0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="5">
+        <widget class="QComboBox" name="comboBox_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="currentIndex">
+          <number>2</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>- Select units -</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>FGS counts</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>J Magnitude</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_backgroundStars">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1" colspan="4">
+        <widget class="QTextEdit" name="textEdit_backgroundStars">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="5">
+        <widget class="QPushButton" name="pushButton_backgroundStars">
+         <property name="text">
+          <string>Add Background Stars</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3" colspan="3">
+        <widget class="QFrame" name="frame_coarsePointing">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_jitterMin">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="horizontalSlider_coarsePointing">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TicksBelow</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_jitterMax">
+            <property name="text">
+             <string>0.3 (max)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_coarsePointing">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>50</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">.QLineEdit:disabled {color: grey}</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>
@@ -866,8 +971,8 @@ Image:</string>
      <y>766</y>
     </hint>
     <hint type="destinationlabel">
-     <x>279</x>
-     <y>505</y>
+     <x>299</x>
+     <y>636</y>
     </hint>
    </hints>
   </connection>
@@ -878,8 +983,8 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>687</y>
+     <x>345</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
      <x>271</x>
@@ -894,12 +999,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>687</y>
+     <x>345</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
-     <x>279</x>
-     <y>505</y>
+     <x>299</x>
+     <y>636</y>
     </hint>
    </hints>
   </connection>
@@ -910,8 +1015,8 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>687</y>
+     <x>345</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
      <x>279</x>
@@ -926,12 +1031,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>687</y>
+     <x>345</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
-     <x>407</x>
-     <y>668</y>
+     <x>355</x>
+     <y>700</y>
     </hint>
    </hints>
   </connection>
@@ -942,12 +1047,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>687</y>
+     <x>345</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
-     <x>533</x>
-     <y>668</y>
+     <x>463</x>
+     <y>700</y>
     </hint>
    </hints>
   </connection>
@@ -958,12 +1063,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>687</y>
+     <x>345</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
-     <x>111</x>
-     <y>668</y>
+     <x>138</x>
+     <y>700</y>
     </hint>
    </hints>
   </connection>
@@ -974,12 +1079,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>687</y>
+     <x>345</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
-     <x>281</x>
-     <y>668</y>
+     <x>246</x>
+     <y>700</y>
     </hint>
    </hints>
   </connection>
@@ -990,12 +1095,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>687</y>
+     <x>345</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
-     <x>659</x>
-     <y>668</y>
+     <x>572</x>
+     <y>700</y>
     </hint>
    </hints>
   </connection>
@@ -1006,12 +1111,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>234</x>
-     <y>349</y>
+     <x>263</x>
+     <y>381</y>
     </hint>
     <hint type="destinationlabel">
-     <x>137</x>
-     <y>376</y>
+     <x>170</x>
+     <y>408</y>
     </hint>
    </hints>
   </connection>
@@ -1022,12 +1127,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>234</x>
-     <y>349</y>
+     <x>263</x>
+     <y>381</y>
     </hint>
     <hint type="destinationlabel">
-     <x>452</x>
-     <y>380</y>
+     <x>500</x>
+     <y>412</y>
     </hint>
    </hints>
   </connection>
@@ -1038,12 +1143,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>273</x>
-     <y>560</y>
+     <x>304</x>
+     <y>592</y>
     </hint>
     <hint type="destinationlabel">
-     <x>450</x>
-     <y>591</y>
+     <x>599</x>
+     <y>623</y>
     </hint>
    </hints>
   </connection>
@@ -1054,12 +1159,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>273</x>
-     <y>560</y>
+     <x>304</x>
+     <y>592</y>
     </hint>
     <hint type="destinationlabel">
-     <x>656</x>
-     <y>598</y>
+     <x>677</x>
+     <y>630</y>
     </hint>
    </hints>
   </connection>
@@ -1070,12 +1175,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>273</x>
-     <y>799</y>
+     <x>304</x>
+     <y>833</y>
     </hint>
     <hint type="destinationlabel">
-     <x>557</x>
-     <y>767</y>
+     <x>599</x>
+     <y>801</y>
     </hint>
    </hints>
   </connection>
@@ -1086,12 +1191,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>273</x>
-     <y>799</y>
+     <x>304</x>
+     <y>833</y>
     </hint>
     <hint type="destinationlabel">
-     <x>656</x>
-     <y>775</y>
+     <x>677</x>
+     <y>809</y>
     </hint>
    </hints>
   </connection>
@@ -1102,12 +1207,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>358</x>
-     <y>327</y>
+     <x>389</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>137</x>
-     <y>346</y>
+     <x>170</x>
+     <y>378</y>
     </hint>
    </hints>
   </connection>
@@ -1118,12 +1223,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>358</x>
-     <y>327</y>
+     <x>389</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>234</x>
-     <y>349</y>
+     <x>263</x>
+     <y>381</y>
     </hint>
    </hints>
   </connection>
@@ -1134,12 +1239,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>415</x>
-     <y>327</y>
+     <x>446</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>476</x>
-     <y>349</y>
+     <x>429</x>
+     <y>381</y>
     </hint>
    </hints>
   </connection>
@@ -1150,12 +1255,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>397</x>
-     <y>327</y>
+     <x>428</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
      <x>176</x>
-     <y>376</y>
+     <y>408</y>
     </hint>
    </hints>
   </connection>
@@ -1166,12 +1271,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>205</x>
-     <y>327</y>
+     <x>236</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>409</x>
-     <y>380</y>
+     <x>500</x>
+     <y>412</y>
     </hint>
    </hints>
   </connection>
@@ -1182,8 +1287,8 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>170</x>
-     <y>327</y>
+     <x>201</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
      <x>133</x>
@@ -1198,12 +1303,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>258</x>
-     <y>327</y>
+     <x>289</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>250</x>
-     <y>453</y>
+     <x>435</x>
+     <y>493</y>
     </hint>
    </hints>
   </connection>
@@ -1214,12 +1319,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>463</x>
-     <y>327</y>
+     <x>494</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>656</x>
-     <y>459</y>
+     <x>677</x>
+     <y>491</y>
     </hint>
    </hints>
   </connection>
@@ -1230,12 +1335,12 @@ Image:</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>284</x>
-     <y>406</y>
+     <x>363</x>
+     <y>438</y>
     </hint>
     <hint type="destinationlabel">
-     <x>476</x>
-     <y>407</y>
+     <x>497</x>
+     <y>439</y>
     </hint>
    </hints>
   </connection>
@@ -1246,12 +1351,12 @@ Image:</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>284</x>
-     <y>406</y>
+     <x>363</x>
+     <y>438</y>
     </hint>
     <hint type="destinationlabel">
-     <x>653</x>
-     <y>410</y>
+     <x>674</x>
+     <y>442</y>
     </hint>
    </hints>
   </connection>
@@ -1262,12 +1367,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>95</x>
-     <y>319</y>
+     <x>126</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>71</x>
-     <y>373</y>
+     <x>104</x>
+     <y>408</y>
     </hint>
    </hints>
   </connection>
@@ -1278,12 +1383,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>36</x>
-     <y>317</y>
+     <x>67</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>45</x>
-     <y>388</y>
+     <x>78</x>
+     <y>439</y>
     </hint>
    </hints>
   </connection>
@@ -1294,12 +1399,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>76</x>
-     <y>319</y>
+     <x>107</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>243</x>
-     <y>402</y>
+     <x>363</x>
+     <y>438</y>
     </hint>
    </hints>
   </connection>
@@ -1310,12 +1415,12 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>95</x>
-     <y>316</y>
+     <x>126</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>347</x>
-     <y>399</y>
+     <x>497</x>
+     <y>439</y>
     </hint>
    </hints>
   </connection>
@@ -1326,12 +1431,108 @@ Image:</string>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>152</x>
-     <y>320</y>
+     <x>183</x>
+     <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>557</x>
-     <y>397</y>
+     <x>674</x>
+     <y>442</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_coarsePointing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>frame_coarsePointing</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>194</x>
+     <y>334</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>372</x>
+     <y>344</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_coarsePointing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_coarsePointing</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>214</x>
+     <y>335</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>635</x>
+     <y>340</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_instrument_2</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>38</x>
+     <y>299</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>59</x>
+     <y>334</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox_coarsePointing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>42</x>
+     <y>301</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>237</x>
+     <y>341</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>frame_coarsePointing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>147</x>
+     <y>297</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>325</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_coarsePointing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>342</x>
+     <y>300</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>641</x>
+     <y>334</y>
     </hint>
    </hints>
   </connection>

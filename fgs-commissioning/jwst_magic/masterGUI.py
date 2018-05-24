@@ -138,6 +138,8 @@ class MasterGui(QMainWindow):
 
         # Image convertor widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
+        self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
+        self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
 
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
@@ -190,6 +192,8 @@ class MasterGui(QMainWindow):
             jmag = float(self.lineEdit_normalize.text())
         else:
             jmag = None
+        coarse_point = self.checkBox_coarsePointing.isChecked()
+        jitter_rate_arcsec = float(self.lineEdit_coarsePointing.text())
         bkgd_stars = self.bkgd_stars
 
         # Handle the case where we want to use a pre-existing converted image
@@ -310,18 +314,44 @@ class MasterGui(QMainWindow):
             return
 
         if convert_im or star_selection or file_writer:
-            run_magic.run_all(input_image, guider, root,
-                               fgs_counts, jmag, nircam_det,
-                               nircam, global_alignment,
-                               steps, in_file, bkgd_stars,
-                               out_dir, convert_im, star_selection,
-                               star_selectiongui, file_writer,
-                               self.app, copy_original, normalize)
+            run_magic.run_all(input_image, guider, root, fgs_counts, jmag,
+                              nircam_det, nircam, global_alignment, steps,
+                              in_file, bkgd_stars, out_dir, convert_im,
+                              star_selection, star_selectiongui, file_writer,
+                              self.app, copy_original, normalize, coarse_point,
+                              jitter_rate_arcsec)
             print("** Run Complete **")
 
             # Update converted image preview
             self.update_converted_image_preview()
             self.update_filepreview()
+
+    def on_change_jitter(self):
+        '''If the coarse pointing slider or text box controlling the
+        jitter rate are changed, update the other one accordingly.
+        '''
+        slider_range = np.linspace(0, 0.3, 101)
+        if self.sender() == self.horizontalSlider_coarsePointing:
+            # Get slider value
+            slider_value = int(self.horizontalSlider_coarsePointing.value())
+
+            # Calculate matching textbox value
+            jitter = slider_range[slider_value]
+
+        elif self.sender() == self.lineEdit_coarsePointing:
+            # Get jitter textbox value
+            jitter = float(self.lineEdit_coarsePointing.text())
+
+            # Make sure the input is not out of bounds
+            jitter = min(jitter, 0.3)
+            jitter = max(jitter, 0)
+
+            # Calculate matching slider value
+            slider_value = (np.abs(slider_range - jitter)).argmin()
+
+        # Update both to show the same value
+        self.horizontalSlider_coarsePointing.setValue(slider_value)
+        self.lineEdit_coarsePointing.setText('{:.3f}'.format(jitter))
 
     def on_click_input(self):
         ''' Using the Input Image Open button (open file)
