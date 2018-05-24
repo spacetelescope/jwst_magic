@@ -283,6 +283,10 @@ class MasterGui(QMainWindow):
             observation_num = SGT_dialog.lineEdit_observationNumber.text()
             visit_num = SGT_dialog.lineEdit_visitNumber.text()
             ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
+            if SGT_dialog.checkBox_countrateFactor.isChecked():
+                countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
+            else:
+                countrate_factor = None
 
             if os.path.exists(self.converted_im_file):
                 fgs_filename = self.converted_im_file
@@ -305,7 +309,8 @@ class MasterGui(QMainWindow):
                                      out_dir=out_dir, data=data,
                                      selected_segs=selected_segs,
                                      masterGUIapp=self.app, refonly=refonly,
-                                     ct_uncert_fctr=ct_uncert_fctr)
+                                     ct_uncert_fctr=ct_uncert_fctr,
+                                     countrate_factor=countrate_factor)
             print("** Run Complete **")
 
             # Update converted image preview
