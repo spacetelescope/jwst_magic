@@ -66,12 +66,22 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 
         # Create and load sgement guiding GUI session
         self.setWindowTitle('JWST MaGIC - Segment Guiding Command Generator')
+        self.adjust_sizes()
         self.define_SegmentGuidingGUI_connections()
         self.show()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def adjust_sizes(self):
+        '''Adjust widget sizes to be smaller for laptop screens
+        '''
+        screen_size = self.qApp.desktop().screenGeometry()
+        width, height = screen_size.width(), screen_size.height()
+        if height < 1100:
+            self.tableWidget_commands.setMinimumSize(220, 250)
+            self.groupBox_commands.setMinimumSize(280, 380 - 50)
+            self.frame_segmentGuiding.layout().setSpacing(20)
 
     def define_SegmentGuidingGUI_connections(self):
         # Main dialog window widgets

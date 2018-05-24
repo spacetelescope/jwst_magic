@@ -304,11 +304,24 @@ class StarSelectorWindow(QDialog):
         '''Set up the two matplotlib canvases that will preview the
         input image and converted image in the "Image Preview" section.
         '''
+        # Adjust the GUI sizes for laptop screens
+        screen_size = self.qApp.desktop().screenGeometry()
+        width, height = screen_size.width(), screen_size.height()
+        if height < 1100:
+            self.frame_canvas.setMinimumSize(600, 0)
+            self.tableWidget_selectedStars.setMinimumSize(420, 150)
+            self.groupBox_selectedStars.setMinimumSize(440, 380 - 150)
+            self.frame_profile.setMinimumSize(0, 250)
+            canvas_left = 0.13
+            profile_bottom = 0.2
+        else:
+            canvas_left = 0.1
+            profile_bottom = 0.15
 
         # Connect main matplotlib canvas and add to layout
         self.canvas = StarClickerMatplotlibCanvas(
             parent=self.frame_canvas,  data=self.data, x=self.x, dpi=100,
-            y=self.y, left=0.1, right=0.93)
+            y=self.y, left=canvas_left, right=0.93)
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
                                            self.y)
         self.canvas.zoom_to_crop()
@@ -318,7 +331,7 @@ class StarSelectorWindow(QDialog):
         # Connect profile matplotlib canvas and add to layout
         self.canvas_profile = StarClickerMatplotlibCanvas(
             parent=self.frame_profile, data=self.data, dpi=100, profile=True,
-            left=0.2, bottom=0.15, right=0.95, top=0.98)
+            left=0.2, bottom=profile_bottom, right=0.95, top=0.98)
         self.canvas_profile.init_profile()
         self.frame_profile.layout().insertWidget(0, self.canvas_profile)
 

@@ -6,14 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>1056</height>
+    <width>1282</width>
+    <height>1044</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_6">
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item row="0" column="0" rowspan="8">
     <widget class="QFrame" name="frame_canvas">
      <property name="sizePolicy">
@@ -254,7 +257,7 @@ p, li { white-space: pre-wrap; }
       <enum>Qt::Vertical</enum>
      </property>
      <property name="sizeType">
-      <enum>QSizePolicy::Minimum</enum>
+      <enum>QSizePolicy::Fixed</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -795,7 +798,6 @@ colorbar limits</string>
      </layout>
      <zorder>line</zorder>
      <zorder>frame_7</zorder>
-     <zorder>frame_7</zorder>
      <zorder>frame_10</zorder>
      <zorder>frame_11</zorder>
      <zorder>line_2</zorder>
@@ -810,6 +812,9 @@ colorbar limits</string>
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item row="0" column="0" alignment="Qt::AlignBottom">
        <widget class="QPushButton" name="pushButton_done">
         <property name="minimumSize">
