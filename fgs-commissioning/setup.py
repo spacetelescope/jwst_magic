@@ -1,20 +1,31 @@
 #!/usr/bin/env python
+'''
+Script to build the jwst_magic package
 
-# To install:
-#
-# >>>  pip install -e .
-#
-# while inside the root directory (Commissioning-tools)
+Authors
+-------
+    Lauren Chambers
+
+Use
+---
+    To install in developer mode:
+    ::
+        pip install -e .
+
+    while inside the root directory (fgs-commissioning)
+'''
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 
 from setuptools import setup, find_packages
 
-setup(name='jwst_fgs_commissioning_tools',
+setup(name='jwst_magic',
       version='0.0',
-      description='Tools for the fine guidance sensor to use during commissioning of JWST.',
-      # long_description='Really, the funniest around.',
+      description='Multifunctional wavefront Guiding Interface for Commissioning (MaGIC)',
+      long_description='Interactive tools to simulate fine guidance sensor data '
+                       'and facilitate guiding operations during wavefront '
+                       'commissioning of JWST.',
       classifiers=[
         # 'Development Status :: 3 - Alpha',
         # 'License :: OSI Approved :: MIT License',
@@ -23,7 +34,7 @@ setup(name='jwst_fgs_commissioning_tools',
         'Topic :: Scientific/Engineering :: Astronomy'
       ],
       keywords='jwst fgs',
-      url='https://grit.stsci.edu/wfsc/tools',
+      url='https://grit.stsci.edu/wfsc/tools/fgs-commissioning/',
       author='Keira Brooks, Lauren Chambers, Kathryn St. Laurent',
       # author_email='flyingcircus@example.com',
       # license='MIT',

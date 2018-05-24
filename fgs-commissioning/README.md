@@ -1,9 +1,9 @@
-FGS Commissioning Tools
-=======================
+Multifunctional wavefront Guiding Interface for Commissioning (MaGIC)
+=====================================================================
 
 ![GUI](notebooks/FGSCommTools_GUI.png)
 
-The FGS Commissioning Tools package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
+The Multifunctional wavefront Guiding Interface for Commissioning (MaGIC) package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
 
 These tools comprise of four main components that can be run individually
 or together:
@@ -57,7 +57,7 @@ The following supplemental packages are required, and will be **automatically in
 
 	git clone git@grit.stsci.edu:wfsc/tools.git
 
-2) Install the `jwst_fgs_commissioning_tools` package:
+2) Install the `jwst_magic` package:
 
 	cd tools/fgs-commissioning
 
@@ -69,9 +69,9 @@ Running the Tools
 -----------------
 These tools are best run in the IPython terminal. Simply launch the GUI with the following steps:
 
-    In[1]: import jwst_fgs_commissioning_tools
+    In[1]: import jwst_magic
 
-    In[2]: jwst_fgs_commissioning_tools.run_tool_GUI()
+    In[2]: jwst_magic.run_tool_GUI()
 
 
 Tutorial

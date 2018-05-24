@@ -14,7 +14,7 @@ Use
 ---
     This module can be imported in a Python shell as such:
     ::
-        from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
+        from jwst_magic.convert_image import counts_to_jmag
 
 Notes
 -----
