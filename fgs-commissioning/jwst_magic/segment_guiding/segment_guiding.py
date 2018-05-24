@@ -393,10 +393,12 @@ class SegmentGuidingCalculator:
 
         # If the selected segments are an array of lists (passed from GUI)
         if isinstance(selected_segs, np.ndarray):
+            LOGGER.info('Segment Guiding: Guiding on segments selected from GUI')
             # If there is more than one orientation provided
             if isinstance(selected_segs[0], list):
+                self.selected_segment_ids = []
                 for i, orientation in enumerate(selected_segs):
-                    self.selected_segment_ids = [s - 1 for s in orientation]
+                    self.selected_segment_ids.append([s - 1 for s in orientation])
 
             # If there is only one
             else:
@@ -404,6 +406,7 @@ class SegmentGuidingCalculator:
 
         # Else if they are a regfile, parse it.
         elif os.path.exists(selected_segs):
+            LOGGER.info('Segment Guiding: Guiding on segments selected in {}'.format(selected_segs))
             self.parse_regfile(selected_segs)
 
         # Otherwise, we don't know what it is...
