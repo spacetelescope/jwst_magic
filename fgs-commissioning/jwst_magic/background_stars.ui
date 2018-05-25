@@ -70,6 +70,9 @@
          </property>
          <item row="0" column="0" colspan="3">
           <widget class="QLabel" name="label">
+           <property name="toolTip">
+            <string>How many stars to add randomly</string>
+           </property>
            <property name="text">
             <string>Number of Stars:</string>
            </property>
@@ -83,6 +86,9 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>How many stars to add randomly</string>
+           </property>
            <property name="text">
             <string>5</string>
            </property>
@@ -90,6 +96,9 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_2">
+           <property name="toolTip">
+            <string>Magnitude range that the stars' brightness will be randomly selected from</string>
+           </property>
            <property name="text">
             <string>From</string>
            </property>
@@ -103,6 +112,9 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Magnitude range that the stars' brightness will be randomly selected from</string>
+           </property>
            <property name="text">
             <string>7</string>
            </property>
@@ -110,6 +122,9 @@
          </item>
          <item row="1" column="2" colspan="2">
           <widget class="QLabel" name="label_3">
+           <property name="toolTip">
+            <string>Magnitude range that the stars' brightness will be randomly selected from</string>
+           </property>
            <property name="text">
             <string>mag dimmer to</string>
            </property>
@@ -123,6 +138,9 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Magnitude range that the stars' brightness will be randomly selected from</string>
+           </property>
            <property name="text">
             <string>3</string>
            </property>
@@ -130,6 +148,9 @@
          </item>
          <item row="1" column="5">
           <widget class="QLabel" name="label_4">
+           <property name="toolTip">
+            <string>Magnitude range that the stars' brightness will be randomly selected from</string>
+           </property>
            <property name="text">
             <string>mag</string>
            </property>
@@ -137,6 +158,9 @@
          </item>
          <item row="2" column="0" colspan="4">
           <widget class="QLabel" name="label_5">
+           <property name="toolTip">
+            <string>Magnitude range that the stars' brightness will be randomly selected from</string>
+           </property>
            <property name="text">
             <string>dimmer than the guide star</string>
            </property>
@@ -201,6 +225,9 @@
           <height>300</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Location and brightness of stars to add</string>
+        </property>
         <property name="rowCount">
          <number>1</number>
         </property>
@@ -230,10 +257,16 @@
           <height>0</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;File containing background star locations and brightness&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
        </widget>
       </item>
       <item row="3" column="1">
        <widget class="QPushButton" name="pushButton_definedFile">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open Finder window to select file with star catalog&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>Load From File</string>
         </property>
@@ -241,6 +274,9 @@
       </item>
       <item row="1" column="0" colspan="2">
        <widget class="QPushButton" name="pushButton_addStar">
+        <property name="toolTip">
+         <string>Add an empty row for another star</string>
+        </property>
         <property name="text">
          <string>Add Another Star</string>
         </property>
@@ -248,6 +284,9 @@
       </item>
       <item row="2" column="0" colspan="2">
        <widget class="QPushButton" name="pushButton_deleteStar">
+        <property name="toolTip">
+         <string>Delete selected star</string>
+        </property>
         <property name="text">
          <string>Delete Star</string>
         </property>
@@ -273,6 +312,9 @@
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="2">
        <widget class="QComboBox" name="comboBox_RAUnits">
+        <property name="toolTip">
+         <string>Units of right acension</string>
+        </property>
         <item>
          <property name="text">
           <string>-Select-</string>
@@ -292,6 +334,9 @@
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_RA">
+        <property name="toolTip">
+         <string>Right ascension of guide star</string>
+        </property>
         <property name="text">
          <string>RA:</string>
         </property>
@@ -299,6 +344,9 @@
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_Dec">
+        <property name="toolTip">
+         <string>Declination of guide star</string>
+        </property>
         <property name="text">
          <string>Dec:</string>
         </property>
@@ -306,6 +354,9 @@
       </item>
       <item row="1" column="2">
        <widget class="QLabel" name="label_DecUnits">
+        <property name="toolTip">
+         <string>Units of declination</string>
+        </property>
         <property name="text">
          <string>Degrees</string>
         </property>
@@ -319,6 +370,9 @@
           <height>0</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Declination of guide star</string>
+        </property>
        </widget>
       </item>
       <item row="0" column="1">
@@ -329,20 +383,33 @@
           <height>0</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Right ascension of guide star</string>
+        </property>
        </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_6">
+        <property name="toolTip">
+         <string>Position/roll angle of telescope</string>
+        </property>
         <property name="text">
          <string>Roll Angle/PA:</string>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLineEdit" name="lineEdit_PA"/>
+       <widget class="QLineEdit" name="lineEdit_PA">
+        <property name="toolTip">
+         <string>Position/roll angle of telescope</string>
+        </property>
+       </widget>
       </item>
       <item row="2" column="2">
        <widget class="QLabel" name="label_7">
+        <property name="toolTip">
+         <string>Units of angle</string>
+        </property>
         <property name="text">
          <string>Degrees</string>
         </property>
@@ -355,6 +422,9 @@
           <width>0</width>
           <height>60</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Find background stars in guider FOV surrounding the RA/Dec defined at left&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Query GSC</string>
@@ -414,6 +484,9 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Use selected method to add background stars to data</string>
+           </property>
            <property name="text">
             <string>Done</string>
            </property>
@@ -432,6 +505,9 @@
              <width>200</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>Discard selections and close window</string>
            </property>
            <property name="text">
             <string>Cancel</string>
