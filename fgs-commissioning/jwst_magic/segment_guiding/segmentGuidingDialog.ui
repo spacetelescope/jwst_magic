@@ -48,11 +48,14 @@
       <string notr="true">QGroupBox { font-size: 14px; font-weight: bold; margin-top: 16px } QGroupBox::title { top: -16px }</string>
      </property>
      <property name="title">
-      <string>Countrate Factor</string>
+      <string>Countrate Factors</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="0" column="0">
        <widget class="QCheckBox" name="checkBox_countrateFactor">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A factor by which to multiply the count rate of the guide star; for use in MIMF and CP where segments are stacked but unphased and the brightness might vary&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>Countrate Factor (MIMF/CP)</string>
         </property>
@@ -60,6 +63,9 @@
       </item>
       <item row="1" column="0" colspan="2">
        <widget class="QLabel" name="label_9">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The uncertainty in the brightness of the guide and reference stars; e.g. if the uncertainty factor is 0.9, then a star with a countrate of 100 will have an uncertainty of 90&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>Uncertainty Factor</string>
         </property>
@@ -67,6 +73,9 @@
       </item>
       <item row="1" column="2" colspan="2">
        <widget class="QLineEdit" name="lineEdit_countrateUncertainty">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The uncertainty in the brightness of the guide and reference stars; e.g. if the uncertainty factor is 0.9, then a star with a countrate of 100 will have an uncertainty of 90&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>0.9</string>
         </property>
@@ -76,6 +85,12 @@
        <widget class="QDoubleSpinBox" name="doubleSpinBox_countrateFactor">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A factor by which to multiply the count rate of the guide star; for use in MIMF and CP where segments are stacked but unphased and the brightness might vary&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="whatsThis">
+         <string/>
         </property>
         <property name="styleSheet">
          <string notr="true">.QDoubleSpinBox:disabled {color: grey}</string>
@@ -121,33 +136,54 @@
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
        <widget class="QLabel" name="label">
+        <property name="toolTip">
+         <string>Three to four digit number describing the APT program</string>
+        </property>
         <property name="text">
          <string>Program Number</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLineEdit" name="lineEdit_programNumber"/>
+       <widget class="QLineEdit" name="lineEdit_programNumber">
+        <property name="toolTip">
+         <string>Three to four digit number describing the APT program</string>
+        </property>
+       </widget>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
+        <property name="toolTip">
+         <string>Number of the observation within the APT program</string>
+        </property>
         <property name="text">
          <string>Observation Number</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QLineEdit" name="lineEdit_observationNumber"/>
+       <widget class="QLineEdit" name="lineEdit_observationNumber">
+        <property name="toolTip">
+         <string>Number of the observation within the APT program</string>
+        </property>
+       </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
+        <property name="toolTip">
+         <string>Number of the visit within the observation</string>
+        </property>
         <property name="text">
          <string>Visit Number</string>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLineEdit" name="lineEdit_visitNumber"/>
+       <widget class="QLineEdit" name="lineEdit_visitNumber">
+        <property name="toolTip">
+         <string>Number of the visit within the observation</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -179,6 +215,9 @@
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
        <widget class="QLabel" name="label_4">
+        <property name="toolTip">
+         <string>Right acension of the guide star in degrees</string>
+        </property>
         <property name="text">
          <string>Right Acension (degrees)</string>
         </property>
@@ -186,6 +225,12 @@
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_6">
+        <property name="toolTip">
+         <string>Position or roll angle of the telescope in degrees</string>
+        </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
         <property name="text">
          <string>Position Angle (degrees)</string>
         </property>
@@ -193,23 +238,46 @@
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_5">
+        <property name="toolTip">
+         <string>Declination of the guide star in degrees</string>
+        </property>
+        <property name="statusTip">
+         <string/>
+        </property>
         <property name="text">
          <string>Declination (degrees) </string>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLineEdit" name="lineEdit_PA"/>
+       <widget class="QLineEdit" name="lineEdit_PA">
+        <property name="toolTip">
+         <string>Position or roll angle of the telescope in degrees</string>
+        </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
+       </widget>
       </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="lineEdit_Dec">
+        <property name="toolTip">
+         <string>Declination of the guide star in degrees</string>
+        </property>
+        <property name="statusTip">
+         <string/>
+        </property>
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLineEdit" name="lineEdit_RA"/>
+       <widget class="QLineEdit" name="lineEdit_RA">
+        <property name="toolTip">
+         <string>Right acension of the guide star in degrees</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -241,6 +309,12 @@
      <layout class="QGridLayout" name="gridLayout_3">
       <item row="0" column="0">
        <widget class="QLabel" name="label_7">
+        <property name="toolTip">
+         <string>Boresight offset in V2 in arcsec</string>
+        </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
         <property name="text">
          <string>V2 Offset (arcsec)</string>
         </property>
@@ -248,6 +322,12 @@
       </item>
       <item row="0" column="1">
        <widget class="QLineEdit" name="lineEdit_V2">
+        <property name="toolTip">
+         <string>Boresight offset in V2 in arcsec</string>
+        </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
         <property name="text">
          <string>0</string>
         </property>
@@ -255,6 +335,12 @@
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_8">
+        <property name="toolTip">
+         <string>Boresight offset in V3 in arcsec</string>
+        </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
         <property name="text">
          <string>V3 Offset (arcsec)</string>
         </property>
@@ -262,6 +348,12 @@
       </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="lineEdit_V3">
+        <property name="toolTip">
+         <string>Boresight offset in V3 in arcsec</string>
+        </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
         <property name="text">
          <string>0</string>
         </property>

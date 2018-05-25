@@ -163,6 +163,9 @@ p, li { white-space: pre-wrap; }
           <height>45</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Save selected guide and reference stars as an override command</string>
+        </property>
         <property name="styleSheet">
          <string notr="true">QPushButton {color: black}</string>
         </property>
@@ -194,6 +197,9 @@ p, li { white-space: pre-wrap; }
              <height>30</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Use the mean position of all segments as the pointing</string>
+           </property>
            <property name="text">
             <string>Use Center of Segment Array
 (segNum = 0)</string>
@@ -205,6 +211,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item>
           <widget class="QLabel" name="label">
+           <property name="toolTip">
+            <string>Use the location of a designated segment as the pointing</string>
+           </property>
            <property name="text">
             <string>Use specific segment as center:</string>
            </property>
@@ -212,6 +221,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item>
           <widget class="QComboBox" name="comboBox_segmentCenter">
+           <property name="toolTip">
+            <string>Use the location of a designated segment as the pointing</string>
+           </property>
            <item>
             <property name="text">
              <string>-Select Segment-</string>
@@ -341,6 +353,9 @@ p, li { white-space: pre-wrap; }
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Plot selected command</string>
+           </property>
            <property name="text">
             <string>Load</string>
            </property>
@@ -359,6 +374,9 @@ p, li { white-space: pre-wrap; }
              <width>16777215</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>Delete selected command</string>
            </property>
            <property name="text">
             <string>Delete</string>
@@ -381,6 +399,9 @@ p, li { white-space: pre-wrap; }
              <width>220</width>
              <height>300</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>List of saved commands</string>
            </property>
            <property name="autoScroll">
             <bool>true</bool>
@@ -435,6 +456,9 @@ p, li { white-space: pre-wrap; }
             </property>
             <item>
              <widget class="QToolButton" name="toolButton_moveUp">
+              <property name="toolTip">
+               <string>Move selected command up</string>
+              </property>
               <property name="text">
                <string>^</string>
               </property>
@@ -445,6 +469,9 @@ p, li { white-space: pre-wrap; }
             </item>
             <item>
              <widget class="QToolButton" name="toolButton_moveDown">
+              <property name="toolTip">
+               <string>Move selected command down</string>
+              </property>
               <property name="text">
                <string>^</string>
               </property>
