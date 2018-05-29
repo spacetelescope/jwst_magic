@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1282</width>
-    <height>1044</height>
+    <width>1110</width>
+    <height>840</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,9 +27,12 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>800</width>
+       <width>600</width>
        <height>0</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="autoFillBackground">
       <bool>false</bool>
@@ -100,6 +103,9 @@ p, li { white-space: pre-wrap; }
    </item>
    <item row="2" column="1">
     <widget class="QLabel" name="label_output">
+     <property name="toolTip">
+      <string>Interactive feedback regarding star selection</string>
+     </property>
      <property name="styleSheet">
       <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
      </property>
@@ -112,6 +118,9 @@ p, li { white-space: pre-wrap; }
     <widget class="QTextEdit" name="textEdit_output">
      <property name="enabled">
       <bool>true</bool>
+     </property>
+     <property name="toolTip">
+      <string>Interactive feedback regarding star selection</string>
      </property>
      <property name="styleSheet">
       <string notr="true"/>
@@ -133,7 +142,7 @@ p, li { white-space: pre-wrap; }
      <property name="minimumSize">
       <size>
        <width>440</width>
-       <height>380</height>
+       <height>230</height>
       </size>
      </property>
      <property name="styleSheet">
@@ -154,8 +163,11 @@ p, li { white-space: pre-wrap; }
         <property name="minimumSize">
          <size>
           <width>420</width>
-          <height>300</height>
+          <height>150</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>List of selected stars IDs, positions, countrates, and indicator of the guide star</string>
         </property>
         <property name="autoScroll">
          <bool>true</bool>
@@ -217,6 +229,9 @@ p, li { white-space: pre-wrap; }
           <height>16777215</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Update selected star to be the new guide star</string>
+        </property>
         <property name="text">
          <string>Make guide star</string>
         </property>
@@ -235,6 +250,9 @@ p, li { white-space: pre-wrap; }
           <width>200</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>Un-select the selected star</string>
         </property>
         <property name="text">
          <string>Delete</string>
@@ -288,7 +306,7 @@ p, li { white-space: pre-wrap; }
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>300</height>
+       <height>250</height>
       </size>
      </property>
      <property name="frameShape">
@@ -354,6 +372,9 @@ p, li { white-space: pre-wrap; }
              <height>20</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Controls for the colorbar limits</string>
+           </property>
            <property name="styleSheet">
             <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
            </property>
@@ -381,10 +402,17 @@ p, li { white-space: pre-wrap; }
              <number>0</number>
             </property>
             <item row="1" column="1">
-             <widget class="QLineEdit" name="lineEdit_vmax"/>
+             <widget class="QLineEdit" name="lineEdit_vmax">
+              <property name="toolTip">
+               <string>Maximum of colorbar axis</string>
+              </property>
+             </widget>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_vmax">
+              <property name="toolTip">
+               <string>Maximum of colorbar axis</string>
+              </property>
               <property name="text">
                <string>vmax:</string>
               </property>
@@ -392,6 +420,9 @@ p, li { white-space: pre-wrap; }
             </item>
             <item row="2" column="0" colspan="2">
              <widget class="QPushButton" name="pushButton_colorbar">
+              <property name="toolTip">
+               <string>Update the colorbar limits to the values above</string>
+              </property>
               <property name="text">
                <string>Update
 colorbar limits</string>
@@ -400,13 +431,20 @@ colorbar limits</string>
             </item>
             <item row="0" column="0">
              <widget class="QLabel" name="label_vmin">
+              <property name="toolTip">
+               <string>Minimum of colorbar axis</string>
+              </property>
               <property name="text">
                <string>vmin: </string>
               </property>
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="lineEdit_vmin"/>
+             <widget class="QLineEdit" name="lineEdit_vmin">
+              <property name="toolTip">
+               <string>Minimum of colorbar axis</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -443,6 +481,9 @@ colorbar limits</string>
              <width>16777215</width>
              <height>20</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>Controls for the matplotlib axis limits</string>
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
@@ -484,6 +525,9 @@ colorbar limits</string>
                </property>
                <item>
                 <widget class="QPushButton" name="pushButton_updateAxes">
+                 <property name="toolTip">
+                  <string>Update the axis limits to the values at left</string>
+                 </property>
                  <property name="text">
                   <string>Update axis limits</string>
                  </property>
@@ -491,6 +535,9 @@ colorbar limits</string>
                </item>
                <item>
                 <widget class="QPushButton" name="pushButton_zoomFit">
+                 <property name="toolTip">
+                  <string>Zoom to fit the entire image in the axes</string>
+                 </property>
                  <property name="text">
                   <string>Zoom fit</string>
                  </property>
@@ -498,6 +545,9 @@ colorbar limits</string>
                </item>
                <item>
                 <widget class="QPushButton" name="pushButton_cropToData">
+                 <property name="toolTip">
+                  <string>Zoom to fit just the data (identified stars) in the axes</string>
+                 </property>
                  <property name="text">
                   <string>Crop to data</string>
                  </property>
@@ -535,6 +585,9 @@ colorbar limits</string>
                </property>
                <item>
                 <widget class="QLabel" name="label_9">
+                 <property name="toolTip">
+                  <string>Boundaries of the y-axis</string>
+                 </property>
                  <property name="text">
                   <string>Y: (</string>
                  </property>
@@ -554,10 +607,16 @@ colorbar limits</string>
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Lower boundary of the y-axis</string>
+                 </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_11">
+                 <property name="toolTip">
+                  <string>Boundaries of the y-axis</string>
+                 </property>
                  <property name="text">
                   <string>,</string>
                  </property>
@@ -577,10 +636,16 @@ colorbar limits</string>
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Upper boundary of the y-axis</string>
+                 </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_10">
+                 <property name="toolTip">
+                  <string>Boundaries of the y-axis</string>
+                 </property>
                  <property name="text">
                   <string>)</string>
                  </property>
@@ -603,6 +668,9 @@ colorbar limits</string>
                 <height>20</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Boundaries of the x-axis</string>
+              </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
               </property>
@@ -618,6 +686,9 @@ colorbar limits</string>
                </property>
                <item>
                 <widget class="QLabel" name="label_6">
+                 <property name="toolTip">
+                  <string>Boundaries of the x-axis</string>
+                 </property>
                  <property name="text">
                   <string>X: (</string>
                  </property>
@@ -637,10 +708,16 @@ colorbar limits</string>
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Lower boundary of the x-axis</string>
+                 </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_7">
+                 <property name="toolTip">
+                  <string>Boundaries of the x-axis</string>
+                 </property>
                  <property name="text">
                   <string>,</string>
                  </property>
@@ -659,6 +736,9 @@ colorbar limits</string>
                    <width>40</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Upper boundary of the x-axis</string>
                  </property>
                 </widget>
                </item>
@@ -708,6 +788,9 @@ colorbar limits</string>
              <height>20</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Indicators for the location of the cursor</string>
+           </property>
            <property name="styleSheet">
             <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
            </property>
@@ -745,6 +828,9 @@ colorbar limits</string>
                 <height>20</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Position of the matplotlib axis currently under the cursor</string>
+              </property>
               <property name="text">
                <string>Cursor Position:</string>
               </property>
@@ -754,6 +840,9 @@ colorbar limits</string>
              <widget class="QLineEdit" name="lineEdit_cursorPosition">
               <property name="enabled">
                <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Position of the matplotlib axis currently under the cursor</string>
               </property>
               <property name="text">
                <string/>
@@ -771,6 +860,9 @@ colorbar limits</string>
                 <height>20</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Value of the image at the cursor location</string>
+              </property>
               <property name="text">
                <string>Pixel Value:</string>
               </property>
@@ -780,6 +872,9 @@ colorbar limits</string>
              <widget class="QLineEdit" name="lineEdit_cursorValue">
               <property name="enabled">
                <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Value of the image at the cursor location</string>
               </property>
               <property name="text">
                <string/>
@@ -823,6 +918,9 @@ colorbar limits</string>
           <height>50</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Use selected stars to write regfile.txt and close window</string>
+        </property>
         <property name="text">
          <string>Done</string>
         </property>
@@ -835,6 +933,9 @@ colorbar limits</string>
           <width>0</width>
           <height>50</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>Discard selections and close window</string>
         </property>
         <property name="text">
          <string>Cancel</string>
