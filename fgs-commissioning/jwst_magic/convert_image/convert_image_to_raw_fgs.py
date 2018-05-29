@@ -58,7 +58,6 @@ Notes
 '''
 
 # STDLIB
-from glob import glob
 import itertools
 import os
 import logging
@@ -125,7 +124,7 @@ def bad_pixel_correction(data, bp_thresh):
 
     Parameters
     ----------
-    data : 2-Dnumpy array
+    data : 2-D numpy array
         Image data
     bp_thresh : int
         Threshold above which pixels are considered "bad" and smoothed
@@ -159,6 +158,7 @@ def bad_pixel_correction(data, bp_thresh):
     data = np.uint16(data)
 
     return data
+
 
 def correct_nircam_dq(image, dq_array, bit_arr=None):
     '''Apply a data quality array correction to an input NIRCam image.
@@ -220,6 +220,7 @@ def correct_nircam_dq(image, dq_array, bit_arr=None):
 
     return im_copy
 
+
 def fgs_add_dq(image, guider):
     '''Apply a data quality array correction to an FGS image.
 
@@ -241,11 +242,7 @@ def fgs_add_dq(image, guider):
     indication as to why they are flagged. For now, we set all flagged
     pixels to saturation.
     '''
-
-    if guider == 1:
-        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G1.fits'))
-    elif guider == 2:
-        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G2.fits'))
+    dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(guider)))
 
     # Apply dq_arr to image
     # FIXME for now, set all flagged pixels to saturation
@@ -376,12 +373,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
 
     # Determine whether the NIRCam image is short- or long-wave to determine
     # the pixel scale
-    if '5' in detector:
-        # Longwave
-        nircam_scale = NIRCAM_LW_SCALE
-    else:
-        # Shortwave
-        nircam_scale = NIRCAM_SW_SCALE
+    nircam_scale = NIRCAM_LW_SCALE if '5' in detector else NIRCAM_SW_SCALE
 
     # Perform the rotation
     if nircam_coord_frame == 'sci':
@@ -537,8 +529,32 @@ def remove_pedestal(data):
 
     return noped_data
 
-# -------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------
+
+def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
+    # Any value above 65535 or below 0 will wrap when converted to uint16
+    data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
+
+    # Define output path
+    output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
+    if not fgsout_path:
+        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                                   '{}_G{}.fits'.format(root, guider))
+    # Load header file
+    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+    hdr = fits.getheader(header_file, ext=0)
+
+    # Write FITS file
+    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                               '{}_G{}.fits'.format(root, guider))
+    utils.write_fits(fgsout_path, np.uint16(data), header=hdr)
+
+    return fgsout_path
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# MAIN FUNCTION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
 def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
                nircam_det=None, out_dir=None, logger_passed=False,
                normalize=True, coarse_pointing=False, jitter_rate_arcsec=None):
@@ -667,32 +683,10 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
 
             # Normalize the data
             data = normalize_data(data, fgs_counts)
-            LOGGER.info("Image Conversion: Normalizing to {} J Magnitude ({} FGS counts)".format(jmag, fgs_counts))
+            LOGGER.info("Image Conversion: Normalizing to {} J Magnitude ({:.1f} FGS counts)".format(jmag, fgs_counts))
 
     except Exception as e:
         LOGGER.exception(e)
         raise
 
     return data
-
-def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
-    # Any value above 65535 or below 0 will wrap when converted to uint16
-    data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
-
-    # Define output path
-    output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
-    if not fgsout_path:
-        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                                   '{}_G{}.fits'.format(root, guider))
-    # Load header file
-    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
-    hdr = fits.getheader(header_file, ext=0)
-
-    # Write FITS file
-    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                               '{}_G{}.fits'.format(root, guider))
-    utils.write_fits(fgsout_path, np.uint16(data), header=hdr)
-
-    return fgsout_path
-
-
