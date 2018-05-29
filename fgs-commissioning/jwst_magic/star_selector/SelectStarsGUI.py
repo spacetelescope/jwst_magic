@@ -315,6 +315,10 @@ class StarSelectorWindow(QDialog):
             canvas_left = 0.13
             profile_bottom = 0.2
         else:
+            self.frame_canvas.setMinimumSize(800, 0)
+            self.tableWidget_selectedStars.setMinimumSize(420, 300)
+            self.groupBox_selectedStars.setMinimumSize(440, 380)
+            self.frame_profile.setMinimumSize(0, 300)
             canvas_left = 0.1
             profile_bottom = 0.15
 
