@@ -38,7 +38,6 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 import os
 import sys
-import inspect
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
