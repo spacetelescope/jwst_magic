@@ -715,7 +715,7 @@ Image:</string>
        <string>Image Converter</string>
       </property>
       <property name="checkable">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="1" column="0">
@@ -1379,8 +1379,8 @@ p, li { white-space: pre-wrap; }
      <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>170</x>
-     <y>378</y>
+     <x>176</x>
+     <y>393</y>
     </hint>
    </hints>
   </connection>
@@ -1459,8 +1459,8 @@ p, li { white-space: pre-wrap; }
      <y>307</y>
     </hint>
     <hint type="destinationlabel">
-     <x>133</x>
-     <y>461</y>
+     <x>166</x>
+     <y>508</y>
     </hint>
    </hints>
   </connection>
@@ -1615,8 +1615,8 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>194</x>
-     <y>334</y>
+     <x>363</x>
+     <y>358</y>
     </hint>
     <hint type="destinationlabel">
      <x>372</x>
@@ -1631,12 +1631,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>214</x>
-     <y>335</y>
+     <x>363</x>
+     <y>358</y>
     </hint>
     <hint type="destinationlabel">
-     <x>635</x>
-     <y>340</y>
+     <x>665</x>
+     <y>361</y>
     </hint>
    </hints>
   </connection>
@@ -1647,12 +1647,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>38</x>
-     <y>299</y>
+     <x>69</x>
+     <y>322</y>
     </hint>
     <hint type="destinationlabel">
-     <x>59</x>
-     <y>334</y>
+     <x>92</x>
+     <y>364</y>
     </hint>
    </hints>
   </connection>
@@ -1663,8 +1663,8 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>42</x>
-     <y>301</y>
+     <x>73</x>
+     <y>322</y>
     </hint>
     <hint type="destinationlabel">
      <x>237</x>
@@ -1679,12 +1679,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>147</x>
-     <y>297</y>
+     <x>178</x>
+     <y>322</y>
     </hint>
     <hint type="destinationlabel">
-     <x>373</x>
-     <y>325</y>
+     <x>671</x>
+     <y>364</y>
     </hint>
    </hints>
   </connection>
@@ -1695,12 +1695,28 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>342</x>
-     <y>300</y>
+     <x>373</x>
+     <y>322</y>
     </hint>
     <hint type="destinationlabel">
-     <x>641</x>
-     <y>334</y>
+     <x>665</x>
+     <y>361</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_LOSTRK</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>202</x>
+     <y>729</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>591</x>
+     <y>706</y>
     </hint>
    </hints>
   </connection>

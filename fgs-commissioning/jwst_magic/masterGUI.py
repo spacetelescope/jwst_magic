@@ -183,11 +183,11 @@ class MasterGui(QMainWindow):
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
         normalize = self.checkBox_normalize.isChecked()
-        if self.comboBox_normalize.currentText() =='FGS counts':
+        if self.comboBox_normalize.currentText() == 'FGS counts':
             fgs_counts = float(self.lineEdit_normalize.text())
         else:
             fgs_counts = None
-        if self.comboBox_normalize.currentText() =='J Magnitude':
+        if self.comboBox_normalize.currentText() == 'J Magnitude':
             jmag = float(self.lineEdit_normalize.text())
         else:
             jmag = None
@@ -241,16 +241,14 @@ class MasterGui(QMainWindow):
             all_psfs = os.path.join(out_dir, 'out', root,
                                     '{}_G{}_ALLpsfs.txt'.format(root, guider))
             all_rows = asc.read(all_psfs)
-            labels = all_rows['label'].data
             x = all_rows['x'].data
             y = all_rows['y'].data
 
             # Run the select stars GUI to determint the new orientation
             inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
-            order = ''.join(labels[inds])
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(order, guider, root, out_dir)
+            rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
             print("** Run Complete **\n\n")
 
             # Update converted image preview
