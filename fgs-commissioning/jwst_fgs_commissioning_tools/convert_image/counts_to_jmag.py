@@ -76,19 +76,21 @@ def fgs_mag_to_jmag(fgs_mag):
     '''Convert FGS magnitude to J magnitude'''
     return fgs_mag-0.90
 
-def jmag_to_jab(jmag):
+def jmag_to_fgs_mag(jmag):
     '''Convert J magnitude to  FGS magnitude '''
     return jmag+0.90
 
 def fgs_counts_to_fgs_mag(countrate, guider):
-    '''Convert FGS counts to J magnitude given the count rate'''
+    '''Convert FGS counts to FGS magnitude given the count rate'''
     electrons = countrate_to_e(countrate, guider)
-    fgs_mag = -2.5 * np.log10(electrons/3.1418185) + 29.057
+    fgs_mag = -2.5 * np.log10(electrons/3.1418185)
     return  fgs_mag_to_jmag(fgs_mag)
+
+
 
 def jmag_to_fgs_counts(jmag, guider):
     '''Convert J magnitude to FGS counts given the J magnitude'''
-    fgs_mag = jmag_to_jab(jmag)
+    fgs_mag = jmag_to_fgs_mag(jmag)
     electrons = 10**((fgs_mag - 29.057)/-2.5) * 3.1418185
     return e_to_counts(electrons, guider)
 
