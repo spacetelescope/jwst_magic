@@ -179,7 +179,7 @@ class MasterGui(QMainWindow):
         copy_original = True
 
         # Convert image
-        convert_im = self.groupBox_imageConverter.isChecked()
+        convert_im = True
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
         normalize = self.checkBox_normalize.isChecked()
@@ -640,8 +640,7 @@ class MasterGui(QMainWindow):
             self.textEdit_showingConverted.setText(self.converted_im_file)
 
             # Toggle the "use converted image" buttons
-            if self.groupBox_imageConverter.isChecked():
-                self.checkBox_useConvertedImage.setEnabled(True)
+            self.checkBox_useConvertedImage.setEnabled(True)
             self.checkBox_useConvertedImage.setChecked(True)
 
             # Enable the "show stars" button
