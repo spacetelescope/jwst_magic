@@ -175,7 +175,7 @@ class MasterGui(QMainWindow):
         input_image = self.lineEdit_inputImage.text()
         guider = int(self.buttonGroup_guider.checkedButton().text())
         root = self.lineEdit_root.text()
-        out_dir = self.textEdit_out.toPlainText()
+        out_dir = self.textEdit_out.toPlainText().rstrip()
         copy_original = True
 
         # Convert image
