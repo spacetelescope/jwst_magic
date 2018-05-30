@@ -133,6 +133,9 @@
          <property name="toolTip">
           <string>Directory name where the root directory exists or will be created</string>
          </property>
+         <property name="acceptRichText">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item row="1" column="3">
