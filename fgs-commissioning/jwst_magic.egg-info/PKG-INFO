@@ -1,0 +1,15 @@
+Metadata-Version: 1.1
+Name: jwst-magic
+Version: 0.0
+Summary: Multifunctional wavefront Guiding Interface for Commissioning (MaGIC)
+Home-page: https://grit.stsci.edu/wfsc/tools/fgs-commissioning/
+Author: Keira Brooks, Lauren Chambers, Kathryn St. Laurent
+Author-email: UNKNOWN
+License: UNKNOWN
+Description-Content-Type: UNKNOWN
+Description: Interactive tools to simulate fine guidance sensor data and facilitate guiding operations during wavefront commissioning of JWST.
+Keywords: jwst fgs
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Topic :: Scientific/Engineering :: Astronomy
