@@ -25,6 +25,10 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
     https://www.blog.pythonlibrary.org/2016/06/09/python-how-to-create-an-exception-logging-decorator/
     https://docs.python.org/2/howto/logging.html
     '''
+    # Ensure the logs directory exists
+    log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
+    ensure_dir_exists(log_path)
+
     # Parse logging level input
     if type(level) != int:
         if level.upper() == 'DEBUG':
@@ -52,7 +56,6 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
         task_name = module_name.split('.')[-1].split('_')
         task_name = ''.join(task_name)
         log_label = '_'.join([task_name, root])
-        log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
         logfile = get_logname(log_path, log_label)
         config['handlers']['file_handler']['filename'] = logfile
 
