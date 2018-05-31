@@ -129,11 +129,13 @@ class MasterGui(QMainWindow):
         self.pushButton_quit.clicked.connect(self.close_application)
 
         # General input widgets
-        self.pushButton_inputImage.clicked.connect(self.on_click_input)
+        self.pushButton_inputImage.clicked.connect(self.update_input)
+        self.lineEdit_inputImage.editingFinished.connect(self.update_input)
         self.buttonGroup_guider.buttonClicked.connect(self.update_filepreview)
         self.lineEdit_root.editingFinished.connect(self.update_filepreview)
         self.pushButton_root.clicked.connect(self.on_click_root)
         self.pushButton_out.clicked.connect(self.on_click_out)
+        self.textEdit_out.installEventFilter(self)
 
         # Image convertor widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
@@ -152,6 +154,32 @@ class MasterGui(QMainWindow):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    @pyqtSlot()
+    def eventFilter(self, source, event):
+        '''"EdittingFinished" event filter for out directory textbox
+        '''
+        if hasattr(self, 'textEdit_out'):
+            # Parse out the focus leaving the out_dir box, and update
+            # all other textboxes accordingly
+            if event.type() == QtCore.QEvent.FocusOut:
+               # (event.type() == QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Return):
+
+                # Read the current out directory name
+                dirname = self.textEdit_out.toPlainText()
+
+                # Remove any new lines from the dirname
+                dirname = dirname.rstrip()
+                self.textEdit_out.setPlainText(dirname)
+
+                # Only continue if that directory actually exists
+                if dirname is not None:
+                    if not os.path.exists(dirname):
+                        raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
+
+                self.update_filepreview()
+
+        return False
 
     def close_application(self):
         ''' Close the window
@@ -349,12 +377,24 @@ class MasterGui(QMainWindow):
         self.horizontalSlider_coarsePointing.setValue(slider_value)
         self.lineEdit_coarsePointing.setText('{:.3f}'.format(jitter))
 
-    def on_click_input(self):
-        ''' Using the Input Image Open button (open file)
+    def update_input(self):
+        ''' Using the Input Image Open button (open file) and textbox
         '''
+        # If coming from the button, open the dialog
+        if self.sender() == self.pushButton_inputImage:
         # Read selected filename
         filename = self.open_filename_dialog("NIRCam or FGS image", file_type="FITS files (*.fits)")
         self.lineEdit_inputImage.setText(filename)
+
+        # If coming from the textbox, just read the new value
+        elif self.sender() == self.lineEdit_inputImage:
+            # Read selected filename
+            filename = self.lineEdit_inputImage.text()
+
+        # Only continue if the entered image path actually exists:
+        if filename is not None:
+            if not os.path.exists(filename):
+                raise FileNotFoundError('Input image {} does not exist.'.format(filename))
 
         # Derive the root from the filename and assume the default output
         # directory (OUT_PATH)
@@ -370,13 +410,7 @@ class MasterGui(QMainWindow):
         self.update_filepreview()
 
         # Show input image preview
-        try:
             self.load_input_image_data(filename)
-        except TypeError as e:
-            if str(e) != "stat: can't specify None for path argument":
-                raise
-            else:
-                pass
 
         # Show converted image preview, if possible
         self.update_converted_image_preview()
@@ -384,10 +418,20 @@ class MasterGui(QMainWindow):
         return filename
 
     def on_click_out(self):
-        ''' Using the Out Dir Open button (open directory) '''
+        ''' Using the Out Dir Open button (open directory)
+        '''
+        # Open the Finder directory dialog
         dirname = self.open_dirname_dialog()
-        self.textEdit_out.setEnabled(True)
+
+        # Remove any new lines from the dirname
+        dirname = dirname.rstrip()
         self.textEdit_out.setText(dirname)
+
+        # Only continue if that directory actually exists
+        if dirname is not None:
+            if not os.path.exists(dirname):
+                raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
+
         self.update_filepreview()
         return dirname
 
