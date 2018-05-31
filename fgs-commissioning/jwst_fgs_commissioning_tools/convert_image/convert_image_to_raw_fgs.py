@@ -70,7 +70,7 @@ from scipy import signal
 
 # LOCAL
 from .. import utils
-from ..convert_image import counts_to_jmag
+from ..convert_image import renormalize
 
 # Paths
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -511,7 +511,7 @@ def remove_pedestal(data):
 
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
-def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
+def convert_im(input_im, guider, root, nircam=True, norm_value=None, norm_unit=None,
                nircam_det=None, out_dir=None, logger_passed=False, normalize=True):
     '''Takes NIRCam or FGS image; turns it into an FGS-like image and
     saves FITS file
@@ -620,18 +620,13 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
 
         # Normalize the image, if the "normalize" flag is True
         if normalize:
-            # Find FGS counts to be used for normalization
-            if fgs_counts is None:
-                if jmag is None:
-                    LOGGER.warning("Image Conversion: No counts or J magnitude given, setting to default")
-                    jmag = 11
-                fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-            else:
-                jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
+            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_units, guider)
+            fgs_counts = norm_obj.to_counts()
+            fgs_mag = norm_obj.to_fgs_mag()
 
             # Normalize the data
             data = normalize_data(data, fgs_counts)
-            LOGGER.info("Image Conversion: Normalizing to {} J Magnitude ({} FGS counts)".format(jmag, fgs_counts))
+            LOGGER.info("Image Conversion: Normalizing to FGS Magnitude of {} ({} FGS counts)".format(fgs_mag, fgs_counts))
 
     except Exception as e:
         LOGGER.exception(e)
@@ -658,5 +653,3 @@ def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
     utils.write_fits(fgsout_path, np.uint16(data), header=hdr)
 
     return fgsout_path
-
-
