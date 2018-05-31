@@ -19,7 +19,7 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-FGS Commissioning Tools package, be sure to use the existing instance
+JWST MaGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """

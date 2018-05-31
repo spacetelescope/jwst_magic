@@ -1,0 +1,1733 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1493</width>
+    <height>923</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_8">
+    <property name="margin">
+     <number>20</number>
+    </property>
+    <item row="0" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_inputData">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+      </property>
+      <property name="title">
+       <string>General Input</string>
+      </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="4">
+        <widget class="QPushButton" name="pushButton_inputImage">
+         <property name="toolTip">
+          <string>Open Finder window to select input image file</string>
+         </property>
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="4">
+        <widget class="QPushButton" name="pushButton_out">
+         <property name="toolTip">
+          <string>Open Finder window to select output directory</string>
+         </property>
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_input">
+         <property name="toolTip">
+          <string>FITS file to convert or generate files from</string>
+         </property>
+         <property name="text">
+          <string>&lt;b&gt;Input Image*&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="2">
+        <widget class="QLabel" name="label_requiredParameter">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;* - Required Parameter&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1" colspan="3">
+        <widget class="QLineEdit" name="lineEdit_root">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Label for directory where output data will be stored and file names&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_guider">
+         <property name="toolTip">
+          <string>Which guider/FGS should the final image simulate</string>
+         </property>
+         <property name="text">
+          <string>&lt;b&gt;Guider*&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="QPushButton" name="pushButton_root">
+         <property name="toolTip">
+          <string>Use the prefix of the input image name as the root</string>
+         </property>
+         <property name="text">
+          <string>Use Default</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_root">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Label for directory where output data will be stored and file names&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>&lt;b&gt;Root&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1" colspan="3">
+        <widget class="QTextEdit" name="textEdit_out">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>70</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Directory name where the root directory exists or will be created</string>
+         </property>
+         <property name="acceptRichText">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>310</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="1">
+        <widget class="QRadioButton" name="radioButton_G1">
+         <property name="toolTip">
+          <string>Which guider/FGS should the final image simulate</string>
+         </property>
+         <property name="text">
+          <string>1</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_guider</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QRadioButton" name="radioButton_G2">
+         <property name="toolTip">
+          <string>Which guider/FGS should the final image simulate</string>
+         </property>
+         <property name="text">
+          <string>2</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_guider</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="3">
+        <widget class="QLineEdit" name="lineEdit_inputImage">
+         <property name="toolTip">
+          <string>FITS file to convert or generate files from</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_out">
+         <property name="toolTip">
+          <string>Directory name where the root directory exists or will be created</string>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Out Directory&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QPushButton" name="pushButton_quit">
+      <property name="toolTip">
+       <string>Exit the tool and close the window</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+	background-color: rgb(255, 102, 102);
+}</string>
+      </property>
+      <property name="text">
+       <string>Quit</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2" rowspan="6">
+     <widget class="QGroupBox" name="groupBox_imagePreview">
+      <property name="styleSheet">
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+      </property>
+      <property name="title">
+       <string>Image Preview</string>
+      </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QTabWidget" name="tabWidget">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="tabPosition">
+          <enum>QTabWidget::North</enum>
+         </property>
+         <property name="tabShape">
+          <enum>QTabWidget::Rounded</enum>
+         </property>
+         <property name="currentIndex">
+          <number>1</number>
+         </property>
+         <widget class="QWidget" name="tab_input">
+          <attribute name="title">
+           <string>Input Image</string>
+          </attribute>
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_showingInput">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Path to the input FGS or NIRCam image found at the out and root directories specified&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Showing
+Image:</string>
+             </property>
+             <property name="buddy">
+              <cstring>label_showingInput</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QTextEdit" name="textEdit_showingInput">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>60</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Path to the input FGS or NIRCam image found at the out and root directories specified&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QWidget" name="canvas_input_slot" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>600</width>
+               <height>600</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tab_converted">
+          <attribute name="title">
+           <string>Converted FGS Image</string>
+          </attribute>
+          <layout class="QGridLayout" name="gridLayout_6">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_showingConverted">
+             <property name="toolTip">
+              <string>Path to the converted FGS image found at the out and root directories specified</string>
+             </property>
+             <property name="text">
+              <string>Showing
+Image:</string>
+             </property>
+             <property name="buddy">
+              <cstring>label_showingInput</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QWidget" name="canvas_converted_slot" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>600</width>
+               <height>600</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QTextEdit" name="textEdit_showingConverted">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>60</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Path to the converted FGS image found at the out and root directories specified</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QCheckBox" name="checkBox_showStars">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Show or hide the locations of stars and star selections as found in the ALLpsfs.txt and regfile in the root directory</string>
+             </property>
+             <property name="text">
+              <string>Show most recent guide and reference star selections (regfile.txt)</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="3" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_fileWriter">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+      </property>
+      <property name="title">
+       <string>Flight Software (FSW) File Writer</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBox_CAL">
+         <property name="toolTip">
+          <string>Calibration</string>
+         </property>
+         <property name="text">
+          <string>CAL</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QCheckBox" name="checkBox_ID">
+         <property name="toolTip">
+          <string>Identification</string>
+         </property>
+         <property name="text">
+          <string>ID</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QCheckBox" name="checkBox_ACQ1">
+         <property name="toolTip">
+          <string>Acquisition 1</string>
+         </property>
+         <property name="text">
+          <string>ACQ1</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QCheckBox" name="checkBox_ACQ2">
+         <property name="toolTip">
+          <string>Acquisition 2</string>
+         </property>
+         <property name="text">
+          <string>ACQ2</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QCheckBox" name="checkBox_TRK">
+         <property name="toolTip">
+          <string>Track</string>
+         </property>
+         <property name="text">
+          <string>TRK</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="5">
+        <widget class="QCheckBox" name="checkBox_LOSTRK">
+         <property name="toolTip">
+          <string>Line-of-sight Track</string>
+         </property>
+         <property name="text">
+          <string>LOSTRK</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="4">
+        <widget class="QCheckBox" name="checkBox_rewritePRC">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rather than writing FITS images, .dat files, and .prc files for each step above, only rewrite the files needed to run DHAS. Will prompt user to re-select guide and reference stars. Requires that certain files already exist.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Only write ID.prc, ACQ.prc, and regfile.txt (for iterative DHAS testing)</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+      <zorder>checkBox_CAL</zorder>
+      <zorder>checkBox_ID</zorder>
+      <zorder>checkBox_ACQ1</zorder>
+      <zorder>checkBox_ACQ2</zorder>
+      <zorder>checkBox_TRK</zorder>
+      <zorder>checkBox_rewritePRC</zorder>
+      <zorder>checkBox_LOSTRK</zorder>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="QPushButton" name="pushButton_run">
+      <property name="toolTip">
+       <string>Run the tool with the parameters as set above</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+	background-color: rgb(90, 190, 125);
+}</string>
+      </property>
+      <property name="text">
+       <string>Run</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_segmentGuiding">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+      </property>
+      <property name="title">
+       <string>Segment Guiding</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_5">
+       <item row="0" column="0">
+        <widget class="QRadioButton" name="radioButton_regfileSegmentGuiding">
+         <property name="toolTip">
+          <string>Define one command with guide and reference stars by loading their locations and brightness loaded from a file</string>
+         </property>
+         <property name="text">
+          <string>Read 1 command from file
+(assume segNum=0)</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_segmentGuiding</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="pushButton_regfileSegmentGuiding">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Open Finder window to select file with segment list</string>
+         </property>
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkBox_refonly">
+         <property name="toolTip">
+          <string>Use the ref-only notation added in VSS build 14.3</string>
+         </property>
+         <property name="text">
+          <string>Designate reference stars with &quot;refonly&quot;</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="lineEdit_regfileSegmentGuiding">
+         <property name="toolTip">
+          <string>File containing guide and reference star locations and brightness</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="QRadioButton" name="radioButton_segmentGuidingGUI">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create one or more segment guiding override commands by clicking on guide and reference stars in the image&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Click-to-Select 1 or more commands (GUI)</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_segmentGuiding</string>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_starSelector">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+      </property>
+      <property name="title">
+       <string>Star Selector</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkBox_globalAlignment">
+         <property name="toolTip">
+          <string>Change the star-finding algorithm to account for the more diffused segments that appear in early commissioning stages</string>
+         </property>
+         <property name="text">
+          <string>Non-Standard PSFs (e.g. Global Alignment, unphased image array)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QPushButton" name="pushButton_regfileStarSelector">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Open Finder window to select file with segment list</string>
+         </property>
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="QRadioButton" name="radioButton_starSelectorGUI">
+         <property name="toolTip">
+          <string>Define guide and reference stars by clicking on them in the image</string>
+         </property>
+         <property name="text">
+          <string>Click-to-Select (GUI)</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_starSelector</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="lineEdit_regfileStarSelector">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>File containing guide and reference star locations and brightness</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QRadioButton" name="radioButton_regfileStarSelector">
+         <property name="toolTip">
+          <string>Define guide and reference stars by loading their locations and brightness from a file</string>
+         </property>
+         <property name="text">
+          <string>Load from File</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_starSelector</string>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+      <zorder>checkBox_globalAlignment</zorder>
+      <zorder>radioButton_starSelectorGUI</zorder>
+      <zorder>radioButton_regfileStarSelector</zorder>
+      <zorder>lineEdit_regfileStarSelector</zorder>
+      <zorder>pushButton_regfileStarSelector</zorder>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QGroupBox" name="groupBox_imageConverter">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="toolTip">
+       <string>Convert input image into a raw FGS image</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+      </property>
+      <property name="title">
+       <string>Image Converter</string>
+      </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_instrument_2">
+         <property name="toolTip">
+          <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coarse Pointing&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_backgroundStars">
+         <property name="toolTip">
+          <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_instrument">
+         <property name="toolTip">
+          <string>Which instrument was used to take the input image</string>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="5">
+        <widget class="QPushButton" name="pushButton_backgroundStars">
+         <property name="toolTip">
+          <string>Launch a dialog window to specify how to incorporate background stars in the image</string>
+         </property>
+         <property name="text">
+          <string>Add Background Stars</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1" colspan="2">
+        <widget class="QCheckBox" name="checkBox_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string>Normalize the final image to a specified value</string>
+         </property>
+         <property name="text">
+          <string>Normalize to:</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" colspan="2">
+        <widget class="QCheckBox" name="checkBox_coarsePointing">
+         <property name="toolTip">
+          <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
+         </property>
+         <property name="text">
+          <string>Add jitter rate (arcsec/sec):</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="5">
+        <widget class="QComboBox" name="comboBox_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string>Units to normalize to</string>
+         </property>
+         <property name="currentIndex">
+          <number>2</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>- Select units -</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>FGS counts</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>J Magnitude</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="1" column="3" colspan="3">
+        <widget class="QFrame" name="frame_coarsePointing">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_jitterMin">
+            <property name="toolTip">
+             <string>Speed of the jitter in arcsec/sec</string>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="horizontalSlider_coarsePointing">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Speed of the jitter in arcsec/sec</string>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TicksBelow</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_jitterMax">
+            <property name="toolTip">
+             <string>Speed of the jitter in arcsec/sec</string>
+            </property>
+            <property name="text">
+             <string>0.3 (max)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_coarsePointing">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>50</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Speed of the jitter in arcsec/sec</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">.QLineEdit:disabled {color: grey}</string>
+            </property>
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="4" column="3" colspan="2">
+        <widget class="QLineEdit" name="lineEdit_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string>Value to normalize to, in units at right</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">.QLineEdit:disabled {color: grey}</string>
+         </property>
+         <property name="text">
+          <string>11.0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1" colspan="4">
+        <widget class="QComboBox" name="comboBox_detector">
+         <property name="toolTip">
+          <string>Which NIRCam detector was used to take the input image</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>- Parse from header -</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A2</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A3</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A4</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>A5 - long wave</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B2</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B3</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B4</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>B5 - long wave</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_normalize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string>Normalize the final image to a specified value</string>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2" colspan="2">
+        <widget class="QRadioButton" name="radioButton_NIRCam">
+         <property name="toolTip">
+          <string>Which instrument was used to take the input image</string>
+         </property>
+         <property name="text">
+          <string>NIRCam</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_instrument</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="5">
+        <widget class="QCheckBox" name="checkBox_useConvertedImage">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Bypass all image convertor functions, and run other tool functions with the converted image instead of the input image</string>
+         </property>
+         <property name="text">
+          <string>Use existing converted image (shown at right) rather than input image</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_detector">
+         <property name="toolTip">
+          <string>Which NIRCam detector was used to take the input image</string>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QRadioButton" name="radioButton_FGS">
+         <property name="toolTip">
+          <string>Which instrument was used to take the input image</string>
+         </property>
+         <property name="text">
+          <string>FGS</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup_instrument</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="5" column="1" colspan="4">
+        <widget class="QTextEdit" name="textEdit_backgroundStars">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>groupBox_segmentGuiding</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>groupBox_fileWriter</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>279</x>
+     <y>766</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>271</x>
+     <y>653</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_segmentGuiding</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>groupBox_imageConverter</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>279</x>
+     <y>766</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>271</x>
+     <y>307</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_segmentGuiding</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>groupBox_starSelector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>279</x>
+     <y>766</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>636</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>groupBox_imageConverter</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>271</x>
+     <y>307</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>groupBox_starSelector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>636</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>groupBox_segmentGuiding</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>279</x>
+     <y>766</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_ACQ1</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>355</x>
+     <y>700</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_ACQ2</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>463</x>
+     <y>700</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_CAL</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>138</x>
+     <y>700</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_ID</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>246</x>
+     <y>700</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_TRK</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>572</x>
+     <y>700</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_FGS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_detector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>263</x>
+     <y>381</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>170</x>
+     <y>408</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_FGS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBox_detector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>263</x>
+     <y>381</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>500</x>
+     <y>412</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_starSelectorGUI</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_regfileStarSelector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>304</x>
+     <y>592</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>599</x>
+     <y>623</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_starSelectorGUI</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pushButton_regfileStarSelector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>304</x>
+     <y>592</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>677</x>
+     <y>630</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_segmentGuidingGUI</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_regfileSegmentGuiding</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>304</x>
+     <y>833</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>599</x>
+     <y>801</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_segmentGuidingGUI</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pushButton_regfileSegmentGuiding</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>304</x>
+     <y>833</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>677</x>
+     <y>809</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_instrument</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>389</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>176</x>
+     <y>393</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>radioButton_FGS</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>389</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>263</x>
+     <y>381</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>radioButton_NIRCam</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>446</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>429</x>
+     <y>381</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_detector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>428</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>176</x>
+     <y>408</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBox_detector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>236</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>500</x>
+     <y>412</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_backgroundStars</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>201</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>166</x>
+     <y>508</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>textEdit_backgroundStars</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>289</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>435</x>
+     <y>493</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pushButton_backgroundStars</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>494</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>677</x>
+     <y>491</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_normalize</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_normalize</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>363</x>
+     <y>438</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>497</x>
+     <y>439</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_normalize</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBox_normalize</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>363</x>
+     <y>438</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>674</x>
+     <y>442</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_detector</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>126</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>104</x>
+     <y>408</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_normalize</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>67</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>78</x>
+     <y>439</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox_normalize</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>107</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>363</x>
+     <y>438</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_normalize</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>126</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>497</x>
+     <y>439</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBox_normalize</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>183</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>674</x>
+     <y>442</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_coarsePointing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>frame_coarsePointing</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>363</x>
+     <y>358</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>372</x>
+     <y>344</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_coarsePointing</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_coarsePointing</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>363</x>
+     <y>358</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>665</x>
+     <y>361</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_instrument_2</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>69</x>
+     <y>322</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>92</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox_coarsePointing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>73</x>
+     <y>322</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>237</x>
+     <y>341</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>frame_coarsePointing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>178</x>
+     <y>322</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>671</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_coarsePointing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>373</x>
+     <y>322</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>665</x>
+     <y>361</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_LOSTRK</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>202</x>
+     <y>729</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>591</x>
+     <y>706</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <buttongroups>
+  <buttongroup name="buttonGroup_instrument"/>
+  <buttongroup name="buttonGroup_guider"/>
+  <buttongroup name="buttonGroup_segmentGuiding"/>
+  <buttongroup name="buttonGroup_starSelector"/>
+ </buttongroups>
+</ui>
