@@ -13,7 +13,7 @@ Use
     ::
         from jwst_fgs_commissioning_tools.convert_image import convert_image_to_raw_fgs
         convert_image_to_raw_fgs.convert_im(input_im, guider, root,
-            nircam=True, nircam_det=None, fgs_counts=None, jmag=None,
+            nircam=True, nircam_det=None, norm_value=None, norm_unit=None,
             out_dir=None):
 
     Required arguments:
@@ -28,10 +28,8 @@ Use
         ``nircam_det`` - used to specify the detector of a provided
             NIRCam image. If left blank, the detector will be extracted
             from the header of the NIRCam FITS file.
-        ``fgs_counts`` and ``jmag`` - used to normalize the input
-            NIRCam image, either to a desired J magnitude or to a
-            desired number of FGS counts. The jmag parameter can also
-            be used to normalize an FGS image.
+        ``norm_value`` and ``norm_unit`` - used to normalize the input
+            NIRCam image, to a desired number of FGS counts.
         ``out_dir`` - where output FGS image(s) will be saved. If not
             provided, the image(s) will be saved to ../out/{root}.
 '''
@@ -63,7 +61,7 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 LOGGER = logging.getLogger(__name__)
 
 
-def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
+def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
             in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
@@ -82,10 +80,10 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
         Which guider is being used: 1 or 2
     root: str
         The root desired for output images if different than root in image
-    fgs_counts: float
-        If the user wants to specify the FGS counts, they do so here
-    jmag: float
-        Like fgs_counts but for the J magnitude (NOT JAB)
+    norm_value: float
+        The value to be used for normalization (depends on norm_unit)
+    norm_unit: str
+        The unit to be used for normalization (expecting "FGS Counts" or "FGS Magnitude")
     nircam_det: str
         The NIRCam detector used for this observation. Only applicable for NIRCam
         images and if cannot be parsed from header.
@@ -125,14 +123,14 @@ def run_all(image, guider, root=None, fgs_counts=None, jmag=None,
     if convert_im:
         fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
                                                      nircam=nircam,
-                                                     fgs_counts=fgs_counts,
-                                                     jmag=jmag,
+                                                     norm_value=norm_value,
+                                                     norm_unit=norm_unit,
                                                      nircam_det=nircam_det,
                                                      out_dir=out_dir,
                                                      logger_passed=True,
                                                      normalize=normalize)
         if bkgd_stars:
-            fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, jmag, fgs_counts, guider)
+            fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, norm_value, norm_unit, guider)
 
         # Write converted image
         convert_image_to_raw_fgs.write_FGS_im(fgs_im, out_dir, root, guider)

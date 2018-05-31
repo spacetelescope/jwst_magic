@@ -345,7 +345,7 @@
          </item>
          <item>
           <property name="text">
-           <string>J Magnitude</string>
+           <string>FGS Magnitude</string>
           </property>
          </item>
         </widget>
