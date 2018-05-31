@@ -70,7 +70,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 # LOCAL
 from .. import utils
-from ..convert_image import counts_to_jmag
+from ..convert_image import renormalize
 
 # Paths
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -529,7 +529,6 @@ def remove_pedestal(data):
 
     return noped_data
 
-
 def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
     # Any value above 65535 or below 0 will wrap when converted to uint16
     data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
@@ -550,14 +549,16 @@ def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
 
     return fgsout_path
 
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN FUNCTION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
-               nircam_det=None, out_dir=None, logger_passed=False,
-               normalize=True, coarse_pointing=False, jitter_rate_arcsec=None):
+def convert_im(input_im, guider, root, nircam=True, norm_value=12.0,
+               norm_unit="FGS Magnitude", nircam_det=None, out_dir=None,
+               logger_passed=False, normalize=True, coarse_pointing=False,
+               jitter_rate_arcsec=None):
     '''Takes NIRCam or FGS image; turns it into an FGS-like image and
     saves FITS file
 
@@ -672,18 +673,14 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
 
         # Normalize the image, if the "normalize" flag is True
         if normalize:
-            # Find FGS counts to be used for normalization
-            if fgs_counts is None:
-                if jmag is None:
-                    LOGGER.warning("Image Conversion: No counts or J magnitude given, setting to default")
-                    jmag = 11
-                fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-            else:
-                jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
+            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
+            fgs_counts = norm_obj.to_counts()
+            fgs_mag = norm_obj.to_fgs_mag()
 
             # Normalize the data
             data = normalize_data(data, fgs_counts)
-            LOGGER.info("Image Conversion: Normalizing to {} J Magnitude ({:.1f} FGS counts)".format(jmag, fgs_counts))
+            LOGGER.info("Image Conversion: Normalizing to FGS Magnitude of {:.1f} ({} FGS counts)".format(fgs_mag, fgs_counts))
+
 
     except Exception as e:
         LOGGER.exception(e)
