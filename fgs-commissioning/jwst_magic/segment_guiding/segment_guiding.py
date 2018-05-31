@@ -551,7 +551,7 @@ class SegmentGuidingCalculator:
         errcode = self.checkout(V2B, -10.0, 10.0)
         if errcode != 0:
             error = msg[errcode]
-            raise StandardError(error)
+            raise ValueError(error)
             return error
         else:
             V2B = float(V2B)
@@ -559,7 +559,7 @@ class SegmentGuidingCalculator:
         errcode = self.checkout(V3B, -10.0, 10.0)
         if errcode != 0:
             error = msg[errcode]
-            raise StandardError(error)
+            raise ValueError(error)
             return error
         else:
             V3B = float(V3B)
@@ -572,7 +572,7 @@ class SegmentGuidingCalculator:
         errcode = self.checkout(gsRA, 0.0, 360.0)
         if errcode != 0:
             error = msg[errcode]
-            raise StandardError(error)
+            raise ValueError(error)
             return error
         else:
             gsRA = float(gsRA)
@@ -581,7 +581,7 @@ class SegmentGuidingCalculator:
         error = msg[errcode]
         if errcode != 0:
             error = msg[errcode]
-            raise StandardError(error)
+            raise ValueError(error)
             return error
         else:
             gsDec = float(gsDec)
@@ -589,7 +589,7 @@ class SegmentGuidingCalculator:
         errcode = self.checkout(gsPA, -180.0, 180.0)
         error = msg[errcode]
         if errcode != 0:
-            raise StandardError(error)
+            raise ValueError(error)
             return
         else:
             gsPA = float(gsPA)
