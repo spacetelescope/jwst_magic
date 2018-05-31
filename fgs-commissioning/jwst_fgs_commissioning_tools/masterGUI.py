@@ -51,7 +51,7 @@ from astropy.io import ascii as asc
 import numpy as np
 
 from . import run_fgs_commissioning_tool, utils, background_stars
-from .convert_image import counts_to_jmag
+from .convert_image import renormalize
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
@@ -66,7 +66,7 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 # GUI CLASS DEFINITON
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MasterGui(QMainWindow):
-    def __init__(self, root=None, fgs_counts=None, jmag=11.0,
+    def __init__(self, root=None, norm_value=12.0, norm_units='FGS Magnitue',
                  nircam_det=None, nircam=True, global_alignment=False, steps=None,
                  in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                  star_selection=True, star_selection_gui=True, file_writer=True,
@@ -182,14 +182,8 @@ class MasterGui(QMainWindow):
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
         normalize = self.checkBox_normalize.isChecked()
-        if self.comboBox_normalize.currentText() =='FGS counts':
-            fgs_counts = float(self.lineEdit_normalize.text())
-        else:
-            fgs_counts = None
-        if self.comboBox_normalize.currentText() =='J Magnitude':
-            jmag = float(self.lineEdit_normalize.text())
-        else:
-            jmag = None
+        norm_value = float(self.lineEdit_normalize.text())
+        norm_unit = self.comboBox_normalize.currentText()
         bkgd_stars = self.bkgd_stars
 
         # Handle the case where we want to use a pre-existing converted image
@@ -311,7 +305,7 @@ class MasterGui(QMainWindow):
 
         if convert_im or star_selection or file_writer:
             run_fgs_commissioning_tool.run_all(input_image, guider, root,
-                                               fgs_counts, jmag, nircam_det,
+                                               norm_value, norm_unit, nircam_det,
                                                nircam, global_alignment,
                                                steps, in_file, bkgd_stars,
                                                out_dir, convert_im, star_selection,
@@ -394,6 +388,7 @@ class MasterGui(QMainWindow):
 
         # Determine what the JMag of the original star is
         if self.checkBox_normalize.isChecked():
+            # TODO: What is going on here? How does this relate to renormalization?? KJB 31May2018
             jmag = float(self.lineEdit_normalize.text())
         else:
             # Determine what the FGS counts of the image is
@@ -403,7 +398,7 @@ class MasterGui(QMainWindow):
             input_image = self.lineEdit_inputImage.text()
             data, _ = utils.get_data_and_header(input_image)
             fgs_counts = np.sum(data[data > np.median(data)])
-            jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
+            jmag = renormalize.counts_to_jmag(fgs_counts, guider)
 
         self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
 
@@ -714,7 +709,7 @@ class MasterGui(QMainWindow):
 # MAIN FUNCTION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def run_MasterGui(root=None, fgs_counts=None, jmag=11.0, nircam_det=None,
+def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_det=None,
                   nircam=True, global_alignment=False, steps=None, in_file=None,
                   bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
@@ -724,7 +719,7 @@ def run_MasterGui(root=None, fgs_counts=None, jmag=11.0, nircam_det=None,
     if app is None:
         app = QApplication(sys.argv)
 
-    ex = MasterGui(root, fgs_counts, jmag, nircam_det, nircam, global_alignment, steps,
+    ex = MasterGui(root, norm_value, norm_unit, nircam_det, nircam, global_alignment, steps,
                    in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
                    file_writer, segment_guiding, app=app)
     # #return ex.settings

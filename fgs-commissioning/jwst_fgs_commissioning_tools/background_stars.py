@@ -44,7 +44,7 @@ import pysiaf
 
 # Local Imports
 from . import coordinate_transforms
-from .convert_image import counts_to_jmag
+from .convert_image import renormalize
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -551,7 +551,7 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
     return stars, window.method
 
 
-def add_background_stars(image, stars, jmag, fgs_counts, guider):
+def add_background_stars(image, stars, norm_value, norm_unit, guider):
     """Add artificial copies of the input PSF to the image to mimic
     background stars.
 
@@ -580,13 +580,9 @@ def add_background_stars(image, stars, jmag, fgs_counts, guider):
     nstars_random = 5
 
     # Determine jmag and fgs_counts of guide star
-    if not fgs_counts:
-        if not jmag:
-            LOGGER.warning('No counts or J magnitude given, setting to default')
-            jmag = 11
-        fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-    else:
-        jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
+    norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
+    fgs_counts = norm_obj.to_counts()
+    jmag = renormalize.counts_to_jmag(fgs_counts, guider)
 
     # If the flag is simply set to "True", randomly place 5 stars on the image
     if stars is True:
@@ -620,7 +616,7 @@ def add_background_stars(image, stars, jmag, fgs_counts, guider):
     image[image < mean] = 0
     for x, y, jmag_back in zip(x_back, y_back, jmags_back):
         if not isinstance(jmag_back, np.ma.core.MaskedConstant):
-            star_fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag_back, guider)
+            star_fgs_counts = renormalize.j_mag_to_fgs_counts(jmag_back, guider)
             scale_factor = star_fgs_counts / fgs_counts
 
             star_data = image * scale_factor
