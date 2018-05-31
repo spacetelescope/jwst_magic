@@ -1,9 +1,9 @@
-Multifunctional wavefront Guiding Interface for Commissioning (MaGIC)
+Multi-Application Guiding Interface for Commissioning (MAGIC)
 =====================================================================
 
 ![GUI](notebooks/FGSCommTools_GUI.png)
 
-The Multifunctional wavefront Guiding Interface for Commissioning (MaGIC) package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
+The Multifunctional wavefront Guiding Interface for Commissioning (MAGIC) package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
 
 These tools comprise of four main components that can be run individually
 or together:
@@ -53,11 +53,13 @@ The following supplemental packages are required, and will be **automatically in
 
 ##### To install:
 
-1) Clone the gitlab repository to your local machine
+1) Activate your Python 3 (preferably Astroconda) environment.
+
+2) Clone the gitlab repository to your local machine
 
 	git clone git@grit.stsci.edu:wfsc/tools.git
 
-2) Install the `jwst_magic` package:
+3) Install the `jwst_magic` package:
 
 	cd tools/fgs-commissioning
 
@@ -67,7 +69,7 @@ The following supplemental packages are required, and will be **automatically in
 
 Running the Tools
 -----------------
-These tools are best run in the IPython terminal. Simply launch the GUI with the following steps:
+These tools are best run in the IPython terminal. Simply activate your Python 3 (preferably Astroconda) environment, and launch the GUI with the following steps:
 
     In[1]: import jwst_magic
 
