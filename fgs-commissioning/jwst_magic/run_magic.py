@@ -1,4 +1,4 @@
-'''Run the FGS Commissioning Tools end-to-end
+'''Run JWST MaGIC end-to-end
 
 ~Description
 
@@ -11,7 +11,7 @@ Use
 ---
     This module can be executed in a Python shell as such:
     ::
-        from jwst_fgs_commissioning_tools.convert_image import convert_image_to_raw_fgs
+        from jwst_magic.convert_image import convert_image_to_raw_fgs
         convert_image_to_raw_fgs.convert_im(input_im, guider, root,
             nircam=True, nircam_det=None, norm_value=None, norm_unit=None,
             out_dir=None):
@@ -65,7 +65,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
             in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
-            masterGUIapp=None, copy_original=True, normalize=True):
+            masterGUIapp=None, copy_original=True, normalize=True,
+            coarse_pointing=False, jitter_rate_arcsec=None):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -128,7 +129,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                      nircam_det=nircam_det,
                                                      out_dir=out_dir,
                                                      logger_passed=True,
-                                                     normalize=normalize)
+                                                     normalize=normalize,
+                                                     coarse_pointing=coarse_pointing,
+                                                     jitter_rate_arcsec=jitter_rate_arcsec)
         if bkgd_stars:
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, norm_value, norm_unit, guider)
 

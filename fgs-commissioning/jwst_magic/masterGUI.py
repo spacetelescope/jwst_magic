@@ -1,6 +1,6 @@
-"""GUI interface to FGS Commissioning Tools
+"""GUI interface to JWST MaGIC
 
-The primary interface to the FGS Commissioning Tools, from which almost
+The primary interface to the JWST MaGIC, from which almost
 all of the tool functions can be operated.
 
 Authors
@@ -12,8 +12,8 @@ Use
 ---
 This GUI can be run in the python shell as such:
     ::
-    import jwst_fgs_commissioning_tools
-    jwst_fgs_commissioning_tools.run_tool_GUI()
+    import jwst_magic
+    jwst_magic.run_tool_GUI()
 
 
 Notes
@@ -31,14 +31,13 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-FGS Commissioning Tools package, be sure to use the existing instance
+JWST MaGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
 
 import os
 import sys
-import inspect
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
@@ -50,8 +49,13 @@ if matplotlib.get_backend() != 'Qt5Agg':
 from astropy.io import ascii as asc
 import numpy as np
 
+<<<<<<< HEAD:fgs-commissioning/jwst_fgs_commissioning_tools/masterGUI.py
 from . import run_fgs_commissioning_tool, utils, background_stars
 from .convert_image import renormalize
+=======
+from . import run_magic, utils, background_stars
+from .convert_image import counts_to_jmag
+>>>>>>> master:fgs-commissioning/jwst_magic/masterGUI.py
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
@@ -93,7 +97,7 @@ class MasterGui(QMainWindow):
         uic.loadUi(os.path.join(__location__, 'masterGUI.ui'), self)
 
         # Create and load GUI session
-        self.setWindowTitle('FGS Commissioning Tools')
+        self.setWindowTitle('JWST MaGIC')
         self.init_matplotlib()
         self.define_MainGUI_connections()
         self.show()
@@ -138,6 +142,8 @@ class MasterGui(QMainWindow):
 
         # Image convertor widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
+        self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
+        self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
 
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
@@ -160,7 +166,7 @@ class MasterGui(QMainWindow):
 
     def run_tool(self):
         '''
-        Takes inputs provided by user and runs run_fgs_commissioning_tool
+        Takes inputs provided by user and runs run_magic
         '''
         # Required
         if self.lineEdit_inputImage.text() == "":
@@ -174,16 +180,18 @@ class MasterGui(QMainWindow):
         input_image = self.lineEdit_inputImage.text()
         guider = int(self.buttonGroup_guider.checkedButton().text())
         root = self.lineEdit_root.text()
-        out_dir = self.textEdit_out.toPlainText()
+        out_dir = self.textEdit_out.toPlainText().rstrip()
         copy_original = True
 
         # Convert image
-        convert_im = self.groupBox_imageConverter.isChecked()
+        convert_im = True
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
         normalize = self.checkBox_normalize.isChecked()
         norm_value = float(self.lineEdit_normalize.text())
         norm_unit = self.comboBox_normalize.currentText()
+        coarse_point = self.checkBox_coarsePointing.isChecked()
+        jitter_rate_arcsec = float(self.lineEdit_coarsePointing.text())
         bkgd_stars = self.bkgd_stars
 
         # Handle the case where we want to use a pre-existing converted image
@@ -232,16 +240,14 @@ class MasterGui(QMainWindow):
             all_psfs = os.path.join(out_dir, 'out', root,
                                     '{}_G{}_ALLpsfs.txt'.format(root, guider))
             all_rows = asc.read(all_psfs)
-            labels = all_rows['label'].data
             x = all_rows['x'].data
             y = all_rows['y'].data
 
             # Run the select stars GUI to determint the new orientation
             inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
-            order = ''.join(labels[inds])
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(order, guider, root, out_dir)
+            rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
             print("** Run Complete **\n\n")
 
             # Update converted image preview
@@ -273,6 +279,10 @@ class MasterGui(QMainWindow):
             observation_num = SGT_dialog.lineEdit_observationNumber.text()
             visit_num = SGT_dialog.lineEdit_visitNumber.text()
             ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
+            if SGT_dialog.checkBox_countrateFactor.isChecked():
+                countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
+            else:
+                countrate_factor = None
 
             if os.path.exists(self.converted_im_file):
                 fgs_filename = self.converted_im_file
@@ -295,7 +305,8 @@ class MasterGui(QMainWindow):
                                      out_dir=out_dir, data=data,
                                      selected_segs=selected_segs,
                                      masterGUIapp=self.app, refonly=refonly,
-                                     ct_uncert_fctr=ct_uncert_fctr)
+                                     ct_uncert_fctr=ct_uncert_fctr,
+                                     countrate_factor=countrate_factor)
             print("** Run Complete **")
 
             # Update converted image preview
@@ -304,18 +315,44 @@ class MasterGui(QMainWindow):
             return
 
         if convert_im or star_selection or file_writer:
-            run_fgs_commissioning_tool.run_all(input_image, guider, root,
-                                               norm_value, norm_unit, nircam_det,
-                                               nircam, global_alignment,
-                                               steps, in_file, bkgd_stars,
-                                               out_dir, convert_im, star_selection,
-                                               star_selectiongui, file_writer,
-                                               self.app, copy_original, normalize)
+            run_magic.run_all(input_image, guider, root, norm_value, norm_unit,
+                              nircam_det, nircam, global_alignment, steps,
+                              in_file, bkgd_stars, out_dir, convert_im,
+                              star_selection, star_selectiongui, file_writer,
+                              self.app, copy_original, normalize, coarse_point,
+                              jitter_rate_arcsec)
             print("** Run Complete **")
 
             # Update converted image preview
             self.update_converted_image_preview()
             self.update_filepreview()
+
+    def on_change_jitter(self):
+        '''If the coarse pointing slider or text box controlling the
+        jitter rate are changed, update the other one accordingly.
+        '''
+        slider_range = np.linspace(0, 0.3, 101)
+        if self.sender() == self.horizontalSlider_coarsePointing:
+            # Get slider value
+            slider_value = int(self.horizontalSlider_coarsePointing.value())
+
+            # Calculate matching textbox value
+            jitter = slider_range[slider_value]
+
+        elif self.sender() == self.lineEdit_coarsePointing:
+            # Get jitter textbox value
+            jitter = float(self.lineEdit_coarsePointing.text())
+
+            # Make sure the input is not out of bounds
+            jitter = min(jitter, 0.3)
+            jitter = max(jitter, 0)
+
+            # Calculate matching slider value
+            slider_value = (np.abs(slider_range - jitter)).argmin()
+
+        # Update both to show the same value
+        self.horizontalSlider_coarsePointing.setValue(slider_value)
+        self.lineEdit_coarsePointing.setText('{:.3f}'.format(jitter))
 
     def on_click_input(self):
         ''' Using the Input Image Open button (open file)
@@ -338,7 +375,13 @@ class MasterGui(QMainWindow):
         self.update_filepreview()
 
         # Show input image preview
-        self.load_input_image_data(filename)
+        try:
+            self.load_input_image_data(filename)
+        except TypeError as e:
+            if str(e) != "stat: can't specify None for path argument":
+                raise
+            else:
+                pass
 
         # Show converted image preview, if possible
         self.update_converted_image_preview()
@@ -603,8 +646,7 @@ class MasterGui(QMainWindow):
             self.textEdit_showingConverted.setText(self.converted_im_file)
 
             # Toggle the "use converted image" buttons
-            if self.groupBox_imageConverter.isChecked():
-                self.checkBox_useConvertedImage.setEnabled(True)
+            self.checkBox_useConvertedImage.setEnabled(True)
             self.checkBox_useConvertedImage.setChecked(True)
 
             # Enable the "show stars" button

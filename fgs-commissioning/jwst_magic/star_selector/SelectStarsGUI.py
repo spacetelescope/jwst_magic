@@ -17,7 +17,7 @@ Use
 ---
 This GUI can be run in the python shell or as a module, as such:
     ::
-    from jwst_fgs_commissioning_tools.star_selector import SelectStarsGUI
+    from jwst_magic.star_selector import SelectStarsGUI
     inds = SelectStarsGUI.run_SelectStars(data_array, x_list, y_list, dist)
 
 References
@@ -40,7 +40,7 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-FGS Commissioning Tools package, be sure to use the existing instance
+JWST MaGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
@@ -291,7 +291,7 @@ class StarSelectorWindow(QDialog):
             self.layout().addWidget(self.central_widget)
 
         # Create and load GUI session
-        self.setWindowTitle('FGS Commissioning Tools - Guide and Reference Star Selector')
+        self.setWindowTitle('JWST MaGIC - Guide and Reference Star Selector')
         self.init_matplotlib()
         self.define_StarSelectionGUI_connections()
         self.show()
@@ -304,11 +304,28 @@ class StarSelectorWindow(QDialog):
         '''Set up the two matplotlib canvases that will preview the
         input image and converted image in the "Image Preview" section.
         '''
+        # Adjust the GUI sizes for laptop screens
+        screen_size = self.qApp.desktop().screenGeometry()
+        width, height = screen_size.width(), screen_size.height()
+        if height < 1100:
+            self.frame_canvas.setMinimumSize(600, 0)
+            self.tableWidget_selectedStars.setMinimumSize(420, 150)
+            self.groupBox_selectedStars.setMinimumSize(440, 380 - 150)
+            self.frame_profile.setMinimumSize(0, 250)
+            canvas_left = 0.13
+            profile_bottom = 0.2
+        else:
+            self.frame_canvas.setMinimumSize(800, 0)
+            self.tableWidget_selectedStars.setMinimumSize(420, 300)
+            self.groupBox_selectedStars.setMinimumSize(440, 380)
+            self.frame_profile.setMinimumSize(0, 300)
+            canvas_left = 0.1
+            profile_bottom = 0.15
 
         # Connect main matplotlib canvas and add to layout
         self.canvas = StarClickerMatplotlibCanvas(
             parent=self.frame_canvas,  data=self.data, x=self.x, dpi=100,
-            y=self.y, left=0.1, right=0.93)
+            y=self.y, left=canvas_left, right=0.93)
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
                                            self.y)
         self.canvas.zoom_to_crop()
@@ -318,7 +335,7 @@ class StarSelectorWindow(QDialog):
         # Connect profile matplotlib canvas and add to layout
         self.canvas_profile = StarClickerMatplotlibCanvas(
             parent=self.frame_profile, data=self.data, dpi=100, profile=True,
-            left=0.2, bottom=0.15, right=0.95, top=0.98)
+            left=0.2, bottom=profile_bottom, right=0.95, top=0.98)
         self.canvas_profile.init_profile()
         self.frame_profile.layout().insertWidget(0, self.canvas_profile)
 

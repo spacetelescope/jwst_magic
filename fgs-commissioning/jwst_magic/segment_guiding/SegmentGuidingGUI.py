@@ -19,7 +19,7 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-FGS Commissioning Tools package, be sure to use the existing instance
+JWST MaGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
@@ -65,13 +65,23 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.frame_selectStarsGUI.layout().addWidget(starSelectorCentralWidget)
 
         # Create and load sgement guiding GUI session
-        self.setWindowTitle('FGS Commissioning Tools - Segment Guiding Command Generator')
+        self.setWindowTitle('JWST MaGIC - Segment Guiding Command Generator')
+        self.adjust_sizes()
         self.define_SegmentGuidingGUI_connections()
         self.show()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    def adjust_sizes(self):
+        '''Adjust widget sizes to be smaller for laptop screens
+        '''
+        screen_size = self.qApp.desktop().screenGeometry()
+        width, height = screen_size.width(), screen_size.height()
+        if height < 1100:
+            self.tableWidget_commands.setMinimumSize(220, 250)
+            self.groupBox_commands.setMinimumSize(280, 380 - 50)
+            self.frame_segmentGuiding.layout().setSpacing(20)
 
     def define_SegmentGuidingGUI_connections(self):
         # Main dialog window widgets
