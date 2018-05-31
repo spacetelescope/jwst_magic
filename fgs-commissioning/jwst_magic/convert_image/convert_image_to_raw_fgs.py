@@ -555,9 +555,10 @@ def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def convert_im(input_im, guider, root, nircam=True, norm_value=None, norm_unit=None,
-               nircam_det=None, out_dir=None, logger_passed=False,
-               normalize=True, coarse_pointing=False, jitter_rate_arcsec=None):
+def convert_im(input_im, guider, root, nircam=True, norm_value=12.0,
+               norm_unit="FGS Magnitude", nircam_det=None, out_dir=None,
+               logger_passed=False, normalize=True, coarse_pointing=False,
+               jitter_rate_arcsec=None):
     '''Takes NIRCam or FGS image; turns it into an FGS-like image and
     saves FITS file
 

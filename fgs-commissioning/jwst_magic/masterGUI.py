@@ -49,13 +49,8 @@ if matplotlib.get_backend() != 'Qt5Agg':
 from astropy.io import ascii as asc
 import numpy as np
 
-<<<<<<< HEAD:fgs-commissioning/jwst_fgs_commissioning_tools/masterGUI.py
-from . import run_fgs_commissioning_tool, utils, background_stars
-from .convert_image import renormalize
-=======
 from . import run_magic, utils, background_stars
-from .convert_image import counts_to_jmag
->>>>>>> master:fgs-commissioning/jwst_magic/masterGUI.py
+from .convert_image import renormalize
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
@@ -431,8 +426,11 @@ class MasterGui(QMainWindow):
 
         # Determine what the JMag of the original star is
         if self.checkBox_normalize.isChecked():
-            # TODO: What is going on here? How does this relate to renormalization?? KJB 31May2018
-            jmag = float(self.lineEdit_normalize.text())
+            norm_value = float(self.lineEdit_normalize.text())
+            norm_unit = self.comboBox_normalize.currentText()
+            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
+            fgs_counts = norm_obj.to_counts()
+            jmag = renormalize.counts_to_jmag(fgs_counts, guider)
         else:
             # Determine what the FGS counts of the image is
             # if self.checkBox_useConvertedImage.isChecked():

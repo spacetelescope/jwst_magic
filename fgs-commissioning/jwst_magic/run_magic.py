@@ -133,7 +133,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                      coarse_pointing=coarse_pointing,
                                                      jitter_rate_arcsec=jitter_rate_arcsec)
         if bkgd_stars:
-            fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars, norm_value, norm_unit, guider)
+            fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars,
+                                                           norm_value, norm_unit,
+                                                           guider, normalize=normalize)
 
         # Write converted image
         convert_image_to_raw_fgs.write_FGS_im(fgs_im, out_dir, root, guider)
