@@ -321,7 +321,7 @@
           <string notr="true">.QLineEdit:disabled {color: grey}</string>
          </property>
          <property name="text">
-          <string>11.0</string>
+          <string>12.0</string>
          </property>
         </widget>
        </item>
