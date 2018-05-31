@@ -30,7 +30,7 @@ import numpy as np
 # GLOBAL VARIABLES
 FGS_ZERO_POINT = 29.057
 J_ZERO_POINT = 0.90
-CONVERSION_FACTOR = 3.1418185
+BRIGHTNESS_FACTOR = 3.14182 #3.1418185
 
 class NormalizeToCounts(object):
     '''
@@ -67,12 +67,12 @@ def electrons_to_counts(electrons, guider):
 def counts_to_fgs_mag(counts, guider):
     '''Convert FGS counts to FGS magnitude '''
     electrons = counts_to_electrons(counts, guider)
-    fgs_mag = -2.5 * np.log10(electrons/CONVERSION_FACTOR) + FGS_ZERO_POINT
+    fgs_mag = -2.5 * np.log10(electrons/BRIGHTNESS_FACTOR) + FGS_ZERO_POINT
     return  fgs_mag
 
 def fgs_mag_to_counts(fgs_mag, guider):
     '''Convert FGS Magnitude to FGS counts '''
-    electrons = 10**((fgs_mag - FGS_ZERO_POINT)/-2.5) * CONVERSION_FACTOR
+    electrons = 10**((fgs_mag - FGS_ZERO_POINT)/-2.5) * BRIGHTNESS_FACTOR
     counts = electrons_to_counts(electrons, guider)
     return  counts
 
