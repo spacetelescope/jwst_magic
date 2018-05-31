@@ -551,7 +551,8 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
     return stars, window.method
 
 
-def add_background_stars(image, stars, norm_value, norm_unit, guider):
+def add_background_stars(image, stars, norm_value, norm_unit, guider, normalize=True):
+    #TODO: Figure out what is going on with normalization
     """Add artificial copies of the input PSF to the image to mimic
     background stars.
 
