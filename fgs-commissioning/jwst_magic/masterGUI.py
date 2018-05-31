@@ -376,7 +376,13 @@ class MasterGui(QMainWindow):
         self.update_filepreview()
 
         # Show input image preview
-        self.load_input_image_data(filename)
+        try:
+            self.load_input_image_data(filename)
+        except TypeError as e:
+            if str(e) != "stat: can't specify None for path argument":
+                raise
+            else:
+                pass
 
         # Show converted image preview, if possible
         self.update_converted_image_preview()
