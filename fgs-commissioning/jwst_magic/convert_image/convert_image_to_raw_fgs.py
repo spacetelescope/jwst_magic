@@ -16,7 +16,7 @@ Use
 ---
     This module can be executed in a Python shell as such:
     ::
-        from jwst_fgs_commissioning_tools.convert_image import convert_image_to_raw_fgs
+        from jwst_magic.convert_image import convert_image_to_raw_fgs
         convert_image_to_raw_fgs.convert_im(input_im, guider, root,
             nircam=True, nircam_det=None, fgs_counts=None, jmag=None,
             out_dir=None):
@@ -66,10 +66,11 @@ import logging
 import numpy as np
 from astropy.io import fits
 from scipy import signal
+from scipy.ndimage.filters import gaussian_filter
 
 # Local Imports
 from .. import utils
-from ..convert_image import counts_to_jmag
+from ..convert_image import renormalize
 
 # Paths
 FSW_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -80,11 +81,38 @@ DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 # Constants
 NIRCAM_SW_SCALE = 0.031  # NIRCam SW pixel scale (arcsec/pixel)
 NIRCAM_LW_SCALE = 0.063  # NIRCam LW pixel scale (arcsec/pixel)
+FGS_SCALE = 0.069  # FGS pixel scale (arcsec/pixel)
 FGS_PIXELS = 2048  # FGS image size in pixels
 FGS_PLATE_SIZE = 2.4  # FGS image size in arcseconds
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
+
+
+def apply_coarse_pointing_filter(data, jitter_rate_arcsec, pixel_scale):
+    '''Apply a Gaussian filter to simulate coarse pointing
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    jitter_rate_arcsec : float
+        The rate of jitter of the telescope (arcsec/sec)
+    pixel_scale : float
+        The pixel scale of the detector (arcsec/pixel)
+
+    Returns
+    -------
+    data_gauss: 2-D numpy array
+        Image data with coarse pointing filter applied
+    '''
+    t_fullframe_read = 10.7  # sec
+    jitter_rate = jitter_rate_arcsec / pixel_scale  # pixel/sec
+    sigma = jitter_rate * t_fullframe_read / 3  # pixel
+
+    data_gauss = gaussian_filter(data, sigma)
+
+    return data_gauss
 
 
 def bad_pixel_correction(data, bp_thresh):
@@ -211,11 +239,7 @@ def fgs_add_dq(image, guider):
     indication as to why they are flagged. For now, we set all flagged
     pixels to saturation.
     '''
-
-    if guider == 1:
-        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G1.fits'))
-    elif guider == 2:
-        dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G2.fits'))
+    dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(guider)))
 
     # Apply dq_arr to image
     # FIXME for now, set all flagged pixels to saturation
@@ -346,12 +370,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
 
     # Determine whether the NIRCam image is short- or long-wave to determine
     # the pixel scale
-    if '5' in detector:
-        # Longwave
-        nircam_scale = NIRCAM_LW_SCALE
-    else:
-        # Shortwave
-        nircam_scale = NIRCAM_SW_SCALE
+    nircam_scale = NIRCAM_LW_SCALE if '5' in detector else NIRCAM_SW_SCALE
 
     # Perform the rotation
     if nircam_coord_frame == 'sci':
@@ -510,10 +529,36 @@ def remove_pedestal(data):
 
     return noped_data
 
-# -------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------
-def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
-               nircam_det=None, out_dir=None, logger_passed=False, normalize=True):
+def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
+    # Any value above 65535 or below 0 will wrap when converted to uint16
+    data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
+
+    # Define output path
+    output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
+    if not fgsout_path:
+        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                                   '{}_G{}.fits'.format(root, guider))
+    # Load header file
+    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+    hdr = fits.getheader(header_file, ext=0)
+
+    # Write FITS file
+    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
+                               '{}_G{}.fits'.format(root, guider))
+    utils.write_fits(fgsout_path, np.uint16(data), header=hdr)
+
+    return fgsout_path
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# MAIN FUNCTION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+def convert_im(input_im, guider, root, nircam=True, norm_value=12.0,
+               norm_unit="FGS Magnitude", nircam_det=None, out_dir=None,
+               logger_passed=False, normalize=True, coarse_pointing=False,
+               jitter_rate_arcsec=None):
     '''Takes NIRCam or FGS image; turns it into an FGS-like image and
     saves FITS file
 
@@ -619,45 +664,26 @@ def convert_im(input_im, guider, root, nircam=True, fgs_counts=None, jmag=None,
             except KeyError:
                 pass
 
+        # Apply Gaussian filter to simulate coarse pointing
+        if coarse_pointing:
+            pixel_scale = nircam_scale if nircam else FGS_SCALE
+
+            data = apply_coarse_pointing_filter(data, jitter_rate_arcsec, pixel_scale)
+            LOGGER.info("Image Conversion: Applied Gaussian filter to simulate coarse pointing with jitter of {:.3f} arcsec/sec".format(jitter_rate_arcsec))
+
         # Normalize the image, if the "normalize" flag is True
         if normalize:
-            # Find FGS counts to be used for normalization
-            if fgs_counts is None:
-                if jmag is None:
-                    LOGGER.warning("Image Conversion: No counts or J magnitude given, setting to default")
-                    jmag = 11
-                fgs_counts = counts_to_jmag.jmag_to_fgs_counts(jmag, guider)
-            else:
-                jmag = counts_to_jmag.fgs_counts_to_jmag(fgs_counts, guider)
+            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
+            fgs_counts = norm_obj.to_counts()
+            fgs_mag = norm_obj.to_fgs_mag()
 
             # Normalize the data
             data = normalize_data(data, fgs_counts)
-            LOGGER.info("Image Conversion: Normalizing to {} J Magnitude ({} FGS counts)".format(jmag, fgs_counts))
+            LOGGER.info("Image Conversion: Normalizing to FGS Magnitude of {:.1f} ({} FGS counts)".format(fgs_mag, fgs_counts))
+
 
     except Exception as e:
         LOGGER.exception(e)
         raise
 
     return data
-
-def write_FGS_im(data, out_dir, root, guider, fgsout_path=None):
-    # Any value above 65535 or below 0 will wrap when converted to uint16
-    data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
-
-    # Define output path
-    output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
-    if not fgsout_path:
-        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                                   '{}_G{}.fits'.format(root, guider))
-    # Load header file
-    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
-    hdr = fits.getheader(header_file, ext=0)
-
-    # Write FITS file
-    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                               '{}_G{}.fits'.format(root, guider))
-    utils.write_fits(fgsout_path, np.uint16(data), header=hdr)
-
-    return fgsout_path
-
-

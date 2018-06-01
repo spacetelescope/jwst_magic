@@ -45,7 +45,7 @@ class SegmentGuidingCalculator:
     def __init__(self, segment_infile, program_id, observation_num, visit_num,
                  root=None, GUI=False, GS_params_dict=None, refonly=False,
                  selected_segs=None, vss_infile=None, out_dir=None,
-                 ct_uncert_fctr=0.9):
+                 ct_uncert_fctr=0.9, countrate_factor=None):
 
         self.root = root
         self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, self.root)
@@ -62,8 +62,9 @@ class SegmentGuidingCalculator:
         # Implement "refonly" label for reference stars?
         self.refonly = refonly
 
-        # Set countrate uncertainty factor
+        # Set countrate uncertainty factor and multiplicative factor
         self.ct_uncert_fctr = ct_uncert_fctr
+        self.countrate_factor = countrate_factor
 
         # Parse the input file type (ALLpsfs.txt, regfile.txt, and VSS infile)
         self.get_gs_params(vss_infile, GS_params_dict)
@@ -224,7 +225,10 @@ class SegmentGuidingCalculator:
 
         # Write out override file with RA/Decs of selected segments
         with open(out_file, 'w') as f:
-            out_string = 'sts -gs_select {:4d}:{}:{}'.format(int(self.program_id),
+            # Determine whether to include a multiplicative countrate factor
+            countrate_qualifier = \
+                ' -count_rate_factor=({:.3f})'.format(self.countrate_factor) if self.countrate_factor else ''
+            out_string = 'sts -gs_select{} {:4d}:{}:{}'.format(countrate_qualifier, int(self.program_id),
                                                              self.observation_num,
                                                              self.visit_num)
 
@@ -393,10 +397,12 @@ class SegmentGuidingCalculator:
 
         # If the selected segments are an array of lists (passed from GUI)
         if isinstance(selected_segs, np.ndarray):
+            LOGGER.info('Segment Guiding: Guiding on segments selected from GUI')
             # If there is more than one orientation provided
             if isinstance(selected_segs[0], list):
+                self.selected_segment_ids = []
                 for i, orientation in enumerate(selected_segs):
-                    self.selected_segment_ids = [s - 1 for s in orientation]
+                    self.selected_segment_ids.append([s - 1 for s in orientation])
 
             # If there is only one
             else:
@@ -404,6 +410,7 @@ class SegmentGuidingCalculator:
 
         # Else if they are a regfile, parse it.
         elif os.path.exists(selected_segs):
+            LOGGER.info('Segment Guiding: Guiding on segments selected in {}'.format(selected_segs))
             self.parse_regfile(selected_segs)
 
         # Otherwise, we don't know what it is...
@@ -544,7 +551,7 @@ class SegmentGuidingCalculator:
         errcode = self.checkout(V2B, -10.0, 10.0)
         if errcode != 0:
             error = msg[errcode]
-            raise StandardError(error)
+            raise ValueError(error)
             return error
         else:
             V2B = float(V2B)
@@ -552,7 +559,7 @@ class SegmentGuidingCalculator:
         errcode = self.checkout(V3B, -10.0, 10.0)
         if errcode != 0:
             error = msg[errcode]
-            raise StandardError(error)
+            raise ValueError(error)
             return error
         else:
             V3B = float(V3B)
@@ -565,7 +572,7 @@ class SegmentGuidingCalculator:
         errcode = self.checkout(gsRA, 0.0, 360.0)
         if errcode != 0:
             error = msg[errcode]
-            raise StandardError(error)
+            raise ValueError(error)
             return error
         else:
             gsRA = float(gsRA)
@@ -574,7 +581,7 @@ class SegmentGuidingCalculator:
         error = msg[errcode]
         if errcode != 0:
             error = msg[errcode]
-            raise StandardError(error)
+            raise ValueError(error)
             return error
         else:
             gsDec = float(gsDec)
@@ -582,7 +589,7 @@ class SegmentGuidingCalculator:
         errcode = self.checkout(gsPA, -180.0, 180.0)
         error = msg[errcode]
         if errcode != 0:
-            raise StandardError(error)
+            raise ValueError(error)
             return
         else:
             gsPA = float(gsPA)
@@ -604,13 +611,15 @@ class SegmentGuidingCalculator:
             errcode = 1
         return errcode
 
-############################## End Class SegmentForm ###############################
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# MAIN FUNCTION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 def run_tool(segment_infile, program_id=0, observation_num=0, visit_num=0, root=None,
              GUI=False, GS_params_dict=None, selected_segs=None, vss_infile=None,
              out_dir=None, data=None, masterGUIapp=None, refonly=False,
-             ct_uncert_fctr=0.9):
+             ct_uncert_fctr=0.9, countrate_factor=None):
     # if not GS_params_dict and not GUI:
     #     GS_params_dict = {'V2Boff': 0.1,  # V2 boresight offset
     #                       'V3Boff': 0.2,  # V3 boresight offset
@@ -654,7 +663,8 @@ def run_tool(segment_infile, program_id=0, observation_num=0, visit_num=0, root=
                                       GS_params_dict=GS_params_dict,
                                       selected_segs=selected_segs,
                                       vss_infile=vss_infile, out_dir=out_dir,
-                                      refonly=refonly, ct_uncert_fctr=ct_uncert_fctr)
+                                      refonly=refonly, ct_uncert_fctr=ct_uncert_fctr,
+                                      countrate_factor=countrate_factor)
         sg.ChosenSeg()
         sg.Calculate()
 

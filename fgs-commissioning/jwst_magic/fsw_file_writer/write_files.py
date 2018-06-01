@@ -48,7 +48,7 @@ Use
 ---
     This module can be executed in a Python shell as such:
     ::
-        from jwst_fgs_commissioning_tools.fsw_file_writer import write_files
+        from jwst_magic.fsw_file_writer import write_files
         write_files.write_all(obj)
 
     Required arguments:
