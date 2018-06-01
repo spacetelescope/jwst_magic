@@ -226,6 +226,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         # Remove old center
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
+            self.center = None
         self.segNum = None
 
         if self.comboBox_segmentCenter.currentText() != "-Select Segment-":
@@ -246,6 +247,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         # Remove old center
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
+            self.center = None
         self.segNum = None
 
         if use_mean_as_center:
