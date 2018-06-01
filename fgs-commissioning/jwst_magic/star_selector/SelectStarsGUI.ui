@@ -6,58 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>1056</height>
+    <width>1110</width>
+    <height>927</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_6">
-   <item row="0" column="0" rowspan="8">
-    <widget class="QFrame" name="frame_canvas">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>800</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QWidget { border-color: black; border-width: 10px }</string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <property name="margin">
-       <number>0</number>
-      </property>
-     </layout>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLabel" name="label_instructions_2">
-     <property name="styleSheet">
-      <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
-     </property>
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Instructions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-     <property name="margin">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
+  <layout class="QGridLayout" name="gridLayout_3">
+   <item row="1" column="1" colspan="2">
     <widget class="QFrame" name="frame_instructions">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
@@ -95,42 +58,51 @@ p, li { white-space: pre-wrap; }
      </layout>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QLabel" name="label_output">
+   <item row="0" column="0" rowspan="7">
+    <widget class="QFrame" name="frame_canvas">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>600</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
      <property name="styleSheet">
-      <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
+      <string notr="true">QWidget { border-color: black; border-width: 10px }</string>
      </property>
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tool Output&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
      </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="margin">
+       <number>0</number>
+      </property>
+     </layout>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QTextEdit" name="textEdit_output">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="html">
-      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-     <property name="placeholderText" stdset="0">
-      <string>No stars selected.</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1">
+   <item row="4" column="1" colspan="2">
     <widget class="QGroupBox" name="groupBox_selectedStars">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
        <width>440</width>
-       <height>380</height>
+       <height>230</height>
       </size>
      </property>
      <property name="styleSheet">
@@ -140,10 +112,79 @@ p, li { white-space: pre-wrap; }
       <string>Selected Guide and Reference Stars</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_5">
+      <item row="2" column="2">
+       <widget class="QPushButton" name="pushButton_clearStars">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Clear Selections</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="pushButton_deleteStar">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>140</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Un-select the selected star</string>
+        </property>
+        <property name="text">
+         <string>Delete</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QPushButton" name="pushButton_makeGuideStar">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>140</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Update selected star to be the new guide star</string>
+        </property>
+        <property name="text">
+         <string>Make guide star</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0" colspan="3">
        <widget class="QTableWidget" name="tableWidget_selectedStars">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -151,8 +192,11 @@ p, li { white-space: pre-wrap; }
         <property name="minimumSize">
          <size>
           <width>420</width>
-          <height>300</height>
+          <height>150</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>List of selected stars IDs, positions, countrates, and indicator of the guide star</string>
         </property>
         <property name="autoScroll">
          <bool>true</bool>
@@ -200,72 +244,87 @@ p, li { white-space: pre-wrap; }
         </column>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="pushButton_makeGuideStar">
+     </layout>
+    </widget>
+   </item>
+   <item row="6" column="1" rowspan="2" colspan="2">
+    <widget class="QFrame" name="frame_12">
+     <property name="minimumSize">
+      <size>
+       <width>440</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_8">
+      <property name="margin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QFrame" name="frame_profile">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
-          <width>140</width>
-          <height>0</height>
+          <width>0</width>
+          <height>250</height>
          </size>
         </property>
-        <property name="maximumSize">
-         <size>
-          <width>200</width>
-          <height>16777215</height>
-         </size>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
         </property>
-        <property name="text">
-         <string>Make guide star</string>
+        <property name="lineWidth">
+         <number>3</number>
         </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QPushButton" name="pushButton_deleteStar">
-        <property name="minimumSize">
-         <size>
-          <width>140</width>
-          <height>0</height>
-         </size>
+        <property name="midLineWidth">
+         <number>0</number>
         </property>
-        <property name="maximumSize">
-         <size>
-          <width>200</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Delete</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QPushButton" name="pushButton_clearStars">
-        <property name="text">
-         <string>Clear Selections</string>
-        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </layout>
        </widget>
       </item>
      </layout>
     </widget>
    </item>
+   <item row="2" column="1">
+    <widget class="QLabel" name="label_output">
+     <property name="toolTip">
+      <string>Interactive feedback regarding star selection</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tool Output&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
    <item row="5" column="1">
-    <spacer name="verticalSpacer_2">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+    <widget class="QLabel" name="label_profile">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Minimum</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
+     <property name="minimumSize">
       <size>
-       <width>20</width>
-       <height>55</height>
+       <width>0</width>
+       <height>15</height>
       </size>
      </property>
-    </spacer>
-   </item>
-   <item row="6" column="1">
-    <widget class="QLabel" name="label_profile">
      <property name="styleSheet">
       <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
      </property>
@@ -274,37 +333,20 @@ p, li { white-space: pre-wrap; }
      </property>
     </widget>
    </item>
-   <item row="7" column="1" rowspan="2">
-    <widget class="QFrame" name="frame_profile">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+   <item row="0" column="1">
+    <widget class="QLabel" name="label_instructions_2">
+     <property name="styleSheet">
+      <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>300</height>
-      </size>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Instructions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="lineWidth">
-      <number>3</number>
-     </property>
-     <property name="midLineWidth">
+     <property name="margin">
       <number>0</number>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_4">
-      <property name="margin">
-       <number>0</number>
-      </property>
-     </layout>
     </widget>
    </item>
-   <item row="8" column="0" rowspan="2">
+   <item row="7" column="0" rowspan="2">
     <widget class="QFrame" name="frame_3">
      <property name="minimumSize">
       <size>
@@ -351,6 +393,9 @@ p, li { white-space: pre-wrap; }
              <height>20</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Controls for the colorbar limits</string>
+           </property>
            <property name="styleSheet">
             <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
            </property>
@@ -378,10 +423,17 @@ p, li { white-space: pre-wrap; }
              <number>0</number>
             </property>
             <item row="1" column="1">
-             <widget class="QLineEdit" name="lineEdit_vmax"/>
+             <widget class="QLineEdit" name="lineEdit_vmax">
+              <property name="toolTip">
+               <string>Maximum of colorbar axis</string>
+              </property>
+             </widget>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_vmax">
+              <property name="toolTip">
+               <string>Maximum of colorbar axis</string>
+              </property>
               <property name="text">
                <string>vmax:</string>
               </property>
@@ -389,6 +441,9 @@ p, li { white-space: pre-wrap; }
             </item>
             <item row="2" column="0" colspan="2">
              <widget class="QPushButton" name="pushButton_colorbar">
+              <property name="toolTip">
+               <string>Update the colorbar limits to the values above</string>
+              </property>
               <property name="text">
                <string>Update
 colorbar limits</string>
@@ -397,13 +452,20 @@ colorbar limits</string>
             </item>
             <item row="0" column="0">
              <widget class="QLabel" name="label_vmin">
+              <property name="toolTip">
+               <string>Minimum of colorbar axis</string>
+              </property>
               <property name="text">
                <string>vmin: </string>
               </property>
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="lineEdit_vmin"/>
+             <widget class="QLineEdit" name="lineEdit_vmin">
+              <property name="toolTip">
+               <string>Minimum of colorbar axis</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -440,6 +502,9 @@ colorbar limits</string>
              <width>16777215</width>
              <height>20</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>Controls for the matplotlib axis limits</string>
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
@@ -481,6 +546,9 @@ colorbar limits</string>
                </property>
                <item>
                 <widget class="QPushButton" name="pushButton_updateAxes">
+                 <property name="toolTip">
+                  <string>Update the axis limits to the values at left</string>
+                 </property>
                  <property name="text">
                   <string>Update axis limits</string>
                  </property>
@@ -488,6 +556,9 @@ colorbar limits</string>
                </item>
                <item>
                 <widget class="QPushButton" name="pushButton_zoomFit">
+                 <property name="toolTip">
+                  <string>Zoom to fit the entire image in the axes</string>
+                 </property>
                  <property name="text">
                   <string>Zoom fit</string>
                  </property>
@@ -495,6 +566,9 @@ colorbar limits</string>
                </item>
                <item>
                 <widget class="QPushButton" name="pushButton_cropToData">
+                 <property name="toolTip">
+                  <string>Zoom to fit just the data (identified stars) in the axes</string>
+                 </property>
                  <property name="text">
                   <string>Crop to data</string>
                  </property>
@@ -532,6 +606,9 @@ colorbar limits</string>
                </property>
                <item>
                 <widget class="QLabel" name="label_9">
+                 <property name="toolTip">
+                  <string>Boundaries of the y-axis</string>
+                 </property>
                  <property name="text">
                   <string>Y: (</string>
                  </property>
@@ -551,10 +628,16 @@ colorbar limits</string>
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Lower boundary of the y-axis</string>
+                 </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_11">
+                 <property name="toolTip">
+                  <string>Boundaries of the y-axis</string>
+                 </property>
                  <property name="text">
                   <string>,</string>
                  </property>
@@ -574,10 +657,16 @@ colorbar limits</string>
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Upper boundary of the y-axis</string>
+                 </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_10">
+                 <property name="toolTip">
+                  <string>Boundaries of the y-axis</string>
+                 </property>
                  <property name="text">
                   <string>)</string>
                  </property>
@@ -600,6 +689,9 @@ colorbar limits</string>
                 <height>20</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Boundaries of the x-axis</string>
+              </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
               </property>
@@ -615,6 +707,9 @@ colorbar limits</string>
                </property>
                <item>
                 <widget class="QLabel" name="label_6">
+                 <property name="toolTip">
+                  <string>Boundaries of the x-axis</string>
+                 </property>
                  <property name="text">
                   <string>X: (</string>
                  </property>
@@ -634,10 +729,16 @@ colorbar limits</string>
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>Lower boundary of the x-axis</string>
+                 </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_7">
+                 <property name="toolTip">
+                  <string>Boundaries of the x-axis</string>
+                 </property>
                  <property name="text">
                   <string>,</string>
                  </property>
@@ -656,6 +757,9 @@ colorbar limits</string>
                    <width>40</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Upper boundary of the x-axis</string>
                  </property>
                 </widget>
                </item>
@@ -705,6 +809,9 @@ colorbar limits</string>
              <height>20</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Indicators for the location of the cursor</string>
+           </property>
            <property name="styleSheet">
             <string notr="true">QLabel {font-weight: bold; font-size: 14px}</string>
            </property>
@@ -742,6 +849,9 @@ colorbar limits</string>
                 <height>20</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Position of the matplotlib axis currently under the cursor</string>
+              </property>
               <property name="text">
                <string>Cursor Position:</string>
               </property>
@@ -751,6 +861,9 @@ colorbar limits</string>
              <widget class="QLineEdit" name="lineEdit_cursorPosition">
               <property name="enabled">
                <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Position of the matplotlib axis currently under the cursor</string>
               </property>
               <property name="text">
                <string/>
@@ -768,6 +881,9 @@ colorbar limits</string>
                 <height>20</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Value of the image at the cursor location</string>
+              </property>
               <property name="text">
                <string>Pixel Value:</string>
               </property>
@@ -777,6 +893,9 @@ colorbar limits</string>
              <widget class="QLineEdit" name="lineEdit_cursorValue">
               <property name="enabled">
                <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Value of the image at the cursor location</string>
               </property>
               <property name="text">
                <string/>
@@ -795,13 +914,12 @@ colorbar limits</string>
      </layout>
      <zorder>line</zorder>
      <zorder>frame_7</zorder>
-     <zorder>frame_7</zorder>
      <zorder>frame_10</zorder>
      <zorder>frame_11</zorder>
      <zorder>line_2</zorder>
     </widget>
    </item>
-   <item row="9" column="1">
+   <item row="8" column="1" colspan="2">
     <widget class="QFrame" name="frame">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -810,6 +928,9 @@ colorbar limits</string>
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item row="0" column="0" alignment="Qt::AlignBottom">
        <widget class="QPushButton" name="pushButton_done">
         <property name="minimumSize">
@@ -817,6 +938,9 @@ colorbar limits</string>
           <width>0</width>
           <height>50</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>Use selected stars to write regfile.txt and close window</string>
         </property>
         <property name="text">
          <string>Done</string>
@@ -831,6 +955,9 @@ colorbar limits</string>
           <height>50</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Discard selections and close window</string>
+        </property>
         <property name="text">
          <string>Cancel</string>
         </property>
@@ -839,7 +966,28 @@ colorbar limits</string>
      </layout>
     </widget>
    </item>
+   <item row="3" column="1">
+    <widget class="QTextEdit" name="textEdit_output">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>100</height>
+      </size>
+     </property>
+    </widget>
+   </item>
   </layout>
+  <zorder>frame_instructions</zorder>
+  <zorder>label_instructions_2</zorder>
+  <zorder>label_output</zorder>
+  <zorder>frame_3</zorder>
+  <zorder>groupBox_selectedStars</zorder>
+  <zorder>frame_canvas</zorder>
+  <zorder>frame_12</zorder>
+  <zorder>label_profile</zorder>
+  <zorder>frame_profile</zorder>
+  <zorder>frame</zorder>
+  <zorder>textEdit_output</zorder>
  </widget>
  <resources/>
  <connections/>
