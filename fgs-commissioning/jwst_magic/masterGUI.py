@@ -42,7 +42,7 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
 from PyQt5 import QtCore, uic
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
@@ -78,9 +78,6 @@ class MasterGui(QMainWindow):
         self.bkgd_stars = None
 
         # Initialize SGT attributes
-        self.RA = None
-        self.Dec = None
-        self.PA = None
         self.prognum = None
         self.obsnum = None
         self.visitnum = None
@@ -93,6 +90,7 @@ class MasterGui(QMainWindow):
 
         # Create and load GUI session
         self.setWindowTitle('JWST MaGIC')
+        self.adjust_screen_size_mainGUI()
         self.init_matplotlib()
         self.define_MainGUI_connections()
         self.show()
@@ -100,6 +98,21 @@ class MasterGui(QMainWindow):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def adjust_screen_size_mainGUI(self):
+        ''' Adjust the GUI sizes for laptop screens
+        '''
+        # Determine screen size
+        screen_size = self.app.desktop().screenGeometry()
+        width, height = screen_size.width(), screen_size.height()
+
+        # Adjust the scroll window size
+        if width - 200 < self.scrollArea_mainGUI.minimumWidth():
+            # Window is too wide
+            self.scrollArea_mainGUI.setMinimumWidth(width - 200)
+        if height - 200 < self.scrollArea_mainGUI.minimumHeight():
+            # Window is too tall
+            self.scrollArea_mainGUI.setMinimumHeight(height - 200)
 
     def init_matplotlib(self):
         '''Set up the two matplotlib canvases that will preview the
@@ -129,11 +142,13 @@ class MasterGui(QMainWindow):
         self.pushButton_quit.clicked.connect(self.close_application)
 
         # General input widgets
-        self.pushButton_inputImage.clicked.connect(self.on_click_input)
+        self.pushButton_inputImage.clicked.connect(self.update_input)
+        self.lineEdit_inputImage.editingFinished.connect(self.update_input)
         self.buttonGroup_guider.buttonClicked.connect(self.update_filepreview)
         self.lineEdit_root.editingFinished.connect(self.update_filepreview)
         self.pushButton_root.clicked.connect(self.on_click_root)
         self.pushButton_out.clicked.connect(self.on_click_out)
+        self.textEdit_out.installEventFilter(self)
 
         # Image convertor widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
@@ -152,6 +167,32 @@ class MasterGui(QMainWindow):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    @pyqtSlot()
+    def eventFilter(self, source, event):
+        '''"EdittingFinished" event filter for out directory textbox
+        '''
+        if hasattr(self, 'textEdit_out'):
+            # Parse out the focus leaving the out_dir box, and update
+            # all other textboxes accordingly
+            if event.type() == QtCore.QEvent.FocusOut:
+               # (event.type() == QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Return):
+
+                # Read the current out directory name
+                dirname = self.textEdit_out.toPlainText()
+
+                # Remove any new lines from the dirname
+                dirname = dirname.rstrip()
+                self.textEdit_out.setPlainText(dirname)
+
+                # Only continue if that directory actually exists
+                if dirname is not None:
+                    if not os.path.exists(dirname):
+                        raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
+
+                self.update_filepreview()
+
+        return False
 
     def close_application(self):
         ''' Close the window
@@ -263,21 +304,27 @@ class MasterGui(QMainWindow):
             SGT_dialog = self.segmentGuiding_dialog()
 
             # Get parameters for dictionary from dialog
-            GS_params_dict = {'V2Boff': float(SGT_dialog.lineEdit_V2.text()),
-                              'V3Boff': float(SGT_dialog.lineEdit_V3.text()),
-                              'fgsNum': guider,
-                              'RA': float(SGT_dialog.lineEdit_RA.text()),
-                              'Dec': float(SGT_dialog.lineEdit_Dec.text()),
-                              'PA': float(SGT_dialog.lineEdit_PA.text()),
-                              'segNum': 0}
-            program_id = SGT_dialog.lineEdit_programNumber.text()
-            observation_num = SGT_dialog.lineEdit_observationNumber.text()
-            visit_num = SGT_dialog.lineEdit_visitNumber.text()
-            ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
-            if SGT_dialog.checkBox_countrateFactor.isChecked():
-                countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
-            else:
-                countrate_factor = None
+            try:
+                GS_params_dict = {'V2Boff': float(SGT_dialog.lineEdit_V2.text()),
+                                  'V3Boff': float(SGT_dialog.lineEdit_V3.text()),
+                                  'fgsNum': guider,
+                                  'RA': float(SGT_dialog.lineEdit_RA.text()),
+                                  'Dec': float(SGT_dialog.lineEdit_Dec.text()),
+                                  'PA': float(SGT_dialog.lineEdit_PA.text()),
+                                  'segNum': 0}
+                program_id = SGT_dialog.lineEdit_programNumber.text()
+                observation_num = SGT_dialog.lineEdit_observationNumber.text()
+                visit_num = SGT_dialog.lineEdit_visitNumber.text()
+                ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
+                if SGT_dialog.checkBox_countrateFactor.isChecked():
+                    countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
+                else:
+                    countrate_factor = None
+            except ValueError as e:
+                if "could not convert string to float:" not in str(e):
+                    raise
+                else:
+                    return
 
             if os.path.exists(self.converted_im_file):
                 fgs_filename = self.converted_im_file
@@ -349,12 +396,24 @@ class MasterGui(QMainWindow):
         self.horizontalSlider_coarsePointing.setValue(slider_value)
         self.lineEdit_coarsePointing.setText('{:.3f}'.format(jitter))
 
-    def on_click_input(self):
-        ''' Using the Input Image Open button (open file)
+    def update_input(self):
+        ''' Using the Input Image Open button (open file) and textbox
         '''
-        # Read selected filename
-        filename = self.open_filename_dialog("NIRCam or FGS image", file_type="FITS files (*.fits)")
-        self.lineEdit_inputImage.setText(filename)
+        # If coming from the button, open the dialog
+        if self.sender() == self.pushButton_inputImage:
+            # Read selected filename
+            filename = self.open_filename_dialog("NIRCam or FGS image", file_type="FITS files (*.fits)")
+            self.lineEdit_inputImage.setText(filename)
+
+        # If coming from the textbox, just read the new value
+        elif self.sender() == self.lineEdit_inputImage:
+            # Read selected filename
+            filename = self.lineEdit_inputImage.text()
+
+        # Only continue if the entered image path actually exists:
+        if filename is not None and filename != '':
+            if not os.path.exists(filename):
+                raise FileNotFoundError('Input image {} does not exist.'.format(filename))
 
         # Derive the root from the filename and assume the default output
         # directory (OUT_PATH)
@@ -370,13 +429,7 @@ class MasterGui(QMainWindow):
         self.update_filepreview()
 
         # Show input image preview
-        try:
-            self.load_input_image_data(filename)
-        except TypeError as e:
-            if str(e) != "stat: can't specify None for path argument":
-                raise
-            else:
-                pass
+        self.load_input_image_data(filename)
 
         # Show converted image preview, if possible
         self.update_converted_image_preview()
@@ -384,10 +437,20 @@ class MasterGui(QMainWindow):
         return filename
 
     def on_click_out(self):
-        ''' Using the Out Dir Open button (open directory) '''
+        ''' Using the Out Dir Open button (open directory)
+        '''
+        # Open the Finder directory dialog
         dirname = self.open_dirname_dialog()
-        self.textEdit_out.setEnabled(True)
+
+        # Remove any new lines from the dirname
+        dirname = dirname.rstrip()
         self.textEdit_out.setText(dirname)
+
+        # Only continue if that directory actually exists
+        if dirname is not None:
+            if not os.path.exists(dirname):
+                raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
+
         self.update_filepreview()
         return dirname
 
@@ -424,22 +487,20 @@ class MasterGui(QMainWindow):
 
         guider = int(self.buttonGroup_guider.checkedButton().text())
 
-        # Determine what the JMag of the original star is
+        # If normalization is turned on, read the normalization value & unit
+        # and calculate JMag of the guidestar
         if self.checkBox_normalize.isChecked():
             norm_value = float(self.lineEdit_normalize.text())
             norm_unit = self.comboBox_normalize.currentText()
             norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
             fgs_counts = norm_obj.to_counts()
-            jmag = renormalize.counts_to_jmag(fgs_counts, guider)
+            jmag = renormalize.fgs_counts_to_j_mag(fgs_counts, guider)
+        # If not, determine the FGS counts of the input image
         else:
-            # Determine what the FGS counts of the image is
-            # if self.checkBox_useConvertedImage.isChecked():
-            #     data, _ = utils.get_data_and_header(self.convert_im_file)
-            # else:
             input_image = self.lineEdit_inputImage.text()
             data, _ = utils.get_data_and_header(input_image)
             fgs_counts = np.sum(data[data > np.median(data)])
-            jmag = renormalize.counts_to_jmag(fgs_counts, guider)
+            jmag = renormalize.fgs_counts_to_j_mag(fgs_counts, guider)
 
         self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
 
@@ -502,9 +563,6 @@ class MasterGui(QMainWindow):
         uic.loadUi(os.path.join(__location__, 'segment_guiding', 'segmentGuidingDialog.ui'), SGT_dialog)
 
         # Set defaults from parsed header
-        SGT_dialog.lineEdit_RA.setText(self.RA)
-        SGT_dialog.lineEdit_Dec.setText(self.Dec)
-        SGT_dialog.lineEdit_PA.setText(self.PA)
         SGT_dialog.lineEdit_programNumber.setText(self.prognum)
         SGT_dialog.lineEdit_observationNumber.setText(self.obsnum)
         SGT_dialog.lineEdit_visitNumber.setText(self.visitnum)
@@ -596,27 +654,6 @@ class MasterGui(QMainWindow):
         # If there is not DETECTOR keyword, set NIRCam detector back to parse
         except KeyError:
             self.comboBox_detector.setCurrentIndex(0)
-
-        # Parse RA, Dec, and PA
-        try:
-            self.RA = str(header['TARG_RA'])
-        except KeyError:
-            try:
-                self.RA = str(header['RA_TARG'])
-            except KeyError:
-                pass
-        try:
-            self.Dec = str(header['TARG_DEC'])
-        except KeyError:
-            try:
-                self.Dec = str(header['DEC_TARG'])
-            except KeyError:
-                pass
-        try:
-            self.PA = str(header['PA_V3'])
-        except KeyError:
-            pass
-
 
         # Parse APT program, observation, and visit information
         keywords = ['PROGRAM', 'OBSERVTN', 'VISIT']
