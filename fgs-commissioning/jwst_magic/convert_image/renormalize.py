@@ -15,7 +15,7 @@ Use
 ---
     This module can be imported in a Python shell as such:
     ::
-        from jwst_fgs_commissioning_tools.convert_image import counts_to_jmag
+        from jwst_fgs_commissioning_tools.convert_image import renormalize
 
 Notes
 -----
@@ -59,32 +59,43 @@ def counts_to_electrons(counts, guider):
     '''Convert count rate to electrons/s'''
     return counts * find_gain(guider)
 
+
 def electrons_to_counts(electrons, guider):
     '''Convert electrons/s to count rate'''
     return electrons / find_gain(guider)
+
 
 # Convert between FGS Counts andf FGS Magnitude
 def counts_to_fgs_mag(counts, guider):
     '''Convert FGS counts to FGS magnitude '''
     electrons = counts_to_electrons(counts, guider)
     fgs_mag = -2.5 * np.log10(electrons/CONVERSION_FACTOR) + FGS_ZERO_POINT
-    return  fgs_mag
+    return fgs_mag
+
 
 def fgs_mag_to_counts(fgs_mag, guider):
     '''Convert FGS Magnitude to FGS counts '''
     electrons = 10**((fgs_mag - FGS_ZERO_POINT)/-2.5) * CONVERSION_FACTOR
     counts = electrons_to_counts(electrons, guider)
-    return  counts
+    return counts
+
 
 def fgs_mag_to_j_mag(fgs_mag):
     '''Convert FGS Magnitude to J Magnitude '''
     j_mag = fgs_mag - (FGS_ZERO_POINT + J_ZERO_POINT)
     return j_mag
 
+
 def fgs_counts_to_j_mag(counts, guider):
     fgs_mag = counts_to_fgs_mag(counts, guider)
     j_mag = fgs_mag_to_j_mag(fgs_mag)
     return j_mag
+
+
+def j_mag_to_fgs_counts(j_mag, guider):
+    fgs_mag = j_mag + (FGS_ZERO_POINT + J_ZERO_POINT)
+    counts = fgs_mag_to_counts(fgs_mag, guider)
+    return counts
 
 
 def find_gain(guider):

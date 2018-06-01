@@ -65,23 +65,40 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.frame_selectStarsGUI.layout().addWidget(starSelectorCentralWidget)
 
         # Create and load sgement guiding GUI session
+        self.show()
         self.setWindowTitle('JWST MaGIC - Segment Guiding Command Generator')
-        self.adjust_sizes()
+        self.adjust_screen_size_segmentGuiding()
         self.define_SegmentGuidingGUI_connections()
         self.show()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def adjust_sizes(self):
-        '''Adjust widget sizes to be smaller for laptop screens
+    def adjust_screen_size_segmentGuiding(self):
+        ''' Adjust the GUI sizes for laptop screens
         '''
+        # Determine screen size
         screen_size = self.qApp.desktop().screenGeometry()
         width, height = screen_size.width(), screen_size.height()
+
+        # Adjust the scroll window size
+        minimum_width = 1110 + 400
+        self.scrollArea_segmentGuiding.setMinimumWidth(minimum_width)
+
+        if width - 200 < self.scrollArea_segmentGuiding.minimumWidth():
+            # Window is too wide
+            self.scrollArea_segmentGuiding.setMinimumWidth(width - 200)
+        if height - 200 < self.scrollArea_segmentGuiding.minimumHeight():
+            # Window is too tall
+            self.scrollArea_segmentGuiding.setMinimumHeight(height - 200)
+
+        # Adjust the widget sizes
         if height < 1100:
             self.tableWidget_commands.setMinimumSize(220, 250)
             self.groupBox_commands.setMinimumSize(280, 380 - 50)
             self.frame_segmentGuiding.layout().setSpacing(20)
+        else:
+            self.scrollArea_segmentGuiding.setMinimumSize(minimum_width + 200, 950 + 200)
 
     def define_SegmentGuidingGUI_connections(self):
         # Main dialog window widgets
@@ -209,6 +226,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         # Remove old center
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
+            self.center = None
         self.segNum = None
 
         if self.comboBox_segmentCenter.currentText() != "-Select Segment-":
@@ -229,6 +247,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         # Remove old center
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
+            self.center = None
         self.segNum = None
 
         if use_mean_as_center:
