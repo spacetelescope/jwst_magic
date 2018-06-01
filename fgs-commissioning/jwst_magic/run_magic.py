@@ -133,9 +133,12 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                      coarse_pointing=coarse_pointing,
                                                      jitter_rate_arcsec=jitter_rate_arcsec)
         if bkgd_stars:
+            if not normalize:
+                norm_value = np.sum(fgs_im[fgs_im > np.median(fgs_im)])
+                norm_unit = "FGS Counts"
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars,
                                                            norm_value, norm_unit,
-                                                           guider, normalize=normalize)
+                                                           guider)
 
         # Write converted image
         convert_image_to_raw_fgs.write_FGS_im(fgs_im, out_dir, root, guider)

@@ -487,22 +487,20 @@ class MasterGui(QMainWindow):
 
         guider = int(self.buttonGroup_guider.checkedButton().text())
 
-        # Determine what the JMag of the original star is
+        # If normalization is turned on, read the normalization value & unit
+        # and calculate JMag of the guidestar
         if self.checkBox_normalize.isChecked():
             norm_value = float(self.lineEdit_normalize.text())
             norm_unit = self.comboBox_normalize.currentText()
             norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
             fgs_counts = norm_obj.to_counts()
-            jmag = renormalize.counts_to_jmag(fgs_counts, guider)
+            jmag = renormalize.fgs_counts_to_j_mag(fgs_counts, guider)
+        # If not, determine the FGS counts of the input image
         else:
-            # Determine what the FGS counts of the image is
-            # if self.checkBox_useConvertedImage.isChecked():
-            #     data, _ = utils.get_data_and_header(self.convert_im_file)
-            # else:
             input_image = self.lineEdit_inputImage.text()
             data, _ = utils.get_data_and_header(input_image)
             fgs_counts = np.sum(data[data > np.median(data)])
-            jmag = renormalize.counts_to_jmag(fgs_counts, guider)
+            jmag = renormalize.fgs_counts_to_j_mag(fgs_counts, guider)
 
         self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
 
