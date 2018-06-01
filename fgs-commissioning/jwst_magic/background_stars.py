@@ -551,7 +551,7 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
     return stars, window.method
 
 
-def add_background_stars(image, stars, norm_value, norm_unit, guider, normalize=True):
+def add_background_stars(image, stars, norm_value, norm_unit, guider):
     #TODO: Figure out what is going on with normalization
     """Add artificial copies of the input PSF to the image to mimic
     background stars.
@@ -583,7 +583,7 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider, normalize=
     # Determine jmag and fgs_counts of guide star
     norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
     fgs_counts = norm_obj.to_counts()
-    jmag = renormalize.counts_to_jmag(fgs_counts, guider)
+    jmag = renormalize.fgs_counts_to_j_mag(fgs_counts, guider)
 
     # If the flag is simply set to "True", randomly place 5 stars on the image
     if stars is True:
