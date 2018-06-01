@@ -1,6 +1,6 @@
-"""GUI interface to FGS Commissioning Tools
+"""GUI interface to JWST MaGIC
 
-The primary interface to the FGS Commissioning Tools, from which almost
+The primary interface to the JWST MaGIC, from which almost
 all of the tool functions can be operated.
 
 Authors
@@ -12,8 +12,8 @@ Use
 ---
 This GUI can be run in the python shell as such:
     ::
-    import jwst_fgs_commissioning_tools
-    jwst_fgs_commissioning_tools.run_tool_GUI()
+    import jwst_magic
+    jwst_magic.run_tool_GUI()
 
 
 Notes
@@ -31,27 +31,26 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-FGS Commissioning Tools package, be sure to use the existing instance
+JWST MaGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
 
 import os
 import sys
-import inspect
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
 from PyQt5 import QtCore, uic
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
-from astropy.io import fits
 from astropy.io import ascii as asc
 import numpy as np
 
-from . import run_fgs_commissioning_tool, utils, background_stars
+from . import run_magic, utils, background_stars
+from .convert_image import renormalize
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
@@ -66,7 +65,7 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 # GUI CLASS DEFINITON
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MasterGui(QMainWindow):
-    def __init__(self, root=None, fgs_counts=None, jmag=11.0,
+    def __init__(self, root=None, norm_value=12.0, norm_units='FGS Magnitue',
                  nircam_det=None, nircam=True, global_alignment=False, steps=None,
                  in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                  star_selection=True, star_selection_gui=True, file_writer=True,
@@ -79,9 +78,6 @@ class MasterGui(QMainWindow):
         self.bkgd_stars = None
 
         # Initialize SGT attributes
-        self.RA = None
-        self.Dec = None
-        self.PA = None
         self.prognum = None
         self.obsnum = None
         self.visitnum = None
@@ -93,7 +89,8 @@ class MasterGui(QMainWindow):
         uic.loadUi(os.path.join(__location__, 'masterGUI.ui'), self)
 
         # Create and load GUI session
-        self.setWindowTitle('FGS Commissioning Tools')
+        self.setWindowTitle('JWST MaGIC')
+        self.adjust_screen_size_mainGUI()
         self.init_matplotlib()
         self.define_MainGUI_connections()
         self.show()
@@ -101,6 +98,21 @@ class MasterGui(QMainWindow):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def adjust_screen_size_mainGUI(self):
+        ''' Adjust the GUI sizes for laptop screens
+        '''
+        # Determine screen size
+        screen_size = self.app.desktop().screenGeometry()
+        width, height = screen_size.width(), screen_size.height()
+
+        # Adjust the scroll window size
+        if width - 200 < self.scrollArea_mainGUI.minimumWidth():
+            # Window is too wide
+            self.scrollArea_mainGUI.setMinimumWidth(width - 200)
+        if height - 200 < self.scrollArea_mainGUI.minimumHeight():
+            # Window is too tall
+            self.scrollArea_mainGUI.setMinimumHeight(height - 200)
 
     def init_matplotlib(self):
         '''Set up the two matplotlib canvases that will preview the
@@ -130,14 +142,18 @@ class MasterGui(QMainWindow):
         self.pushButton_quit.clicked.connect(self.close_application)
 
         # General input widgets
-        self.pushButton_inputImage.clicked.connect(self.on_click_input)
+        self.pushButton_inputImage.clicked.connect(self.update_input)
+        self.lineEdit_inputImage.editingFinished.connect(self.update_input)
         self.buttonGroup_guider.buttonClicked.connect(self.update_filepreview)
         self.lineEdit_root.editingFinished.connect(self.update_filepreview)
         self.pushButton_root.clicked.connect(self.on_click_root)
         self.pushButton_out.clicked.connect(self.on_click_out)
+        self.textEdit_out.installEventFilter(self)
 
         # Image convertor widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
+        self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
+        self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
 
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
@@ -152,6 +168,32 @@ class MasterGui(QMainWindow):
     # WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    @pyqtSlot()
+    def eventFilter(self, source, event):
+        '''"EdittingFinished" event filter for out directory textbox
+        '''
+        if hasattr(self, 'textEdit_out'):
+            # Parse out the focus leaving the out_dir box, and update
+            # all other textboxes accordingly
+            if event.type() == QtCore.QEvent.FocusOut:
+               # (event.type() == QtCore.QEvent.KeyPress and event.key() == QtCore.Qt.Key_Return):
+
+                # Read the current out directory name
+                dirname = self.textEdit_out.toPlainText()
+
+                # Remove any new lines from the dirname
+                dirname = dirname.rstrip()
+                self.textEdit_out.setPlainText(dirname)
+
+                # Only continue if that directory actually exists
+                if dirname is not None:
+                    if not os.path.exists(dirname):
+                        raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
+
+                self.update_filepreview()
+
+        return False
+
     def close_application(self):
         ''' Close the window
         '''
@@ -160,7 +202,7 @@ class MasterGui(QMainWindow):
 
     def run_tool(self):
         '''
-        Takes inputs provided by user and runs run_fgs_commissioning_tool
+        Takes inputs provided by user and runs run_magic
         '''
         # Required
         if self.lineEdit_inputImage.text() == "":
@@ -174,22 +216,18 @@ class MasterGui(QMainWindow):
         input_image = self.lineEdit_inputImage.text()
         guider = int(self.buttonGroup_guider.checkedButton().text())
         root = self.lineEdit_root.text()
-        out_dir = self.textEdit_out.toPlainText()
+        out_dir = self.textEdit_out.toPlainText().rstrip()
         copy_original = True
 
         # Convert image
-        convert_im = self.groupBox_imageConverter.isChecked()
+        convert_im = True
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
         normalize = self.checkBox_normalize.isChecked()
-        if self.comboBox_normalize.currentText() =='FGS counts':
-            fgs_counts = float(self.lineEdit_normalize.text())
-        else:
-            fgs_counts = None
-        if self.comboBox_normalize.currentText() =='J Magnitude':
-            jmag = float(self.lineEdit_normalize.text())
-        else:
-            jmag = None
+        norm_value = float(self.lineEdit_normalize.text())
+        norm_unit = self.comboBox_normalize.currentText()
+        coarse_point = self.checkBox_coarsePointing.isChecked()
+        jitter_rate_arcsec = float(self.lineEdit_coarsePointing.text())
         bkgd_stars = self.bkgd_stars
 
         # Handle the case where we want to use a pre-existing converted image
@@ -229,11 +267,7 @@ class MasterGui(QMainWindow):
             # Open converted FGS file
             fgs_filename = os.path.join(out_dir, 'out', root, 'FGS_imgs',
                                         '{}_G{}.fits'.format(root, guider))
-            with fits.open(fgs_filename) as hdulist:
-                if len(hdulist) > 1:
-                    data = hdulist[1].data
-                else:
-                    data = hdulist[0].data
+            data, _ = utils.get_data_and_header(fgs_filename)
 
             # Update array for showing in LogNorm
             data[data <= 0] = 1
@@ -242,16 +276,14 @@ class MasterGui(QMainWindow):
             all_psfs = os.path.join(out_dir, 'out', root,
                                     '{}_G{}_ALLpsfs.txt'.format(root, guider))
             all_rows = asc.read(all_psfs)
-            labels = all_rows['label'].data
             x = all_rows['x'].data
             y = all_rows['y'].data
 
             # Run the select stars GUI to determint the new orientation
             inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
-            order = ''.join(labels[inds])
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(order, guider, root, out_dir)
+            rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
             print("** Run Complete **\n\n")
 
             # Update converted image preview
@@ -272,27 +304,33 @@ class MasterGui(QMainWindow):
             SGT_dialog = self.segmentGuiding_dialog()
 
             # Get parameters for dictionary from dialog
-            GS_params_dict = {'V2Boff': float(SGT_dialog.lineEdit_V2.text()),
-                              'V3Boff': float(SGT_dialog.lineEdit_V3.text()),
-                              'fgsNum': guider,
-                              'RA': float(SGT_dialog.lineEdit_RA.text()),
-                              'Dec': float(SGT_dialog.lineEdit_Dec.text()),
-                              'PA': float(SGT_dialog.lineEdit_PA.text()),
-                              'segNum': 0}
-            program_id = SGT_dialog.lineEdit_programNumber.text()
-            observation_num = SGT_dialog.lineEdit_observationNumber.text()
-            visit_num = SGT_dialog.lineEdit_visitNumber.text()
-            ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
+            try:
+                GS_params_dict = {'V2Boff': float(SGT_dialog.lineEdit_V2.text()),
+                                  'V3Boff': float(SGT_dialog.lineEdit_V3.text()),
+                                  'fgsNum': guider,
+                                  'RA': float(SGT_dialog.lineEdit_RA.text()),
+                                  'Dec': float(SGT_dialog.lineEdit_Dec.text()),
+                                  'PA': float(SGT_dialog.lineEdit_PA.text()),
+                                  'segNum': 0}
+                program_id = SGT_dialog.lineEdit_programNumber.text()
+                observation_num = SGT_dialog.lineEdit_observationNumber.text()
+                visit_num = SGT_dialog.lineEdit_visitNumber.text()
+                ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
+                if SGT_dialog.checkBox_countrateFactor.isChecked():
+                    countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
+                else:
+                    countrate_factor = None
+            except ValueError as e:
+                if "could not convert string to float:" not in str(e):
+                    raise
+                else:
+                    return
 
             if os.path.exists(self.converted_im_file):
                 fgs_filename = self.converted_im_file
             else:
                 fgs_filename = input_image
-            with fits.open(fgs_filename) as hdulist:
-                if len(hdulist) > 1:
-                    data = hdulist[1].data
-                else:
-                    data = hdulist[0].data
+            data, _ = utils.get_data_and_header(fgs_filename)
 
             # Determine whether to load regfile or run GUI
             if self.radioButton_regfileSegmentGuiding.isChecked():
@@ -309,7 +347,8 @@ class MasterGui(QMainWindow):
                                      out_dir=out_dir, data=data,
                                      selected_segs=selected_segs,
                                      masterGUIapp=self.app, refonly=refonly,
-                                     ct_uncert_fctr=ct_uncert_fctr)
+                                     ct_uncert_fctr=ct_uncert_fctr,
+                                     countrate_factor=countrate_factor)
             print("** Run Complete **")
 
             # Update converted image preview
@@ -318,25 +357,63 @@ class MasterGui(QMainWindow):
             return
 
         if convert_im or star_selection or file_writer:
-            run_fgs_commissioning_tool.run_all(input_image, guider, root,
-                                               fgs_counts, jmag, nircam_det,
-                                               nircam, global_alignment,
-                                               steps, in_file, bkgd_stars,
-                                               out_dir, convert_im, star_selection,
-                                               star_selectiongui, file_writer,
-                                               self.app, copy_original, normalize)
+            run_magic.run_all(input_image, guider, root, norm_value, norm_unit,
+                              nircam_det, nircam, global_alignment, steps,
+                              in_file, bkgd_stars, out_dir, convert_im,
+                              star_selection, star_selectiongui, file_writer,
+                              self.app, copy_original, normalize, coarse_point,
+                              jitter_rate_arcsec)
             print("** Run Complete **")
 
             # Update converted image preview
             self.update_converted_image_preview()
             self.update_filepreview()
 
-    def on_click_input(self):
-        ''' Using the Input Image Open button (open file)
+    def on_change_jitter(self):
+        '''If the coarse pointing slider or text box controlling the
+        jitter rate are changed, update the other one accordingly.
         '''
-        # Read selected filename
-        filename = self.open_filename_dialog("NIRCam or FGS image", file_type="FITS files (*.fits)")
-        self.lineEdit_inputImage.setText(filename)
+        slider_range = np.linspace(0, 0.3, 101)
+        if self.sender() == self.horizontalSlider_coarsePointing:
+            # Get slider value
+            slider_value = int(self.horizontalSlider_coarsePointing.value())
+
+            # Calculate matching textbox value
+            jitter = slider_range[slider_value]
+
+        elif self.sender() == self.lineEdit_coarsePointing:
+            # Get jitter textbox value
+            jitter = float(self.lineEdit_coarsePointing.text())
+
+            # Make sure the input is not out of bounds
+            jitter = min(jitter, 0.3)
+            jitter = max(jitter, 0)
+
+            # Calculate matching slider value
+            slider_value = (np.abs(slider_range - jitter)).argmin()
+
+        # Update both to show the same value
+        self.horizontalSlider_coarsePointing.setValue(slider_value)
+        self.lineEdit_coarsePointing.setText('{:.3f}'.format(jitter))
+
+    def update_input(self):
+        ''' Using the Input Image Open button (open file) and textbox
+        '''
+        # If coming from the button, open the dialog
+        if self.sender() == self.pushButton_inputImage:
+            # Read selected filename
+            filename = self.open_filename_dialog("NIRCam or FGS image", file_type="FITS files (*.fits)")
+            self.lineEdit_inputImage.setText(filename)
+
+        # If coming from the textbox, just read the new value
+        elif self.sender() == self.lineEdit_inputImage:
+            # Read selected filename
+            filename = self.lineEdit_inputImage.text()
+
+        # Only continue if the entered image path actually exists:
+        if filename is not None and filename != '':
+            if not os.path.exists(filename):
+                raise FileNotFoundError('Input image {} does not exist.'.format(filename))
 
         # Derive the root from the filename and assume the default output
         # directory (OUT_PATH)
@@ -360,10 +437,20 @@ class MasterGui(QMainWindow):
         return filename
 
     def on_click_out(self):
-        ''' Using the Out Dir Open button (open directory) '''
+        ''' Using the Out Dir Open button (open directory)
+        '''
+        # Open the Finder directory dialog
         dirname = self.open_dirname_dialog()
-        self.textEdit_out.setEnabled(True)
+
+        # Remove any new lines from the dirname
+        dirname = dirname.rstrip()
         self.textEdit_out.setText(dirname)
+
+        # Only continue if that directory actually exists
+        if dirname is not None:
+            if not os.path.exists(dirname):
+                raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
+
         self.update_filepreview()
         return dirname
 
@@ -399,7 +486,24 @@ class MasterGui(QMainWindow):
         self.textEdit_backgroundStars.setEnabled(True)
 
         guider = int(self.buttonGroup_guider.checkedButton().text())
-        jmag = float(self.lineEdit_normalize.text())
+
+        # Determine what the JMag of the original star is
+        if self.checkBox_normalize.isChecked():
+            norm_value = float(self.lineEdit_normalize.text())
+            norm_unit = self.comboBox_normalize.currentText()
+            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
+            fgs_counts = norm_obj.to_counts()
+            jmag = renormalize.counts_to_jmag(fgs_counts, guider)
+        else:
+            # Determine what the FGS counts of the image is
+            # if self.checkBox_useConvertedImage.isChecked():
+            #     data, _ = utils.get_data_and_header(self.convert_im_file)
+            # else:
+            input_image = self.lineEdit_inputImage.text()
+            data, _ = utils.get_data_and_header(input_image)
+            fgs_counts = np.sum(data[data > np.median(data)])
+            jmag = renormalize.counts_to_jmag(fgs_counts, guider)
+
         self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
 
         method_adverb = {'random': 'randomly',
@@ -461,9 +565,6 @@ class MasterGui(QMainWindow):
         uic.loadUi(os.path.join(__location__, 'segment_guiding', 'segmentGuidingDialog.ui'), SGT_dialog)
 
         # Set defaults from parsed header
-        SGT_dialog.lineEdit_RA.setText(self.RA)
-        SGT_dialog.lineEdit_Dec.setText(self.Dec)
-        SGT_dialog.lineEdit_PA.setText(self.PA)
         SGT_dialog.lineEdit_programNumber.setText(self.prognum)
         SGT_dialog.lineEdit_observationNumber.setText(self.obsnum)
         SGT_dialog.lineEdit_visitNumber.setText(self.visitnum)
@@ -484,12 +585,7 @@ class MasterGui(QMainWindow):
             self.tabWidget.setCurrentIndex(0)
 
             # Load data and prep for showing on log scale
-            with fits.open(filename) as hdulist:
-                if len(hdulist) > 1:
-                    data = hdulist[1].data
-                else:
-                    data = hdulist[0].data
-                header = hdulist[0].header
+            data, header = utils.get_data_and_header(filename)
             data[data <= 0] = 1
 
             # Try to get information out of the header
@@ -519,8 +615,7 @@ class MasterGui(QMainWindow):
 
     def parse_header(self, filename):
         # Open the header
-        with fits.open(filename) as hdulist:
-            header = hdulist[0].header
+        _, header = utils.get_data_and_header(filename)
 
         # Parse instrument
         try:
@@ -562,27 +657,6 @@ class MasterGui(QMainWindow):
         except KeyError:
             self.comboBox_detector.setCurrentIndex(0)
 
-        # Parse RA, Dec, and PA
-        try:
-            self.RA = str(header['TARG_RA'])
-        except KeyError:
-            try:
-                self.RA = str(header['RA_TARG'])
-            except KeyError:
-                pass
-        try:
-            self.Dec = str(header['TARG_DEC'])
-        except KeyError:
-            try:
-                self.Dec = str(header['DEC_TARG'])
-            except KeyError:
-                pass
-        try:
-            self.PA = str(header['PA_V3'])
-        except KeyError:
-            pass
-
-
         # Parse APT program, observation, and visit information
         keywords = ['PROGRAM', 'OBSERVTN', 'VISIT']
         attributes = ['prognum', 'obsnum', 'visitnum']
@@ -609,19 +683,14 @@ class MasterGui(QMainWindow):
             self.textEdit_showingConverted.setText(self.converted_im_file)
 
             # Toggle the "use converted image" buttons
-            if self.groupBox_imageConverter.isChecked():
-                self.checkBox_useConvertedImage.setEnabled(True)
+            self.checkBox_useConvertedImage.setEnabled(True)
             self.checkBox_useConvertedImage.setChecked(True)
 
             # Enable the "show stars" button
             self.checkBox_showStars.setEnabled(True)
 
             # Load data
-            with fits.open(self.converted_im_file) as hdulist:
-                if len(hdulist) > 1:
-                    data = hdulist[1].data
-                else:
-                    data = hdulist[0].data
+            data, _ = utils.get_data_and_header(self.converted_im_file)
             data[data <= 0] = 1
 
             # Load ALLpsfs.text
@@ -719,7 +788,7 @@ class MasterGui(QMainWindow):
 # MAIN FUNCTION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def run_MasterGui(root=None, fgs_counts=None, jmag=11.0, nircam_det=None,
+def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_det=None,
                   nircam=True, global_alignment=False, steps=None, in_file=None,
                   bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
@@ -729,7 +798,7 @@ def run_MasterGui(root=None, fgs_counts=None, jmag=11.0, nircam_det=None,
     if app is None:
         app = QApplication(sys.argv)
 
-    ex = MasterGui(root, fgs_counts, jmag, nircam_det, nircam, global_alignment, steps,
+    ex = MasterGui(root, norm_value, norm_unit, nircam_det, nircam, global_alignment, steps,
                    in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
                    file_writer, segment_guiding, app=app)
     # #return ex.settings

@@ -14,7 +14,7 @@ Use
 ---
     This module can be executed in a Python shell as such:
     ::
-        from jwst_fgs_commissioning_tools.fsw_file_writer import buildfgssteps
+        from jwst_magic.fsw_file_writer import buildfgssteps
         buildfgssteps.BuildFGSSteps(im, guider, root, step, out_dir)
 
     Required arguments:

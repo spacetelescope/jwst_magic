@@ -17,7 +17,7 @@ Use
 ---
 This GUI can be run in the python shell or as a module, as such:
     ::
-    from jwst_fgs_commissioning_tools.star_selector import SelectStarsGUI
+    from jwst_magic.star_selector import SelectStarsGUI
     inds = SelectStarsGUI.run_SelectStars(data_array, x_list, y_list, dist)
 
 References
@@ -40,7 +40,7 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-FGS Commissioning Tools package, be sure to use the existing instance
+JWST MaGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
@@ -59,7 +59,8 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
-                             QTableWidgetItem, QWidget, QVBoxLayout)
+                             QTableWidgetItem, QWidget, QVBoxLayout, QScrollArea,
+                             QFrame)
 from PyQt5.QtCore import pyqtSlot, QSize
 from PyQt5.QtGui import QIcon
 
@@ -260,6 +261,7 @@ class StarSelectorWindow(QDialog):
         self.qApp = qApp
         self.print_output = print_output
         self.in_master_GUI = in_master_GUI
+        self.in_SGT_GUI = in_SGT_GUI
 
         # Initialize construction attributes
         self.image_dim = 800
@@ -287,12 +289,25 @@ class StarSelectorWindow(QDialog):
         # Initialize dialog object and add imported UI
         if not in_SGT_GUI:
             QDialog.__init__(self, modal=True)
+            # Set dialog window layout
             self.setLayout(QVBoxLayout())
-            self.layout().addWidget(self.central_widget)
+
+            # Create scroll area and add it to the dialog window
+            self.scrollArea_selectStars = QScrollArea()
+            self.layout().addWidget(self.scrollArea_selectStars)
+
+            # Modify scroll area
+            self.scrollArea_selectStars.setMinimumSize(1110, 950)
+            self.scrollArea_selectStars.setFrameShape(QFrame.NoFrame)
+            self.scrollArea_selectStars.setWidgetResizable(True)
+
+            # Add central widget to scroll area
+            self.scrollArea_selectStars.setWidget(self.central_widget)
 
         # Create and load GUI session
-        self.setWindowTitle('FGS Commissioning Tools - Guide and Reference Star Selector')
-        self.init_matplotlib()
+        self.setWindowTitle('JWST MaGIC - Guide and Reference Star Selector')
+        canvas_left, profile_bottom = self.adjust_screen_size_selectStars()
+        self.init_matplotlib(canvas_left, profile_bottom)
         self.define_StarSelectionGUI_connections()
         self.show()
 
@@ -300,7 +315,41 @@ class StarSelectorWindow(QDialog):
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def init_matplotlib(self):
+    def adjust_screen_size_selectStars(self):
+        ''' Adjust the GUI sizes for laptop screens
+        '''
+        # Determine screen size
+        screen_size = self.qApp.desktop().screenGeometry()
+        width, height = screen_size.width(), screen_size.height()
+
+        # Adjust the matplotlib frame sizes
+        if height < 1100:
+            canvas_left = 0.13
+            profile_bottom = 0.2
+        else:
+            self.frame_canvas.setMinimumSize(800, 0)
+            self.tableWidget_selectedStars.setMinimumSize(420, 300)
+            self.groupBox_selectedStars.setMinimumSize(440, 380)
+            self.frame_profile.setMinimumSize(0, 300)
+            if not self.in_SGT_GUI:
+                self.scrollArea_selectStars.setMinimumSize(1110 + 200, 950 + 200)
+            canvas_left = 0.1
+            profile_bottom = 0.15
+
+        # If the window is standalone, adjust the scroll window size
+        if not self.in_SGT_GUI:
+            # Window is too wide
+            if width - 200 < self.scrollArea_selectStars.minimumWidth():
+                # print('Star selection window is too wide (screen size: {}); resizing to {}'.format(width, width - 200))
+                self.scrollArea_selectStars.setMinimumWidth(width - 200)
+            # Window is too tall
+            if height - 200 < self.scrollArea_selectStars.minimumHeight():
+                # print('Star selection window is too tall (screen size: {}); resizing to {}'.format(height, height - 200))
+                self.scrollArea_selectStars.setMinimumHeight(height - 200)
+
+        return canvas_left, profile_bottom
+
+    def init_matplotlib(self, canvas_left, profile_bottom):
         '''Set up the two matplotlib canvases that will preview the
         input image and converted image in the "Image Preview" section.
         '''
@@ -308,7 +357,7 @@ class StarSelectorWindow(QDialog):
         # Connect main matplotlib canvas and add to layout
         self.canvas = StarClickerMatplotlibCanvas(
             parent=self.frame_canvas,  data=self.data, x=self.x, dpi=100,
-            y=self.y, left=0.1, right=0.93)
+            y=self.y, left=canvas_left, right=0.93)
         self.canvas.compute_initial_figure(self.canvas.fig, self.data, self.x,
                                            self.y)
         self.canvas.zoom_to_crop()
@@ -318,7 +367,7 @@ class StarSelectorWindow(QDialog):
         # Connect profile matplotlib canvas and add to layout
         self.canvas_profile = StarClickerMatplotlibCanvas(
             parent=self.frame_profile, data=self.data, dpi=100, profile=True,
-            left=0.2, bottom=0.15, right=0.95, top=0.98)
+            left=0.2, bottom=profile_bottom, right=0.95, top=0.98)
         self.canvas_profile.init_profile()
         self.frame_profile.layout().insertWidget(0, self.canvas_profile)
 

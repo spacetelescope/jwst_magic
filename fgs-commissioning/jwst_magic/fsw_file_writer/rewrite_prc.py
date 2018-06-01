@@ -21,7 +21,7 @@ from ..fsw_file_writer.mkproc import Mkproc
 LOGGER = logging.getLogger(__name__)
 
 
-def rewrite_prc(order, guider, root, out_dir, thresh_factor=0.9,
+def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
                 prc=True, regfile=True):
     '''For a given dataset, rewrite the PRC and regfile to select a new commanded
     guide star and reference stars'''
@@ -32,18 +32,25 @@ def rewrite_prc(order, guider, root, out_dir, thresh_factor=0.9,
     LOGGER.info("Rewrite PRC: Reading from (and writing to) {}".format(out_dir))
     all_psfs = os.path.join(out_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))
     all_rows = asc.read(all_psfs)
-    labels = all_rows['label'].data
 
-    if len(set(labels)) != len(labels):
-        raise ValueError('Could not accurately map labels to segments. This is '
-                         'most likely due to incorrect labelling in the ALLpsfs.txt file.')
+    # If the segments are specified as a string of alphabetic labels
+    if isinstance(inds, str):
+        labels = all_rows['label'].data
+        if len(set(labels)) != len(labels):
+            raise ValueError('Could not accurately map labels to segments. This is '
+                             'most likely due to incorrect labelling in the ALLpsfs.txt file.')
+        if not inds.isalpha():
+            raise TypeError('Must enter only letters as PSF labels.')
 
-    if not order.isalpha():
-        raise TypeError('Must enter only letters as PSF labels.')
+        # Match each segment to its label
+        inds = [np.argwhere(labels == letter)[0] for letter in inds]
+        inds = np.concatenate(inds)
+    # If the segments are specified as a list of inds, directly from the GUI
+    elif isinstance(inds, list):
+        pass
+    else:
+        raise ValueError('Invalid indices provided (must be string of alphabetic labels or list of integer indices): ', inds)
 
-    # Match each segment to its label
-    inds = [np.argwhere(labels == letter)[0] for letter in order]
-    inds = np.concatenate(inds)
     rows = all_rows[inds]
 
     # Rewrite CECIL proc file

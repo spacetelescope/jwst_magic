@@ -18,7 +18,7 @@ handlers:
         filename: None
 
 loggers:
-    jwst_fgs_commissioning_tools:
+    jwst_magic:
         level: INFO
         handlers: [console, file_handler]
         propagate: no
