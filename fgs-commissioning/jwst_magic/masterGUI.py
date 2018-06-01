@@ -42,7 +42,7 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
 from PyQt5 import QtCore, uic
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
@@ -93,6 +93,7 @@ class MasterGui(QMainWindow):
 
         # Create and load GUI session
         self.setWindowTitle('JWST MaGIC')
+        self.adjust_screen_size_mainGUI()
         self.init_matplotlib()
         self.define_MainGUI_connections()
         self.show()
@@ -100,6 +101,21 @@ class MasterGui(QMainWindow):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def adjust_screen_size_mainGUI(self):
+        ''' Adjust the GUI sizes for laptop screens
+        '''
+        # Determine screen size
+        screen_size = self.app.desktop().screenGeometry()
+        width, height = screen_size.width(), screen_size.height()
+
+        # Adjust the scroll window size
+        if width - 200 < self.scrollArea_mainGUI.minimumWidth():
+            # Window is too wide
+            self.scrollArea_mainGUI.setMinimumWidth(width - 200)
+        if height - 200 < self.scrollArea_mainGUI.minimumHeight():
+            # Window is too tall
+            self.scrollArea_mainGUI.setMinimumHeight(height - 200)
 
     def init_matplotlib(self):
         '''Set up the two matplotlib canvases that will preview the
@@ -382,9 +398,9 @@ class MasterGui(QMainWindow):
         '''
         # If coming from the button, open the dialog
         if self.sender() == self.pushButton_inputImage:
-        # Read selected filename
-        filename = self.open_filename_dialog("NIRCam or FGS image", file_type="FITS files (*.fits)")
-        self.lineEdit_inputImage.setText(filename)
+            # Read selected filename
+            filename = self.open_filename_dialog("NIRCam or FGS image", file_type="FITS files (*.fits)")
+            self.lineEdit_inputImage.setText(filename)
 
         # If coming from the textbox, just read the new value
         elif self.sender() == self.lineEdit_inputImage:
@@ -392,7 +408,7 @@ class MasterGui(QMainWindow):
             filename = self.lineEdit_inputImage.text()
 
         # Only continue if the entered image path actually exists:
-        if filename is not None:
+        if filename is not None and filename != '':
             if not os.path.exists(filename):
                 raise FileNotFoundError('Input image {} does not exist.'.format(filename))
 
@@ -410,7 +426,7 @@ class MasterGui(QMainWindow):
         self.update_filepreview()
 
         # Show input image preview
-            self.load_input_image_data(filename)
+        self.load_input_image_data(filename)
 
         # Show converted image preview, if possible
         self.update_converted_image_preview()
