@@ -101,7 +101,7 @@ def find_gain(guider):
         Appropriate conversion factor from ADU/sec to e-/sec
     '''
     if guider == 1:
-        gain = 1.55
+        gain = 1.74
     else:
-        gain = 1.81
+        gain = 1.57
     return gain
