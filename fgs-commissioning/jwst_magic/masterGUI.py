@@ -78,9 +78,6 @@ class MasterGui(QMainWindow):
         self.bkgd_stars = None
 
         # Initialize SGT attributes
-        self.RA = None
-        self.Dec = None
-        self.PA = None
         self.prognum = None
         self.obsnum = None
         self.visitnum = None
@@ -307,21 +304,27 @@ class MasterGui(QMainWindow):
             SGT_dialog = self.segmentGuiding_dialog()
 
             # Get parameters for dictionary from dialog
-            GS_params_dict = {'V2Boff': float(SGT_dialog.lineEdit_V2.text()),
-                              'V3Boff': float(SGT_dialog.lineEdit_V3.text()),
-                              'fgsNum': guider,
-                              'RA': float(SGT_dialog.lineEdit_RA.text()),
-                              'Dec': float(SGT_dialog.lineEdit_Dec.text()),
-                              'PA': float(SGT_dialog.lineEdit_PA.text()),
-                              'segNum': 0}
-            program_id = SGT_dialog.lineEdit_programNumber.text()
-            observation_num = SGT_dialog.lineEdit_observationNumber.text()
-            visit_num = SGT_dialog.lineEdit_visitNumber.text()
-            ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
-            if SGT_dialog.checkBox_countrateFactor.isChecked():
-                countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
-            else:
-                countrate_factor = None
+            try:
+                GS_params_dict = {'V2Boff': float(SGT_dialog.lineEdit_V2.text()),
+                                  'V3Boff': float(SGT_dialog.lineEdit_V3.text()),
+                                  'fgsNum': guider,
+                                  'RA': float(SGT_dialog.lineEdit_RA.text()),
+                                  'Dec': float(SGT_dialog.lineEdit_Dec.text()),
+                                  'PA': float(SGT_dialog.lineEdit_PA.text()),
+                                  'segNum': 0}
+                program_id = SGT_dialog.lineEdit_programNumber.text()
+                observation_num = SGT_dialog.lineEdit_observationNumber.text()
+                visit_num = SGT_dialog.lineEdit_visitNumber.text()
+                ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
+                if SGT_dialog.checkBox_countrateFactor.isChecked():
+                    countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
+                else:
+                    countrate_factor = None
+            except ValueError as e:
+                if "could not convert string to float:" not in str(e):
+                    raise
+                else:
+                    return
 
             if os.path.exists(self.converted_im_file):
                 fgs_filename = self.converted_im_file
@@ -562,9 +565,6 @@ class MasterGui(QMainWindow):
         uic.loadUi(os.path.join(__location__, 'segment_guiding', 'segmentGuidingDialog.ui'), SGT_dialog)
 
         # Set defaults from parsed header
-        SGT_dialog.lineEdit_RA.setText(self.RA)
-        SGT_dialog.lineEdit_Dec.setText(self.Dec)
-        SGT_dialog.lineEdit_PA.setText(self.PA)
         SGT_dialog.lineEdit_programNumber.setText(self.prognum)
         SGT_dialog.lineEdit_observationNumber.setText(self.obsnum)
         SGT_dialog.lineEdit_visitNumber.setText(self.visitnum)
@@ -656,27 +656,6 @@ class MasterGui(QMainWindow):
         # If there is not DETECTOR keyword, set NIRCam detector back to parse
         except KeyError:
             self.comboBox_detector.setCurrentIndex(0)
-
-        # Parse RA, Dec, and PA
-        try:
-            self.RA = str(header['TARG_RA'])
-        except KeyError:
-            try:
-                self.RA = str(header['RA_TARG'])
-            except KeyError:
-                pass
-        try:
-            self.Dec = str(header['TARG_DEC'])
-        except KeyError:
-            try:
-                self.Dec = str(header['DEC_TARG'])
-            except KeyError:
-                pass
-        try:
-            self.PA = str(header['PA_V3'])
-        except KeyError:
-            pass
-
 
         # Parse APT program, observation, and visit information
         keywords = ['PROGRAM', 'OBSERVTN', 'VISIT']
