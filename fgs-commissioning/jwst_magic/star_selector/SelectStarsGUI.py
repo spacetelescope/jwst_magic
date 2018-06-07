@@ -380,6 +380,7 @@ class StarSelectorWindow(QDialog):
         #   Update cursor position and pixel value under cursor
         self.canvas.mpl_connect('motion_notify_event', self.update_cursor_position)
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
+        self.canvas.mpl_connect('motion_notify_event', self.show_segment_id)
         #   Star selection!
         self.canvas.mpl_connect('button_press_event', self.button_press_callback)
 
@@ -562,6 +563,24 @@ class StarSelectorWindow(QDialog):
 
             self.canvas_profile.draw()
 
+    def show_segment_id(self, event):
+        '''Show the segment ID of a segment when the cursor mouses over
+        a segment on the matplotlib axis
+        '''
+        if event.inaxes:
+            # Determine if the cursor is close to a segment
+            dist = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
+            indseq = np.nonzero(np.equal(dist, np.amin(dist)))[0]
+            ind = indseq[0]
+
+            if dist[ind] <= self.epsilon:
+                # Update the tool tip to show the segment ID
+                self.canvas.setToolTip(str(ind + 1))
+
+            else:
+                # Update the tool tip to be blank
+                self.canvas.setToolTip(str(''))
+
     def button_press_callback(self, event):
         '''Whenever the mouse is clicked, determines if the click is
         within the matplotlib axis; if so calls get_ind_under_point'''
@@ -597,21 +616,11 @@ class StarSelectorWindow(QDialog):
         self.canvas.draw()
 
     def remove_star(self):
-        '''
-        Remove star and update inds list
+        '''Remove star and update inds list
         '''
 
         # Determine index of star being removed
         star_ind = self.tableWidget_selectedStars.currentRow()
-
-        # If user tries to delete guide star, don't let them
-        if star_ind == self.gs_ind:
-            redText = "<span style=\" color:#ff0000;\" >"
-            redText += 'The guide star cannot be deleted. Please choose \
-                        another star or change the guide star.'
-            redText += "</span><br>"
-            self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
-            return
 
         # Un-draw circle
         delete_circle = self.circles.pop(star_ind)
@@ -631,15 +640,25 @@ class StarSelectorWindow(QDialog):
         self.inds.pop(star_ind)
 
         # Update guide star index
-        if star_ind < self.gs_ind:
-            self.gs_ind -= 1
+        gs_deleted, self.gs_ind = self.calc_new_gs_ind(star_ind)
 
         # Update table
         self.tableWidget_selectedStars.removeRow(star_ind)
-
+        if self.gs_ind is None:
+            # Add back empty row
+            self.tableWidget_selectedStars.insertRow(0)
         # Update which row is highlighted:
-        self.currentRow = self.tableWidget_selectedStars.currentRow()
-        self.circles[self.currentRow].set_markeredgecolor('cornflowerblue')
+        if self.gs_ind is not None:
+            self.currentRow = self.tableWidget_selectedStars.currentRow()
+            self.circles[self.currentRow].set_markeredgecolor('cornflowerblue')
+
+        # Update guide star
+        if gs_deleted and self.gs_ind is not None:
+            # Re-draw new guide star as guide star
+            self.circles[self.gs_ind].set_markeredgecolor('yellow')
+
+            # Move the guide star icon
+            self.tableWidget_selectedStars.setItem(self.gs_ind, 0, QTableWidgetItem(QIcon(os.path.join(__location__, 'gs_icon.png')), ''))
 
         self.canvas.draw()
 
@@ -809,6 +828,23 @@ class StarSelectorWindow(QDialog):
     def nostars_dialog(self, button):
         if 'No' in button.text():
             self.answer = False
+
+    def calc_new_gs_ind(self, star_ind):
+        # If a star earlier than the guide star was deleted
+        if star_ind < self.gs_ind:
+            return False, 1
+
+        # If the guide star was deleted
+        elif star_ind == self.gs_ind:
+            if len(self.inds) == 0:
+                return True, None
+
+            elif star_ind == 0:
+                # Make the first star the guide star
+                return True, 0
+            else:
+                # Make the star_ind - 1 star the guide star
+                return True, star_ind - 1
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN FUNCTION
