@@ -1,12 +1,19 @@
 #!/usr/bin/env python
+"""Generate segment guiding override files.
 
-"""
-segment_guiding.py
+The JWST MAGIC Segment Guiding Tool (SGT) is used during early
+wavefront commissioning, when the mirror segments are still unstacked.
+The tool takes a list of segment locations and guide star parameters,
+using them to calculates the effective RA and Dec where each segment
+appears in the sky. The user then specifies which segments to select as
+the "guide star" and as the "reference stars". Finally, the tool
+generates a segment guiding override file (gs-override*.txt) that the
+Visit Scheduling System (VSS) will use to generate a visit.
 
-Segment Guiding Tool (SGT), optionally using tkinter GUI
-
-Created by Colin Cox on 2017-05-01.
-Modified by Lauren Chambers January 2018
+Authors
+-------
+    - Colin Cox (original creator, May 2017)
+    - Lauren Chambers (modifications in 2018)
 """
 
 # Standard Library Imports
@@ -14,9 +21,7 @@ import os
 import logging
 
 # Third Party Imports
-# Work out backend business
 import matplotlib
-backend = matplotlib.get_backend()
 matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import pysiaf
@@ -49,24 +54,19 @@ class SegmentGuidingCalculator:
                  selected_segs=None, vss_infile=None, out_dir=None,
                  ct_uncert_fctr=0.9, countrate_factor=None):
 
+        # Initialize attributes
         self.root = root
         self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, self.root)
-
-        utils.ensure_dir_exists(self.out_dir)
-
         self.program_id = program_id
         self.observation_num = observation_num
         self.visit_num = visit_num
-
-        # Will the tool be run through the GUI?
-        self.GUI = GUI
-
-        # Implement "refonly" label for reference stars?
-        self.refonly = refonly
-
-        # Set countrate uncertainty factor and multiplicative factor
+        self.GUI = GUI  # Will the tool be run through the GUI?
+        self.refonly = refonly  # Implement "refonly" label for reference stars?
         self.ct_uncert_fctr = ct_uncert_fctr
         self.countrate_factor = countrate_factor
+
+        # Ensure the output directory exists
+        utils.ensure_dir_exists(self.out_dir)
 
         # Parse the input file type (ALLpsfs.txt, regfile.txt, and VSS infile)
         self.get_gs_params(vss_infile, GS_params_dict)
@@ -75,35 +75,29 @@ class SegmentGuidingCalculator:
             self.get_selected_segs(selected_segs)
 
         # Get aperture parameters from FGS SIAF
-        self.FGSsetup()
+        self.get_guider_aperture()
 
-    def ChosenSeg(self, *args):
-        '''
+    def ChosenSeg(self):
+        '''Determine the V2/V3 position of the chosen segment.
+
         1) Check that the user-provided segment ID number is valid (0 to 18)
         2) Calculate the central V2/V3 point of either the provided segment or
         the center of the segment array
-        3) Update GUI with V2/V3 coordinates and Ideal angle coordinatess
         '''
         # Try to convert provided segment ID number to an integer
         try:
             segN = int(self.segNum)
         except ValueError:
             raise ValueError('Unrecognized segment number: {}'.format(segN))
-            return
-
-        # If no segment ID number is provided, do nothing
-        if segN == '':
-            return
 
         # Refresh FGS data
-        self.FGSsetup()
+        self.get_guider_aperture()
 
         # Ensure the provided segment ID is valid
         segMax = len(self.V2SegArray)
         if (segN < 0) or (segN > segMax):
             msg = 'Segment number {} out of range (0, {})'.format(segN, segMax)
             raise ValueError(msg)
-            return
 
         # Determine the central V2/V3 point from the given segment ID
 
@@ -119,8 +113,8 @@ class SegmentGuidingCalculator:
             self.V3SegN = self.V3SegArray.mean()
 
         # Calculate aim
-        self.V2Ref = float(self.fgsV2)   # obtained from FGS setup
-        self.V3Ref = float(self.fgsV3)
+        self.V2Ref = float(self.V2Ref)   # obtained from FGS setup
+        self.V3Ref = float(self.V3Ref)
         dV2Aim = self.V2SegN
         dV3Aim = self.V3SegN
         self.V2Aim = self.V2Ref + dV2Aim
@@ -129,31 +123,26 @@ class SegmentGuidingCalculator:
         # Convert to Ideal coordinates
         self.xIdl, self.yIdl = self.fgs_siaf_aperture.tel_to_idl(self.V2Aim, self.V3Aim)
 
-    def FGSsetup(self, *args):
-        '''Taking the current guider number (per the radio buttons on the GUI),
-        extracts V2Ref, V3Ref, V3IdlYAngle, and VIdlParity from the respective
-        aperture in the FGS SIAF.
-        '''
+    def get_guider_aperture(self):
+        '''Extract needed parameters from the SIAF file for the given FGS.
 
-        # Read chosen guider number
+        Taking the current guider number, extracts V2Ref, V3Ref,
+        V3IdlYAngle, and VIdlParity from the respective aperture in the
+        FGS SIAF.
+        '''
         # Ensure the guider number is valid
         if str(self.fgsNum) not in ['1', '2']:
             raise ValueError('Invalid guider number: "{}"'.format(self.fgsNum))
 
+        # Construct the aperture name
         det = 'FGS' + str(self.fgsNum) + '_FULL_OSS'
 
-        # Open SIAF aperture for appropriate guider with pysiaf
+        # Read SIAF for appropriate guider aperture with pysiaf
         self.fgs_siaf_aperture = FGS_SIAF[det]
-        V2Ref = self.fgs_siaf_aperture.V2Ref
-        V3Ref = self.fgs_siaf_aperture.V3Ref
-        V3IdlYAngle = self.fgs_siaf_aperture.V3IdlYAngle
-        VIdlParity = self.fgs_siaf_aperture.VIdlParity
-
-        self.fgsV2 = '%10.4f' % V2Ref
-        self.fgsV3 = '%10.4f' % V3Ref
-        self.fgsAngle = '%10.4f' % V3IdlYAngle
-        self.fgsParity = '%3d' % VIdlParity
-
+        self.V2Ref = self.fgs_siaf_aperture.V2Ref
+        self.V3Ref = self.fgs_siaf_aperture.V3Ref
+        self.V3IdlYAngle = self.fgs_siaf_aperture.V3IdlYAngle
+        self.VIdlParity = self.fgs_siaf_aperture.VIdlParity
 
     def Calculate(self):
         nseg = len(self.SegIDArray)
@@ -209,11 +198,11 @@ class SegmentGuidingCalculator:
 
             summary_output = """Guide Star Parameters
                 Aperture FGS: {0}
-                V2/V3 Refs: ({1}, {2}) arc-sec
+                V2/V3 Refs: ({1:10.4f}, {2:10.4f}) arc-sec
                 Guiding segment number: {3}
                 V2/V3 Boresight offset: ({4}, {5}) arc-sec
                 Guide star RA & Dec: ({6}, {7}) degrees
-                Position angle: {8} degrees""".format(self.fgsNum, self.fgsV2, self.fgsV3, self.segNum, V2B, V3B, gsRA, gsDec, gsPA)
+                Position angle: {8} degrees""".format(self.fgsNum, self.V2Ref, self.V3Ref, self.segNum, V2B, V3B, gsRA, gsDec, gsPA)
             LOGGER.info('Segment Guiding: ' + summary_output)
 
             all_segments = 'All Segment Locations'
@@ -768,8 +757,8 @@ def run_tool(segment_infile, guider, root=None, program_id=0, observation_num=0,
             # Find the minimum distance between PSFs
             if len(coords) < 2:
                 # For cases where we only have star, we assume that we are sufficiently
-                #isolated from other stars, but also that the guide star's PSF may be
-                #distorted enough that it might appear quite large on the detector
+                # isolated from other stars, but also that the guide star's PSF may be
+                # distorted enough that it might appear quite large on the detector
                 dist = 20
             else:
                 dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
@@ -799,4 +788,3 @@ def run_tool(segment_infile, guider, root=None, program_id=0, observation_num=0,
     except Exception as e:
         LOGGER.exception(e)
         raise
-
