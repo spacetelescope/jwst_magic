@@ -1,6 +1,6 @@
-"""GUI interface to JWST MaGIC
+"""GUI interface to JWST MAGIC
 
-The primary interface to the JWST MaGIC, from which almost
+The primary interface to JWST MAGIC, from which almost
 all of the tool functions can be operated.
 
 Authors
@@ -38,7 +38,7 @@ matplotlib-dependent packages are imported.
 will already by instances of the QApplication object floating around
 when this GUI is called. However, only one instance of QApplication can
 be run at once without things crashing terribly. In all GUIs within the
-JWST MaGIC package, be sure to use the existing instance
+JWST MAGIC package, be sure to use the existing instance
 of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
@@ -74,7 +74,7 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 
 
 class EmittingStream(QtCore.QObject):
-    '''Define a class to tee sys.stdout to textEdit.log
+    '''Define a class to tee sys.stdout to textEdit_log
     '''
     def __init__(self, textEdit_log):
         # Initialize the super class (QObject)
@@ -88,7 +88,7 @@ class EmittingStream(QtCore.QObject):
         self.textEdit_log = textEdit_log
 
     def __del__(self):
-        '''Set sys.stdout back to normal
+        '''Upon deletion, set sys.stdout back to normal
         '''
         sys.stdout = self.stdout
 
@@ -97,7 +97,7 @@ class EmittingStream(QtCore.QObject):
         '''
         self.stdout.write(text)
         try:
-            self.write_output(text, self.textEdit_log)
+            self.write_output(text)
         except RuntimeError:
             pass
 
@@ -106,16 +106,17 @@ class EmittingStream(QtCore.QObject):
         '''
         pass
 
-    def write_output(self, text, textEdit_log):
+    def write_output(self, text):
         '''Format and append stdout text to the log QTextEdit.
         '''
-        current_text = textEdit_log.toHtml()
+        current_text = self.textEdit_log.toHtml()
         text_noANSI = re.sub(r'(\[.+?m)', '', text).replace('\n', '<br>')
-        textEdit_log.setHtml(current_text + text_noANSI)
+        self.textEdit_log.setHtml(current_text + text_noANSI)
 
-        cursor = textEdit_log.textCursor()
+        # Move the cursor to the end so that the most recent  text is visible
+        cursor = self.textEdit_log.textCursor()
         cursor.movePosition(QtGui.QTextCursor.End)
-        textEdit_log.setTextCursor(cursor)
+        self.textEdit_log.setTextCursor(cursor)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI CLASS DEFINITON
