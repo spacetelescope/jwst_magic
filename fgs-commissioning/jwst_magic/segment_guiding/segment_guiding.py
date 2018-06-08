@@ -650,7 +650,10 @@ def run_tool(segment_infile, program_id=0, observation_num=0, visit_num=0, root=
                 dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
 
             # Run the GUI to select guide and reference stars
-            inds, segNum = SegmentGuidingGUI.run_SelectSegmentOverride(data, x, y, dist, masterGUIapp=masterGUIapp)
+            inds, segNum = SegmentGuidingGUI.run_SelectSegmentOverride(
+                data, x, y, dist, selected_segs=selected_segs,
+                masterGUIapp=masterGUIapp
+            )
             LOGGER.info('Segment Guiding: {} segment override commands generated with segNum = {}'.format(len(inds), segNum))
             GS_params_dict['segNum'] = segNum
 
