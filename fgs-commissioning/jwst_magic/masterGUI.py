@@ -15,6 +15,13 @@ This GUI can be run in the python shell as such:
     import jwst_magic
     jwst_magic.run_tool_GUI()
 
+References
+----------
+Standard output/error stream handling:
+    - https://stackoverflow.com/questions/8356336/how-to-capture-output-
+      of-pythons-interpreter-and-show-in-a-text-widget
+    - https://stackoverflow.com/questions/616645/how-do-i-duplicate-sys-
+      stdout-to-a-log-file-in-python
 
 Notes
 -----
@@ -38,10 +45,11 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 import os
 import sys
+import re
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
-from PyQt5 import QtCore, uic
+from PyQt5 import QtCore, uic, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
@@ -60,10 +68,60 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# OUTPUT HANDLER
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+class EmittingStream(QtCore.QObject):
+    '''Define a class to tee sys.stdout to textEdit.log
+    '''
+    def __init__(self, textEdit_log):
+        # Initialize the super class (QObject)
+        super(EmittingStream, self).__init__()
+
+        # Redefine sys.stdout to call this class
+        self.stdout = sys.stdout
+        sys.stdout = self
+
+        # Connect to the main window's textEdit_log widget
+        self.textEdit_log = textEdit_log
+
+    def __del__(self):
+        '''Set sys.stdout back to normal
+        '''
+        sys.stdout = self.stdout
+
+    def write(self, text):
+        '''Write output to both stdout and to textEdit_log
+        '''
+        self.stdout.write(text)
+        try:
+            self.write_output(text, self.textEdit_log)
+        except RuntimeError:
+            pass
+
+    def flush(self):
+        '''In reality, empty a buffer. Here, do nothing.
+        '''
+        pass
+
+    def write_output(self, text, textEdit_log):
+        '''Format and append stdout text to the log QTextEdit.
+        '''
+        current_text = textEdit_log.toHtml()
+        text_noANSI = re.sub(r'(\[.+?m)', '', text).replace('\n', '<br>')
+        textEdit_log.setHtml(current_text + text_noANSI)
+
+        cursor = textEdit_log.textCursor()
+        cursor.movePosition(QtGui.QTextCursor.End)
+        textEdit_log.setTextCursor(cursor)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI CLASS DEFINITON
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
 class MasterGui(QMainWindow):
     def __init__(self, root=None, norm_value=12.0, norm_units='FGS Magnitue',
                  nircam_det=None, nircam=True, global_alignment=False, steps=None,
@@ -87,6 +145,9 @@ class MasterGui(QMainWindow):
 
         # Import .ui file
         uic.loadUi(os.path.join(__location__, 'masterGUI.ui'), self)
+
+        # Set up the custom output stream
+        EmittingStream(self.textEdit_log)
 
         # Create and load GUI session
         self.setWindowTitle('JWST MaGIC')
@@ -137,6 +198,9 @@ class MasterGui(QMainWindow):
         self.canvas_converted.setMinimumSize(max_dim, max_dim)
 
     def define_MainGUI_connections(self):
+        # Standard output and error
+        self.textEdit_log.setFont(QtGui.QFont("Courier New"))
+
         # Main window widgets
         self.pushButton_run.clicked.connect(self.run_tool)
         self.pushButton_quit.clicked.connect(self.close_application)
