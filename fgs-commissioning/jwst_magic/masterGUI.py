@@ -398,12 +398,8 @@ class MasterGui(QMainWindow):
             data, _ = utils.get_data_and_header(fgs_filename)
 
             # Determine whether to load regfile or run GUI
-            if self.radioButton_regfileSegmentGuiding.isChecked():
-                selected_segs = self.lineEdit_regfileStarSelector.text()
-                GUI = False
-            else:
-                selected_segs = None
-                GUI = True
+            GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
+            selected_segs = self.lineEdit_regfileStarSelector.text()
 
             segment_guiding.run_tool(segment_infile, program_id=program_id,
                                      observation_num=observation_num,

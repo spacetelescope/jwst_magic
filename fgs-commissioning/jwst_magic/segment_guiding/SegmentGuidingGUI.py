@@ -31,6 +31,7 @@ import os
 
 # Third Party Imports
 import numpy as np
+from astropy.io import ascii as asc
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QTableWidgetItem)
 from PyQt5.QtGui import QIcon
@@ -43,7 +44,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 
 class SegmentGuidingWindow(StarSelectorWindow, QDialog):
     def __init__(self, data, x, y, dist, qApp, in_master_GUI,
-                 print_output=False):
+                 print_output=False, selected_segs=None):
         '''Defines attributes; calls initUI() method to set up user interface.'''
         # Initialize attributes
         self.n_orientations = 0
@@ -70,6 +71,10 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.adjust_screen_size_segmentGuiding()
         self.define_SegmentGuidingGUI_connections()
         self.show()
+
+        # Load stars from regfile, if it exists
+        if selected_segs is not None and os.path.exists(selected_segs):
+            self.load_orientation(selected_segs)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
@@ -145,14 +150,36 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.clear_selected_stars()
         self.n_orientations += 1
 
-    def load_orientation(self):
-        # Remove the stars that are currently shown
-        self.clear_selected_stars()
-
+    def load_orientation(self, selected_segs=None):
         # Determine what are the indices of the stars to load
-        selected_row = self.tableWidget_commands.selectedItems()[0].row()
-        selected_orientation = self.tableWidget_commands.item(selected_row, 0).text()
-        selected_indices = [int(s) for s in selected_orientation.split(', ')]
+
+        # Read them from a regfile
+        if selected_segs is not None:
+            regfile_locations = asc.read(selected_segs)
+            x_reg = regfile_locations['x']
+            y_reg = regfile_locations['y']
+            selected_indices = []
+            for x, y in zip(x_reg, y_reg):
+                for i in range(len(self.x)):
+                    if self.x[i] == x and self.y[i] == y:
+                        selected_indices.append(i + 1)
+            regfile_message = ' from regfile.txt'
+
+            # If the regfile doesn't match the ALLpsfs locations,
+            # don't try to load anything.
+            if selected_indices == []:
+                return
+
+        # Read them from a table
+        elif selected_segs is None:
+            # Remove the stars that are currently shown
+            self.clear_selected_stars()
+
+            # Read the table
+            selected_row = self.tableWidget_commands.selectedItems()[0].row()
+            selected_orientation = self.tableWidget_commands.item(selected_row, 0).text()
+            selected_indices = [int(s) for s in selected_orientation.split(', ')]
+            regfile_message = ''
 
         # Update the table and canvas
         for i_row, ind in enumerate(selected_indices):
@@ -190,7 +217,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.inds = [i - 1 for i in selected_indices]
 
         # Send message to output
-        remstar_string = 'Loaded orientation: {}'.format(', '.join([str(i + 1) for i in self.inds]))
+        remstar_string = 'Loaded orientation{}: {}'.format(regfile_message, ', '.join([str(i) for i in selected_indices]))
         self.textEdit_output.setHtml(remstar_string + "<br>" + self.textEdit_output.toHtml())
         if self.print_output:
             print(remstar_string)
@@ -303,7 +330,8 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def run_SelectSegmentOverride(data, x, y, dist, print_output=False, masterGUIapp=None):
+def run_SelectSegmentOverride(data, x, y, dist, print_output=False,
+                              selected_segs=None, masterGUIapp=None):
     '''Calls a PyQt GUI to allow interactive user selection of guide and reference stars.
 
     Params
@@ -341,7 +369,8 @@ def run_SelectSegmentOverride(data, x, y, dist, print_output=False, masterGUIapp
 
     window = SegmentGuidingWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
                                   in_master_GUI=in_master_GUI,
-                                  print_output=print_output)
+                                  print_output=print_output,
+                                  selected_segs=selected_segs)
 
     # Begin interactive session; pauses until window.exit() is called
     if masterGUIapp:
