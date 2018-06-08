@@ -277,42 +277,50 @@ class MasterGui(QMainWindow):
             self.no_guider_dialog()
             return
 
+        # Initialize parameter dictionary
+        magic_parameters = {}
+
         # General input
-        input_image = self.lineEdit_inputImage.text()
-        guider = int(self.buttonGroup_guider.checkedButton().text())
-        root = self.lineEdit_root.text()
-        out_dir = self.textEdit_out.toPlainText().rstrip()
-        copy_original = True
+        magic_parameters['general']['input_image'] = self.lineEdit_inputImage.text()
+        magic_parameters['general']['guider'] = int(self.buttonGroup_guider.checkedButton().text())
+        magic_parameters['general']['root'] = self.lineEdit_root.text()
+        magic_parameters['general']['out_dir'] = self.textEdit_out.toPlainText().rstrip()
+        magic_parameters['general']['copy_original'] = True
+        magic_parameters['general']['converted_im'] = self.converted_im_file
+        magic_parameters['general']['masterGUIapp'] = self.app
 
         # Convert image
-        convert_im = True
-        nircam = self.radioButton_NIRCam.isChecked()
-        nircam_det = str(self.comboBox_detector.currentText())
-        normalize = self.checkBox_normalize.isChecked()
-        norm_value = float(self.lineEdit_normalize.text())
-        norm_unit = self.comboBox_normalize.currentText()
-        coarse_point = self.checkBox_coarsePointing.isChecked()
-        jitter_rate_arcsec = float(self.lineEdit_coarsePointing.text())
-        bkgd_stars = self.bkgd_stars
+        magic_parameters['convert_image']['convert_im'] = True
+        magic_parameters['convert_image']['nircam'] = self.radioButton_NIRCam.isChecked()
+        magic_parameters['convert_image']['nircam_det'] = str(self.comboBox_detector.currentText())
+        magic_parameters['convert_image']['normalize'] = self.checkBox_normalize.isChecked()
+        magic_parameters['convert_image']['norm_value'] = float(self.lineEdit_normalize.text())
+        magic_parameters['convert_image']['norm_unit'] = self.comboBox_normalize.currentText()
+        magic_parameters['convert_image']['coarse_point'] = self.checkBox_coarsePointing.isChecked()
+        magic_parameters['convert_image']['jitter_rate_arcsec'] = float(self.lineEdit_coarsePointing.text())
+        magic_parameters['convert_image']['bkgd_stars'] = self.bkgd_stars
 
         # Handle the case where we want to use a pre-existing converted image
-        if self.checkBox_useConvertedImage.isChecked() and convert_im and\
+        if self.checkBox_useConvertedImage.isChecked() and\
+           magic_parameters['convert_image']['convert_im'] and\
            self.checkBox_useConvertedImage.isEnabled():
-            convert_im = False
-            input_image = self.converted_im_file
-            copy_original = False
+            magic_parameters['convert_image']['convert_im'] = False
+            magic_parameters['general']['input_image'] = self.converted_im_file
+            magic_parameters['general']['copy_original'] = False
 
         # Star selection
-        global_alignment = self.checkBox_globalAlignment.isChecked()
-        star_selection = self.groupBox_starSelector.isChecked()
-        star_selectiongui = self.radioButton_starSelectorGUI.isChecked()
+        magic_parameters['star_selector']['global_alignment'] = self.checkBox_globalAlignment.isChecked()
+        magic_parameters['star_selector']['star_selection'] = self.groupBox_starSelector.isChecked()
+        magic_parameters['star_selector']['star_selectiongui'] = self.radioButton_starSelectorGUI.isChecked()
+        magic_parameters['star_selector']['global_alignment'] = self.checkBox_globalAlignment.isChecked()
         if not self.radioButton_regfileStarSelector.isChecked():
             in_file = None
         else:
             in_file = self.lineEdit_regfileStarSelector.text()
+        magic_parameters['star_selector']['in_file'] = in_file
 
         # File writer
-        file_writer = self.groupBox_fileWriter.isChecked()
+        magic_parameters['fsw_file_writer']['file_writer'] = self.groupBox_fileWriter.isChecked()
         steps = []
         if self.checkBox_CAL.isChecked():
             steps.append('CAL')
@@ -326,21 +334,18 @@ class MasterGui(QMainWindow):
             steps.append('TRK')
         if self.checkBox_LOSTRK.isChecked():
             steps.append('LOSTRK')
+        magic_parameters['fsw_file_writer']['steps'] = steps
 
         # Rewrite .prc and regfile.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
             # Open converted FGS file
-            fgs_filename = os.path.join(out_dir, 'out', root, 'FGS_imgs',
-                                        '{}_G{}.fits'.format(root, guider))
-            data, _ = utils.get_data_and_header(fgs_filename)
+            data, _ = utils.get_data_and_header(self.converted_im_file)
 
             # Update array for showing in LogNorm
             data[data <= 0] = 1
 
             # Open ALLpsfs.txt (list of all identified segments)
-            all_psfs = os.path.join(out_dir, 'out', root,
-                                    '{}_G{}_ALLpsfs.txt'.format(root, guider))
-            all_rows = asc.read(all_psfs)
+            all_rows = asc.read(self.ALLpsfs)
             x = all_rows['x'].data
             y = all_rows['y'].data
 
@@ -348,7 +353,9 @@ class MasterGui(QMainWindow):
             inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
+            rewrite_prc.rewrite_prc(inds, magic_parameters['general']['guider'],
+                                    magic_parameters['general']['root'],
+                                    magic_parameters['general']['out_dir'])
             print("** Run Complete **\n\n")
 
             # Update converted image preview
@@ -358,58 +365,52 @@ class MasterGui(QMainWindow):
 
         # Segment guiding
         if self.groupBox_segmentGuiding.isChecked():
-            refonly = self.checkBox_refonly.isChecked()
+            magic_parameters['segment_guiding']['refonly'] = self.checkBox_refonly.isChecked()
 
-            segment_infile = self.ALLpsfs
-            if not os.path.exists(segment_infile):
-                raise OSError('Provided segment infile {} not found.'.format(segment_infile))
+            if not os.path.exists(self.ALLpsfs):
+                raise OSError('Provided segment infile {} not found.'.format(self.ALLpsfs))
+            magic_parameters['segment_guiding']['segment_infile'] = self.ALLpsfs
 
             # Raise dialog box
-            self.parse_header(input_image)
+            self.parse_header(magic_parameters['general']['input_image'])
             SGT_dialog = self.segmentGuiding_dialog()
 
             # Get parameters for dictionary from dialog
             try:
                 GS_params_dict = {'V2Boff': float(SGT_dialog.lineEdit_V2.text()),
                                   'V3Boff': float(SGT_dialog.lineEdit_V3.text()),
-                                  'fgsNum': guider,
+                                  'fgsNum': magic_parameters['general']['guider'],
                                   'RA': float(SGT_dialog.lineEdit_RA.text()),
                                   'Dec': float(SGT_dialog.lineEdit_Dec.text()),
                                   'PA': float(SGT_dialog.lineEdit_PA.text()),
                                   'segNum': 0}
-                program_id = SGT_dialog.lineEdit_programNumber.text()
-                observation_num = SGT_dialog.lineEdit_observationNumber.text()
-                visit_num = SGT_dialog.lineEdit_visitNumber.text()
-                ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
+                magic_parameters['segment_guiding']['GS_params_dict'] = GS_params_dict
+                magic_parameters['segment_guiding']['program_id'] = SGT_dialog.lineEdit_programNumber.text()
+                magic_parameters['segment_guiding']['observation_num'] = SGT_dialog.lineEdit_observationNumber.text()
+                magic_parameters['segment_guiding']['visit_num'] = SGT_dialog.lineEdit_visitNumber.text()
+                magic_parameters['segment_guiding']['ct_uncert_fctr'] = float(SGT_dialog.lineEdit_countrateUncertainty.text())
                 if SGT_dialog.checkBox_countrateFactor.isChecked():
                     countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
                 else:
                     countrate_factor = None
+                magic_parameters['segment_guiding']['countrate_factor'] = countrate_factor
+
+            # Don't throw an error if the user just closes the dialog box
             except ValueError as e:
                 if "could not convert string to float:" not in str(e):
                     raise
                 else:
                     return
 
-            if os.path.exists(self.converted_im_file):
-                fgs_filename = self.converted_im_file
-            else:
-                fgs_filename = input_image
-            data, _ = utils.get_data_and_header(fgs_filename)
+
+            # magic_parameters['data, _ = utils.get_data_and_header(self.converted_im_file)
 
             # Determine whether to load regfile or run GUI
-            GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
-            selected_segs = self.lineEdit_regfileStarSelector.text()
+            magic_parameters['segment_guiding']['GUI'] = not self.radioButton_regfileSegmentGuiding.isChecked()
+            magic_parameters['segment_guiding']['selected_segs'] = self.lineEdit_regfileStarSelector.text()
 
-            segment_guiding.run_tool(segment_infile, program_id=program_id,
-                                     observation_num=observation_num,
-                                     visit_num=visit_num, root=root,
-                                     GUI=GUI, GS_params_dict=GS_params_dict,
-                                     out_dir=out_dir, data=data,
-                                     selected_segs=selected_segs,
-                                     masterGUIapp=self.app, refonly=refonly,
-                                     ct_uncert_fctr=ct_uncert_fctr,
-                                     countrate_factor=countrate_factor)
+            # Run the tool
+            segment_guiding.run_tool(magic_parameters)
             print("** Run Complete **")
 
             # Update converted image preview
@@ -417,13 +418,12 @@ class MasterGui(QMainWindow):
             self.update_filepreview()
             return
 
-        if convert_im or star_selection or file_writer:
-            run_magic.run_all(input_image, guider, root, norm_value, norm_unit,
-                              nircam_det, nircam, global_alignment, steps,
-                              in_file, bkgd_stars, out_dir, convert_im,
-                              star_selection, star_selectiongui, file_writer,
-                              self.app, copy_original, normalize, coarse_point,
-                              jitter_rate_arcsec)
+        # Run the whole tool
+        if magic_parameters['convert_image']['convert_im'] or \
+           magic_parameters['star_selector']['star_selection'] or \
+           magic_parameters['fsw_file_writer']['file_writer']:
+            # Do it!
+            run_magic.run_all(magic_parameters)
             print("** Run Complete **")
 
             # Update converted image preview
