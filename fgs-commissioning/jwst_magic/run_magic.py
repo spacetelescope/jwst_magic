@@ -141,7 +141,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                            guider)
 
         # Write converted image
-        convert_image_to_raw_fgs.write_FGS_im(fgs_im, out_dir, root, guider)
+        convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider)
         LOGGER.info("*** Image Conversion COMPLETE ***")
     # Or, if an FGS image was provided, use it!
     else:

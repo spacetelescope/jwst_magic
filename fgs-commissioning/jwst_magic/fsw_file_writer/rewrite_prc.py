@@ -1,18 +1,47 @@
-'''Rewrite .prc and regfile.txt files with new guide and reference stars
+"""Rewrite .prc and regfile.txt files with new guide and reference stars
 
 Allow the user to rewrite the ID.prc, ACQ.prc, and regfile.txt files
-without having to rerun image conversion and star selection.
+without rerunning image conversion and star selection.
 
-Author
-------
+Authors
+-------
     - Lauren Chambers
-'''
+
+Use
+---
+    This module can be used as such:
+    ::
+        from jwst_magic.fsw_file_writer import rewrite_prc
+        rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
+
+    Required arguments:
+        ```inds``` - string listing segment labels or list of segment indices
+            indicating which segments to re-write as the guide and
+            reference stars
+        ```guider``` - guider number (1 or 2)
+        ```root``` - name used to create the output directory,
+            {out_dir}/out/{root}
+        ```out_dir``` - where output files will be saved. If not provided, the
+            image(s) will be saved within the repository at
+            tools/fgs-commissioning/
+
+    Optional arguments:
+        ```thresh_factor``` - factor by which to multiply the countrates
+            to determine the threshold count rate
+        ```prc``` - denotes whether to rewrite {root}_G{guider}_ID.prc
+        ```regfile``` - denotes whether to rewrite {root}_G{guider}_regfile.txt
+
+"""
+
+# Standard Library Imports
 import os
 import logging
 
+# Third Party Imports
 from astropy.io import ascii as asc
 import numpy as np
 
+# Local Imports
 from .. import utils
 from ..star_selector import select_psfs
 from ..fsw_file_writer.mkproc import Mkproc
@@ -23,8 +52,40 @@ LOGGER = logging.getLogger(__name__)
 
 def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
                 prc=True, regfile=True):
-    '''For a given dataset, rewrite the PRC and regfile to select a new commanded
-    guide star and reference stars'''
+    """For a given dataset, rewrite the PRC and regfile to select a
+    new commanded guide star and reference stars
+
+    Parameters
+    ----------
+    inds : str or list
+        String listing segment labels or list of segment indices
+        indicating which segments to re-write as the guide and
+        reference stars
+    guider : int
+        Guider number (1 or 2)
+    root : str
+        Name used to create the output directory, {out_dir}/out/{root}
+    out_dir : str
+        Where output files will be saved. If not provided, the
+        image(s) will be saved within the repository at
+        tools/fgs-commissioning/
+    thresh_factor : float, optional
+        Factor by which to multiply the countrates to determine
+        the threshold count rate
+    prc : bool, optional
+        Denotes whether to rewrite {root}_G{guider}_ID.prc
+    regfile : bool, optional
+        Denotes whether to rewrite {root}_G{guider}_regfile.txt
+
+    Raises
+    ------
+    TypeError
+        A string of labels was provided that is not only letters.
+    ValueError
+        Could not match provided segment labels to ALLpsfs.txt.
+        Value passed to inds that is neither an alphabetic
+            string or a list of integers.
+    """
 
     out_dir = os.path.join(out_dir, 'out', root)
 

@@ -1,4 +1,4 @@
-'''Setup to write all simulated files for CAL, ID, ACQ, and/or TRK steps
+"""Setup to write all simulated files for CAL, ID, ACQ, and/or TRK steps
 
 This module parses the ``config.ini`` file to create an FGS simulation
 object for CAL, ID, ACQ, and/or TRK steps. This object will ultimately
@@ -26,92 +26,131 @@ Use
     Optional arguments:
         ``reg_file`` - file containing X/Y positions and countrates for
             all stars in an image
-        ``configfile`` - file definiing parameters for each guider step
-        ``out_dir`` - where output FGS image(s) will be saved. If not
-            provided, the image(s) will be saved to ../out/{root}.
-'''
+        ``configfile`` - file defining parameters for each guider step.
+            If not defined, defaults to jwst_magic/data/config.ini
+        ``out_dir`` - where output files will be saved. If not provided,
+            the image(s) will be saved within the repository at
+            tools/fgs-commissioning/
+        ``logger_passed`` - denotes if a logger object has already been
+            generated.
+"""
 
-# STDLIB
+# Standard Library Imports
 import os
 import logging
 
-# Third Party
+# Third Party Imports
 from astropy.io import fits
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
-# LOCAL
+# Local imports
 from .. import utils
 from ..fsw_file_writer import config, getbias, write_files
 
-# DEFINE ALL PATHS
-FSW_PATH = os.path.dirname(os.path.realpath(__file__))
-PACKAGE_PATH = os.path.split(FSW_PATH)[0]
+# Paths
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+PACKAGE_PATH = os.path.split(__location__)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# MAIN CLASS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
 class BuildFGSSteps(object):
-    '''
-    Creates an FGS simulation object for ID, ACQ, and/or TRK stages to be used
-    with DHAS.
-    '''
+    """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
+    to be used with DHAS.
+    """
     def __init__(self, im, guider, root, step, reg_file=None, configfile=None,
                  out_dir=None, logger_passed=False):
+        """Initialize the class and call build_fgs_steps().
+        """
         # Set up logger
         if not logger_passed:
             utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
         try:
-            # Practical things
+            # Initialize attributes
             self.guider = guider
             self.root = root
             self.step = step
             self.yoffset = 12
 
-            ## DEFINE ALL THINGS PATHS
-            self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
-
-            ## READ IN IMAGE
-            if isinstance(im, str):
-                data = fits.getdata(im) #*_bin_norm from FGS_bin_tool
-                self.input_im = data
-            else:
-                self.input_im = im
-
-            # Correct for negative, saturated pixels and other nonsense
-            self.input_im = utils.correct_image(self.input_im)
-
-            # THEN convert to uint16
-            self.input_im = np.uint16(self.input_im)
-
-            # LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
-
-            self.get_coords_and_counts(reg_file=reg_file)
-
-            section = '{}_dict'.format(self.step.lower())
-            config_ini = self.build_step(section, configfile)
-            self.image = self.create_img_arrays(section, config_ini)
-
-            # Write the files
-            LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
-            write_files.write_all(self)
+            # Build FGS steps
+            self.build_fgs_steps(im, root, out_dir, reg_file, configfile)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
+    def build_fgs_steps(self, im, root, out_dir, reg_file, configfile):
+        """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
+        to be used with DHAS.
+
+        Parameters
+        ----------
+        im : 2-D numpy array or str
+            Image data or filepath to image
+        root : str
+            Name used to create the output directory, {out_dir}/out/{root}
+        out_dir : str
+            Where output files will be saved. If not provided, the
+            image(s) will be saved within the repository at
+            tools/fgs-commissioning/
+        reg_file : str
+            File containing X/Y positions and countrates for all stars
+            in the provided image
+        configfile : str
+            File defining parameters for each guider step. If not
+            defined, defaults to jwst_magic/data/config.ini
+        """
+        # Define paths
+        self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+        utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
+        utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
+        utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
+
+        # READ IN IMAGE
+        if isinstance(im, str):
+            data = fits.getdata(im)
+            self.input_im = data
+        else:
+            self.input_im = im
+
+        # Correct for negative, saturated pixels and other nonsense
+        self.input_im = utils.correct_image(self.input_im)
+
+        # THEN convert to uint16
+        self.input_im = np.uint16(self.input_im)
+
+        # LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
+
+        self.get_coords_and_counts(reg_file=reg_file)
+
+        section = '{}_dict'.format(self.step.lower())
+        config_ini = self.build_step(section, configfile)
+        self.image = self.create_img_arrays(section, config_ini)
+
+        # Write the files
+        LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
+        write_files.write_all(self)
+
     def get_coords_and_counts(self, reg_file=None):
-        '''
-        Get coordinate information and countrates of guide star and
-        reference stars
-        '''
+        """Get coordinate information and countrates of guide star and
+        reference stars.
+
+        Parameters
+        ----------
+        reg_file : str, optional
+            File containing X/Y positions and countrates for all stars
+            in the provided image
+        """
         if reg_file is None:
             reg_file = os.path.join(self.out_dir,
                                     '{0}_G{1}_regfile.txt'.format(self.root,
@@ -138,10 +177,22 @@ class BuildFGSSteps(object):
             self.countrate = np.asarray([self.countrate])
 
     def build_step(self, section, configfile=None):
-        '''
-        Build the step of commissioning based on the parameters in the
-        config.ini and return the step section if step is known
-        '''
+        """Read out the parameters in the config.ini, and alter class
+        attributes to build the current step accordingly.
+
+        Parameters
+        ----------
+        section : str
+            Name of step within the config file ('{step}_dict')
+        configfile : str, optional
+            File defining parameters for each guider step. If not
+            defined, defaults to jwst_magic/data/config.ini
+
+        Returns
+        -------
+        config_ini : obj
+            Object containing all parameters from the given configfile
+        """
         self.nreads = 2
 
         if configfile is None:
@@ -164,9 +215,9 @@ class BuildFGSSteps(object):
         return config_ini
 
     def create_img_arrays(self, section, config_ini):
-        '''Create the needed image arrays for the given step.
+        """Create the needed image arrays for the given step.
 
-        Possible arrays include:
+        Possible arrays (created as class attributes):
             - time_normed_im : the "sky" image, or the time-normalized
                 image (in counts per one second, AKA counts)
             - bias : the FGS bias used to simulate the image; includes
@@ -176,19 +227,29 @@ class BuildFGSSteps(object):
             - strips : divides a full-frame array into 36 strips of
                 size 64 x 2048
 
-        The array named "image" is the final image, including any
-        necessary detector effects, and either full-frame or the
-        appropriately sized subarray.
-
         If creating LOSTRK images, the final "image" array will be
         normalized and resized for use in the FGSES
-        '''
+
+        Parameters
+        ----------
+        section : str
+            Name of step within the config file ('{step}_dict')
+        configfile : str, optional
+            File defining parameters for each guider step. If not
+            defined, defaults to jwst_magic/data/config.ini
+
+        Returns
+        -------
+        image : 2-D numpy array
+            The final image including any necessary detector effects,
+            either full-frame or the appropriately sized subarray.
+        """
 
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
         self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tcds')
 
-        ## Grab the expected bias
+        # Grab the expected bias
         if config_ini.getboolean(section, 'bias'):
             self.bias = getbias.getbias(self.guider, self.xarr, self.yarr,
                                         self.nreads, config_ini.getint(section, 'nramps'),
@@ -204,7 +265,7 @@ class BuildFGSSteps(object):
             self.bias = None
             image = self.time_normed_im
 
-        ## Cut any pixels over saturation or under zero
+        # Cut any pixels over saturation or under zero
         image = utils.correct_image(image)
 
         # Create the CDS image by subtracting the first read from the second
@@ -237,20 +298,45 @@ class BuildFGSSteps(object):
         return image
 
 # ------------------------------------------------------------------------------
-# EXTERNAL FUNCTIONS
+# ANCILLARY FUNCTIONS
 # ------------------------------------------------------------------------------
 
-def create_strips(image, imgsize, nstrips, nramps, nreads, h, yoffset, overlap):
-    '''
-    Create the ID strips fits image to be passed into DHAS
-    '''
+
+def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset, overlap):
+    """Create the ID strips fits image to be passed into DHAS.
+
+    Parameters
+    ----------
+    image : 2-D numpy array
+        Image data
+    imgsize : int
+        Dimension of full-frame image (pixels)
+    nstrips : int
+        Number of strips to split the image into
+    nramps : int
+        Numer of ramps in the integraion
+    nreads : int
+        Number of reads in the ramp
+    strip_height : int
+        Height of each strip (pixels)
+    yoffset : int
+        The offset at the bottom of the array before the first strip (pixels)
+    overlap : int
+        The number of pixels of overlap between strips
+
+    Returns
+    -------
+    strips : 3-D numpy array
+        Array of ID strips with dimensions:
+        (nramps * nreads * nz, strip_height, imgsize)
+    """
     nz = nramps * nreads
-    strips = np.zeros((nstrips * nz, h, imgsize))
+    strips = np.zeros((nstrips * nz, strip_height, imgsize))
     nn = 0
     for i in range(nstrips):
         for iz in range(nz):
-            ylow = i * (h - overlap) + yoffset
-            yhigh = ylow + h
+            ylow = i * (strip_height - overlap) + yoffset
+            yhigh = ylow + strip_height
             strips[nn] = image[iz, ylow:yhigh, :]
             nn += 1
 
@@ -262,18 +348,42 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, h, yoffset, overlap):
 
 
 def create_cds(arr):
-    '''
-    Create CDS image: Subtract the first read from the second read.
-    '''
+    """Create CDS image: Subtract the first read from the second read.
+
+    Parameters
+    ----------
+    arr : 3-D numpy array
+        Image data
+
+    Returns
+    -------
+    2-D numpy array
+        CDS of image
+    """
     return arr[1::2] - arr[:-1:2]
 
+
 def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
-    '''
-    Display an image array. If the array is a cube, specify the index to
+    """Plot an image array. If the array is a cube, specify the index to
     look at using 'ind'. If you want to add a scatter plot of PSF centers,
     use add_coords=True and pass in x and y (Note: This only works for full
     frame images for the time being).
-    '''
+
+    Parameters
+    ----------
+    image : numpy array
+        Image data (2- or 3-dimensional)
+    ind : int, optional
+        The frame of a 3-D array to plot
+    vmin : float, optional
+        The minimum value of the colorbar
+    vmax : float, optional
+        The maximum value of the colorbar
+    xarr : list, optional
+        List of x values to plot as points over image
+    yarr : list, optional
+        List of y values to plot as points over image
+    """
     if image.ndim == 3:
         img = image[ind]
     else:
@@ -289,25 +399,29 @@ def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
 
     plt.show()
 
-# def add_jitter(cube, total_shift=3):
-#     '''
-#     Add random single pixel jitter
-
-#     VERY rudimentary. Uses np.roll so images look kind of funny.
-#     '''
-#     cube2 = np.zeros_like(cube)
-#     for i, img in enumerate(cube):
-#         # This will generate a random integer up to the total_shift
-#         shift = np.random.randint(total_shift + 1)
-#         cube2[i] = np.roll(img, shift)
-
-#     return cube2
 
 def create_im_subarray(image, xcoord, ycoord, imgsize, show_fig=False):
-    '''
-    Based on the array size given by nx and ny, created a subarray around
-    the guide star.
-    '''
+    """Based on the array size given by nx and ny, created a subarray
+    around the guide star.
+
+    Parameters
+    ----------
+    image : 2-D numpy array
+        Image data
+    xcoord : int
+        X coordinate of guide star (pixels)
+    ycoord : int
+        Y coordinate of guide star (pixels)
+    imgsize : int
+        Dimension of subarray (pixels)
+    show_fig : bool, optional
+        Denotes whether to generate a plot of the created subarray
+
+    Returns
+    -------
+    img : 2-D numpy array
+        Subarray of image data around guide star coordinates
+    """
     if imgsize % 2 == 1:
         xlow = int(xcoord - (imgsize // 2 + 1))
         ylow = int(ycoord - (imgsize // 2 + 1))
@@ -326,15 +440,3 @@ def create_im_subarray(image, xcoord, ycoord, imgsize, show_fig=False):
         plt.show()
 
     return img
-
-
-def add_background(array, imgsize, nz):
-    '''
-    Add background to array
-    '''
-    try:
-        array += 500 + 10. * np.random.standard_normal((nz, imgsize, imgsize))
-    except NameError:
-        array = 500 + 10. * np.random.standard_normal((nz, imgsize, imgsize))
-
-    return array
