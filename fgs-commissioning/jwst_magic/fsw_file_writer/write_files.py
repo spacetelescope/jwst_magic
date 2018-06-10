@@ -1,4 +1,4 @@
-'''Writes all flight software files for CAL, ID, ACQ, and/or TRK steps
+"""Writes all flight software files for CAL, ID, ACQ, and/or TRK steps
 
 This module takes an FGS simulation object for CAL, ID, ACQ, and/or TRK
 steps (created in ``buildfgssteps.py``), which it uses to write the
@@ -54,29 +54,29 @@ Use
     Required arguments:
         ``obj`` - FGS simulation object for CAL, ID, ACQ, and/or TRK
             stages; created by ``buildfgssteps.py``
-'''
+"""
 
 
-# STDLIB
+# Standard Library Imports
 import os
 
-# THIRD PARTY
+# Third Party Imports
 from astropy.io import fits
 import numpy as np
 
-# LOCAL
+# Local Imports
 from .. import utils, coordinate_transforms
 from ..fsw_file_writer import mkproc
 
-# Define all paths
-FSW_PATH = os.path.dirname(os.path.realpath(__file__))
-PACKAGE_PATH = os.path.split(FSW_PATH)[0]
+# Paths
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+PACKAGE_PATH = os.path.split(__location__)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 
 def write_all(obj):
-    '''Create **all** the files and images needed for simulation with
+    """Create **all** the files and images needed for simulation with
     the flight software and use by analysts for a particular step
 
     Parameters
@@ -84,7 +84,7 @@ def write_all(obj):
     obj : obj
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
-    '''
+    """
     # Determine the root filename
     filename_root = '{}_G{}_{}'.format(obj.root, obj.guider, obj.step)
     obj.filename_root = filename_root
@@ -156,7 +156,7 @@ def write_all(obj):
 
 
 def write_sky(obj):
-    '''Write the time-normed image, or "sky" image
+    """Write the time-normed image, or "sky" image
 
     Units:  counts per one second
     Size:   n_cols x n_rows
@@ -166,14 +166,14 @@ def write_sky(obj):
     obj : obj
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
-    '''
+    """
     filename_sky = os.path.join(obj.out_dir, 'stsci',
                                 obj.filename_root + 'sky.fits')
     utils.write_fits(filename_sky, obj.time_normed_im)
 
 
 def write_bias(obj):
-    '''Write the bias image
+    """Write the bias image
 
     Units:  counts
     Size:   n_cols x n_rows x (n_reads x n_ramps)
@@ -183,7 +183,7 @@ def write_bias(obj):
     obj : obj
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
-    '''
+    """
     if obj.bias is not None:
         filename_bias = os.path.join(obj.out_dir,
                                      'stsci',
@@ -192,7 +192,7 @@ def write_bias(obj):
 
 
 def write_cds(obj):
-    '''Write the correlated double sample (CDS) image by subtracting
+    """Write the correlated double sample (CDS) image by subtracting
     the 0th read from the 1st read
 
     Units:  counts
@@ -203,7 +203,7 @@ def write_cds(obj):
     obj : obj
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
-    '''
+    """
     if obj.cds is not None:
         filename_cds = os.path.join(obj.out_dir,
                                     'stsci',
@@ -212,7 +212,7 @@ def write_cds(obj):
 
 
 def write_image(obj):
-    '''Write a normal image (i.e. ACQ1, TRK, CAL)
+    """Write a normal image (i.e. ACQ1, TRK, CAL)
 
     Units:  counts
     Size:   n_cols x n_rows x (n_reads x n_ramps)
@@ -222,7 +222,7 @@ def write_image(obj):
     obj : obj
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
-    '''
+    """
 
     if obj.step == 'ID':
         # Create "full-frame" (rather than strips) image
@@ -239,7 +239,7 @@ def write_image(obj):
 
 
 def write_strips(obj):
-    '''Write an ID strips image
+    """Write an ID strips image
 
     Units:  counts
     Size:   2048 x 64 x (36 x n_reads x n_ramps)
@@ -249,7 +249,7 @@ def write_strips(obj):
     obj : obj
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
-    '''
+    """
 
     # Extract strips from ff img
     filename_id_strips = os.path.join(obj.out_dir,
@@ -263,7 +263,7 @@ def write_strips(obj):
 
 
 def write_prc(obj):
-    '''Write a procedure (.prc) file for use with file software
+    """Write a procedure (.prc) file for use with file software
 
     Parameters
     ----------
@@ -275,7 +275,7 @@ def write_prc(obj):
     -----
         Don't need to include the yoffset in the .prc IF the strips
         offset parameter in DHAS is set to 12
-    '''
+    """
     if obj.step == 'ID':
         step = 'ID'
         acq1_imgsize = None
@@ -294,8 +294,9 @@ def write_prc(obj):
                   step=step, out_dir=obj.out_dir, acq1_imgsize=acq1_imgsize,
                   acq2_imgsize=acq2_imgsize)
 
+
 def write_dat(obj):
-    '''
+    """
     Convert a .fits file to a .dat file for use on the ground system
 
     If 'data' is an array, provide 'root'.
@@ -305,7 +306,7 @@ def write_dat(obj):
     obj : obj
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
-    '''
+    """
     if obj.step == 'ID':
         data_to_write = obj.strips
     else:
@@ -322,7 +323,6 @@ def write_dat(obj):
         data = data_to_write
         filename = '{}_G{}_{}.dat'.format(obj.root, obj.guider, obsmode)
 
-    #data = swap_if_little_endian(data)
     flat = data.flatten()
 
     if (obsmode == 'PSF') or (obsmode == 'TRK') or (obsmode == 'LOSTRK'):
@@ -379,7 +379,7 @@ def write_stc(obj):
 
 
 def write_cat(obj):
-    '''
+    """
     Write out star catalog in real pixels
 
     Parameters
@@ -387,7 +387,7 @@ def write_cat(obj):
     obj : obj
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
-    '''
+    """
     if obj.step == 'ID':
         filetype = '.gssscat'
     else:
