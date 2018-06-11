@@ -1,40 +1,61 @@
-""" Find all the relevant PSFs in the image, be it manually or using a file."""
-# STDLIB
+"""Find all the relevant PSFs in the image, be it manually or using a
+file, and generate a regfile.txt and ALLpsfs.txt.
+
+Analyze image data using the photutils find_peaks function to identify
+the locations and count rates of all stars (or segments) in the image.
+Either prompt the use to select which stars to use as the guide and
+reference stars, or read the guide and reference stars from a
+pre-existing regfile. Generate an ALLpsfs.txt file that lists all the
+segments in the image, and a regfile.txt file that lists just the guide
+and reference stars.
+
+Authors
+-------
+    - Keira Brooks
+    - Lauren Chambers
+
+Use
+---
+    This module can be used as such:
+    ::
+        from jwst_magic.star_selector import select_psfs
+        select_psfs.create_reg_file(fgs_im, root, guider)
+
+    Required arguments:
+
+"""
+
+# Standard Library Imports
 import os
-import sys
-from inspect import currentframe, getframeinfo
-import warnings
 import string
 import random
 import logging
 
-# Third Party
+# Third Party Imports
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib import rcParams
-
 from astropy.io import fits
 from astropy.io import ascii as asc
 from astropy.stats import sigma_clipped_stats
 import numpy as np
 from photutils import find_peaks
-from scipy import ndimage, signal
+from scipy import ndimage
 
-# LOCAL
+# Local Imports
 from .. import utils
 from ..star_selector import SelectStarsGUI
 
-# Adjust matplotlib origin
+# Adjust matplotlib parameters
 rcParams['image.origin'] = 'upper'
-
-# Make plots pretty
 rcParams['font.family'] = 'serif'
-rcParams['font.weight']='light'
+rcParams['font.weight'] = 'light'
 rcParams['mathtext.bf'] = 'serif:normal'
 
+# Paths
 SS_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_PATH = os.path.split(SS_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
@@ -42,8 +63,28 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
+
 def count_psfs(smoothed_data, gauss_sigma, choose=False):
     """Use photutils.find_peaks to count how many PSFS are present in the data
+
+    Parameters
+    ----------
+    smoothed_data : 2-D numpy array
+        Image data that has been smoothed with a Gaussian filter
+    gauss_sigma : float
+        The sigma of the Gaussian smoothing filter
+    choose : bool, optional
+        Prompt the user to choose which method to use to select the
+        threshold
+
+    Returns
+    -------
+    num_psfs : int
+        The number of PSFs found in the smoothed data
+    coords : list
+        List of tuples of x and y coordinates of all identified PSFs
+    threshold : float
+        The threshold used with photutils.find_peaks
     """
 
     if choose:
@@ -68,6 +109,30 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
 
 
 def choose_threshold(smoothed_data, gauss_sigma):
+    """Prompt the user to choose which method to use to select the
+    threshold
+
+    Parameters
+    ----------
+    smoothed_data : 2-D numpy array
+        Image data that has been smoothed with a Gaussian filter
+    gauss_sigma : float
+        The sigma of the Gaussian smoothing filter
+
+    Returns
+    -------
+    num_psfs : int
+        The number of PSFs found in the smoothed data
+    coords : list
+        List of tuples of x and y coordinates of all identified PSFs
+    threshold : float
+        The threshold used with photutils.find_peaks
+
+    Raises
+    ------
+    ValueError
+        User did not accept either of the threshold options.
+    """
     # Perform statistics
     mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
 
@@ -76,7 +141,7 @@ def choose_threshold(smoothed_data, gauss_sigma):
     sources_std = find_peaks(smoothed_data, thresholds[0], box_size=gauss_sigma)
     sources_mean = find_peaks(smoothed_data, thresholds[1], box_size=gauss_sigma)
 
-    # Show plots of each for user to chooose between
+    # Show plots of each for user to choose between
     plt.ion()
     smoothed_data[smoothed_data == 0] = 0.1  # Allow LogNorm plotting
     fig, [ax1, ax2] = plt.subplots(1, 2, figsize=(16, 8))
@@ -96,14 +161,14 @@ def choose_threshold(smoothed_data, gauss_sigma):
     plt.show()
 
     # Prompt user to choose
-    choice = raw_input('''
-                       Examine the two options presented. To use the stars \
-                       selected with a 3 standard deviation threshold, \
-                       type "S". To use the stars selected with a mean \
-                       threshold, type "M". To use neither and cancel the \
-                       program, press enter.
+    choice = input('''
+                   Examine the two options presented. To use the stars \
+                   selected with a 3 standard deviation threshold, \
+                   type "S". To use the stars selected with a mean \
+                   threshold, type "M". To use neither and cancel the \
+                   program, press enter.
 
-                       Choice: ''')
+                   Choice: ''')
 
     plt.close()
 
@@ -117,9 +182,25 @@ def choose_threshold(smoothed_data, gauss_sigma):
         return num_psfs, coords, thresholds[1]
     else:
         LOGGER.error('Star Selection: User rejection of identified PSFs.')
-        raise StandardError('User rejection of identified PSFs.')
+        raise ValueError('User rejection of identified PSFs.')
+
 
 def plot_centroids(data, coords, root, guider, out_dir):
+    """Plot the identified segment locations over the data
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    coords : list
+        List of tuples of x and y coordinates of all identified PSFs
+    root : str, optional
+        Name used to generate output folder and output filenames.
+    guider : int
+        Guider number (1 or 2)
+    out_dir : str
+        Where output files will be saved.
+    """
     pad = 300
 
     # Determine x and y limits that encompass all PSFS
@@ -128,8 +209,8 @@ def plot_centroids(data, coords, root, guider, out_dir):
     y_mid = (min(yarray) + max(yarray)) / 2
     x_range = max(xarray) - min(xarray)
     y_range = max(yarray) - min(yarray)
-    ax_range = max(x_range, y_range) # Choose the larger of the dimensions
-    ax_range += 100 # Make sure not to clip off the edge of border PSFS
+    ax_range = max(x_range, y_range)  # Choose the larger of the dimensions
+    ax_range += 100  # Make sure not to clip off the edge of border PSFS
 
     plt.figure(figsize=(17, 17))
     plt.imshow(data, cmap='Greys', norm=LogNorm())
@@ -147,11 +228,30 @@ def plot_centroids(data, coords, root, guider, out_dir):
 
 
 def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
-    """
-    Get the x,y, and counts for each psf in the image
+    """Get the count rates within each object from a segmentation image.
 
-    The threshold default of 150, assumes that your data type is uint16. If not,
-    a good start is 40.
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    objects : 2-D numpy array
+        Segmentation of image data
+    num_objects : int
+        Number of individidual objects in the segmentation data
+    x : list
+        List of x-coordinates of identified PSFs
+    y : list
+        List of y-coordinates of identified PSFs
+    counts_3x3 : bool, optional
+        Calculate the value of the 3x3 square (True), or of the entire
+        object (False)
+
+    Returns
+    -------
+    counts : list
+        List of count rates of each segmentation object
+    val : list
+        List of number of pixels within each segmentation object
     """
 
     counts = []
@@ -171,18 +271,44 @@ def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
 
 
 def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
-    """
-    Create an array of columns of y, x, and counts of each PSF to be written out.
-    Use the inds returned from pick_stars based on user input.
+    """Format position and count rate data to be written to file.
 
-    If no inds are given, put the PSF with the most compact PSF first in the list to make it the
-    Guide Star. **This method is not fool-proof, use at own risk***
+    Create an array of columns of y, x, and counts of each PSF to be
+    written out. Use the inds returned from pick_stars based on user
+    input. If no inds are given, put the PSF with the most compact PSF
+    first in the list to make it the guide star.
+
+
+    Parameters
+    ----------
+    x : list
+        List of x-coordinates of identified PSFs
+    y : list
+        List of y-coordinates of identified PSFs
+    counts : list
+        List of count rates of identified PSFs
+    val : list
+        List of the number of pixels in each PSF's segmentation object
+    labels : bool, optional
+        Denotes whether the PSF alphabetic labels should be included as
+        a column to write out
+    inds : list, optional
+        List of the indices of the guide and reference stars
+
+    Returns
+    -------
+    cols : list
+        List of segment positions, count rates, and maybe labels for
+        each selected segments
     """
     if labels:
+        # NOTE: these coordinates are y, x
         cols = [[ll, '{:.4f}'.format(yy),
-                 '{:.4f}'.format(xx), '{:.4f}'.format(co)] for ll, yy, xx, co in zip(labels, y, x, counts)]# these coordinates are y,x
+                 '{:.4f}'.format(xx),
+                 '{:.4f}'.format(co)] for ll, yy, xx, co in zip(labels, y, x, counts)]
     else:
-        cols = [[yy, xx, co] for yy, xx, co in zip(y, x, counts)]# these coordinates are y,x
+        # NOTE: these coordinates are y, x
+        cols = [[yy, xx, co] for yy, xx, co in zip(y, x, counts)]
 
     if inds is None:
         min_ind = np.where(val == np.min(val))[0][0]  # Find most compact PSF
@@ -192,7 +318,25 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
 
     return cols
 
+
 def match_psfs_to_segments(x, y, global_alignment):
+    """Match PSFs found in the image to their alphabetic label (between A and R)
+
+    Parameters
+    ----------
+    x : list
+        List of x-coordinates of identified PSFs
+    y : list
+        List of y-coordinates of identified PSFs
+    global_alignment : bool
+        Denotes that the image is from unphased, unstacked early
+        commissioning data
+
+    Returns
+    -------
+    matched_labels : list
+        List of alphabetic labels for each identified PSF
+    """
     labels = string.ascii_uppercase[:18]
 
     # Determine boundaries of array
@@ -234,16 +378,39 @@ def match_psfs_to_segments(x, y, global_alignment):
 
     if len(set(matched_labels)) != len(matched_labels) and global_alignment:
         LOGGER.warning('Could not accurately map labels to segments. It will not '
-                    'be possible to run fsw_file_writer.rewrite_prc using the '
-                    'ALLpsfs.txt file generated here.')
+                       'be possible to run fsw_file_writer.rewrite_prc using the '
+                       'ALLpsfs.txt file generated here.')
 
     return matched_labels
 
+
 def parse_in_file(in_file):
-    '''Determines if the input file contains x, y, and countrate data. If so,
-    extracts the locations and countrates of the stars accordingly. Recognizes
-    columns named "x" or "xreal"; "y" or "yreal"; "countrate", "count rate", or
-    "ctot".'''
+    '''Get the position and countrates from a provided regfile.txt
+
+    Determines if the input file contains x, y, and countrate data. If
+    so, extracts the locations and countrates of the stars accordingly.
+    Recognizes columns named "x" or "xreal"; "y" or "yreal";
+    "countrate", "count rate", or "ctot".
+
+    Parameters
+    ----------
+    in_file : str
+        File containing locations and count rates of selected segments
+
+    Returns
+    -------
+    out_cols : list
+        List of positions and countrates of selected segments
+    coords : list
+        List of tuples with X and Y positions of selected PSFs
+    nref : int
+        The number of selected reference stars
+
+    Raises
+    ------
+    TypeError
+        Incompatible file provided to in_file
+    '''
 
     in_table = asc.read(in_file)
     colnames = in_table.colnames
@@ -334,10 +501,43 @@ def parse_in_file(in_file):
 
     return out_cols, coords, nref
 
+
 def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=None):
-    '''Algorithmically find and locate all PSFs in image using
+    '''Launches a GUI to prompt the user to click-to-select guide and
+    reference stars.
+
+    Algorithmically find and locate all PSFs in image using
     photutils.find_peaks; prompt user to select guide and reference stars
-    using GUI.'''
+    using the GUI.
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    global_alignment : bool
+        Denotes that the image is from unphased, unstacked early
+        commissioning data
+    testing : bool, optional
+        Generates indices randomly (for running pytests)
+    masterGUIapp : qApplication, optional
+        qApplication instance of parent GUI
+
+    Returns
+    -------
+    cols : list
+        List of positions and countrates of selected segments
+    coords : list
+        List of tuples with X and Y positions of selected PSFs
+    nref : int
+        The number of selected reference stars
+    all_cols : list
+        List of positions and countrates of all segments in the image
+
+    Raises
+    ------
+    ValueError
+        The user closed the GUI wihout selecting any stars.
+    '''
     if global_alignment:
         gauss_sigma = 26
     else:
@@ -360,8 +560,8 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     # Find the minimum distance between PSFs
     if len(coords) < 2:
         # For cases where we only have star, we assume that we are sufficiently
-        #isolated from other stars, but also that the guide star's PSF may be
-        #distorted enough that it might appear quite large on the detector
+        # isolated from other stars, but also that the guide star's PSF may be
+        # distorted enough that it might appear quite large on the detector
         dist = 20
     else:
         dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
@@ -390,18 +590,60 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
         LOGGER.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
 
     segment_labels = match_psfs_to_segments(x, y, global_alignment)
-    ALL_cols = create_cols_for_coords_counts(x, y, counts, val,
+    all_cols = create_cols_for_coords_counts(x, y, counts, val,
                                              labels=segment_labels,
                                              inds=range(len(x)))
     cols = create_cols_for_coords_counts(x, y, counts, val, inds=inds)
 
-    return cols, coords, nref, ALL_cols
+    return cols, coords, nref, all_cols
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# MAIN FUNCTION
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 def create_reg_file(data, root, guider, in_file=None,
                     global_alignment=False, return_nref=False, testing=False,
                     out_dir=None, masterGUIapp=None, logger_passed=False):
+    """Locate all of the segments in the provdied data, then use the
+    provided (or GUI-defined) list of selected segments to generate an
+    ALLpsfs.txt file that lists all the segments in the image, and a
+    regfile.txt file that lists just the guide and reference stars.
 
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    root : str
+        Name used to generate output folder and output filenames.
+    guider : int
+        Guider number (1 or 2)
+    in_file : str, optional
+        File containing locations and count rates of selected segments
+    global_alignment : bool, optional
+        Denotes that the image is from unphased, unstacked early
+        commissioning data
+    return_nref : bool, optional
+        Return the number of references stars
+    testing : bool, optional
+        Randomly select guide and reference stars (for use with pytests)
+    out_dir : str, optional
+        Where output files will be saved. If not provided, the
+        image(s) will be saved within the repository at
+        tools/fgs-commissioning/
+    masterGUIapp : qApplication, optional
+        qApplication instance of parent GUI
+    logger_passed : bool, optional
+        Denotes if a logger object has already been generated.
+
+    Returns
+    -------
+    cols : list
+        List of positions and countrates of selected segments
+    nref : int
+        The number of selected reference stars
+    """
     if not logger_passed:
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
@@ -420,11 +662,11 @@ def create_reg_file(data, root, guider, in_file=None,
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
             cols, coords, nref = parse_in_file(in_file)
-            ALL_cols = None
+            all_cols = None
         else:
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
-            cols, coords, nref, ALL_cols = manual_star_selection(data,
+            cols, coords, nref, all_cols = manual_star_selection(data,
                                                                  global_alignment,
                                                                  testing,
                                                                  masterGUIapp)
@@ -432,12 +674,12 @@ def create_reg_file(data, root, guider, in_file=None,
         # Save PNG of image and all PSF locations in out_dir
         plot_centroids(data, coords, root, guider, out_dir)
 
-        if ALL_cols:
+        if all_cols:
             # Write out file of ALL identified PSFs
             utils.write_cols_to_file(out_dir,
                                      filename='{0}_G{1}_ALLpsfs.txt'.format(root, guider),
                                      labels=['label', 'y', 'x', 'countrate'],
-                                     cols=ALL_cols)
+                                     cols=all_cols)
 
         # Write out regfile of selected PSFs
         utils.write_cols_to_file(out_dir,

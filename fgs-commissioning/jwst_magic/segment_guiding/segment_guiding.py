@@ -22,36 +22,36 @@ Use
         segment_guiding.run_tool(segment_infile, guider)
 
     Required arguments:
-        ```segment_infile``` - filepath to ALLpsfs.txt file with list
+        ``segment_infile`` - filepath to ALLpsfs.txt file with list
             of all segment locations and countrates
-        ```guider``` - which guider is being used: 1 or 2
+        ``guider`` - which guider is being used: 1 or 2
 
     Optional arguments:
-        ```root``` - name used to generate output folder and output
+        ``root`` - name used to generate output folder and output
             filenames. If not specified, will be derived from the
             segment_infile name
-        ```out_dir``` - location of out/ directory. If not provided,
+        ``out_dir`` - location of out/ directory. If not provided,
             the image(s) will be saved within the repository at
             tools/fgs-commissioning/
-        ```selected_segs``` - filepath to regfile.txt file with list of
+        ``selected_segs`` - filepath to regfile.txt file with list of
             locations and countrates for the selected segments (guide
             and reference stars). If not provided, will default to
             {out_dir}/out/{root}/{root}_G{guider}_regfile.txt
-        ```GUI``` - will the tool use the segment guiding GUI? If not
+        ``GUI`` - will the tool use the segment guiding GUI? If not
             specified, set to True.
-        ```vss_infile``` - filepath to guide star report provided by VSS
-        ```data``` - image that will be displayed in the click-to-select GUI
-        ```masterGUIapp``` - qApplication instance of parent GUI
-        ```refonly``` - will the override file be written out using the
+        ``vss_infile`` - filepath to guide star report provided by VSS
+        ``data`` - image that will be displayed in the click-to-select GUI
+        ``masterGUIapp`` - qApplication instance of parent GUI
+        ``refonly`` - will the override file be written out using the
             'ref-only' syntax?
-        ```parameter_dialog``` - prompt the user to enter parameters
+        ``parameter_dialog`` - prompt the user to enter parameters
             (countrate factors, APT numbers, RA, Dec, PA, and boresight
             offset) from a dialog box rather than manually providing
             arguments. If True, the remaining arguments are not necessary.
-        ```program_id``` - APT program number
-        ```observation_num``` - observation number
-        ```visit_num``` - visit number
-        ```guide_star_params_dict``` - dictionary containing guide star
+        ``program_id`` - APT program number
+        ``observation_num`` - observation number
+        ``visit_num`` - visit number
+        ``guide_star_params_dict`` - dictionary containing guide star
             parameters, for example:
             {'V2Boff': 0.1,  # boresight offset in V2 (arcsec)
              'V3Boff': 0.2,  # boresight offset in V3 (arcsec)
@@ -60,9 +60,9 @@ Use
              'Dec': 50.,  # Dec of guide star
              'PA': 2.,  # position angle of guide star
              'segNum': 0}  # selected segment to guide on
-        ```ct_uncert_fctr``` - the factor by which countrates are
+        ``ct_uncert_fctr`` - the factor by which countrates are
             multiplied to determine the countrate uncertainty
-        ```countrate_factor``` - the factor by which countrates are
+        ``countrate_factor`` - the factor by which countrates are
             multipled by to simulate diffuse PSFs (e.g. in MIMF)
 """
 
