@@ -14,12 +14,12 @@ Use
             nramps, imgsize)
 
     Required arguments:
-        ```guider``` - guider number (1 or 2)
-        ```xcoord``` - X coordinate of guide star (pixels)
-        ```ycoord``` - Y coordinate of guide star (pixels)
-        ```nreads``` - number of reads in the ramp
-        ```nramps``` - number of ramps in the FGS step
-        ```imgsize``` - dimension of the array (pixels)
+        ``guider`` - guider number (1 or 2)
+        ``xcoord`` - X coordinate of guide star (pixels)
+        ``ycoord`` - Y coordinate of guide star (pixels)
+        ``nreads`` - number of reads in the ramp
+        ``nramps`` - number of ramps in the FGS step
+        ``imgsize`` - dimension of the array (pixels)
 
 Notes
 -----

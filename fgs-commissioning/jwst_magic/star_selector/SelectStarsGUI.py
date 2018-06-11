@@ -18,7 +18,18 @@ Use
 This GUI can be run in the python shell or as a module, as such:
     ::
     from jwst_magic.star_selector import SelectStarsGUI
-    inds = SelectStarsGUI.run_SelectStars(data_array, x_list, y_list, dist)
+    inds = SelectStarsGUI.run_SelectStars(data, x, y, dist)
+
+    Required arguments:
+        ``data`` - image data (2048 x 2048)
+        ``x`` - list of x-coordinates of identified PSFs
+        ``y`` - list of y-coordinates of identified PSFs
+        ``dist`` - minimum distance between identified PSFs; maximum
+            distance from a star the user can click to select that star
+
+    Optional arguments:
+        ``print_output`` - enable output to the terminal
+        ``masterGUIapp`` - qApplication instance of parent GUI
 
 References
 ----------
@@ -45,12 +56,12 @@ of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
 
-# Standard Library
+# Standard Library Imports
 from __future__ import unicode_literals
 import sys
 import os
 
-# Third Party
+# Third Party Imports
 import numpy as np
 import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -64,42 +75,54 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
 from PyQt5.QtCore import pyqtSlot, QSize
 from PyQt5.QtGui import QIcon
 
+# Adjust matplotlib parameters
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['font.weight'] = 'light'
 matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
+# Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
 class StarClickerMatplotlibCanvas(FigureCanvas):
-    """Creates a matplotlib canvas as a PyQt widget to plot an FGS image.
-
-    Initializes and draws a matplotlib canvas which plots the following:
-    the provided FGS image and the locations of the PSFs as identified by
-    photutils.find_peaks.
-
-    Attributes
-    ----------
-    data (2D array)
-        Opened FITS image data (should be 2048 x 2048)
-    fig (matplotlib Figure)
-        Figure to be used in the GUI; one subplot is on self.axes
-    axes (matplotlib Axes)
-        Axes to be used in the GUI
-
-
-    Methods
-    -------
-    compute_initial_figure
-        Plots image of data (with colorbar) and locations of identified PSFs
-    zoom_to_fit
-        Resets axes limits to (0, 2048)
-    """
 
     def __init__(self, parent=None, width=None, height=None, dpi=100, data=None,
                  x=None, y=None, left=None, right=None, bottom=0.05, top=0.95,
                  profile=False):
+        """Creates a matplotlib canvas as a PyQt widget to plot an FGS image.
 
+        Initializes and draws a matplotlib canvas which plots the following
+        the provided FGS image and the locations of the PSFs as identified by
+        photutils.find_peaks.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            Parent widget of the matplotlib canvas
+        width : int, optional
+            Width of the matplotlib axis
+        height : int, optional
+            Height of the matplotlib axis
+        dpi : int, optional
+            DPI of the matplotlib figure
+        data : 2-D numpy array, optional
+            Image data
+        x : list
+            List of x-coordinates of all identified PSFs
+        y : list
+            List of y-coordinates of all identified PSFs
+        left : float, optional
+            Left boundary of matplotlib figure
+        right : float, optional
+            Right boundary of matplotlib figure
+        bottom : float, optional
+            Bottom boundary of matplotlib figure
+        top : float, optional
+            Top boundary of matplotlib figure
+        profile : bool, optional
+            Denotes if the canvas will show profile data (True) or image
+            data (False)
+        """
         self.data = data
         self.x = x
         self.y = y
@@ -123,6 +146,24 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
     def compute_initial_figure(self, fig, data, x, y,
                                xlabel='Raw FGS X (–V3) [pixels]',
                                ylabel='Raw FGS Y (V2) [pixels]'):
+        """Plot the figure axes and colorbar with given image data and
+        coordinates.
+
+        Parameters
+        ----------
+        fig : matplotlib Figure
+            Figure to plot to
+        data : 2-D numpy array
+            Image data
+        x : list
+            List of x-coordinates of all identified PSFs
+        y : list
+            List of y-coordinates of all identified PSFs
+        xlabel : str, optional
+            X axis label
+        ylabel : str, optional
+            Y axis label
+        """
         # Plot data
         self.fitsplot = self.axes.imshow(data, cmap='bone', interpolation='nearest',
                                          clim=(0.1, 1e3), norm=LogNorm())
@@ -133,7 +174,8 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         # Update colorbar
         if self.cbar != []:
             self.cbar.remove()
-        self.cbar = self.fig.colorbar(self.fitsplot, ax=self.axes, fraction=0.046, pad=0.04, norm=LogNorm())
+        self.cbar = self.fig.colorbar(self.fitsplot, ax=self.axes,
+                                      fraction=0.046, pad=0.04, norm=LogNorm())
 
         # Add axis labels
         self.axes.set_xlabel(xlabel)
@@ -141,6 +183,8 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.draw()
 
     def init_profile(self):
+        """Initialize the PSF profile figure.
+        """
         profile_min = max(np.min(self.data) / 5, 1e-1)
         self.axes.set_ylim(profile_min, 5 * np.max(self.data))
         self.axes.set_yscale('log')
@@ -152,11 +196,15 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.draw()
 
     def zoom_to_fit(self):
+        """Update the axes limits to fit the entire image.
+        """
         self.axes.set_xlim(0, np.shape(self.data)[0])
         self.axes.set_ylim(np.shape(self.data)[1], 0)
         self.draw()
 
     def zoom_to_crop(self):
+        """Update the axes limits to crop to just the source locations
+        """
         # Calculate initial axis limits to show all sources
         xarray, yarray = [self.y, self.x]
         x_mid = (min(xarray) + max(xarray)) / 2
@@ -173,13 +221,31 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.draw()
 
     def sizeHint(self):
-        if self.profile == True:
+        """Reimplementation of the sizeHint method for the matplotlib
+        canvas widget. Determines what the size hint should be based on
+        if the canvas is plotting a profile or an image.
+
+        Returns
+        -------
+        QSize
+            Size of widget
+        """
+        if self.profile is True:
             return QSize(200, 250)
         else:
             return QSize(800, 800)
 
     def hasHeightForWidth(self):
-        return self.profile == False
+        """Reimplementation of the hasHeightForWidth method for the
+        matplotlib canvas widget. Ensures the widget is square if the
+        canvas is plotting an image.
+
+        Returns
+        -------
+        QSize
+            Size of widget
+        """
+        return not self.profile
 
 
 class StarSelectorWindow(QDialog):
@@ -251,12 +317,35 @@ class StarSelectorWindow(QDialog):
     make_setGuideStar
         Updates the order of inds (i.e. the selected guide star) if user changes
         the guide star and updates matplotlib axis accordingly
-    fileQuit
+    quit
         Closes the application
     """
     def __init__(self, data, x, y, dist, qApp, in_master_GUI,
                  print_output=False, in_SGT_GUI=False):
-        '''Defines attributes; calls initUI() method to set up user interface.'''
+        """Initializes class; sets up user interface.
+
+        Parameters
+        ----------
+        data : 2-D numpy array
+            Image data (2048 x 2048)
+        x : list
+            List of x-coordinates of identified PSFs
+        y : list
+            List of y-coordinates of identified PSFs
+        dist : int
+            Minimum distance between identified PSFs; maximum distance from a star the user
+            can click to select that star
+        qApp : qApplication
+            qApplication instance of parent GUI
+        in_master_GUI : bool
+            Denotes if the GUI is being launched as a dialog box from
+            the master GUI
+        print_output : bool, optional
+            Flag enabling output to the terminal
+        in_SGT_GUI : bool, optional
+            Denotes if this instance of the StarSelectorWindow was
+            created within ``SegmentGuidingGUI.py``
+        """
         # Initialize runtime attributes
         self.qApp = qApp
         self.print_output = print_output
@@ -276,7 +365,7 @@ class StarSelectorWindow(QDialog):
         self.inds_of_inds = []
         self.n_stars_max = 11
         self.gs_ind = None
-        self.currentRow = -1
+        self.current_row = -1
         self.circles = []
 
         # Import .ui file
@@ -306,7 +395,7 @@ class StarSelectorWindow(QDialog):
 
         # Create and load GUI session
         self.setWindowTitle('JWST MaGIC - Guide and Reference Star Selector')
-        canvas_left, profile_bottom = self.adjust_screen_size_selectStars()
+        canvas_left, profile_bottom = self.adjust_screen_size_select_stars()
         self.init_matplotlib(canvas_left, profile_bottom)
         self.define_StarSelectionGUI_connections()
         self.show()
@@ -315,9 +404,10 @@ class StarSelectorWindow(QDialog):
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def adjust_screen_size_selectStars(self):
-        ''' Adjust the GUI sizes for laptop screens
-        '''
+    def adjust_screen_size_select_stars(self):
+        """ Adjust the GUI sizes for laptop screens
+        """
+
         # Determine screen size
         screen_size = self.qApp.desktop().screenGeometry()
         width, height = screen_size.width(), screen_size.height()
@@ -340,19 +430,32 @@ class StarSelectorWindow(QDialog):
         if not self.in_SGT_GUI:
             # Window is too wide
             if width - 200 < self.scrollArea_selectStars.minimumWidth():
-                # print('Star selection window is too wide (screen size: {}); resizing to {}'.format(width, width - 200))
+                # print(
+                #     'Star selection window is too wide (screen size: {}); resizing to {}'.
+                #     format(width, width - 200)
+                # )
                 self.scrollArea_selectStars.setMinimumWidth(width - 200)
             # Window is too tall
             if height - 200 < self.scrollArea_selectStars.minimumHeight():
-                # print('Star selection window is too tall (screen size: {}); resizing to {}'.format(height, height - 200))
+                # print(
+                #     'Star selection window is too tall (screen size: {}); resizing to {}'.
+                #     format(height, height - 200)
+                # )
                 self.scrollArea_selectStars.setMinimumHeight(height - 200)
 
         return canvas_left, profile_bottom
 
     def init_matplotlib(self, canvas_left, profile_bottom):
-        '''Set up the two matplotlib canvases that will preview the
+        """Set up the two matplotlib canvases that will preview the
         input image and converted image in the "Image Preview" section.
-        '''
+
+        Parameters
+        ----------
+        canvas_left : float
+            Left boundary of matplotlib figure
+        profile_bottom : float
+            Bottom boundary of matplotlib figure
+        """
 
         # Connect main matplotlib canvas and add to layout
         self.canvas = StarClickerMatplotlibCanvas(
@@ -372,8 +475,10 @@ class StarSelectorWindow(QDialog):
         self.frame_profile.layout().insertWidget(0, self.canvas_profile)
 
     def define_StarSelectionGUI_connections(self):
+        """Connect widgets' signals to the appropriate methods.
+        """
         # Main dialog widgets
-        self.pushButton_done.clicked.connect(self.fileQuit)
+        self.pushButton_done.clicked.connect(self.quit)
         self.pushButton_cancel.clicked.connect(self.cancel)
 
         # Main matplotlib canvas widget
@@ -408,9 +513,21 @@ class StarSelectorWindow(QDialog):
 
     @pyqtSlot()
     def eventFilter(self, source, event):
-        '''Event filter for "Delete Star" button, "Clear Selection"
+        """Event filter for "Delete Star" button, "Clear Selection"
         button, and selected stars table.
-        '''
+
+        Parameters
+        ----------
+        source : QWidget
+            Widget that signalled to the event filter
+        event : QEvent
+            The event that occured within the source widget
+
+        Returns
+        -------
+        bool
+            Denotes an action occured within the event filter
+        """
         if hasattr(self, 'pushButton_deleteStar') and \
            hasattr(self, 'tableWidget_selectedStars') and \
            hasattr(self, 'pushButton_clearStars'):
@@ -420,7 +537,7 @@ class StarSelectorWindow(QDialog):
             if source == self.pushButton_deleteStar:
                 if event.type() == QtCore.QEvent.Enter and len(self.inds) > 0:
                     # Determine index of star corresponding to button
-                    star_ind = self.tableWidget_selectedStars.currentRow()
+                    star_ind = self.tableWidget_selectedStars.current_row()
 
                     # Re-draw selected star as red
                     if star_ind != -1:
@@ -430,7 +547,7 @@ class StarSelectorWindow(QDialog):
 
                 if event.type() == QtCore.QEvent.Leave and len(self.inds) > 0:
                     # Determine index of star corresponding to button
-                    star_ind = self.tableWidget_selectedStars.currentRow()
+                    star_ind = self.tableWidget_selectedStars.current_row()
 
                     # Re-draw selected star as selected color
                     if star_ind != -1:
@@ -466,34 +583,34 @@ class StarSelectorWindow(QDialog):
             # Parse any mouse clicks within the table widget, and update the
             # matplotlib axis with a blue highlighted circle to represent the
             # rows that is selected
-            elif source == self.tableWidget_selectedStars.viewport() and \
-                 event.type() == QtCore.QEvent.MouseButtonPress:
+            elif (source == self.tableWidget_selectedStars.viewport()) and \
+                 (event.type() == QtCore.QEvent.MouseButtonPress):
                 # Record the previous row that was selected
-                previousRow = self.currentRow
+                previous_row = self.current_row
 
                 # Determine where the click happened
                 if self.tableWidget_selectedStars.itemAt(event.pos()) is None:
-                    currentRow = -1
+                    current_row = -1
                 else:
-                    currentRow = self.tableWidget_selectedStars.itemAt(event.pos()).row()
+                    current_row = self.tableWidget_selectedStars.itemAt(event.pos()).row()
 
                 # Re-draw the newly selected star as blue
-                if currentRow >= 0:
-                    self.circles[currentRow].set_markeredgecolor('cornflowerblue')
+                if current_row >= 0:
+                    self.circles[current_row].set_markeredgecolor('cornflowerblue')
 
                 # Update the table to show the selection
-                self.tableWidget_selectedStars.setCurrentCell(currentRow, 0)
+                self.tableWidget_selectedStars.setCurrentCell(current_row, 0)
 
                 # Put the previously selected star back to normal
-                if previousRow == currentRow:
+                if previous_row == current_row:
                     pass
-                elif previousRow == self.gs_ind:
-                    self.circles[previousRow].set_markeredgecolor('yellow')
-                elif previousRow >= 0:
-                    self.circles[previousRow].set_markeredgecolor('darkorange')
+                elif previous_row == self.gs_ind:
+                    self.circles[previous_row].set_markeredgecolor('yellow')
+                elif previous_row >= 0:
+                    self.circles[previous_row].set_markeredgecolor('darkorange')
 
                 # Update current row to be the newly clicked one
-                self.currentRow = currentRow
+                self.current_row = current_row
 
                 self.canvas.draw()
                 return True
@@ -501,9 +618,9 @@ class StarSelectorWindow(QDialog):
         return False
 
     def update_axes(self):
-        '''Changes the axes limits of the matplotlib canvas to the current
-        values of the axis limit textboxes
-        '''
+        """Changes the axes limits of the matplotlib canvas to the current
+        values of the axis limit textboxes.
+        """
         self.canvas.axes.set_xlim(float(self.lineEdit_xmin.text()),
                                   float(self.lineEdit_xmax.text()))
         self.canvas.axes.set_ylim(float(self.lineEdit_ymax.text()),
@@ -512,16 +629,17 @@ class StarSelectorWindow(QDialog):
         self.canvas.draw()
 
     def update_cbar(self):
-        '''Changes the limits of the colorbar to the current values of the
-        colorbar limit textboxes
-        '''
+        """Changes the limits of the colorbar to the current values of the
+        colorbar limit textboxes.
+        """
         self.canvas.fitsplot.set_clim(float(self.lineEdit_vmin.text()),
                                       float(self.lineEdit_vmax.text()))
         self.canvas.draw()
 
     def update_textboxes(self):
-        '''Changes the values of the axis limit textboxes to the current axis
-        limits of the matplotlib canvas'''
+        """Changes the values of the axis limit textboxes to the current axis
+        limits of the matplotlib canvas.
+        """
         self.lineEdit_xmin.setText(str(self.canvas.axes.get_xlim()[0]))
         self.lineEdit_xmax.setText(str(self.canvas.axes.get_xlim()[1]))
         self.lineEdit_ymax.setText(str(self.canvas.axes.get_ylim()[0]))
@@ -531,8 +649,14 @@ class StarSelectorWindow(QDialog):
         self.lineEdit_vmax.setText(str(self.canvas.fitsplot.get_clim()[1]))
 
     def update_cursor_position(self, event):
-        '''Updates the cursor position textbox when the cursor moves within the
-        matplotlib axis'''
+        """Updates the cursor position textbox when the cursor moves within the
+        matplotlib axis.
+
+        Parameters
+        ----------
+        event : QEvent
+            The event that occured within the signalling widget
+        """
         if event.inaxes:
             self.lineEdit_cursorPosition.setText('({:.0f}, {:.0f})'.format(event.xdata,
                                                                            event.ydata))
@@ -540,7 +664,14 @@ class StarSelectorWindow(QDialog):
                                                                         int(event.xdata)]))
 
     def update_profile(self, event):
-        '''Updates the profile plot when the cursor moves within the matplotlib axis'''
+        """Updates the profile plot when the cursor moves within the
+        matplotlib axis.
+
+        Parameters
+        ----------
+        event : QEvent
+            The event that occured within the signalling widget
+        """
         if event.inaxes:
             # Determine profile under the cursor
             x = np.arange(max(0, np.floor(event.xdata - self.epsilon)),
@@ -554,19 +685,27 @@ class StarSelectorWindow(QDialog):
             # Plot the new line and update axis limits
             self.canvas_profile.axes.plot(x, y, c='cornflowerblue')
             self.canvas_profile.axes.set_xlim(int(np.floor(event.xdata - self.epsilon)),
-                                       int(np.ceil(event.xdata + self.epsilon)))
+                                              int(np.ceil(event.xdata + self.epsilon)))
 
             # Update countrate indicator
             countrate = np.sum(self.data[int(event.ydata) - 1:int(event.ydata) + 2,
                                          int(event.xdata) - 1:int(event.xdata) + 2])
-            self.canvas_profile.countrate_label.set_text('3 x 3 countrate: {:.0f}'.format(countrate))
+            self.canvas_profile.countrate_label.set_text(
+                '3 x 3 countrate: {:.0f}'.
+                format(countrate)
+            )
 
             self.canvas_profile.draw()
 
     def show_segment_id(self, event):
-        '''Show the segment ID of a segment when the cursor mouses over
-        a segment on the matplotlib axis
-        '''
+        """Show the segment ID of a segment when the cursor mouses over
+        a segment on the matplotlib axis.
+
+        Parameters
+        ----------
+        event : QEvent
+            The event that occured within the signalling widget
+        """
         if event.inaxes:
             # Determine if the cursor is close to a segment
             dist = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
@@ -582,8 +721,14 @@ class StarSelectorWindow(QDialog):
                 self.canvas.setToolTip(str(''))
 
     def button_press_callback(self, event):
-        '''Whenever the mouse is clicked, determines if the click is
-        within the matplotlib axis; if so calls get_ind_under_point'''
+        """Whenever the mouse is clicked, determines if the click is
+        within the matplotlib axis; if so calls get_ind_under_point.
+
+        Parameters
+        ----------
+        event : QEvent
+            The event that occured within the signalling widget
+        """
         if not event.inaxes:
             return
         if event.button != 1:
@@ -591,36 +736,39 @@ class StarSelectorWindow(QDialog):
         self._ind = self.get_ind_under_point(event)
 
     def set_guidestar(self):
-        '''
-        Change order of self.inds to reflect the new guide star
-        Update list of original index order
-        Update GUI plotted circles
-        '''
+        """Set the currently selected star to be the guide star.
+
+        Change order of self.inds to reflect the new guide star, update
+        list of original index order, and update GUI plotted circles
+        """
         # Determine index of old guide star
-        ind_of_OLD_GS = self.gs_ind
+        ind_of_old_guide_star = self.gs_ind
 
         # Re-draw old guide star as regular star
-        self.circles[ind_of_OLD_GS].set_markeredgecolor('darkorange')
+        self.circles[ind_of_old_guide_star].set_markeredgecolor('darkorange')
 
         # Determine index of new guide star
-        guide_ind = self.tableWidget_selectedStars.currentRow()
+        guide_ind = self.tableWidget_selectedStars.current_row()
         self.gs_ind = guide_ind
 
         # Re-draw new guide star as guide star
         self.circles[guide_ind].set_markeredgecolor('yellow')
 
         # Move the guide star icon
-        self.tableWidget_selectedStars.setItem(ind_of_OLD_GS, 0, QTableWidgetItem(''))
-        self.tableWidget_selectedStars.setItem(guide_ind, 0, QTableWidgetItem(QIcon(os.path.join(__location__, 'gs_icon.png')), ''))
+        self.tableWidget_selectedStars.setItem(ind_of_old_guide_star, 0,
+                                               QTableWidgetItem(''))
+        icon = QIcon(os.path.join(__location__, 'gs_icon.png'))
+        self.tableWidget_selectedStars.setItem(guide_ind, 0,
+                                               QTableWidgetItem(icon, ''))
 
         self.canvas.draw()
 
     def remove_star(self):
-        '''Remove star and update inds list
-        '''
+        """Remove the currently selected star and update inds list.
+        """
 
         # Determine index of star being removed
-        star_ind = self.tableWidget_selectedStars.currentRow()
+        star_ind = self.tableWidget_selectedStars.current_row()
 
         # Un-draw circle
         delete_circle = self.circles.pop(star_ind)
@@ -630,9 +778,9 @@ class StarSelectorWindow(QDialog):
         ind_of_ind = int(self.tableWidget_selectedStars.item(star_ind, 1).text()) - 1
         remstar_string = 'Deleted star at: x={:.1f}, y={:.1f}'.format(self.x[ind_of_ind],
                                                                       self.y[ind_of_ind])
-        redText = "<span style=\" color:#ff0000;\" >" + \
-                  remstar_string + "</span><br>"
-        self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+        red_text = "<span style=\" color:#ff0000;\" >" + \
+                   remstar_string + "</span><br>"
+        self.textEdit_output.setHtml(red_text + self.textEdit_output.toHtml())
         if self.print_output:
             print(remstar_string)
 
@@ -649,8 +797,8 @@ class StarSelectorWindow(QDialog):
             self.tableWidget_selectedStars.insertRow(0)
         # Update which row is highlighted:
         if self.gs_ind is not None:
-            self.currentRow = self.tableWidget_selectedStars.currentRow()
-            self.circles[self.currentRow].set_markeredgecolor('cornflowerblue')
+            self.current_row = self.tableWidget_selectedStars.current_row()
+            self.circles[self.current_row].set_markeredgecolor('cornflowerblue')
 
         # Update guide star
         if gs_deleted and self.gs_ind is not None:
@@ -658,11 +806,16 @@ class StarSelectorWindow(QDialog):
             self.circles[self.gs_ind].set_markeredgecolor('yellow')
 
             # Move the guide star icon
-            self.tableWidget_selectedStars.setItem(self.gs_ind, 0, QTableWidgetItem(QIcon(os.path.join(__location__, 'gs_icon.png')), ''))
+            icon = QIcon(os.path.join(__location__, 'gs_icon.png'))
+            self.tableWidget_selectedStars.setItem(self.gs_ind, 0,
+                                                   QTableWidgetItem(icon, ''))
 
         self.canvas.draw()
 
     def clear_selected_stars(self):
+        """Remove all stars from the table.
+        """
+
         # Reset table
         self.tableWidget_selectedStars.setRowCount(0)
 
@@ -681,21 +834,24 @@ class StarSelectorWindow(QDialog):
 
         # Send deletion message to output
         remstar_string = 'Cleared all selected stars.'
-        redText = "<span style=\" color:#ff0000;\" >" + \
-                  remstar_string + "</span><br>"
-        self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+        red_text = "<span style=\" color:#ff0000;\" >" + \
+                   remstar_string + "</span><br>"
+        self.textEdit_output.setHtml(red_text + self.textEdit_output.toHtml())
         if self.print_output:
             print(remstar_string)
 
-    def fileQuit(self):
-        '''Closes the star selector window'''
+    def quit(self):
+        """Closes the star selector window.
+        """
 
         self.answer = True
         # If the user didn't choose any stars, ask if they really want to quit.
         if self.inds == []:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
-            no_stars_selected_dialog.setInformativeText('The tool will not be able to continue. Do you want to quit anyway?')
+            no_stars_selected_dialog.setInformativeText(
+                'The tool will not be able to continue. Do you want to quit anyway?'
+            )
             no_stars_selected_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             no_stars_selected_dialog.buttonClicked.connect(self.nostars_dialog)
             no_stars_selected_dialog.exec()
@@ -713,7 +869,8 @@ class StarSelectorWindow(QDialog):
             self.close()
 
     def cancel(self):
-        '''Closes the star selector window and clears indices'''
+        """Closes the star selector window and clears indices.
+        """
 
         # Clear the indices (i.e. don't save user selections)
         self.inds = []
@@ -728,26 +885,40 @@ class StarSelectorWindow(QDialog):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # HELPER FUNCTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
     def get_ind_under_point(self, event):
-        '''If user clicks within one epsilon of an identified star, appends that
+        """Get the index of the closest star to where a click occurred.
+
+        If user clicks within one epsilon of an identified star, appends that
         star's position to inds; notifies user if no star is nearby or if
-        selected star is already selected'''
+        selected star is already selected.
+
+        Parameters
+        ----------
+        event : QEvent
+            The event that occured within the signalling widget
+
+        Returns
+        -------
+        ind : int
+            The index of the star closest to a mouseButtonPress event
+
+        """
 
         dist = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
         indseq = np.nonzero(np.equal(dist, np.amin(dist)))[0]
         ind = indseq[0]
-        n_stars = len(self.inds)
 
         # If the user has already selected the maximum number of stars
         if len(self.inds) == self.n_stars_max:
             if self.print_output:
                 print('Maximum number of stars, {}, already selected.'.format(self.n_stars_max))
 
-            redText = "<span style=\" color:#ff0000;\" >"
-            redText += 'Maximum number of stars, {}, already selected.'.format(self.n_stars_max)
-            redText += "</span><br>"
+            red_text = "<span style=\" color:#ff0000;\" >"
+            red_text += 'Maximum number of stars, {}, already selected.'.format(self.n_stars_max)
+            red_text += "</span><br>"
 
-            self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+            self.textEdit_output.setHtml(red_text + self.textEdit_output.toHtml())
             return
 
         # If there is no star within ``dist`` of the mouse click
@@ -755,22 +926,22 @@ class StarSelectorWindow(QDialog):
             if self.print_output:
                 print('No star within {} pixels. No star selected.'.format(self.epsilon))
 
-            redText = "<span style=\" color:#ff0000;\" >"
-            redText += 'No star within {} pixels. No star selected.'.format(self.epsilon)
-            redText += "</span><br>"
+            red_text = "<span style=\" color:#ff0000;\" >"
+            red_text += 'No star within {} pixels. No star selected.'.format(self.epsilon)
+            red_text += "</span><br>"
 
-            self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+            self.textEdit_output.setHtml(red_text + self.textEdit_output.toHtml())
 
         # If the user clicked on a star that already exists
         elif ind in self.inds:
             if self.print_output:
                 print('Star already selected, please choose another star')
 
-            redText = "<span style=\" color:#ff0000;\" >"
-            redText += 'Star already selected, please choose another star'
-            redText += "</span><br>"
+            red_text = "<span style=\" color:#ff0000;\" >"
+            red_text += 'Star already selected, please choose another star'
+            red_text += "</span><br>"
 
-            self.textEdit_output.setHtml(redText + self.textEdit_output.toHtml())
+            self.textEdit_output.setHtml(red_text + self.textEdit_output.toHtml())
 
         # Otherwise, actually add the star to the list!
         else:
@@ -800,7 +971,8 @@ class StarSelectorWindow(QDialog):
             countrate = np.sum(self.data[int(self.y[ind] - 1):int(self.y[ind] + 2),
                                          int(self.x[ind] - 1):int(self.x[ind] + 2)])
             # Populate row with data
-            values = ['', str(ind + 1), str(int(self.x[ind])), str(int(self.y[ind])), str(int(countrate))]
+            values = ['', str(ind + 1), str(int(self.x[ind])),
+                      str(int(self.y[ind])), str(int(countrate))]
             for i_col, value in enumerate(values):
                 if gs and i_col == 0:
                     item = QTableWidgetItem(QIcon(os.path.join(__location__, 'gs_icon.png')), '')
@@ -811,7 +983,7 @@ class StarSelectorWindow(QDialog):
 
             # Plot the new star on the canvas
             self.circles += self.canvas.axes.plot(self.x[ind], self.y[ind], 'o', ms=25,
-                                                 mfc='none', mec=c, mew=2, lw=0)
+                                                  mfc='none', mec=c, mew=2, lw=0)
             self.canvas.draw()
 
             # Add to the list of indices
@@ -820,16 +992,47 @@ class StarSelectorWindow(QDialog):
         return ind
 
     def reorder_indices(self):
-        gs_ID = self.inds[self.gs_ind]
+        """Re-order self.inds such that the desired guide star is the
+        first element on the list.
+        """
+
+        # Determine which ID is the guide star
+        guide_star_id = self.inds[self.gs_ind]
+
+        # Remove it from the list
         self.inds.pop(self.gs_ind)
-        inds_final = [gs_ID] + self.inds
+
+        # Rewrite self.inds
+        inds_final = [guide_star_id] + self.inds
         self.inds = inds_final
 
     def nostars_dialog(self, button):
+        """Process dialog box asking if user wants to close the window
+        without selecting stars.
+
+        Parameters
+        ----------
+        button : QPushButton
+            The button that was pushed in the dialog box.
+        """
         if 'No' in button.text():
             self.answer = False
 
     def calc_new_gs_ind(self, star_ind):
+        """Determine the new guide star index after a star was removed.
+
+        Parameters
+        ----------
+        star_ind : int
+            Index of the deleted star
+
+        Returns
+        -------
+        bool
+            Denotes if the guide star was deleted
+        int
+            The new guide star index
+        """
         # If a star earlier than the guide star was deleted
         if star_ind < self.gs_ind:
             return False, 1
@@ -850,28 +1053,32 @@ class StarSelectorWindow(QDialog):
 # MAIN FUNCTION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
-    '''Calls a PyQt GUI to allow interactive user selection of guide and reference stars.
 
-    Params
-    ------
-    data (2D array)
-        Opened FITS image data (2048 x 2048)
-    x (list)
+def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
+    """Calls a PyQt GUI to allow interactive user selection of guide and
+    reference stars.
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data (2048 x 2048)
+    x : list
         List of x-coordinates of identified PSFs
-    y (list)
+    y : list
         List of y-coordinates of identified PSFs
-    dist (int)
+    dist : int
         Minimum distance between identified PSFs; maximum distance from a star the user
         can click to select that star
-    print_output (boolean)
+    print_output : bool, optional
         Flag enabling output to the terminal
+    masterGUIapp : qApplication, optional
+        qApplication instance of parent GUI
 
     Returns
     -------
-    inds (list)
+    inds : list
         List of indices of positions of selected stars
-    '''
+    """
 
     # RUN GUI
     if masterGUIapp:
