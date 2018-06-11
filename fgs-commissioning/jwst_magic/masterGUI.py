@@ -358,39 +358,18 @@ class MasterGui(QMainWindow):
 
         # Segment guiding
         if self.groupBox_segmentGuiding.isChecked():
-            refonly = self.checkBox_refonly.isChecked()
-
+            # Verify that the ALLpsfs.txt file exists
             segment_infile = self.ALLpsfs
             if not os.path.exists(segment_infile):
                 raise OSError('Provided segment infile {} not found.'.format(segment_infile))
 
-            # Raise dialog box
+            # Get APT program information from parsed header
             self.parse_header(input_image)
-            SGT_dialog = self.segmentGuiding_dialog()
+            program_id = self.prognum
+            observation_num = self.obsnum
+            visit_num = self.visitnum
 
-            # Get parameters for dictionary from dialog
-            try:
-                GS_params_dict = {'V2Boff': float(SGT_dialog.lineEdit_V2.text()),
-                                  'V3Boff': float(SGT_dialog.lineEdit_V3.text()),
-                                  'fgsNum': guider,
-                                  'RA': float(SGT_dialog.lineEdit_RA.text()),
-                                  'Dec': float(SGT_dialog.lineEdit_Dec.text()),
-                                  'PA': float(SGT_dialog.lineEdit_PA.text()),
-                                  'segNum': 0}
-                program_id = SGT_dialog.lineEdit_programNumber.text()
-                observation_num = SGT_dialog.lineEdit_observationNumber.text()
-                visit_num = SGT_dialog.lineEdit_visitNumber.text()
-                ct_uncert_fctr = float(SGT_dialog.lineEdit_countrateUncertainty.text())
-                if SGT_dialog.checkBox_countrateFactor.isChecked():
-                    countrate_factor = float(SGT_dialog.doubleSpinBox_countrateFactor.value())
-                else:
-                    countrate_factor = None
-            except ValueError as e:
-                if "could not convert string to float:" not in str(e):
-                    raise
-                else:
-                    return
-
+            # Determine which image to use
             if os.path.exists(self.converted_im_file):
                 fgs_filename = self.converted_im_file
             else:
@@ -401,15 +380,16 @@ class MasterGui(QMainWindow):
             GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
             selected_segs = self.lineEdit_regfileStarSelector.text()
 
-            segment_guiding.run_tool(segment_infile, program_id=program_id,
+            # Determine whether to use "ref-only" syntax
+            refonly = self.checkBox_refonly.isChecked()
+
+            # Run the tool
+            segment_guiding.run_tool(segment_infile, guider, program_id=program_id,
                                      observation_num=observation_num,
-                                     visit_num=visit_num, root=root,
-                                     GUI=GUI, GS_params_dict=GS_params_dict,
+                                     visit_num=visit_num, root=root, GUI=GUI,
                                      out_dir=out_dir, data=data,
                                      selected_segs=selected_segs,
-                                     masterGUIapp=self.app, refonly=refonly,
-                                     ct_uncert_fctr=ct_uncert_fctr,
-                                     countrate_factor=countrate_factor)
+                                     masterGUIapp=self.app, refonly=refonly)
             print("** Run Complete **")
 
             # Update converted image preview
