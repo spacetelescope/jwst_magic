@@ -15,21 +15,21 @@ Use
         rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
 
     Required arguments:
-        ```inds``` - string listing segment labels or list of segment indices
+        ``inds`` - string listing segment labels or list of segment indices
             indicating which segments to re-write as the guide and
             reference stars
-        ```guider``` - guider number (1 or 2)
-        ```root``` - name used to create the output directory,
+        ``guider`` - guider number (1 or 2)
+        ``root`` - name used to create the output directory,
             {out_dir}/out/{root}
-        ```out_dir``` - where output files will be saved. If not provided, the
+        ``out_dir`` - where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
             tools/fgs-commissioning/
 
     Optional arguments:
-        ```thresh_factor``` - factor by which to multiply the countrates
+        ``thresh_factor`` - factor by which to multiply the countrates
             to determine the threshold count rate
-        ```prc``` - denotes whether to rewrite {root}_G{guider}_ID.prc
-        ```regfile``` - denotes whether to rewrite {root}_G{guider}_regfile.txt
+        ``prc`` - denotes whether to rewrite {root}_G{guider}_ID.prc
+        ``regfile`` - denotes whether to rewrite {root}_G{guider}_regfile.txt
 
 """
 

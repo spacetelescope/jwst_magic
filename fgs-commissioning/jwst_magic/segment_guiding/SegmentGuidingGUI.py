@@ -1,5 +1,11 @@
 """Interactive star selector GUI for segment guiding.
 
+Builds a GUI with PyQt5 that prompts the user to click on a data image
+to select guide and/or reference stars, which are then saved as segment
+guiding override commands and written as segment override files in
+``segment_guiding.py``. The dynamic matplotlib plot that is users
+interact with is imported from ``SelectStarsGUI.py``.
+
 Authors
 -------
     - Lauren Chambers
@@ -12,17 +18,17 @@ Use
         SegmentGuidingGUI.run_segment_override_gui(data, x, y, dist)
 
     Required arguments:
-        ```data``` - image data (2048 x 2048)
-        ```x``` - list of x-coordinates of identified PSFs
-        ```y``` - list of y-coordinates of identified PSFs
-        ```dist``` - minimum distance between identified PSFs; maximum
+        ``data`` - image data (2048 x 2048)
+        ``x`` - list of x-coordinates of identified PSFs
+        ``y`` - list of y-coordinates of identified PSFs
+        ``dist`` - minimum distance between identified PSFs; maximum
             distance from a star the user can click to select that star
 
     Optional arguments:
-        ```print_output``` - enable output to the terminal
-        ```selected_segs``` - filepath containing locations and count
+        ``print_output`` - enable output to the terminal
+        ``selected_segs`` - filepath containing locations and count
             rates of segments selected as the guide and reference stars
-        ```masterGUIapp``` - qApplication instance of parent GUI
+        ``masterGUIapp`` - qApplication instance of parent GUI
 
 Notes
 -----

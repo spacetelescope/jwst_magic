@@ -13,21 +13,21 @@ Use
         mkproc.Mkproc(guider, root, xarr, yarr, counts, step)
 
     Required arguments:
-        ```guider``` - guider number (1 or 2)
-        ```root``` - name used to create the output directory, {out_dir}/out/{root}
-        ```xarr``` - X coordinates of guide and reference stars (pixels)
-        ```yarr``` - Y coordinates of guide and reference stars (pixels)
-        ```counts``` - count rates of guide and reference stars
-        ```step``` - name of the step to create files for
+        ``guider`` - guider number (1 or 2)
+        ``root`` - name used to create the output directory, {out_dir}/out/{root}
+        ``xarr`` - X coordinates of guide and reference stars (pixels)
+        ``yarr`` - Y coordinates of guide and reference stars (pixels)
+        ``counts`` - count rates of guide and reference stars
+        ``step`` - name of the step to create files for
 
     Optional arguments:
-        ```thresh_factor``` - factor by which to multiply the countrates
+        ``thresh_factor`` - factor by which to multiply the countrates
             to determine the threshold count rate
-        ```out_dir``` - qhere output files will be saved. If not provided,
+        ``out_dir`` - qhere output files will be saved. If not provided,
             the image(s) will be saved within the repository at
             tools/fgs-commissioning/
-        ```acq1_imgsize``` - dimension of ACQ1 images
-        ```acq2_imgsize``` - dimension of ACQ2 images
+        ``acq1_imgsize`` - dimension of ACQ1 images
+        ``acq2_imgsize`` - dimension of ACQ2 images
 
 Notes
 -----
