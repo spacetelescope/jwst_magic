@@ -4,6 +4,26 @@ Authors
 -------
     - Lauren Chambers
 
+Use
+---
+    This module can be used as such:
+    ::
+        from jwst_magic.segment_guiding import SegmentGuidingGUI
+        SegmentGuidingGUI.run_segment_override_gui(data, x, y, dist)
+
+    Required arguments:
+        ```data``` - image data (2048 x 2048)
+        ```x``` - list of x-coordinates of identified PSFs
+        ```y``` - list of y-coordinates of identified PSFs
+        ```dist``` - minimum distance between identified PSFs; maximum
+            distance from a star the user can click to select that star
+
+    Optional arguments:
+        ```print_output``` - enable output to the terminal
+        ```selected_segs``` - filepath containing locations and count
+            rates of segments selected as the guide and reference stars
+        ```masterGUIapp``` - qApplication instance of parent GUI
+
 Notes
 -----
 1. For the GUI to run successfully, the QtAgg matplotlib backend should
@@ -39,13 +59,37 @@ from PyQt5.QtGui import QIcon
 # Local Imports
 from ..star_selector.SelectStarsGUI import StarSelectorWindow
 
+# Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
 class SegmentGuidingWindow(StarSelectorWindow, QDialog):
     def __init__(self, data, x, y, dist, qApp, in_master_GUI,
                  print_output=False, selected_segs=None):
-        '''Defines attributes; calls initUI() method to set up user interface.'''
+        """Initializes class; calls initUI() method to set up user interface.
+
+        Parameters
+        ----------
+        data : 2-D numpy array
+            Image data (2048 x 2048)
+        x : list
+            List of x-coordinates of identified PSFs
+        y : list
+            List of y-coordinates of identified PSFs
+        dist : int
+            Minimum distance between identified PSFs; maximum distance from a star the user
+            can click to select that star
+        qApp : qApplication
+            qApplication instance of parent GUI
+        in_master_GUI : bool
+            Denotes if the GUI is being launched as a dialog box from
+            the master GUI
+        print_output : bool, optional
+            Flag enabling output to the terminal
+        selected_segs : str, optional
+            Filepath containing locations and count rates of segments
+            selected as the guide and reference stars
+        """
         # Initialize attributes
         self.n_orientations = 0
         self.segNum = None
@@ -68,7 +112,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         # Create and load sgement guiding GUI session
         self.show()
         self.setWindowTitle('JWST MaGIC - Segment Guiding Command Generator')
-        self.adjust_screen_size_segmentGuiding()
+        self.adjust_screen_size_segment_guiding()
         self.define_SegmentGuidingGUI_connections()
         self.show()
 
@@ -79,9 +123,10 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def adjust_screen_size_segmentGuiding(self):
-        ''' Adjust the GUI sizes for laptop screens
-        '''
+
+    def adjust_screen_size_segment_guiding(self):
+        """ Adjust the GUI sizes for laptop screens
+        """
         # Determine screen size
         screen_size = self.qApp.desktop().screenGeometry()
         width, height = screen_size.width(), screen_size.height()
@@ -106,6 +151,8 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             self.scrollArea_segmentGuiding.setMinimumSize(minimum_width + 200, 950 + 200)
 
     def define_SegmentGuidingGUI_connections(self):
+        """Connect widgets' signals to the appropriate methods.
+        """
         # Main dialog window widgets
         self.pushButton_done.clicked.connect(self.fileQuit)  # Redefine
 
@@ -127,10 +174,15 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def save_orientation_to_list(self):
+        """Save the currently selected segment orientation to the list
+        of override commands.
+        """
         if self.inds == []:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
-            no_stars_selected_dialog.setInformativeText('Please select at least one star to command.')
+            no_stars_selected_dialog.setInformativeText(
+                'Please select at least one star to command.'
+            )
             no_stars_selected_dialog.setStandardButtons(QMessageBox.Ok)
             no_stars_selected_dialog.exec()
             return
@@ -151,6 +203,15 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.n_orientations += 1
 
     def load_orientation(self, selected_segs=None):
+        """Plot the segments in the currently selected override command
+        on the matplotlib canvas
+
+        Parameters
+        ----------
+        selected_segs : str, optional
+            Filepath to regfile.txt file with list of locations and
+            countrates for the selected segments (guide and reference stars).
+        """
         # Determine what are the indices of the stars to load
 
         # Read them from a regfile
@@ -193,10 +254,12 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             # Populate row with data
             countrate = np.sum(self.data[int(self.y[ind] - 1):int(self.y[ind] + 2),
                                          int(self.x[ind] - 1):int(self.x[ind] + 2)])
-            values = ['', str(ind + 1), str(int(self.x[ind])), str(int(self.y[ind])), str(int(countrate))]
+            values = ['', str(ind + 1), str(int(self.x[ind])),
+                      str(int(self.y[ind])), str(int(countrate))]
             for i_col, value in enumerate(values):
                 if gs and i_col == 0:
-                    item = QTableWidgetItem(QIcon(os.path.join(__location__, '../star_selector/gs_icon.png')), '')
+                    icon = QIcon(os.path.join(__location__, '../star_selector/gs_icon.png'))
+                    item = QTableWidgetItem(icon, '')
                 else:
                     item = QTableWidgetItem(value)
                 item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
@@ -217,17 +280,23 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.inds = [i - 1 for i in selected_indices]
 
         # Send message to output
-        remstar_string = 'Loaded orientation{}: {}'.format(regfile_message, ', '.join([str(i) for i in selected_indices]))
+        remstar_string = 'Loaded orientation{}: {}'.\
+            format(regfile_message, ', '.join([str(i) for i in selected_indices]))
         self.textEdit_output.setHtml(remstar_string + "<br>" + self.textEdit_output.toHtml())
         if self.print_output:
             print(remstar_string)
 
     def delete_orientation(self):
+        """Delete the selected override command.
+        """
         selected_orientation_index = self.tableWidget_commands.selectedItems()[0].row()
         self.tableWidget_commands.removeRow(selected_orientation_index)
         self.n_orientations -= 1
 
     def move_orientation(self):
+        """Move the selected override command up or down within the
+        list of commands.
+        """
         # Remove the item
         selected_orientation_index = self.tableWidget_commands.selectedItems()[0].row()
         item = self.tableWidget_commands.takeItem(selected_orientation_index, 0)
@@ -245,8 +314,8 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.tableWidget_commands.setCurrentItem(item)
 
     def update_center_seg(self):
-        '''Use the location of a specific segment as the pointing center
-        '''
+        """Use the location of a specific segment as the pointing center.
+        """
         # Uncheck "use segment center" box
         self.checkBox_meanCenter.setChecked(False)
 
@@ -269,8 +338,8 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.canvas.draw()
 
     def update_center_mean(self, use_mean_as_center):
-        '''Use the mean of the array as the pointing center
-        '''
+        """Use the mean of the array as the pointing center.
+        """
         # Remove old center
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
@@ -293,7 +362,9 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.canvas.draw()
 
     def fileQuit(self):
-        '''Closes the star selector window'''
+        """Ensures that all necessay values have been defined and
+        closes the segment guiding window.
+        """
         # If the center segment number hasn't been set, don't quit.
         if self.segNum is None:
             no_segNum_selected_dialog = QMessageBox()
@@ -313,7 +384,9 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         elif self.inds == [] and self.n_orientations == 0:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
-            no_stars_selected_dialog.setInformativeText('The tool will not be able to continue. Do you want to quit anyway?')
+            no_stars_selected_dialog.setInformativeText(
+                'The tool will not be able to continue. Do you want to quit anyway?'
+            )
             no_stars_selected_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             no_stars_selected_dialog.exec()
         # If they do, then quit.
@@ -330,29 +403,38 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def run_SelectSegmentOverride(data, x, y, dist, print_output=False,
-                              selected_segs=None, masterGUIapp=None):
-    '''Calls a PyQt GUI to allow interactive user selection of guide and reference stars.
+def run_segment_override_gui(data, x, y, dist, print_output=False,
+                             selected_segs=None, masterGUIapp=None):
+    """Constructs a PyQt GUI to allow interactive user selection of
+    guide and reference stars.
 
-    Params
-    ------
-    data (2D array)
-        Opened FITS image data (2048 x 2048)
-    x (list)
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data (2048 x 2048)
+    x : list
         List of x-coordinates of identified PSFs
-    y (list)
+    y : list
         List of y-coordinates of identified PSFs
-    dist (int)
+    dist : int
         Minimum distance between identified PSFs; maximum distance from a star the user
         can click to select that star
-    print_output (boolean)
+    print_output : bool, optional
         Flag enabling output to the terminal
+    selected_segs : str, optional
+        Filepath containing locations and count rates of segments
+        selected as the guide and reference stars
+    masterGUIapp : qApplication, optional
+        qApplication instance of parent GUI
 
     Returns
     -------
-    inds (list)
+    inds : list
         List of indices of positions of selected stars
-    '''
+    segNum : int
+        Number of the segment used as the center of the pointing (the
+        mean of the array was used if segNum is 0)
+    """
 
     # Alter data to accurately display null or negative values in log scale plot
     data[data <= 0] = 1
