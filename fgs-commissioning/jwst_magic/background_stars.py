@@ -4,6 +4,35 @@ Authors
 -------
     - Lauren Chambers
 
+Use
+---
+    To run the GUI with this module:
+    ::
+        from jwst_magic import background_stars
+        background_stars.run_background_stars_GUI(guider, jmag)
+
+    Required arguments:
+        ``guider`` - guider number (1 or 2)
+        ``jmag`` - brightness of the guide star in J Magnitude
+
+    Optional arguments:
+        ``masterGUIapp`` - qApplication instance of parent GUI
+
+
+    To add background stars to an image with this module:
+    ::
+        from jwst_magic import background_stars
+        background_stars.add_background_stars(image, stars, norm_value,
+            norm_unit, guider)
+
+    Required arguments:
+        ``image`` - the input data with the original star
+        ``stars`` - either a boolean or a dictionary that defines how
+            to add the additional stars to the image
+        ``norm_value`` - specifies the value to which to normalize.
+        ``norm_unit`` - specifies the unit of norm_value (FGS Magnitude or FGS Counts)
+        ``guider`` - the number of the guider used to take the data
+
 Notes
 -----
 1. For the GUI to run successfully, the QtAgg matplotlib backend should
@@ -525,7 +554,28 @@ class BackgroundStarsWindow(QDialog):
 
 
 def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
-    # RUN GUI
+    """Open the BackgroundStarsWindow and prompt user to specify how to
+    add background stars.
+
+    Parameters
+    ----------
+    guider : int
+        Guider number (1 or 2)
+    jmag : float
+        Brightness of the guide star in J Magnitude
+    masterGUIapp : qApplication, optional
+        qApplication instance of parent GUI
+
+    Returns
+    -------
+    stars : dict
+        Dictionary that contains positions and brightnesses of
+        background stars
+    method : str
+        How the background stars were calculated ('random',
+        'user-defined', or 'catalog')
+    """
+
     in_master_GUI = masterGUIapp is not None
 
     if in_master_GUI:
@@ -548,32 +598,41 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
     stars['y'] = window.y
     stars['jmag'] = window.jmags
 
-    return stars, window.method
+    # Record the method used to generate the background stars
+    method = window.method
+
+    return stars, method
 
 
 def add_background_stars(image, stars, norm_value, norm_unit, guider):
-    #TODO: Figure out what is going on with normalization
     """Add artificial copies of the input PSF to the image to mimic
     background stars.
 
-    Arguments
-    ---------
-    image: numpy array
+    Parameters
+    ----------
+    image : 2-D numpy array
         The input data with the original star
-    stars
+    stars : bool or dict
         Either a boolean or a dictionary that defines how to add the
         additional stars to the image
-    jmag: float
-        The desired J magnitude of the original star
-    fgs_counts: float
-        The desired FGS counts in the original star
-    guider: int
+    norm_value : float
+        Specifieds the value to which to normalize.
+    norm_unit : str
+        Specifies the unit of norm_value (FGS Magnitude or FGS Counts)
+    guider : int
         The number of the guider used to take the data
 
     Returns
     -------
-    add_data: numpy array
+    add_data : 2-D numpy array
         Image array with original star and additional stars
+
+    Raises
+    ------
+    TypeError
+        Incompatible value passed to stars
+    ValueError
+        Invalid dictionary passed to stars
     """
 
     # Randomly create 5 locations on the image
