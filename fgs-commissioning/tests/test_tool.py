@@ -1,5 +1,18 @@
 '''Collection of unit tests to verify the correct function of the FGS
-Commissioning Tools'''
+Commissioning Tools
+
+Authors
+-------
+    - Lauren Chambers
+
+Use
+---
+    These tests can be run via the command line (omit the ``-s`` to
+    suppress verbose output to ``stdout``):
+
+    ::
+        pytest -s test_tool.py
+"""'''
 import glob
 import os
 
