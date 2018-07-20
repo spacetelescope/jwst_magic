@@ -247,10 +247,11 @@ class BuildFGSSteps(object):
 
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
-        self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tcds')
+        self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tframe')
 
-        # Grab the expected bias
+        # Add the bias, and build the array of reads with noisy data
         if config_ini.getboolean(section, 'bias'):
+            # Get the bias ramp
             self.bias = getbias.getbias(self.guider, self.xarr, self.yarr,
                                         self.nreads, config_ini.getint(section, 'nramps'),
                                         config_ini.getint(section, 'imgsize'))
@@ -258,10 +259,32 @@ class BuildFGSSteps(object):
             # Take the bias and add a noisy version of the input image
             # (specifically Poisson noise), adding signal over each read
             image = np.copy(self.bias)
-            for ireads in range(self.nreads):
-                image[ireads::(self.nreads)] += (ireads + 1) * \
-                                                np.random.poisson(self.time_normed_im)
+
+            # *** NOTE ***
+            # You should probably be re-calculating the poisson noise for
+            # every single frame, not just twice....
+
+            # First read
+            # Calculate how much signal should be in the first read
+            i_read = 0
+            n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
+            n_frametimes_in_first_read = n_drops_before_first_read + 1
+            # Add signal to every first read
+            noisy_im = np.random.poisson(self.time_normed_im)
+            image[i_read::(self.nreads)] += n_frametimes_in_first_read * noisy_im
+
+            # Second read
+            # Calculate how much signal should be in the second read
+            i_read = 1
+            n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
+            n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
+            # Add signal to every second read
+            noisy_im = np.random.poisson(self.time_normed_im)
+            image[i_read::(self.nreads)] += n_frametimes_in_second_read * noisy_im
+
         else:
+            # In the case of LOSTRK, just return one frame with one
+            # frame readout worth of signal
             self.bias = None
             image = self.time_normed_im
 
