@@ -98,10 +98,10 @@ class Mkproc(object):
 
         # Depending on the 'step' create the correct CECIL proc files.
         if step == 'ID':
-            self.create_id_proc_file(root, guider, xarr, yarr, counts,
+            self.create_id_proc_file(guider, root, xarr, yarr, counts,
                                      thresh_factor=thresh_factor)
         elif step == 'ACQ':
-            self.create_acq_proc_file(root, guider, xarr, yarr, counts,
+            self.create_acq_proc_file(guider, root, xarr, yarr, counts,
                                       acq1_imgsize, acq2_imgsize)
 
     def find_templates(self, guider, step, template_path):
@@ -217,7 +217,7 @@ class Mkproc(object):
                                                            '{0}_G{1}_ID.prc'.
                                                            format(root, guider))))
 
-    def create_acq_proc_file(self, root, guider, xarr, yarr, counts,
+    def create_acq_proc_file(self, guider, root, xarr, yarr, counts,
                              acq1_imgsize, acq2_imgsize):
         """Creates the CECIL proc file for the acquisition (ACQ) steps.
         Writes to {out_dir}/out/{root}/dhas/{root}_G{guider}_ACQ.prc
