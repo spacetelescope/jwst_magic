@@ -47,7 +47,7 @@ from matplotlib.colors import LogNorm
 
 # Local imports
 from .. import utils
-from ..fsw_file_writer import config, getbias, write_files
+from ..fsw_file_writer import config, detector_effects, write_files
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -253,9 +253,11 @@ class BuildFGSSteps(object):
         if config_ini.getboolean(section, 'bias'):
             # Get the bias ramp
             nramps = config_ini.getint(section, 'nramps')
-            self.bias = getbias.getbias(self.guider, self.xarr, self.yarr,
-                                        self.nreads, nramps,
-                                        config_ini.getint(section, 'imgsize'))
+            det_eff = detector_effects.FGSDetectorEffects(
+                self.guider, self.xarr, self.yarr, self.nreads, nramps,
+                config_ini.getint(section, 'imgsize')
+            )
+            self.bias = det_eff.add_detector_effects()
 
             # Take the bias and add a noisy version of the input image
             # (specifically Poisson noise), adding signal over each read
