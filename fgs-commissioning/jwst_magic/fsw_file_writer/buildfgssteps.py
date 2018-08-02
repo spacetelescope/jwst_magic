@@ -252,17 +252,15 @@ class BuildFGSSteps(object):
         # Add the bias, and build the array of reads with noisy data
         if config_ini.getboolean(section, 'bias'):
             # Get the bias ramp
+            nramps = config_ini.getint(section, 'nramps')
             self.bias = getbias.getbias(self.guider, self.xarr, self.yarr,
-                                        self.nreads, config_ini.getint(section, 'nramps'),
+                                        self.nreads, nramps,
                                         config_ini.getint(section, 'imgsize'))
 
             # Take the bias and add a noisy version of the input image
             # (specifically Poisson noise), adding signal over each read
             image = np.copy(self.bias)
-
-            # *** NOTE ***
-            # You should probably be re-calculating the poisson noise for
-            # every single frame, not just twice....
+            signal_cube = [self.time_normed_im] * nramps
 
             # First read
             # Calculate how much signal should be in the first read
@@ -270,8 +268,8 @@ class BuildFGSSteps(object):
             n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
             n_frametimes_in_first_read = n_drops_before_first_read + 1
             # Add signal to every first read
-            noisy_im = np.random.poisson(self.time_normed_im)
-            image[i_read::(self.nreads)] += n_frametimes_in_first_read * noisy_im
+            noisy_signal_cube = np.random.poisson(signal_cube)
+            image[i_read::(self.nreads)] += n_frametimes_in_first_read * noisy_signal_cube
 
             # Second read
             # Calculate how much signal should be in the second read
@@ -279,8 +277,8 @@ class BuildFGSSteps(object):
             n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
             n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
             # Add signal to every second read
-            noisy_im = np.random.poisson(self.time_normed_im)
-            image[i_read::(self.nreads)] += n_frametimes_in_second_read * noisy_im
+            noisy_signal_cube = np.random.poisson(signal_cube)
+            image[i_read::(self.nreads)] += n_frametimes_in_second_read * noisy_signal_cube
 
         else:
             # In the case of LOSTRK, just return one frame with one
