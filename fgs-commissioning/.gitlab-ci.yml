@@ -1,5 +1,0 @@
-test_jwst_magic:
-  image: python:3.6
-  script:
-    - pip install .
-    - pytest
