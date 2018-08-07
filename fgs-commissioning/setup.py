@@ -20,17 +20,37 @@ from __future__ import (absolute_import, division,
 
 from setuptools import setup, find_packages
 
+INSTALL_REQUIRES = [
+    'numpy',
+    'astropy',
+    'ipython',
+    'matplotlib',
+    'pysiaf',
+    'pyyaml',
+    'requests',
+    'pytest',
+    'photutils'
+]
+
+# Determine if PyQt5 needs to be included in the install_requires
+try:
+    import PyQt5
+except ImportError:
+    INSTALL_REQUIRES.append('PyQt5')
+
 setup(name='jwst_magic',
       version='0.0',
-      description='Multifunctional wavefront Guiding Interface for Commissioning (MaGIC)',
+      description='Multi-Application Guiding Interface for Commissioning (MAGIC)',
       long_description='Interactive tools to simulate fine guidance sensor data '
                        'and facilitate guiding operations during wavefront '
                        'commissioning of JWST.',
       classifiers=[
         # 'Development Status :: 3 - Alpha',
         # 'License :: OSI Approved :: MIT License',
+        'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
+        'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Scientific/Engineering :: Astronomy'
       ],
       keywords='jwst fgs',
@@ -39,17 +59,6 @@ setup(name='jwst_magic',
       # author_email='flyingcircus@example.com',
       # license='MIT',
       packages=find_packages(),  # How will this work with subpackages?
-      install_requires=[
-          'numpy',
-          'astropy',
-          'ipython',
-          'matplotlib',
-          'PyQt5',
-          'pysiaf',
-          'pyyaml',
-          'requests',
-          'pytest',
-          'photutils'
-      ],
+      install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       zip_safe=False)
