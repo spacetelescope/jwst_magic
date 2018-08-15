@@ -186,8 +186,8 @@ class FGSDetectorEffects():
             read_noise_dict = yaml.load(f.read())
 
         # Get the read noise value for the current step
-        array = 'full' if self.imgsize == 2048 else 'subarray'
-        read_noise = read_noise_dict['guider{}'.format(self.guider)][array]
+        array_size = self.imgsize if self.imgsize != 43 else 32
+        read_noise = read_noise_dict['guider{}'.format(self.guider)][array_size]
 
         # Add normally distributed read noise to the bias
         # *** What should the standard deviation be??? ***
