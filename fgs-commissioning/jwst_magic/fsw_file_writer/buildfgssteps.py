@@ -123,11 +123,12 @@ class BuildFGSSteps(object):
         else:
             self.input_im = im
 
+        # *** SHOULD THIS BE HAPPENING HERE?? ***
         # Correct for negative, saturated pixels and other nonsense
         self.input_im = utils.correct_image(self.input_im)
 
-        # THEN convert to uint16
-        self.input_im = np.uint16(self.input_im)
+        # # THEN convert to uint16
+        # self.input_im = np.uint16(self.input_im)
 
         # LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
 
@@ -290,7 +291,7 @@ class BuildFGSSteps(object):
             image = self.time_normed_im
 
         # Cut any pixels over saturation or under zero
-        image = utils.correct_image(image)
+        # image = utils.correct_image(image)
 
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
@@ -365,8 +366,7 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
             nn += 1
 
     # Make sure the data is between 0 and 65,000 counts and are finite numbers
-    strips = utils.correct_image(strips)
-    strips = np.uint16(strips)
+    # strips = utils.correct_image(strips)
 
     return strips
 
