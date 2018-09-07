@@ -293,6 +293,8 @@ def countrate_3x3(x, y, data):
     Using the coordinates of each PSF, place a 3x3 box around center pixel and sum
     the counts of the pixels in this box.
     """
+    data = correct_image(data)
+    data = np.uint16(data)
     x = int(x)
     y = int(y)
 
