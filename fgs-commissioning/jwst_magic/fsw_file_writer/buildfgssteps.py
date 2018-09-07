@@ -243,7 +243,7 @@ class BuildFGSSteps(object):
         -------
         image : 2-D numpy array
             The final image including any necessary detector effects,
-            either full-frame or the appropriately sized subarray.
+            either full-frame or the appropriately sized subarray, in counts.
         """
 
         # Create the time-normalized image (will be in counts, where the
@@ -296,7 +296,7 @@ class BuildFGSSteps(object):
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
         if config_ini.getboolean(section, 'cdsimg'):
-            self.cds = create_cds(image)
+            self.cds = create_cds(image, section, config_ini)
         else:
             self.cds = None
 
@@ -371,20 +371,65 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
     return strips
 
 
-def create_cds(arr):
+def create_cds(arr, section, config_ini, fix_saturated_pix=True):
     """Create CDS image: Subtract the first read from the second read.
+    Option to handle saturated pixels in CDS.
 
     Parameters
     ----------
     arr : 3-D numpy array
-        Image data
+        Image data in
+    fix_saturated_pix : boolean
+        Apply a fix to saturated pixels in the CDS array?
 
     Returns
     -------
     2-D numpy array
         CDS of image
     """
-    return arr[1::2] - arr[:-1:2]
+    # Second read minus first read
+    first_reads = arr[:-1:2]
+    second_reads = arr[1::2]
+    cds_arr = second_reads - first_reads
+
+    if fix_saturated_pix:
+        # Determine which pixels are saturated in each read
+        saturated_read_2 = second_reads == 65000
+        saturated_read_1 = first_reads == 65000
+
+        # For pixels that are saturated in the second read, calculate their
+        # expected CDS value using the count rate from the first read and
+        # assuming linearity.
+        n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
+        n_frametimes_in_first_read = n_drops_before_first_read + 1
+        time_first_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_first_read  # seconds
+        first_read_countrates = first_reads / time_first_read  # counts / second
+
+        n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
+        n_frametimes_in_cds_read = n_drops_before_second_read + 1
+        time_cds_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_cds_read  # seconds
+
+        # If the calculated CDS value is less than saturation, set that
+        # as the pixel value. Otherwise, set the pixel value to 65000.
+        cds_counts = first_read_countrates * time_cds_read  # counts
+        cds_counts[cds_counts > 65000] = 65000
+        cds_arr[saturated_read_2] = cds_counts[saturated_read_2]
+
+        # n_sat_2 = len([p for p in saturated_read_2[0].flatten() if p])
+        n_sat_2 = len(saturated_read_2[0][saturated_read_2[0] == True].flatten())
+        print('Adjusting {} pixels that are saturated in read 2.'.format(n_sat_2))
+
+        # For pixels that are saturated in both reads, set their CDS
+        # value to the saturated value (65000).
+        saturated_both_reads = saturated_read_1 * saturated_read_2
+        cds_arr[saturated_both_reads] = 65000
+        print(saturated_both_reads)
+
+        # n_sat_both = len([p for p in saturated_both_reads[0].flatten() if p])
+        n_sat_both = len(saturated_both_reads[0][saturated_both_reads[0] == True].flatten())
+        print('Adjusting {} pixels that are saturated in both reads.'.format(n_sat_both))
+
+    return cds_arr
 
 
 def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):
