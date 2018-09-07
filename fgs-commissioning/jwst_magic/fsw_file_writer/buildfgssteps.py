@@ -247,6 +247,7 @@ class BuildFGSSteps(object):
 
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
+        # ** THIS MIGHT NOT BE CORRECT IF IT OCCURS AFTER THE IMAGE HAS BEEN NORMALIZED TO COUNTS ALREADY **
         self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tframe')
 
         # Add the bias, and build the array of reads with noisy data
