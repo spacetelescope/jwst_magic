@@ -394,8 +394,8 @@ def create_cds(arr, section, config_ini, fix_saturated_pix=True):
 
     if fix_saturated_pix:
         # Determine which pixels are saturated in each read
-        saturated_read_2 = second_reads == 65000
-        saturated_read_1 = first_reads == 65000
+        saturated_read_2 = second_reads >= 65000
+        saturated_read_1 = first_reads >= 65000
 
         # For pixels that are saturated in the second read, calculate their
         # expected CDS value using the count rate from the first read and
@@ -423,7 +423,6 @@ def create_cds(arr, section, config_ini, fix_saturated_pix=True):
         # value to the saturated value (65000).
         saturated_both_reads = saturated_read_1 * saturated_read_2
         cds_arr[saturated_both_reads] = 65000
-        print(saturated_both_reads)
 
         # n_sat_both = len([p for p in saturated_both_reads[0].flatten() if p])
         n_sat_both = len(saturated_both_reads[0][saturated_both_reads[0] == True].flatten())
