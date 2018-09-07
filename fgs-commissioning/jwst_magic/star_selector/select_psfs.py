@@ -606,14 +606,14 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
 def create_reg_file(data, root, guider, in_file=None,
                     global_alignment=False, return_nref=False, testing=False,
                     out_dir=None, masterGUIapp=None, logger_passed=False):
-    """Locate all of the segments in the provdied data, then use the
+    """Locate all of the segments in the provided data, then use the
     provided (or GUI-defined) list of selected segments to generate an
     ALLpsfs.txt file that lists all the segments in the image, and a
     regfile.txt file that lists just the guide and reference stars.
 
     Parameters
     ----------
-    data : 2-D numpy array
+    data : 2-D numpy array or str
         Image data
     root : str
         Name used to generate output folder and output filenames.
