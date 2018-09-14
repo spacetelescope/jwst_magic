@@ -51,7 +51,7 @@ BIASZERO_G2 = fits.getdata(os.path.join(DATA_PATH, 'g2bias0.fits'))
 READ_NOISE = os.path.join(DATA_PATH, 'readnoise.yaml')
 
 
-class FGSDetectorEffects():
+class FGSDetectorEffects:
     """Fetch the bias file for the specified guider, crop to the
     appropriate array size, multiply to have the appropriate number of
     ramps and reads, and add kTc  and read noise.
@@ -67,7 +67,7 @@ class FGSDetectorEffects():
     nreads : int
         Number of reads in the ramp
     nramps : int
-        Numer of ramps in the integraion
+        Number of ramps in the integration
     imgsize : int
         Dimension of the image array (pixels)
 

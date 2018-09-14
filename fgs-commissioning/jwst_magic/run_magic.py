@@ -1,4 +1,4 @@
-'''Run JWST MaGIC end-to-end
+"""Run JWST MaGIC end-to-end
 
 ~Description
 
@@ -32,7 +32,7 @@ Use
             NIRCam image, to a desired number of FGS counts.
         ``out_dir`` - where output FGS image(s) will be saved. If not
             provided, the image(s) will be saved to ../out/{root}.
-'''
+"""
 
 # STDLIB
 import os
@@ -45,7 +45,6 @@ if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 print('Using backend: ', matplotlib.get_backend())
 import numpy as np
-from astropy.io import fits
 
 # LOCAL
 from . import utils, background_stars
@@ -74,27 +73,52 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     the guide star and reference stars necessary for the FSW.
 
     Parameters
-    ==========
+    ----------
+    out_dir : str, optional
+        Where output FGS image(s) will be saved. If not provided, the
+        image(s) will be saved to ../out/{root}.
+    convert_im : boolean, optional
+        Run the convert_image module?
+    star_selection : boolean, optional
+        Run the  star_selector module?
+    star_selection_gui : boolean, optional
+        Show the GUI for the star_selector module?
+    file_writer : boolean, optional
+        Run the fsw_file_writer module?
+    masterGUIapp : PyQt5.QtCore.QCoreApplication instance, optional
+        The QApplication instance of the master GUI, if it is already
+        open.
+    copy_original : boolean, optional
+        Copy the original data to {out_dir}/{root}?
+    normalize : boolean, optional
+        Normalize the provided image during convert_image?
+    coarse_pointing : boolean, optional
+        Apply jitter to simulate coarse pointing?
+    jitter_rate_arcsec : float, optional
+        If coarse_pointing is true, the rate of jitter in arcseconds
+        per second to apply in the form of a Gaussian filter.
+    bkgd_stars : boolean, optional
+        Add background stars to the image?
     image: str
         The path to the image.
     guider: int
         Which guider is being used: 1 or 2
-    root: str
+    root: str, optional
         The root desired for output images if different than root in image
-    norm_value: float
+    norm_value: float, optional
         The value to be used for normalization (depends on norm_unit)
-    norm_unit: str
+    norm_unit: str, optional
         The unit to be used for normalization (expecting "FGS Counts" or "FGS Magnitude")
-    nircam_det: str
+    nircam_det: str, optional
         The NIRCam detector used for this observation. Only applicable for NIRCam
         images and if cannot be parsed from header.
-    nircam: bool
+    nircam: bool, optional
         If this is a FGS image, set this flag to False
-    global_alignment: bool
+    global_alignment: bool, optional
         If this is not a global_alignment image, set this flag to False
-    steps: list of strings
+    steps: list of strings, optional
         List of the steps to be completed
-    in_file: str
+    in_file: str, optional
         If this image comes with an incat or reg file, the file path
     """
 

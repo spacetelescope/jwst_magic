@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 Script to build the jwst_magic package
 
 Authors
@@ -13,7 +13,7 @@ Use
         pip install -e .
 
     while inside the root directory (fgs-commissioning)
-'''
+"""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
@@ -29,7 +29,8 @@ INSTALL_REQUIRES = [
     'pyyaml',
     'requests',
     'pytest',
-    'photutils'
+    'photutils',
+    'scipy'
 ]
 
 # Determine if PyQt5 needs to be included in the install_requires
