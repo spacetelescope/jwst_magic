@@ -3,6 +3,7 @@
 import csv
 import itertools
 import os
+import socket
 import sys
 import time
 import logging.config
@@ -75,6 +76,19 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
     logger.info('Started logging to file {}'.format(logfile))
 
     return logger
+
+def determine_log_path():
+    """Determine whether to save log files in a shared log directory on
+    SOGS, or in the default ``logs`` directory in the package directory.
+    Ensure the chosen log directory exists.
+    """
+    if "sogs" in socket.gethostname():
+        log_path = "/Users/svc_wssops/WFSC_guiding/MAGIC_logs/"
+    else:
+        log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
+
+    ensure_dir_exists(log_path)
+
 
 def ensure_dir_exists(fullpath):
     """Creates dirs from ``fullpath`` if they do not already exist.
