@@ -288,7 +288,6 @@ def write_prc(obj):
 
     else:
         raise ValueError('Unknown step {}; cannot write .prc file.'.format(obj.step))
-        return
 
     mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
                   step=step, out_dir=obj.out_dir, acq1_imgsize=acq1_imgsize,

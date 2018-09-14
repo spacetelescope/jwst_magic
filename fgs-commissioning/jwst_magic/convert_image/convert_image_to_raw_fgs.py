@@ -1,8 +1,8 @@
 """Convert NIRCam or FGS images to raw FGS frame.
 
-This tool takes input NIRCam or FGS images, rebins to FGS platescale
+This tool takes input NIRCam or FGS images, re-bins to FGS plate scale
 if necessary, applies the DQ array if necessary, rotates the image
-according to the SIAF coordinate transformations, and renormalizes to
+according to the SIAF coordinate transformations, and re-normalizes to
 the desired FGS counts/magnitude. The development of this code used
 mock-up NIRCam files from Ball Aerospace's ITM tool, simulating Global
 Alignment using the short wavelength channel.
@@ -388,7 +388,7 @@ def rotate_nircam_image(image, fgs_guider, header, nircam_det,
         Description
     """
 
-    # The Dectector keyword retruns 'NRCA*' or 'NRCB*', so to simplify matters
+    # The Detector keyword returns 'NRCA*' or 'NRCB*', so to simplify matters
     # just pull out the 4th character in the string
     if nircam_det not in [None, "-Parse from Header-"]:
         detector = nircam_det
@@ -443,7 +443,7 @@ def pad_data(data, padding, fgs_pix):
     size = np.shape(data)[0]
 
     # Create an array of size (binned data + 2*padding), filled with the mean data value
-    padded_size = size + 2 * (padding)
+    padded_size = size + 2 * padding
     if padded_size != fgs_pix - 8:
         # If just a +1 error from odd size of image
         if padded_size == 2039:
@@ -553,7 +553,8 @@ def remove_pedestal(data):
         noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
         # print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
     LOGGER.info("Image Conversion: " +
-                "Removed pedestal values from NIRCam image: {} ".format(', '.join(['{:.2f}'.format(p) for p in pedestals])))
+                "Removed pedestal values from NIRCam image: {} ".
+                format(', '.join(['{:.2f}'.format(p) for p in pedestals])))
 
     return noped_data
 
@@ -589,7 +590,7 @@ def convert_im(input_im, guider, root, nircam=True,
         Denotes if the image will be normalized. If True, norm_value
         and norm_unit will be used to determine the normalization value
     norm_value : float, optional
-        Specifieds the value to which to normalize.
+        Specifies the value to which to normalize.
     norm_unit : str, optional
         Specifies the unit of norm_value (FGS Magnitude or FGS Counts)
     coarse_pointing : bool, optional
@@ -621,11 +622,8 @@ def convert_im(input_im, guider, root, nircam=True,
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
     try:
-        # Determine output path and open file
-        basename = os.path.basename(input_im)
-
         LOGGER.info("Image Conversion: " +
-                 "Beginning image conversion to guider {} FGS image".format(guider))
+                    "Beginning image conversion to guider {} FGS image".format(guider))
 
         data = fits.getdata(input_im, header=False)
         header = fits.getheader(input_im, ext=0)
@@ -645,7 +643,11 @@ def convert_im(input_im, guider, root, nircam=True,
                 if pupil_keyword in ['CLEAR', 'Imaging Pupil']:
                     pass
                 else:
-                    raise ValueError('NIRCam "PUPIL" header keyword for provided file is {}. Only the CLEAR/Imaging Pupil can be used to realistically simulate FGS images.'.format(pupil_keyword))
+                    raise ValueError(
+                        'NIRCam "PUPIL" header keyword for provided file is {}. '.format(pupil_keyword) +
+                        'Only the CLEAR/Imaging Pupil can be used to realistically simulate FGS images.'
+                    )
+
             except KeyError:
                 pass
 
@@ -682,7 +684,8 @@ def convert_im(input_im, guider, root, nircam=True,
             pixel_scale = nircam_scale if nircam else FGS_SCALE
 
             data = apply_coarse_pointing_filter(data, jitter_rate_arcsec, pixel_scale)
-            LOGGER.info("Image Conversion: Applied Gaussian filter to simulate coarse pointing with jitter of {:.3f} arcsec/sec".format(jitter_rate_arcsec))
+            LOGGER.info("Image Conversion: Applied Gaussian filter to simulate "
+                        "coarse pointing with jitter of {:.3f} arcsec/sec".format(jitter_rate_arcsec))
 
         # Normalize the image, if the "normalize" flag is True
         if normalize:
@@ -692,7 +695,8 @@ def convert_im(input_im, guider, root, nircam=True,
 
             # Normalize the data
             data = normalize_data(data, fgs_counts)
-            LOGGER.info("Image Conversion: Normalizing to FGS Magnitude of {:.1f} ({} FGS counts)".format(fgs_mag, fgs_counts))
+            LOGGER.info("Image Conversion: Normalizing to FGS Magnitude of {:.1f} ({} FGS counts)".
+                        format(fgs_mag, fgs_counts))
 
     except Exception as e:
         LOGGER.exception(e)
@@ -741,8 +745,6 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     hdr = fits.getheader(header_file, ext=0)
 
     # Write FITS file
-    fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                               '{}_G{}.fits'.format(root, guider))
     utils.write_fits(fgsout_path, np.uint16(data), header=hdr)
 
     return fgsout_path

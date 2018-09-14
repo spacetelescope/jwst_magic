@@ -143,7 +143,7 @@ class SegmentGuidingCalculator:
             The factor by which countrates are multiplied to determine
             the countrate uncertainty
         countrate_factor : float, optional
-            The factor by which countrates are multipled by to simulate
+            The factor by which countrates are multiplied by to simulate
             diffuse PSFs (e.g. in MIMF)
         """
 
@@ -181,7 +181,7 @@ class SegmentGuidingCalculator:
         try:
             segN = int(self.segNum)
         except ValueError:
-            raise ValueError('Unrecognized segment number: {}'.format(segN))
+            raise ValueError('Unrecognized segment number: {}'.format(self.segNum))
 
         # Refresh FGS data
         self.get_guider_aperture()
@@ -271,9 +271,9 @@ class SegmentGuidingCalculator:
         # Check to make sure no segments are off the detector
         for x, y, i_seg in zip(self.xDet, self.yDet, self.SegIDArray):
             if x < 0.5 or x > 2048.5:
-                LOGGER.warn('Segment Guiding: %8s off detector in X direction' % i_seg)
+                LOGGER.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
             if y < 0.5 or y > 2048.5:
-                LOGGER.warn('Segment Guiding: %8s off detector in Y direction' % i_seg)
+                LOGGER.warning('Segment Guiding: %8s off detector in Y direction' % i_seg)
 
         # Check to make sure that RA is between 0 and 360 and Dec is between -90 and 90
         self.check_coords()
@@ -320,7 +320,7 @@ class SegmentGuidingCalculator:
             all_segments += '\n                Segment     dV2    dV3    xIdl' +\
                             '   yIdl     RA         Dec         xDet     yDet'
             for p in range(nseg):
-                all_segments += ('\n                %5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f' \
+                all_segments += ('\n                %5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f'
                                  % (self.SegIDArray[p], self.V2SegArray[p],
                                     self.V3SegArray[p], self.xIdlSegs[p],
                                     self.yIdlSegs[p], self.SegRA[p],
@@ -410,20 +410,20 @@ class SegmentGuidingCalculator:
         """
         for i, ra in enumerate(self.SegRA):
             if ra > 360.0:
-                LOGGER.warn('Segment Guiding: RA = {}'.format(ra))
+                LOGGER.warning('Segment Guiding: RA = {}'.format(ra))
                 self.SegRA -= self.SegRA
             elif ra < 0.0:
-                LOGGER.warn('Segment Guiding: RA = {}'.format(ra))
+                LOGGER.warning('Segment Guiding: RA = {}'.format(ra))
                 self.SegRA += 360.0
             else:
                 continue
 
         for i, dec in enumerate(self.SegDec):
             if dec > 90.0:
-                LOGGER.warn('Segment Guiding: Dec = {}'.format(dec))
+                LOGGER.warning('Segment Guiding: Dec = {}'.format(dec))
                 self.SegDec -= 180.0
             elif dec < -90.0:
-                LOGGER.warn('Segment Guiding: Dec = {}'.format(dec))
+                LOGGER.warning('Segment Guiding: Dec = {}'.format(dec))
                 self.SegDec += 180.0
             else:
                 continue
@@ -513,7 +513,7 @@ class SegmentGuidingCalculator:
                 raise TypeError('Incompatible file type: ', segment_infile)
 
             # If the countrates are included in the input file, read them!
-            if (any(['countrate' == c for c in column_names])):
+            if any(['countrate' == c for c in column_names]):
                 self.counts_array = read_table['countrate']
 
         else:
@@ -662,7 +662,7 @@ class SegmentGuidingCalculator:
                     format(visit_file)
                 )
 
-        # Read in as astropy table
+        # Read in as Astropy table
         names = ['Order', 'Star IDs', 'FGS', 'Corrected RA', 'Corrected Dec',
                  'Probability', 'ID V2', 'ID V3', 'ID X', 'ID Y', 'ID PA @ star',
                  'FGS Magnitude', 'FGS Mag Uncert', 'Count Rate', 'Count Rate Uncert']
@@ -772,7 +772,6 @@ class SegmentGuidingCalculator:
             gsRA = float(gsRA)
 
         errcode = self.checkout(gsDec, -90.0, 90.0)
-        error = msg[errcode]
         if errcode != 0:
             error = msg[errcode]
             raise ValueError(error)
@@ -790,14 +789,15 @@ class SegmentGuidingCalculator:
 
         return v2_boresight, v3_boresight, gsRA, gsDec, gsPA
 
-    def checkout(self, str, low, high):
+    @staticmethod
+    def checkout(value, low, high):
         """Test conversion from string to float. If float conversion
         works, test range return errcode 0 for OK, 1 for conversion
         error, 2 for range error
         """
 
         try:
-            x = float(str)
+            x = float(value)
             if low <= x <= high:
                 errcode = 0
             else:
@@ -976,7 +976,7 @@ def run_tool(segment_infile, guider, root=None, program_id=0, observation_num=0,
         The factor by which countrates are multiplied to determine
         the countrate uncertainty
     countrate_factor : float, optional
-        The factor by which countrates are multipled by to simulate
+        The factor by which countrates are multiplied by to simulate
         diffuse PSFs (e.g. in MIMF)
     parameter_dialog : bool, optional
         Prompt the user to enter parameters (countrate factors, APT

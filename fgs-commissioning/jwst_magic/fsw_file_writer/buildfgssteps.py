@@ -234,9 +234,8 @@ class BuildFGSSteps(object):
         ----------
         section : str
             Name of step within the config file ('{step}_dict')
-        configfile : str, optional
-            File defining parameters for each guider step. If not
-            defined, defaults to jwst_magic/data/config.ini
+        config_ini : : obj
+            Object containing all parameters from the given config file
 
         Returns
         -------
@@ -271,7 +270,7 @@ class BuildFGSSteps(object):
             n_frametimes_in_first_read = n_drops_before_first_read + 1
             # Add signal to every first read
             noisy_signal_cube = np.random.poisson(signal_cube)
-            image[i_read::(self.nreads)] += n_frametimes_in_first_read * noisy_signal_cube
+            image[i_read::self.nreads] += n_frametimes_in_first_read * noisy_signal_cube
 
             # Second read
             # Calculate how much signal should be in the second read
@@ -280,7 +279,7 @@ class BuildFGSSteps(object):
             n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
             # Add signal to every second read
             noisy_signal_cube = np.random.poisson(signal_cube)
-            image[i_read::(self.nreads)] += n_frametimes_in_second_read * noisy_signal_cube
+            image[i_read::self.nreads] += n_frametimes_in_second_read * noisy_signal_cube
 
         else:
             # In the case of LOSTRK, just return one frame with one
@@ -337,7 +336,7 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
     nstrips : int
         Number of strips to split the image into
     nramps : int
-        Numer of ramps in the integraion
+        Number of ramps in the integration
     nreads : int
         Number of reads in the ramp
     strip_height : int
