@@ -115,7 +115,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         starSelectorCentralWidget = self.central_widget
         self.frame_selectStarsGUI.layout().addWidget(starSelectorCentralWidget)
 
-        # Create and load sgement guiding GUI session
+        # Create and load segment guiding GUI session
         self.show()
         self.setWindowTitle('JWST MaGIC - Segment Guiding Command Generator')
         self.adjust_screen_size_segment_guiding()
@@ -183,7 +183,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         """Save the currently selected segment orientation to the list
         of override commands.
         """
-        if self.inds == []:
+        if not self.inds:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
             no_stars_selected_dialog.setInformativeText(
@@ -234,7 +234,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 
             # If the regfile doesn't match the ALLpsfs locations,
             # don't try to load anything.
-            if selected_indices == []:
+            if not selected_indices:
                 return
 
         # Read them from a table
@@ -368,14 +368,17 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.canvas.draw()
 
     def fileQuit(self):
-        """Ensures that all necessay values have been defined and
+        """Ensures that all necessary values have been defined and
         closes the segment guiding window.
         """
         # If the center segment number hasn't been set, don't quit.
         if self.segNum is None:
             no_segNum_selected_dialog = QMessageBox()
             no_segNum_selected_dialog.setText('No center segment number' + ' ' * 50)
-            no_segNum_selected_dialog.setInformativeText('The center of override pointing (segNum) has not been defined. Please define before quitting.')
+            no_segNum_selected_dialog.setInformativeText(
+                'The center of override pointing (segNum) has not been defined.'
+                ' Please define before quitting.'
+            )
             no_segNum_selected_dialog.setStandardButtons(QMessageBox.Ok)
             no_segNum_selected_dialog.exec()
             return

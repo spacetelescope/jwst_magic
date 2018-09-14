@@ -23,7 +23,7 @@ Use
     Optional arguments:
         ``thresh_factor`` - factor by which to multiply the countrates
             to determine the threshold count rate
-        ``out_dir`` - qhere output files will be saved. If not provided,
+        ``out_dir`` - where output files will be saved. If not provided,
             the image(s) will be saved within the repository at
             tools/fgs-commissioning/
         ``acq1_imgsize`` - dimension of ACQ1 images
@@ -31,7 +31,7 @@ Use
 
 Notes
 -----
-    This code is adapted from mkIDproc.pro/mkACQproc.pro from Sherie Hofeltz.
+    This code is adapted from mkIDproc.pro/mkACQproc.pro from Sherie Holfeltz.
 """
 
 # Standard Library Imports
@@ -44,12 +44,13 @@ from .. import coordinate_transforms
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.split(__location__)[0]
-OUT_PATH = os.path.split(PACKAGE_PATH)[0] # Location of out/ directory
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ directory
 
 
 class Mkproc(object):
     """Makes CECIL proc files for FGS guider 1 and 2
     """
+
     def __init__(self, guider, root, xarr, yarr, counts, step, thresh_factor=0.5,
                  out_dir=None, acq1_imgsize=None, acq2_imgsize=None):
         """ Initialize the class and create CECIL proc files for guider 1 and 2.
@@ -148,7 +149,7 @@ class Mkproc(object):
             the threshold count rate
         """
         eol = '\n'
-        nref = len(xarr)-1
+        nref = len(xarr) - 1
         dhas_filename = os.path.join(self.out_dir, 'dhas',
                                      '{0}_G{1}_ID.prc'.format(root, guider))
 
@@ -175,7 +176,7 @@ class Mkproc(object):
 
             self.write_from_template(self.template_b, file_out)
 
-            if nref >= 1: # ref stars > 0
+            if nref >= 1:  # ref stars > 0
                 file_out.write('@IFGS_REFCOUNT DETECTOR={0}, REFSTARS={1}'.format(self.guider,
                                                                                   nref))
                 file_out.write(eol)
@@ -193,8 +194,8 @@ class Mkproc(object):
                     file_out.write(eol)
                     self.write_from_template(self.template_d, file_out)
 
-                #The last reference star ends with a different template so it
-                #written outside of the for loop
+                # The last reference star ends with a different template so it
+                # written outside of the for loop
                 file_out.write('@IFGS_REFSTAR {0}, {1:5d}, {2:12.6f}, {3:12.6f}, \
                                {4:8d},{5:8d}'.format(self.guider,
                                                      int(nref),
@@ -243,11 +244,11 @@ class Mkproc(object):
 
         ### THIS IS BAD -- CHANGE THIS --- KJB 1/25/2018
         # Corner coordinates & guide star counts
-        xarr1, yarr1 = coordinate_transforms.Raw2DHAS(xarr - acq1_imgsize//2,
-                                                      yarr - acq1_imgsize//2,
+        xarr1, yarr1 = coordinate_transforms.Raw2DHAS(xarr - acq1_imgsize // 2,
+                                                      yarr - acq1_imgsize // 2,
                                                       guider)
-        xarr2, yarr2 = coordinate_transforms.Raw2DHAS(xarr - acq2_imgsize//2,
-                                                      yarr - acq2_imgsize//2,
+        xarr2, yarr2 = coordinate_transforms.Raw2DHAS(xarr - acq2_imgsize // 2,
+                                                      yarr - acq2_imgsize // 2,
                                                       guider)
 
         # Get threshold from countrate (not from STC file)
@@ -296,9 +297,9 @@ class Mkproc(object):
         shutil.copy2(dhas_filename,
                      os.path.join(self.out_dir, 'ground_system'))
         print("Successfully wrote: {}".format(os.path.join(
-            self.out_dir, 'ground_system',  '{0}_G{1}_ACQ.prc'.format(root,
-                                                                      guider)
-            )
+            self.out_dir, 'ground_system', '{0}_G{1}_ACQ.prc'.format(root,
+                                                                     guider)
+        )
         ))
 
     @staticmethod

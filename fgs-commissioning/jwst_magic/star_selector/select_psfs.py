@@ -237,7 +237,7 @@ def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
     objects : 2-D numpy array
         Segmentation of image data
     num_objects : int
-        Number of individidual objects in the segmentation data
+        Number of individual objects in the segmentation data
     x : list
         List of x-coordinates of identified PSFs
     y : list
@@ -289,7 +289,7 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
         List of count rates of identified PSFs
     val : list
         List of the number of pixels in each PSF's segmentation object
-    labels : bool, optional
+    labels : list, optional
         Denotes whether the PSF alphabetic labels should be included as
         a column to write out
     inds : list, optional
@@ -385,7 +385,7 @@ def match_psfs_to_segments(x, y, global_alignment):
 
 
 def parse_in_file(in_file):
-    '''Get the position and countrates from a provided regfile.txt
+    """Get the position and countrates from a provided regfile.txt
 
     Determines if the input file contains x, y, and countrate data. If
     so, extracts the locations and countrates of the stars accordingly.
@@ -410,7 +410,7 @@ def parse_in_file(in_file):
     ------
     TypeError
         Incompatible file provided to in_file
-    '''
+    """
 
     in_table = asc.read(in_file)
     colnames = in_table.colnames
@@ -441,7 +441,6 @@ def parse_in_file(in_file):
                                                                         fix_colnames)
                 raise TypeError(err_message)
                 LOGGER.error(err_message)
-                return
 
             for old_col, fix_col in zip(colnames, fix_colnames):
                 # Assign fixed column names to table
@@ -458,7 +457,6 @@ def parse_in_file(in_file):
                                                                     raw_columns.split())
             raise TypeError(err_message)
             LOGGER.error(err_message)
-            return
 
     # Make sure all the necessary columns are present
     x_check = 'x' in colnames or 'xreal' in colnames
@@ -472,7 +470,6 @@ def parse_in_file(in_file):
                        named {}. Please rename columns.'.format(in_file, colnames)
         raise TypeError(err_message)
         LOGGER.error(err_message)
-        return
 
     # Passed all the checkpoints! Move on to process the file.
     LOGGER.info('Star Selection: Selecting stars from input file {}'.format(in_file))
@@ -503,7 +500,7 @@ def parse_in_file(in_file):
 
 
 def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=None):
-    '''Launches a GUI to prompt the user to click-to-select guide and
+    """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
     Algorithmically find and locate all PSFs in image using
@@ -536,8 +533,8 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     Raises
     ------
     ValueError
-        The user closed the GUI wihout selecting any stars.
-    '''
+        The user closed the GUI without selecting any stars.
+    """
     if global_alignment:
         gauss_sigma = 26
     else:
