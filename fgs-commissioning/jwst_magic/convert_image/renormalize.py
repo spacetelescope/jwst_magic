@@ -47,6 +47,7 @@ class NormalizeToCounts(object):
         self.value = value
         self.unit = unit
         self.guider = guider
+        log.warning('* * * AN IMAGE THAT IS NORMALIZED TO COUNTS MIGHT HAVE INCORRECT UNITS DUE TO IT BEING MULTIPLIED BY THE FRAME TIME IN create_img_arrays() * * *')
 
     def to_counts(self):
         """Convert self.value to FGS counts
