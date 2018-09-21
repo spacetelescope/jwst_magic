@@ -566,7 +566,7 @@ def remove_pedestal(data):
 def convert_im(input_im, guider, root, nircam=True,
                nircam_det=None, normalize=True, norm_value=12.0,
                norm_unit="FGS Magnitude", coarse_pointing=False,
-               jitter_rate_arcsec=None, logger_passed=False,):
+               jitter_rate_arcsec=None, logger_passed=False):
     """Takes NIRCam or FGS image and converts it into an FGS-like image.
 
     Parameters
@@ -689,7 +689,7 @@ def convert_im(input_im, guider, root, nircam=True,
 
         # Normalize the image, if the "normalize" flag is True
         if normalize:
-            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
+            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider, logger_passed=True)
             fgs_counts = norm_obj.to_counts()
             fgs_mag = norm_obj.to_fgs_mag()
 
