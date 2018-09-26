@@ -42,6 +42,7 @@ fgs-commissioning/jwst_fgs_commissioning_tools.egg-info/*
 .Trashes
 ehthumbs.db
 Thumbs.db
+*~$*.docx
 
 # Notebooks #
 #############
