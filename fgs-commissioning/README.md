@@ -1,9 +1,11 @@
-FGS Commissioning Tools
-=======================
+Multi-Application Guiding Interface for Commissioning (MAGIC)
+=====================================================================
 
-![GUI](notebooks/FGSCommTools_GUI.png)
+<p align="center">
+    <img width="275" src ="magic_logo.png" alt="MAGIC logo" />
+</p>
 
-The FGS Commissioning Tools package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
+The Multifunctional wavefront Guiding Interface for Commissioning (MAGIC) package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
 
 These tools comprise of four main components that can be run individually
 or together:
@@ -21,7 +23,7 @@ an FGS image that it is passed by the user, and allow the user to choose
 the guide star and reference stars using a GUI.
 
 
-### 3. Flight software file creation (``fsw_file_writer``)
+### 3. Flight Software File Writer (``fsw_file_writer``)
 This module requires an FGS image and a file that includes a list of the
 coordinates of the guide star and reference stars, along with their count
 rates. This tool will create all files necessary to test this image different
@@ -35,49 +37,50 @@ provided 1) the commanded RA and Dec of a guide star and 2) the V2/V3 (or x/y)
 positions of all segments in an array, the segment guiding tool calculates the
 effective RA and Dec of all segments on the sky.
 
-------------------
 
 Installation notes
 ------------------
-
 This package was developed in a python 3.5 environment. Python 2.7 is not yet supported.
 
-The following supplemental packages are required:
-* pysiaf (download here: https://grit.stsci.edu/ins-tel/jwst_siaf_prototype)
-* photutils
+The following supplemental packages are required, and will be **automatically installed** with the package:
+* `astropy`
+* `matplotlib`
+* `numpy`
+* `photutils`
+* `PyQt5`
+* `pysiaf`
+* `pytest`
+* `pyyaml`
+* `requests`
 
-To install:
+##### To install:
 
-1) Clone the gitlab repository to your local machine
+1) Activate your Python 3 (preferably Astroconda) environment.
 
-	`git clone git@grit.stsci.edu:wfsc/tools.git`
+2) Clone the gitlab repository to your local machine
 
-2) Install the jwst_fgs_commissioning_tools package:
+	git clone git@grit.stsci.edu:wfsc/tools.git
 
-	`cd tools/fgs-commissioning`
+3) Install the `jwst_magic` package:
 
-	`pip install -e .`
+	cd tools/fgs-commissioning
+
+	pip install -e .a
 
 
 
 Running the Tools
 -----------------
-These tools are best run in IPython or Jupyter Notebook.
+These tools are best run in the IPython terminal. Simply activate your Python 3 (preferably Astroconda) environment, and launch the GUI with the following steps:
 
-#### Jupyter Notebook
-See the `FGS Commisioning Tool Tutorial.ipynb` notebook for examples on how to run the tools.
+    In[1]: import jwst_magic
 
-#### IPython
-In IPython, execute the following steps:
+    In[2]: jwst_magic.run_tool_GUI()
 
-```
-In[1]: from jwst_fgs_commissioning_tools import run_fgs_commissioning_tool
 
-In[2]: input_image = ‘full/path/to/image.fits’
+Tutorial
+-----------------
+See the [`FGS Commissioning Tool Tutorial.ipynb`](notebooks/FGS Commissioning Tool Tutorial.ipynb) notebook for examples on how to run the tools on a modular level from within a Jupyter notebook.
 
-In[3]: guider = 1
 
-In[4]: run_fgs_commissioning_tool.run_all(input_image, guider)
-```
-
-Developed by Keira Brooks, Lauren Chambers, Kathryn St. Laurent and collaborators, 2016-2018.
+###### Developed by Keira Brooks, Lauren Chambers, Kathryn St. Laurent and collaborators, 2016-2018.
