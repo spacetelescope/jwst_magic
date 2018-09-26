@@ -56,9 +56,9 @@ Use
             {'V2Boff': 0.1,  # boresight offset in V2 (arcsec)
              'V3Boff': 0.2,  # boresight offset in V3 (arcsec)
              'fgsNum': 1,  # guider number
-             'RA': 30.,  # RA of guide star
-             'Dec': 50.,  # Dec of guide star
-             'PA': 2.,  # position angle of guide star
+             'RA': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
+             'Dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
+             'PA': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
              'segNum': 0}  # selected segment to guide on
         ``ct_uncert_fctr`` - the factor by which countrates are
             multiplied to determine the countrate uncertainty
@@ -126,9 +126,9 @@ class SegmentGuidingCalculator:
             {'V2Boff': 0.1,  # boresight offset in V2 (arcsec)
              'V3Boff': 0.2,  # boresight offset in V3 (arcsec)
              'fgsNum': 1,  # guider number
-             'RA': 30.,  # RA of guide star
-             'Dec': 50.,  # Dec of guide star
-             'PA': 2.,  # position angle of guide star
+             'RA': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
+             'Dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
+             'PA': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
              'segNum': 0}  # selected segment to guide on
         refonly : bool, optional
             Will the override file be written out using the 'ref-only' syntax?
@@ -765,7 +765,7 @@ class SegmentGuidingCalculator:
 
         errcode = self.checkout(gsRA, 0.0, 360.0)
         if errcode != 0:
-            error = msg[errcode]
+            error = "{} for RA. Expecting between 0.0 and 360.0 degrees.".format(msg[errcode])
             raise ValueError(error)
             return error
         else:
@@ -773,14 +773,14 @@ class SegmentGuidingCalculator:
 
         errcode = self.checkout(gsDec, -90.0, 90.0)
         if errcode != 0:
-            error = msg[errcode]
+            error = "{} for DEC. Expecting between -90.0 and 90.0 degrees.".format(msg[errcode])
             raise ValueError(error)
             return error
         else:
             gsDec = float(gsDec)
 
-        errcode = self.checkout(gsPA, -180.0, 180.0)
-        error = msg[errcode]
+        errcode = self.checkout(gsPA, 0.0, 360.0)
+        error = "{} for POSITION ANGLE. Expecting between 0.0 and 360.0 degrees.".format(msg[errcode])
         if errcode != 0:
             raise ValueError(error)
             return
@@ -955,9 +955,9 @@ def run_tool(segment_infile, guider, root=None, program_id=0, observation_num=0,
         {'V2Boff': 0.1,  # boresight offset in V2 (arcsec)
          'V3Boff': 0.2,  # boresight offset in V3 (arcsec)
          'fgsNum': 1,  # guider number
-         'RA': 30.,  # RA of guide star
-         'Dec': 50.,  # Dec of guide star
-         'PA': 2.,  # position angle of guide star
+         'RA': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
+         'Dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
+         'PA': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
          'segNum': 0}  # selected segment to guide on
     selected_segs : str, optional
         Filepath to regfile.txt file with list of locations and
