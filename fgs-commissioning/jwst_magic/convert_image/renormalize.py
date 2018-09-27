@@ -29,6 +29,9 @@ import logging
 # Third Party Imports
 import numpy as np
 
+# Local Imports
+from .. import utils
+
 # Constants
 FGS_ZERO_POINT = 29.057
 J_ZERO_POINT = 0.90
@@ -46,7 +49,7 @@ class NormalizeToCounts(object):
     """Input the user-defined value and unit (FGS Counts, FGS Magnitude
     or J Magnitude) and convert into FGS Counts.
     """
-    def __init__(self, value, unit, guider, logger_passed=False):
+    def __init__(self, value, unit, guider, root='', logger_passed=False):
         """Initialize the class.
         """
         # Set up logger
