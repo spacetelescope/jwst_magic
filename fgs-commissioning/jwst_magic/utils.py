@@ -4,6 +4,7 @@ import csv
 import itertools
 import logging.config
 import os
+import socket
 import sys
 import time
 import yaml
@@ -27,8 +28,7 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
     https://docs.python.org/2/howto/logging.html
     """
     # Ensure the logs directory exists
-    log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
-    ensure_dir_exists(log_path)
+    log_path = determine_log_path()
 
     # Parse logging level input
     if type(level) != int:
@@ -77,6 +77,23 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
     logger.info('Started logging to file {}'.format(logfile))
 
     return logger
+
+
+def determine_log_path():
+    """Determine whether to save log files in a shared log directory on
+    SOGS, or in the default ``logs`` directory in the package directory.
+    Ensure the chosen log directory exists.
+    """
+    on_SOGS = "sogs" in socket.gethostname()
+
+    if on_SOGS:
+        log_path = "/data/jwst/wss/guiding/MAGIC_logs/"
+    else:
+        log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
+
+    ensure_dir_exists(log_path)
+
+    return log_path
 
 
 def ensure_dir_exists(fullpath):
