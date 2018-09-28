@@ -164,7 +164,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         """Connect widgets' signals to the appropriate methods.
         """
         # Main dialog window widgets
-        self.pushButton_done.clicked.connect(self.fileQuit)  # Redefine
+        self.pushButton_done.clicked.connect(self.quit_segment_guiding)  # Redefine
 
         # General segment guiding widgets
         self.pushButton_save.clicked.connect(self.save_orientation_to_list)
@@ -371,7 +371,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 
         self.canvas.draw()
 
-    def fileQuit(self):
+    def quit_segment_guiding(self):
         """Ensures that all necessary values have been defined and
         closes the segment guiding window.
         """
