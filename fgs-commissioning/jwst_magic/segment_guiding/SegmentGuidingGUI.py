@@ -340,8 +340,8 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             i_seg_center = int(self.comboBox_segmentCenter.currentText()) - 1
             self.center = self.canvas.axes.plot(self.x[i_seg_center],
                                                 self.y[i_seg_center], 'x', ms=20,
-                                                alpha=0.8, mfc='white',
-                                                mec='white', mew=5, lw=0)
+                                                alpha=0.8, mfc='red',
+                                                mec='red', mew=5, lw=0)
 
             self.segNum = int(self.comboBox_segmentCenter.currentText())
 
@@ -365,7 +365,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 
             # Plot mean location of array on canvas
             self.center = self.canvas.axes.plot(x_mean, y_mean, 'x', ms=20, alpha=0.8,
-                                                mfc='white', mec='white', mew=5, lw=0)
+                                                mfc='red', mec='red', mew=5, lw=0)
 
             self.segNum = 0
 
