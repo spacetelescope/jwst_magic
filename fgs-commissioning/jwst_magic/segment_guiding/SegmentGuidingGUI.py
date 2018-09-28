@@ -122,6 +122,10 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.define_SegmentGuidingGUI_connections()
         self.show()
 
+        # Add the number of stars/segments to the pointing center dropdown menu
+        for i in range(len(x)):
+            self.comboBox_segmentCenter.addItem('{}'.format(i+1))
+
         # Load stars from regfile, if it exists
         if selected_segs is not None and os.path.exists(selected_segs):
             self.load_orientation(selected_segs)
