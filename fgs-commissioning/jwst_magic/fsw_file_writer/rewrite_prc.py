@@ -110,7 +110,9 @@ def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
     elif isinstance(inds, list):
         pass
     else:
-        raise ValueError('Invalid indices provided (must be string of alphabetic labels or list of integer indices): ', inds)
+        raise ValueError(
+            'Invalid indices provided (must be string of alphabetic labels or '
+            'list of integer indices): ', inds)
 
     rows = all_rows[inds]
 
