@@ -925,10 +925,10 @@ def segment_guiding_dialog(guider, program_id, observation_num, visit_num):
 
 
 def run_tool(segment_infile, guider, root=None, program_id=0, observation_num=0,
-             visit_num=0, GUI=True, guide_star_params_dict=None, selected_segs=None,
-             vss_infile=None, out_dir=None, data=None, masterGUIapp=None,
-             refonly=False, ct_uncert_fctr=0.9, countrate_factor=None,
-             parameter_dialog=True):
+             visit_num=0, click_to_select_GUI=True, guide_star_params_dict=None,
+             selected_segs=None, vss_infile=None, out_dir=None, data=None,
+             masterGUIapp=None, refonly=False, ct_uncert_fctr=0.9,
+             countrate_factor=None, parameter_dialog=True):
     """Run the segment guiding tool to generate a segment guiding
     override file.
 
@@ -948,7 +948,7 @@ def run_tool(segment_infile, guider, root=None, program_id=0, observation_num=0,
         Observation number
     visit_num : int, optional
         Visit number
-    GUI : bool, optional
+    click_to_select_GUI : bool, optional
         Will the tool use the segment guiding GUI?
     guide_star_params_dict : dict, optional
         Dictionary containing guide star parameters, for example:
@@ -995,7 +995,14 @@ def run_tool(segment_infile, guider, root=None, program_id=0, observation_num=0,
                     guider, program_id, observation_num, visit_num
                 )
 
-        if GUI:
+        if click_to_select_GUI:
+            if data is None:
+                raise ValueError(
+                    'In order to run the segment guiding tool with '
+                    '`click_to_select_GUI=True`, you must provide a 2-D '
+                    'numpy array of the image to the `data` argument in '
+                    '`segment_guiding.run_tool`.'
+                )
             # Parse ALLpsfs.txt for locations of segments
             all_segment_locations = asc.read(segment_infile)
             x = all_segment_locations['x']
@@ -1027,7 +1034,7 @@ def run_tool(segment_infile, guider, root=None, program_id=0, observation_num=0,
 
         # Set up guiding calculator object
         sg = SegmentGuidingCalculator(segment_infile, program_id, observation_num,
-                                      visit_num, root=root, GUI=GUI,
+                                      visit_num, root=root, GUI=click_to_select_GUI,
                                       guide_star_params_dict=guide_star_params_dict,
                                       selected_segs=selected_segs,
                                       vss_infile=vss_infile, out_dir=out_dir,

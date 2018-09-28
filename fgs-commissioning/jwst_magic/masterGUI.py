@@ -390,7 +390,7 @@ class MasterGui(QMainWindow):
             # Run the tool
             segment_guiding.run_tool(segment_infile, guider, program_id=program_id,
                                      observation_num=observation_num,
-                                     visit_num=visit_num, root=root, GUI=GUI,
+                                     visit_num=visit_num, root=root, click_to_select_GUI=GUI,
                                      out_dir=out_dir, data=data,
                                      selected_segs=selected_segs,
                                      masterGUIapp=self.app, refonly=refonly)
