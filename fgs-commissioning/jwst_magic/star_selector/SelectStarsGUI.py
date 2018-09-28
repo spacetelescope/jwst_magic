@@ -537,7 +537,7 @@ class StarSelectorWindow(QDialog):
             if source == self.pushButton_deleteStar:
                 if event.type() == QtCore.QEvent.Enter and len(self.inds) > 0:
                     # Determine index of star corresponding to button
-                    star_ind = self.tableWidget_selectedStars.current_row()
+                    star_ind = self.tableWidget_selectedStars.currentRow()
 
                     # Re-draw selected star as red
                     if star_ind != -1:
@@ -547,7 +547,7 @@ class StarSelectorWindow(QDialog):
 
                 if event.type() == QtCore.QEvent.Leave and len(self.inds) > 0:
                     # Determine index of star corresponding to button
-                    star_ind = self.tableWidget_selectedStars.current_row()
+                    star_ind = self.tableWidget_selectedStars.currentRow()
 
                     # Re-draw selected star as selected color
                     if star_ind != -1:
@@ -748,7 +748,7 @@ class StarSelectorWindow(QDialog):
         self.circles[ind_of_old_guide_star].set_markeredgecolor('darkorange')
 
         # Determine index of new guide star
-        guide_ind = self.tableWidget_selectedStars.current_row()
+        guide_ind = self.tableWidget_selectedStars.currentRow()
         self.gs_ind = guide_ind
 
         # Re-draw new guide star as guide star
@@ -768,7 +768,7 @@ class StarSelectorWindow(QDialog):
         """
 
         # Determine index of star being removed
-        star_ind = self.tableWidget_selectedStars.current_row()
+        star_ind = self.tableWidget_selectedStars.currentRow()
 
         # Un-draw circle
         delete_circle = self.circles.pop(star_ind)
@@ -797,7 +797,7 @@ class StarSelectorWindow(QDialog):
             self.tableWidget_selectedStars.insertRow(0)
         # Update which row is highlighted:
         if self.gs_ind is not None:
-            self.current_row = self.tableWidget_selectedStars.current_row()
+            self.current_row = self.tableWidget_selectedStars.currentRow()
             self.circles[self.current_row].set_markeredgecolor('cornflowerblue')
 
         # Update guide star
