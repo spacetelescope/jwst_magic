@@ -477,8 +477,9 @@ class StarSelectorWindow(QDialog):
     def define_StarSelectionGUI_connections(self):
         """Connect widgets' signals to the appropriate methods.
         """
-        # Main dialog widgets
-        self.pushButton_done.clicked.connect(self.quit)
+        # If not in SGT, define the main GUI widgets
+        if not self.in_SGT_GUI:
+            self.pushButton_done.clicked.connect(self.quit_star_selection)
         self.pushButton_cancel.clicked.connect(self.cancel)
 
         # Main matplotlib canvas widget
@@ -840,7 +841,7 @@ class StarSelectorWindow(QDialog):
         if self.print_output:
             print(remstar_string)
 
-    def quit(self):
+    def quit_star_selection(self):
         """Closes the star selector window.
         """
 
