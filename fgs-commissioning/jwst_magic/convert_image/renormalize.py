@@ -23,14 +23,22 @@ Notes
     should be looked into at some point for consistency with other
     systems
 """
+# Standard Library Imports
+import logging
 
 # Third Party Imports
 import numpy as np
+
+# Local Imports
+from .. import utils
 
 # Constants
 FGS_ZERO_POINT = 29.057
 J_ZERO_POINT = 0.90
 CONVERSION_FACTOR = 3.1418185
+
+# Start logger
+LOGGER = logging.getLogger(__name__)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN CLASS
@@ -41,12 +49,17 @@ class NormalizeToCounts(object):
     """Input the user-defined value and unit (FGS Counts, FGS Magnitude
     or J Magnitude) and convert into FGS Counts.
     """
-    def __init__(self, value, unit, guider):
+    def __init__(self, value, unit, guider, root='', logger_passed=False):
         """Initialize the class.
         """
+        # Set up logger
+        if not logger_passed:
+            utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+
         self.value = value
         self.unit = unit
         self.guider = guider
+        LOGGER.warning('* * * AN IMAGE THAT IS NORMALIZED TO COUNTS MIGHT HAVE INCORRECT UNITS DUE TO IT BEING MULTIPLIED BY THE FRAME TIME IN create_img_arrays() * * *')
 
     def to_counts(self):
         """Convert self.value to FGS counts

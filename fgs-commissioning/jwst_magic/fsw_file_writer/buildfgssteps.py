@@ -123,11 +123,12 @@ class BuildFGSSteps(object):
         else:
             self.input_im = im
 
+        # *** SHOULD THIS BE HAPPENING HERE?? ***
         # Correct for negative, saturated pixels and other nonsense
         self.input_im = utils.correct_image(self.input_im)
 
-        # THEN convert to uint16
-        self.input_im = np.uint16(self.input_im)
+        # # THEN convert to uint16
+        # self.input_im = np.uint16(self.input_im)
 
         # LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
 
@@ -234,19 +235,19 @@ class BuildFGSSteps(object):
         ----------
         section : str
             Name of step within the config file ('{step}_dict')
-        configfile : str, optional
-            File defining parameters for each guider step. If not
-            defined, defaults to jwst_magic/data/config.ini
+        config_ini : : obj
+            Object containing all parameters from the given config file
 
         Returns
         -------
         image : 2-D numpy array
             The final image including any necessary detector effects,
-            either full-frame or the appropriately sized subarray.
+            either full-frame or the appropriately sized subarray, in counts.
         """
 
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
+        # ** THIS MIGHT NOT BE CORRECT IF IT OCCURS AFTER THE IMAGE HAS BEEN NORMALIZED TO COUNTS ALREADY **
         self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tframe')
 
         # Add the bias, and build the array of reads with noisy data
@@ -271,7 +272,7 @@ class BuildFGSSteps(object):
             n_frametimes_in_first_read = n_drops_before_first_read + 1
             # Add signal to every first read
             noisy_signal_cube = np.random.poisson(signal_cube)
-            image[i_read::(self.nreads)] += n_frametimes_in_first_read * noisy_signal_cube
+            image[i_read::self.nreads] += n_frametimes_in_first_read * noisy_signal_cube
 
             # Second read
             # Calculate how much signal should be in the second read
@@ -280,7 +281,7 @@ class BuildFGSSteps(object):
             n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
             # Add signal to every second read
             noisy_signal_cube = np.random.poisson(signal_cube)
-            image[i_read::(self.nreads)] += n_frametimes_in_second_read * noisy_signal_cube
+            image[i_read::self.nreads] += n_frametimes_in_second_read * noisy_signal_cube
 
         else:
             # In the case of LOSTRK, just return one frame with one
@@ -289,12 +290,12 @@ class BuildFGSSteps(object):
             image = self.time_normed_im
 
         # Cut any pixels over saturation or under zero
-        image = utils.correct_image(image)
+        # image = utils.correct_image(image)
 
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
         if config_ini.getboolean(section, 'cdsimg'):
-            self.cds = create_cds(image)
+            self.cds = create_cds(image, section, config_ini)
         else:
             self.cds = None
 
@@ -337,7 +338,7 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
     nstrips : int
         Number of strips to split the image into
     nramps : int
-        Numer of ramps in the integraion
+        Number of ramps in the integration
     nreads : int
         Number of reads in the ramp
     strip_height : int
@@ -364,26 +365,69 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
             nn += 1
 
     # Make sure the data is between 0 and 65,000 counts and are finite numbers
-    strips = utils.correct_image(strips)
-    strips = np.uint16(strips)
+    # strips = utils.correct_image(strips)
 
     return strips
 
 
-def create_cds(arr):
+def create_cds(arr, section, config_ini, fix_saturated_pix=True):
     """Create CDS image: Subtract the first read from the second read.
+    Option to handle saturated pixels in CDS.
 
     Parameters
     ----------
     arr : 3-D numpy array
-        Image data
+        Image data in
+    fix_saturated_pix : boolean
+        Apply a fix to saturated pixels in the CDS array?
 
     Returns
     -------
     2-D numpy array
         CDS of image
     """
-    return arr[1::2] - arr[:-1:2]
+    # Second read minus first read
+    first_reads = arr[:-1:2]
+    second_reads = arr[1::2]
+    cds_arr = second_reads - first_reads
+
+    if fix_saturated_pix:
+        # Determine which pixels are saturated in each read
+        saturated_read_2 = second_reads >= 65000
+        saturated_read_1 = first_reads >= 65000
+
+        # For pixels that are saturated in the second read, calculate their
+        # expected CDS value using the count rate from the first read and
+        # assuming linearity.
+        n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
+        n_frametimes_in_first_read = n_drops_before_first_read + 1
+        time_first_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_first_read  # seconds
+        first_read_countrates = first_reads / time_first_read  # counts / second
+
+        n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
+        n_frametimes_in_cds_read = n_drops_before_second_read + 1
+        time_cds_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_cds_read  # seconds
+
+        # If the calculated CDS value is less than saturation, set that
+        # as the pixel value. Otherwise, set the pixel value to 65000.
+        cds_counts = first_read_countrates * time_cds_read  # counts
+        cds_counts[cds_counts > 65000] = 65000
+        cds_arr[saturated_read_2] = cds_counts[saturated_read_2]
+
+        # n_sat_2 = len([p for p in saturated_read_2[0].flatten() if p])
+        n_sat_2 = len(saturated_read_2[0][saturated_read_2[0] == True].flatten())
+        print('Adjusting {} pixels that are saturated in read 2.'.format(n_sat_2))
+
+        # For pixels that are saturated in both reads, set their CDS
+        # value to the saturated value (65000).
+        saturated_both_reads = saturated_read_1 * saturated_read_2
+        cds_arr[saturated_both_reads] = 65000
+
+        # n_sat_both = len([p for p in saturated_both_reads[0].flatten() if p])
+        n_sat_both = len(saturated_both_reads[0][saturated_both_reads[0] == True].flatten())
+        print('Adjusting {} pixels that are saturated in both reads.'.format(n_sat_both))
+
+    return cds_arr
 
 
 def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):

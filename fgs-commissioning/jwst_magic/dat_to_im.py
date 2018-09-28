@@ -7,10 +7,11 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 
 # From local
-import utils
+from . import utils
 
-def dat_to_array(file):
-    with open(file) as f:
+
+def dat_to_array(dat_file):
+    with open(dat_file) as f:
         data = f.readlines()
 
     if data[0][4] == ' ':
@@ -19,11 +20,11 @@ def dat_to_array(file):
         data = re.split(' ', data[0])[:-1]
         data = [float.fromhex(num) for num in data]
 
-        if 'ACQ1' in file:
+        if 'ACQ1' in dat_file:
             data = np.reshape(data, (12, 128, 128))
-        elif 'ACQ2' in file:
+        elif 'ACQ2' in dat_file:
             data = np.reshape(data, (10, 32, 32))
-        elif 'IDstrips' in file:
+        elif 'IDstrips' in dat_file:
             data = np.reshape(data, (144, 64, 2048))
         else:
             print('Unrecognized file type; cannot reshape flattened array.')
@@ -38,7 +39,7 @@ def dat_to_array(file):
         else:
             data = np.array(data[0].split()).astype(float)
 
-            if 'LOSTRK' in file:
+            if 'LOSTRK' in dat_file:
                 data = np.reshape(data, (255, 255))
             else:
                 print('Unrecognized file type; cannot reshape flattened array.')
