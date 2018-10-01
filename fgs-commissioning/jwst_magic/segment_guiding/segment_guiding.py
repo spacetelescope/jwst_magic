@@ -330,7 +330,7 @@ class SegmentGuidingCalculator:
         # Write out override file with RA/Decs of selected segments
         with open(out_file, 'w') as f:
             # Determine whether to include a multiplicative countrate factor
-            countrate_qualifier = ' -count_rate_factor=({:.3f})'.\
+            countrate_qualifier = ' -count_rate_factor={:.3f}'.\
                 format(self.countrate_factor) if self.countrate_factor else ''
             out_string = 'sts -gs_select{} {:4d}:{}:{}'.\
                 format(countrate_qualifier, int(self.program_id),
@@ -746,7 +746,6 @@ class SegmentGuidingCalculator:
         if errcode != 0:
             error = msg[errcode]
             raise ValueError(error)
-            return error
         else:
             v2_boresight = float(v2_boresight)
 
@@ -754,7 +753,6 @@ class SegmentGuidingCalculator:
         if errcode != 0:
             error = msg[errcode]
             raise ValueError(error)
-            return error
         else:
             v3_boresight = float(v3_boresight)
 
@@ -767,7 +765,6 @@ class SegmentGuidingCalculator:
         if errcode != 0:
             error = "{} for RA. Expecting between 0.0 and 360.0 degrees.".format(msg[errcode])
             raise ValueError(error)
-            return error
         else:
             gsRA = float(gsRA)
 
@@ -775,7 +772,6 @@ class SegmentGuidingCalculator:
         if errcode != 0:
             error = "{} for DEC. Expecting between -90.0 and 90.0 degrees.".format(msg[errcode])
             raise ValueError(error)
-            return error
         else:
             gsDec = float(gsDec)
 
@@ -783,9 +779,15 @@ class SegmentGuidingCalculator:
         error = "{} for POSITION ANGLE. Expecting between 0.0 and 360.0 degrees.".format(msg[errcode])
         if errcode != 0:
             raise ValueError(error)
-            return
         else:
             gsPA = float(gsPA)
+
+        # Also, check the count rate factor and ensure it is between 0 and 1
+        errcode = self.checkout(self.countrate_factor, 0.0, 1.0)
+        if errcode != 0:
+            error = "{} for count_rate_factor. Expecting between 0.0 and 1.0.".format(msg[errcode])
+            raise ValueError(error)
+
 
         return v2_boresight, v3_boresight, gsRA, gsDec, gsPA
 
