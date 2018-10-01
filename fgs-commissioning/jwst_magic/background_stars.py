@@ -161,9 +161,7 @@ class BackgroundStarsWindow(QDialog):
 
         # Randomly added stars widgets
         self.groupBox_random.toggled.connect(self.on_check_section)
-        self.lineEdit_nStars.editingFinished.connect(self.draw_random_stars)
-        self.lineEdit_magMin.editingFinished.connect(self.draw_random_stars)
-        self.lineEdit_magMax.editingFinished.connect(self.draw_random_stars)
+        self.pushButton_random.clicked.connect(self.draw_random_stars)
 
         # User-defined stars widgets
         self.groupBox_defined.toggled.connect(self.on_check_section)
@@ -207,13 +205,11 @@ class BackgroundStarsWindow(QDialog):
 
             # Parse the file
             tab = asc.read(filename)
-            print(tab)
             for i_row, row in enumerate(tab):
                 if i_row + 1 > self.tableWidget.rowCount():
                     self.tableWidget.insertRow(i_row)
                 for i_col, value in enumerate(row):
                     item = QTableWidgetItem(str(value))
-                    print(i_row, i_col, value, type(value), item)
                     self.tableWidget.setItem(i_row, i_col, item)
             self.draw_defined_stars()
 
@@ -594,7 +590,10 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
         qApp.exec_()
 
     # Create dictionary to pass to ``add_background_stars``
-    stars = {'x': window.x, 'y': window.y, 'jmag': window.jmags}
+    if window.x != [] and window.y != [] and window.jmags != []:
+        stars = {'x': window.x, 'y': window.y, 'jmag': window.jmags}
+    else:
+        stars = None
 
     # Record the method used to generate the background stars
     method = window.method
