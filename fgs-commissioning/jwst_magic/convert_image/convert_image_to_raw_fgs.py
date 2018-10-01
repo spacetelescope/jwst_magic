@@ -689,8 +689,7 @@ def convert_im(input_im, guider, root, nircam=True,
 
         # Normalize the image, if the "normalize" flag is True
         if normalize:
-            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit,
-                                                     guider, root, logger_passed=True)
+            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
             fgs_counts = norm_obj.to_counts()
             fgs_mag = norm_obj.to_fgs_mag()
 
