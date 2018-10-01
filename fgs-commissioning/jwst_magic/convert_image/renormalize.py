@@ -49,17 +49,15 @@ class NormalizeToCounts(object):
     """Input the user-defined value and unit (FGS Counts, FGS Magnitude
     or J Magnitude) and convert into FGS Counts.
     """
-    def __init__(self, value, unit, guider, root='', logger_passed=False):
+    def __init__(self, value, unit, guider):
         """Initialize the class.
         """
-        # Set up logger
-        if not logger_passed:
-            utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-
         self.value = value
         self.unit = unit
         self.guider = guider
-        LOGGER.warning('* * * AN IMAGE THAT IS NORMALIZED TO COUNTS MIGHT HAVE INCORRECT UNITS DUE TO IT BEING MULTIPLIED BY THE FRAME TIME IN create_img_arrays() * * *')
+        LOGGER.warning('* * * AN IMAGE THAT IS NORMALIZED TO COUNTS MIGHT HAVE '
+                       'INCORRECT UNITS DUE TO IT BEING MULTIPLIED BY THE FRAME '
+                       'TIME IN create_img_arrays() * * *')
 
     def to_counts(self):
         """Convert self.value to FGS counts
