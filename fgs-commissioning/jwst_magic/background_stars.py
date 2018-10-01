@@ -271,7 +271,7 @@ class BackgroundStarsWindow(QDialog):
                 elif self.tableWidget.item(i_row, i_col).text() == '':
                     return
                 elif not self.tableWidget.item(i_row, i_col).text().isnumeric():
-                    LOGGER.warbubg('Background Stars: There is a cell with non-numeric contents')
+                    LOGGER.warning('Background Stars: There is a cell with non-numeric contents')
                     return
 
         # Alert user if the coordinates are out of bounds
@@ -590,7 +590,7 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
         qApp.exec_()
 
     # Create dictionary to pass to ``add_background_stars``
-    if window.x != [] and window.y != [] and window.jmags != []:
+    if window.x != [] and window.y != [] and list(window.jmags) != []:
         stars = {'x': window.x, 'y': window.y, 'jmag': window.jmags}
     else:
         stars = None
