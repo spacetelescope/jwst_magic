@@ -182,7 +182,7 @@ class FGSDetectorEffects:
         """Add read noise to every frame.
         """
         # Load all the read noise values from the yaml
-        with open(READ_NOISE) as f:
+        with open(READ_NOISE, encoding="utf-8") as f:
             read_noise_dict = yaml.load(f.read())
 
         # Get the read noise value for the current step

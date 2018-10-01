@@ -416,7 +416,8 @@ def create_cds(arr, section, config_ini, fix_saturated_pix=True):
 
         # n_sat_2 = len([p for p in saturated_read_2[0].flatten() if p])
         n_sat_2 = len(saturated_read_2[0][saturated_read_2[0] == True].flatten())
-        print('Adjusting {} pixels that are saturated in read 2.'.format(n_sat_2))
+        if n_sat_2 > 0:
+            print('Adjusting {} pixels that are saturated in read 2.'.format(n_sat_2))
 
         # For pixels that are saturated in both reads, set their CDS
         # value to the saturated value (65000).
@@ -425,7 +426,8 @@ def create_cds(arr, section, config_ini, fix_saturated_pix=True):
 
         # n_sat_both = len([p for p in saturated_both_reads[0].flatten() if p])
         n_sat_both = len(saturated_both_reads[0][saturated_both_reads[0] == True].flatten())
-        print('Adjusting {} pixels that are saturated in both reads.'.format(n_sat_both))
+        if n_sat_both > 0:
+            print('Adjusting {} pixels that are saturated in both reads.'.format(n_sat_both))
 
     return cds_arr
 
