@@ -607,7 +607,8 @@ class StarSelectorWindow(QDialog):
                     pass
                 elif previous_row == self.gs_ind:
                     self.circles[previous_row].set_markeredgecolor('yellow')
-                elif previous_row >= 0:
+                elif previous_row >= 0 and len(self.inds) > 0:
+                    # Except for the case where all the stars have been deleted
                     self.circles[previous_row].set_markeredgecolor('darkorange')
 
                 # Update current row to be the newly clicked one
@@ -1036,7 +1037,7 @@ class StarSelectorWindow(QDialog):
         """
         # If a star earlier than the guide star was deleted
         if star_ind < self.gs_ind:
-            return False, 1
+            return False, self.gs_ind - 1
 
         # If the guide star was deleted
         elif star_ind == self.gs_ind:
@@ -1049,6 +1050,10 @@ class StarSelectorWindow(QDialog):
             else:
                 # Make the star_ind - 1 star the guide star
                 return True, star_ind - 1
+
+        # If a star after the guide star was deleted
+        elif star_ind > self.gs_ind:
+            return False, self.gs_ind
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN FUNCTION
