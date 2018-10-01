@@ -100,6 +100,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.n_orientations = 0
         self.segNum = None
         self.center = None
+        self.selected_segs = selected_segs
 
         # Initialize dialog object
         QDialog.__init__(self, modal=True)
@@ -127,8 +128,9 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             self.comboBox_segmentCenter.addItem('{}'.format(i+1))
 
         # Load stars from regfile, if it exists
-        if selected_segs is not None and os.path.exists(selected_segs):
-            self.load_orientation(selected_segs)
+        if self.selected_segs is not None and os.path.exists(self.selected_segs):
+            self.load_orientation()
+        self.selected_segs = None
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
@@ -212,7 +214,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.clear_selected_stars()
         self.n_orientations += 1
 
-    def load_orientation(self, selected_segs=None):
+    def load_orientation(self):
         """Plot the segments in the currently selected override command
         on the matplotlib canvas
 
@@ -225,8 +227,8 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         # Determine what are the indices of the stars to load
 
         # Read them from a regfile
-        if selected_segs is not None:
-            regfile_locations = asc.read(selected_segs)
+        if self.selected_segs is not None:
+            regfile_locations = asc.read(self.selected_segs)
             x_reg = regfile_locations['x']
             y_reg = regfile_locations['y']
             selected_indices = []
@@ -242,7 +244,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
                 return
 
         # Read them from a table
-        elif selected_segs is None:
+        elif self.selected_segs is None:
             # Remove the stars that are currently shown
             self.clear_selected_stars()
 
