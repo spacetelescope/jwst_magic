@@ -783,10 +783,11 @@ class SegmentGuidingCalculator:
             gsPA = float(gsPA)
 
         # Also, check the count rate factor and ensure it is between 0 and 1
-        errcode = self.checkout(self.countrate_factor, 0.0, 1.0)
-        if errcode != 0:
-            error = "{} for count_rate_factor. Expecting between 0.0 and 1.0.".format(msg[errcode])
-            raise ValueError(error)
+        if self.countrate_factor:
+            errcode = self.checkout(self.countrate_factor, 0.0, 1.0)
+            if errcode != 0:
+                error = "{} for count_rate_factor. Expecting between 0.0 and 1.0.".format(msg[errcode])
+                raise ValueError(error)
 
 
         return v2_boresight, v3_boresight, gsRA, gsDec, gsPA
