@@ -102,7 +102,7 @@ class SegmentGuidingCalculator:
     def __init__(self, segment_infile, program_id, observation_num, visit_num,
                  root=None, GUI=False, guide_star_params_dict=None, refonly=False,
                  selected_segs=None, vss_infile=None, out_dir=None,
-                 ct_uncert_fctr=0.9, countrate_factor=None):
+                 ct_uncert_fctr=0.9, countrate_factor=None, oss_factor=0.6):
         """Initialize the class.
 
         Parameters
@@ -157,6 +157,7 @@ class SegmentGuidingCalculator:
         self.refonly = refonly  # Implement "refonly" label for reference stars?
         self.ct_uncert_fctr = ct_uncert_fctr
         self.countrate_factor = countrate_factor
+        self.oss_factor = oss_factor
 
         # Ensure the output directory exists
         utils.ensure_dir_exists(self.out_dir)
@@ -361,12 +362,14 @@ class SegmentGuidingCalculator:
                 orientations = np.array([np.linspace(1, nseg, nseg).astype(int)])
 
             # If countrates were included in the input file, use them!
+            # The OSS factor is multiplied by OSS to account for the 3x3 countrates
+            # So we need to divide it out here and for every segment override file
             try:
-                rate = self.counts_array
-                uncertainty = self.counts_array * self.ct_uncert_fctr
+                rate = self.counts_array / self.oss_factor
+                uncertainty = self.counts_array * self.ct_uncert_fctr / self.oss_factor
             except AttributeError:
-                rate = [0.0] * nseg
-                uncertainty = [0.0] * nseg
+                rate = [0.0] * nseg / oss_factor
+                uncertainty = [0.0] * nseg / oss_factor
 
             # Write the commands for each orientation
             for i_o, orientation in enumerate(orientations):
