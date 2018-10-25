@@ -175,7 +175,7 @@ class SegmentGuidingCalculator:
         self.get_gs_params(vss_infile, guide_star_params_dict)
         if segment_infile:
             self.parse_infile(segment_infile)
-        if selected_segs:
+        if selected_segs is not None:
             self.get_selected_segs(selected_segs)
 
         # Get aperture parameters from FGS SIAF
@@ -280,7 +280,7 @@ class SegmentGuidingCalculator:
         self.x_det, self.y_det = self.fgs_siaf_aperture.idl_to_det(self.x_idl_segs, self.y_idl_segs)
 
         # Check to make sure no segments are off the detector
-        for x, y, i_seg in zip(self.x_det, self.y_idl_segs, self.seg_id_array):
+        for x, y, i_seg in zip(self.x_det, self.y_det, self.seg_id_array):
             if x < 0.5 or x > 2048.5:
                 LOGGER.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
             if y < 0.5 or y > 2048.5:
