@@ -329,7 +329,7 @@ class SegmentGuidingCalculator:
                                      % (self.seg_id_array[p], self.v2_seg_array[p],
                                         self.v3_seg_array[p], self.x_idl_segs[p],
                                         self.y_idl_segs[p], self.seg_ra[p],
-                                        self.seg_dec[p], self.x_idl_segs[p], self.y_idl_segs[p]))
+                                        self.seg_dec[p], self.x_det[p], self.x_det[p]))
                 LOGGER.info('Segment Guiding: ' + all_segments)
 
         # Write out override file with RA/Decs of selected segments
@@ -420,7 +420,7 @@ class SegmentGuidingCalculator:
         for i, ra in enumerate(self.seg_ra):
             if ra > 360.0:
                 LOGGER.warning('Segment Guiding: RA = {}'.format(ra))
-                self.seg_ra -= self.seg_ra
+                self.seg_ra -= 360.0
             elif ra < 0.0:
                 LOGGER.warning('Segment Guiding: RA = {}'.format(ra))
                 self.seg_ra += 360.0
