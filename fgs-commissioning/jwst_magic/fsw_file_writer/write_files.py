@@ -143,15 +143,14 @@ def write_all(obj):
 
         # Write files for use in the DHAS
         write_image(obj)
-        write_dat(obj)
 
     elif obj.step == 'LOSTRK':
         # Write files for use by folks at STScI
         write_sky(obj)
         write_stc(obj)
-
-        # Write files for use in the DHAS and FGSES
         write_image(obj)
+
+        # Write files for use in the FGSES
         write_dat(obj)
 
 
@@ -231,6 +230,11 @@ def write_image(obj):
         # Create "full-frame" (rather than strips) image
         location = 'stsci'
         filetype = 'ff.fits'
+    elif obj.step == 'LOSTRK':
+        # Place the FITS file in stsci/, as it is just for reference
+        # to the LOSTRK.dat file
+        location = 'stsci'
+        filetype = '.fits'
     else:
         location = 'dhas'
         filetype = '.fits'
