@@ -255,7 +255,7 @@ class SegmentGuidingCalculator:
         """Calculate the effective RAs and Decs for each segment, and
         write the segment guiding override file.
         """
-        nseg = len(self.seg_id_array)
+        self.nseg = len(self.seg_id_array)
 
         # Convert V2/V3 coordinates to ideal coordinates
         idl_coords = self.fgs_siaf_aperture.tel_to_idl(self.v2_seg_array + self.v2_ref,
@@ -268,9 +268,9 @@ class SegmentGuidingCalculator:
                                       self.ra, self.dec, float(self.pa))
 
         # Get RA and Dec for each segment.
-        self.seg_ra = np.zeros(nseg)
-        self.seg_dec = np.zeros(nseg)
-        for i in range(nseg):
+        self.seg_ra = np.zeros(self.nseg)
+        self.seg_dec = np.zeros(self.nseg)
+        for i in range(self.nseg):
             V2 = self.v2_ref + self.v2_seg_array[i]
             V3 = self.v3_ref + self.v3_seg_array[i]
             self.seg_ra[i], self.seg_dec[i] = rotations.pointing(attitude, V2, V3,
@@ -288,7 +288,6 @@ class SegmentGuidingCalculator:
 
         # Check to make sure that RA is between 0 and 360 and Dec is between -90 and 90
         self.check_coords()
-        self.nseg = nseg
 
     def write_override_file(self, nseg=None, verbose=True):
         """Write the segment guiding override file: {out_dir}/out/{root}/
