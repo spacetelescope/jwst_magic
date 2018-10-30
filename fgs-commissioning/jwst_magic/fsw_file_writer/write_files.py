@@ -239,8 +239,11 @@ def write_image(obj):
     filename = os.path.join(obj.out_dir, location,
                             obj.filename_root + filetype)
     obj.image = utils.correct_image(obj.image)
-    utils.write_fits(filename, np.uint16(obj.image))
 
+    if obj.step == 'LOSTRK':
+        utils.write_fits(filename, obj.image) # Don't make it np.uint16
+    else:
+        utils.write_fits(filename, np.uint16(obj.image))
 
 def write_strips(obj):
     """Write an ID strips image
@@ -303,8 +306,6 @@ def write_dat(obj):
     """
     Convert a .fits file to a .dat file for use on the ground system
 
-    If 'data' is an array, provide 'root'.
-
     Parameters
     ----------
     obj : obj
@@ -326,27 +327,32 @@ def write_dat(obj):
     else:
         data = data_to_write
         filename = '{}_G{}_{}.dat'.format(obj.root, obj.guider, obsmode)
+    filename = os.path.join(out_dir, filename)
     data = utils.correct_image(data)
 
     flat = data.flatten()
 
+    # Write out TRK/LOSTRK files in ASCII float format
     if (obsmode == 'PSF') or (obsmode == 'TRK') or (obsmode == 'LOSTRK'):
         # ascii float format
         fmt = '{:16.7e} '
+        with open(filename, 'w') as file_out:
+            for dat in flat:  # Note: NOT saving out as uint16!!!
+                file_out.write(fmt.format(dat))
 
+    # Write out all other files in ASCII hex format (from uint16)
     elif (obsmode == 'ID') or (obsmode == 'ACQ1') or (obsmode == 'ACQ2') or \
          (obsmode == 'ACQ') or (obsmode == 'CAL'):
         # ascii hex dat format
         fmt = '{:04X} '
+        with open(filename, 'w') as file_out:
+            for dat in flat.astype(np.uint16):
+                file_out.write(fmt.format(dat))
 
     else:
         raise ValueError("FSW File Writing: Observation mode {} not recognized.".format(obsmode))
 
-    with open(os.path.join(out_dir, filename), 'w') as file_out:
-        for dat in flat.astype(np.uint16):
-            file_out.write(fmt.format(dat))
-
-    print("Successfully wrote: {}".format(os.path.join(out_dir, filename)))
+    print("Successfully wrote: {}".format(filename))
     return
 
 
