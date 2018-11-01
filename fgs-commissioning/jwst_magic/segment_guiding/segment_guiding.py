@@ -266,7 +266,7 @@ class SegmentGuidingCalculator:
 
         # Get the attitude matrix
         attitude = rotations.attitude(self.v2_aim + self.v2_boff,
-                                      self.v2_aim + self.v3_boff,
+                                      self.v3_aim + self.v3_boff,
                                       self.ra, self.dec, self.pa)
 
         # Get RA and Dec for each segment.
@@ -481,7 +481,7 @@ class SegmentGuidingCalculator:
         GS_pointing = SkyCoord(ra=self.ra * u.degree, dec=self.dec * u.degree)
         fgs_fov_length = 2.3 * u.arcmin
         for i, p in enumerate(seg_pointings):
-            p = SkyCoord(ra=p[0] * u.degree, dec=[1] * u.degree)
+            p = SkyCoord(ra=p[0] * u.degree, dec=p[1] * u.degree)
             sep = p.separation(GS_pointing)
             FGS_radius = np.sqrt(2 * (fgs_fov_length / 2) ** 2)
             if sep > FGS_radius:
