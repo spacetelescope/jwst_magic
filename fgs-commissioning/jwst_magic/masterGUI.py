@@ -376,7 +376,6 @@ class MasterGui(QMainWindow):
                 selected_segs = None
                 refonly = False
             else:
-                print("I got here when I wasn't supposed to")
                 # Verify that the ALLpsfs.txt file exists
                 segment_infile = self.ALLpsfs
                 if not os.path.exists(segment_infile):
