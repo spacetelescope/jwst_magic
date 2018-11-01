@@ -225,10 +225,10 @@ class SegmentGuidingCalculator:
         dv2_aim = self.v2_seg_n
         dv3_aim = self.v3_seg_n
         self.v2_aim = self.v2_ref + dv2_aim
-        self.v2_aim = self.v3_ref + dv3_aim
+        self.v3_aim = self.v3_ref + dv3_aim
 
         # Convert to Ideal coordinates
-        self.x_idl, self.y_idl = self.fgs_siaf_aperture.tel_to_idl(self.v2_aim, self.v2_aim)
+        self.x_idl, self.y_idl = self.fgs_siaf_aperture.tel_to_idl(self.v2_aim, self.v3_aim)
 
     def get_guider_aperture(self):
         """Extract needed parameters from the SIAF file for the given FGS.
