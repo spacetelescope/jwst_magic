@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1400</width>
-    <height>937</height>
+    <width>1433</width>
+    <height>1078</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -46,8 +46,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1385</width>
-         <height>929</height>
+         <width>1433</width>
+         <height>1066</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -251,7 +251,16 @@
            <property name="spacing">
             <number>-1</number>
            </property>
-           <property name="margin">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
             <number>0</number>
            </property>
            <item>
@@ -461,6 +470,16 @@ Image:</string>
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
+           <item row="5" column="5">
+            <widget class="QPushButton" name="pushButton_backgroundStars">
+             <property name="toolTip">
+              <string>Launch a dialog window to specify how to incorporate background stars in the image</string>
+             </property>
+             <property name="text">
+              <string>Add Background Stars</string>
+             </property>
+            </widget>
+           </item>
            <item row="1" column="0">
             <widget class="QLabel" name="label_instrument_2">
              <property name="toolTip">
@@ -488,16 +507,6 @@ Image:</string>
              </property>
              <property name="text">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="5">
-            <widget class="QPushButton" name="pushButton_backgroundStars">
-             <property name="toolTip">
-              <string>Launch a dialog window to specify how to incorporate background stars in the image</string>
-             </property>
-             <property name="text">
-              <string>Add Background Stars</string>
              </property>
             </widget>
            </item>
@@ -548,6 +557,90 @@ Image:</string>
                <string>FGS counts</string>
               </property>
              </item>
+            </widget>
+           </item>
+           <item row="4" column="3" colspan="2">
+            <widget class="QLineEdit" name="lineEdit_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Value to normalize to, in units at right</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">.QLineEdit:disabled {color: grey}</string>
+             </property>
+             <property name="text">
+              <string>12.0</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Normalize the final image to a specified value</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2" colspan="2">
+            <widget class="QRadioButton" name="radioButton_NIRCam">
+             <property name="toolTip">
+              <string>Which instrument was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>NIRCam</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_instrument</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="5">
+            <widget class="QCheckBox" name="checkBox_useConvertedImage">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Bypass all image convertor functions, and run other tool functions with the converted image instead of the input image</string>
+             </property>
+             <property name="text">
+              <string>Use existing converted image (shown at right) rather than input image</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_detector">
+             <property name="toolTip">
+              <string>Which NIRCam detector was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QRadioButton" name="radioButton_FGS">
+             <property name="toolTip">
+              <string>Which instrument was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>FGS</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_instrument</string>
+             </attribute>
             </widget>
            </item>
            <item row="1" column="3" colspan="3">
@@ -653,19 +746,30 @@ Image:</string>
              </layout>
             </widget>
            </item>
-           <item row="4" column="3" colspan="2">
-            <widget class="QLineEdit" name="lineEdit_normalize">
+           <item row="5" column="1" colspan="4">
+            <widget class="QTextEdit" name="textEdit_backgroundStars">
              <property name="enabled">
-              <bool>true</bool>
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>40</height>
+              </size>
              </property>
              <property name="toolTip">
-              <string>Value to normalize to, in units at right</string>
+              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
              </property>
              <property name="styleSheet">
-              <string notr="true">.QLineEdit:disabled {color: grey}</string>
+              <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
              </property>
-             <property name="text">
-              <string>12.0</string>
+             <property name="html">
+              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
@@ -729,101 +833,6 @@ Image:</string>
                <string>B5 - long wave</string>
               </property>
              </item>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_normalize">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Normalize the final image to a specified value</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2" colspan="2">
-            <widget class="QRadioButton" name="radioButton_NIRCam">
-             <property name="toolTip">
-              <string>Which instrument was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>NIRCam</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_instrument</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="0" column="0" colspan="5">
-            <widget class="QCheckBox" name="checkBox_useConvertedImage">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>Bypass all image convertor functions, and run other tool functions with the converted image instead of the input image</string>
-             </property>
-             <property name="text">
-              <string>Use existing converted image (shown at right) rather than input image</string>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_detector">
-             <property name="toolTip">
-              <string>Which NIRCam detector was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QRadioButton" name="radioButton_FGS">
-             <property name="toolTip">
-              <string>Which instrument was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>FGS</string>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_instrument</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="5" column="1" colspan="4">
-            <widget class="QTextEdit" name="textEdit_backgroundStars">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QTextEdit { background-color : #ECECEC }
-\</string>
-             </property>
-             <property name="html">
-              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
             </widget>
            </item>
           </layout>
@@ -1060,7 +1069,40 @@ p, li { white-space: pre-wrap; }
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
-           <item row="0" column="0">
+           <item row="1" column="2">
+            <widget class="QPushButton" name="pushButton_regfileSegmentGuiding">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Open Finder window to select file with segment list</string>
+             </property>
+             <property name="text">
+              <string>Open</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="lineEdit_regfileSegmentGuiding">
+             <property name="toolTip">
+              <string>File containing guide and reference star locations and brightness</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QCheckBox" name="checkBox_refonly">
+             <property name="toolTip">
+              <string>Use the ref-only notation added in VSS build 14.3</string>
+             </property>
+             <property name="text">
+              <string>Designate reference stars with &quot;refonly&quot;</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
             <widget class="QRadioButton" name="radioButton_regfileSegmentGuiding">
              <property name="toolTip">
               <string>Define one command with guide and reference stars by loading their locations and brightness loaded from a file</string>
@@ -1074,40 +1116,7 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
-           <item row="0" column="2">
-            <widget class="QPushButton" name="pushButton_regfileSegmentGuiding">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>Open Finder window to select file with segment list</string>
-             </property>
-             <property name="text">
-              <string>Open</string>
-             </property>
-            </widget>
-           </item>
            <item row="2" column="0" colspan="2">
-            <widget class="QCheckBox" name="checkBox_refonly">
-             <property name="toolTip">
-              <string>Use the ref-only notation added in VSS build 14.3</string>
-             </property>
-             <property name="text">
-              <string>Designate reference stars with &quot;refonly&quot;</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="lineEdit_regfileSegmentGuiding">
-             <property name="toolTip">
-              <string>File containing guide and reference star locations and brightness</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
             <widget class="QRadioButton" name="radioButton_segmentGuidingGUI">
              <property name="toolTip">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create one or more segment guiding override commands by clicking on guide and reference stars in the image&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1117,6 +1126,19 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="checked">
               <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_segmentGuiding</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QRadioButton" name="radioButton_photometryOverride">
+             <property name="toolTip">
+              <string>Have a stacked PSFs so only need to override the photometry</string>
+             </property>
+             <property name="text">
+              <string>Create photometry override file</string>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_segmentGuiding</string>

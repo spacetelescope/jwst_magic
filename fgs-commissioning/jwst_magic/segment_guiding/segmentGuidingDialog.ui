@@ -36,7 +36,7 @@
       <string notr="true">QGroupBox { font-size: 14px; font-weight: bold; margin-top: 16px } QGroupBox::title { top: -16px }</string>
      </property>
      <property name="title">
-      <string>APT Parameters</string>
+      <string>APT Parameters (required)</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
