@@ -83,8 +83,11 @@ import os
 import logging
 
 # Third Party Imports
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 import matplotlib
 matplotlib.use("Qt5Agg")
+import matplotlib.path as mpltPath
 import matplotlib.pyplot as plt
 import pysiaf
 from pysiaf.utils import rotations
@@ -175,7 +178,7 @@ class SegmentGuidingCalculator:
         self.get_gs_params(vss_infile, guide_star_params_dict)
         if segment_infile:
             self.parse_infile(segment_infile)
-        if selected_segs:
+        if selected_segs is not None:
             self.get_selected_segs(selected_segs)
 
         # Get aperture parameters from FGS SIAF
@@ -225,10 +228,10 @@ class SegmentGuidingCalculator:
         dv2_aim = self.v2_seg_n
         dv3_aim = self.v3_seg_n
         self.v2_aim = self.v2_ref + dv2_aim
-        self.v2_aim = self.v3_ref + dv3_aim
+        self.v3_aim = self.v3_ref + dv3_aim
 
         # Convert to Ideal coordinates
-        self.x_idl, self.y_idl = self.fgs_siaf_aperture.tel_to_idl(self.v2_aim, self.v2_aim)
+        self.x_idl, self.y_idl = self.fgs_siaf_aperture.tel_to_idl(self.v2_aim, self.v3_aim)
 
     def get_guider_aperture(self):
         """Extract needed parameters from the SIAF file for the given FGS.
@@ -252,10 +255,9 @@ class SegmentGuidingCalculator:
         self.v_idl_parity = self.fgs_siaf_aperture.VIdlParity
 
     def calculate_effective_ra_dec(self):
-        """Calculate the effective RAs and Decs for each segment, and
-        write the segment guiding override file.
+        """Calculate the effective RAs and Decs for each segment.
         """
-        nseg = len(self.seg_id_array)
+        self.nseg = len(self.seg_id_array)
 
         # Convert V2/V3 coordinates to ideal coordinates
         idl_coords = self.fgs_siaf_aperture.tel_to_idl(self.v2_seg_array + self.v2_ref,
@@ -264,23 +266,25 @@ class SegmentGuidingCalculator:
 
         # Get the attitude matrix
         attitude = rotations.attitude(self.v2_aim + self.v2_boff,
-                                      self.v2_aim + self.v3_boff,
-                                      self.ra, self.dec, float(self.pa))
+                                      self.v3_aim + self.v3_boff,
+                                      self.ra, self.dec, self.pa)
 
         # Get RA and Dec for each segment.
-        self.seg_ra = np.zeros(nseg)
-        self.seg_dec = np.zeros(nseg)
-        for i in range(nseg):
+        self.seg_ra = np.zeros(self.nseg)
+        self.seg_dec = np.zeros(self.nseg)
+        for i in range(self.nseg):
             V2 = self.v2_ref + self.v2_seg_array[i]
             V3 = self.v3_ref + self.v3_seg_array[i]
             self.seg_ra[i], self.seg_dec[i] = rotations.pointing(attitude, V2, V3,
                                                                positive_ra=True)
 
+        self.check_segments_inside_fov(attitude)
+
         # Convert segment coordinates to detector frame
         self.x_det, self.y_det = self.fgs_siaf_aperture.idl_to_det(self.x_idl_segs, self.y_idl_segs)
 
         # Check to make sure no segments are off the detector
-        for x, y, i_seg in zip(self.x_det, self.y_idl_segs, self.seg_id_array):
+        for x, y, i_seg in zip(self.x_det, self.y_det, self.seg_id_array):
             if x < 0.5 or x > 2048.5:
                 LOGGER.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
             if y < 0.5 or y > 2048.5:
@@ -288,7 +292,6 @@ class SegmentGuidingCalculator:
 
         # Check to make sure that RA is between 0 and 360 and Dec is between -90 and 90
         self.check_coords()
-        self.nseg = nseg
 
     def write_override_file(self, nseg=None, verbose=True):
         """Write the segment guiding override file: {out_dir}/out/{root}/
@@ -329,7 +332,7 @@ class SegmentGuidingCalculator:
                                      % (self.seg_id_array[p], self.v2_seg_array[p],
                                         self.v3_seg_array[p], self.x_idl_segs[p],
                                         self.y_idl_segs[p], self.seg_ra[p],
-                                        self.seg_dec[p], self.x_idl_segs[p], self.y_idl_segs[p]))
+                                        self.seg_dec[p], self.x_det[p], self.x_det[p]))
                 LOGGER.info('Segment Guiding: ' + all_segments)
 
         # Write out override file with RA/Decs of selected segments
@@ -420,7 +423,7 @@ class SegmentGuidingCalculator:
         for i, ra in enumerate(self.seg_ra):
             if ra > 360.0:
                 LOGGER.warning('Segment Guiding: RA = {}'.format(ra))
-                self.seg_ra -= self.seg_ra
+                self.seg_ra -= 360.0
             elif ra < 0.0:
                 LOGGER.warning('Segment Guiding: RA = {}'.format(ra))
                 self.seg_ra += 360.0
@@ -436,6 +439,54 @@ class SegmentGuidingCalculator:
                 self.seg_dec += 180.0
             else:
                 continue
+
+    def check_segments_inside_fov(self, attitude):
+        """Check to make sure that the calculated RA and Dec of each
+        segment is within the field of view of the given FGS.
+
+        Parameters
+        ----------
+        attitude : 3 x 3 numpy array
+            Attitude matrix generated by pysiaf.utils.rotations.attitude
+        """
+        # Get the vertices of the given FGS detector
+        vertices = [(self.fgs_siaf_aperture.XIdlVert1, self.fgs_siaf_aperture.YIdlVert1),
+                    (self.fgs_siaf_aperture.XIdlVert2, self.fgs_siaf_aperture.YIdlVert2),
+                    (self.fgs_siaf_aperture.XIdlVert3, self.fgs_siaf_aperture.YIdlVert3),
+                    (self.fgs_siaf_aperture.XIdlVert4, self.fgs_siaf_aperture.YIdlVert4)]
+
+        # Convert the vertices from ideal coordinates to RA & Dec
+        vertices_sky = []
+        for v_idlx, v_idly in vertices:
+            v_v2, v_v3 = self.fgs_siaf_aperture.idl_to_tel(v_idlx, v_idly)
+            v_sky = rotations.pointing(attitude, v_v2, v_v3)
+            vertices_sky.append(v_sky)
+
+        # Create a matplotlib Path that encompasses the entire detector
+        fov_path = mpltPath.Path(vertices_sky)
+
+        # Determine if every segment RA and Dec is within that Path (i.e.
+        # within the guider FOV)
+        seg_pointings = [(seg_ra, seg_dec) for seg_ra, seg_dec in zip(self.seg_ra, self.seg_dec)]
+        segs_in_fov = fov_path.contains_points(seg_pointings)
+        if not segs_in_fov.all():
+            segments_outside = np.where(segs_in_fov == False)[0]
+            raise ValueError(
+                'Incorrect segment guiding calculations. Segment(s) {} is outside of the FGS{} FOV. Cannot generate segment override file that will not fail.'
+                    .format(segments_outside, self.fgs_num)
+            )
+
+        # And because I don't trust anything anymore, straight up check that the
+        # segments are within a guider ~FOV of the commanded GS RA/Dec
+        GS_pointing = SkyCoord(ra=self.ra * u.degree, dec=self.dec * u.degree)
+        fgs_fov_length = 2.3 * u.arcmin
+        for i, p in enumerate(seg_pointings):
+            p = SkyCoord(ra=p[0] * u.degree, dec=p[1] * u.degree)
+            sep = p.separation(GS_pointing)
+            FGS_radius = np.sqrt(2 * (fgs_fov_length / 2) ** 2)
+            if sep > FGS_radius:
+                raise ValueError('Segment {} at RA, Dec = ({}, {}) is outside the FGS{} FOV. Cannot generate segment override file that will not fail.'
+                                 .format(i + 1, p.ra, p.dec, self.fgs_num))
 
     def get_gs_params(self, vss_infile, guide_star_params_dict):
         """Get guide star parameters from dictionary or VSS file
@@ -1076,12 +1127,15 @@ def run_tool(segment_infile=None, guider=None, root=None, program_id=0, observat
                                       countrate_factor=countrate_factor, oss_factor=oss_factor)
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params()
+
         if guide_star_params_dict['ra'] and guide_star_params_dict['dec']: #FIXME
+            # Write a SOF
             sg.get_chosen_segment_position()
             sg.calculate_effective_ra_dec()
             sg.write_override_file(nseg=sg.nseg) # Print and save final output
             sg.plot_segments() # Save .pngs of plots
         else:
+            # Write a POF
             sg.write_override_file()
 
 
