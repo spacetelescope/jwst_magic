@@ -362,30 +362,38 @@ class MasterGui(QMainWindow):
 
         # Segment guiding
         if self.groupBox_segmentGuiding.isChecked():
-            # Verify that the ALLpsfs.txt file exists
-            segment_infile = self.ALLpsfs
-            if not os.path.exists(segment_infile):
-                raise OSError('Provided segment infile {} not found.'.format(segment_infile))
-
             # Get APT program information from parsed header
             self.parse_header(input_image)
             program_id = self.prognum
             observation_num = self.obsnum
             visit_num = self.visitnum
 
-            # Determine which image to use
-            if os.path.exists(self.converted_im_file):
-                fgs_filename = self.converted_im_file
+            # Check if this is a photometry only override file or segment override file
+            if self.radioButton_photometryOverride.isChecked():
+                segment_infile = None
+                data = None
+                GUI = False
+                selected_segs = None
+                refonly = False
             else:
-                fgs_filename = input_image
-            data, _ = utils.get_data_and_header(fgs_filename)
+                # Verify that the ALLpsfs.txt file exists
+                segment_infile = self.ALLpsfs
+                if not os.path.exists(segment_infile):
+                    raise OSError('Provided segment infile {} not found.'.format(segment_infile))
 
-            # Determine whether to load regfile or run GUI
-            GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
-            selected_segs = self.lineEdit_regfileStarSelector.text()
+                # Determine which image to use
+                if os.path.exists(self.converted_im_file):
+                    fgs_filename = self.converted_im_file
+                else:
+                    fgs_filename = input_image
+                data, _ = utils.get_data_and_header(fgs_filename)
 
-            # Determine whether to use "ref-only" syntax
-            refonly = self.checkBox_refonly.isChecked()
+                # Determine whether to load regfile or run GUI
+                GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
+                selected_segs = self.lineEdit_regfileStarSelector.text()
+
+                # Determine whether to use "ref-only" syntax
+                refonly = self.checkBox_refonly.isChecked()
 
             # Run the tool
             segment_guiding.run_tool(segment_infile, guider, program_id=program_id,
