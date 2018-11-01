@@ -252,8 +252,7 @@ class SegmentGuidingCalculator:
         self.v_idl_parity = self.fgs_siaf_aperture.VIdlParity
 
     def calculate_effective_ra_dec(self):
-        """Calculate the effective RAs and Decs for each segment, and
-        write the segment guiding override file.
+        """Calculate the effective RAs and Decs for each segment.
         """
         self.nseg = len(self.seg_id_array)
 
@@ -265,7 +264,7 @@ class SegmentGuidingCalculator:
         # Get the attitude matrix
         attitude = rotations.attitude(self.v2_aim + self.v2_boff,
                                       self.v2_aim + self.v3_boff,
-                                      self.ra, self.dec, float(self.pa))
+                                      self.ra, self.dec, self.pa)
 
         # Get RA and Dec for each segment.
         self.seg_ra = np.zeros(self.nseg)
@@ -1075,12 +1074,15 @@ def run_tool(segment_infile=None, guider=None, root=None, program_id=0, observat
                                       countrate_factor=countrate_factor, oss_factor=oss_factor)
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params()
+
         if guide_star_params_dict['ra'] and guide_star_params_dict['dec']: #FIXME
+            # Write a SOF
             sg.get_chosen_segment_position()
             sg.calculate_effective_ra_dec()
             sg.write_override_file(nseg=sg.nseg) # Print and save final output
             sg.plot_segments() # Save .pngs of plots
         else:
+            # Write a POF
             sg.write_override_file()
 
 
