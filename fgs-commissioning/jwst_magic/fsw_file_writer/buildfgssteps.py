@@ -312,12 +312,13 @@ class BuildFGSSteps(object):
 
         # Modify further for LOSTRK images (that will be run in FGSES)
         if self.step == 'LOSTRK':
-            # Normalize to a count sum of 1000
-            image = image / np.sum(image) * 1000
             # Resize image array to oversample by 6 (from 43x43 to 255x255)
             image = image.repeat(6, axis=0)
             image = image.repeat(6, axis=1)
             image = image[1:-2, 1:-2]
+
+            # Normalize to a count sum of 1000
+            image = image / np.sum(image) * 1000
 
         return image
 
