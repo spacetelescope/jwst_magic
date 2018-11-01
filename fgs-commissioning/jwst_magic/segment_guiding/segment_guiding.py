@@ -71,6 +71,8 @@ import os
 import logging
 
 # Third Party Imports
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from astropy.table import Table
 import matplotlib
@@ -464,6 +466,19 @@ class SegmentGuidingCalculator:
                 'Incorrect segment guiding calculations. Segment(s) {} is outside of the FGS{} FOV. Cannot generate segment override file that will not fail.'
                     .format(segments_outside, self.fgsNum)
             )
+
+        # And because I don't trust anything anymore, straight up check that the
+        # segments are within a guider ~FOV of the commanded GS RA/Dec
+        GS_pointing = SkyCoord(ra=self.RA * u.degree, dec=self.Dec * u.degree)
+        fgs_fov_length = 2.3 * u.arcmin
+        for i, p in enumerate(seg_pointings):
+            p = SkyCoord(ra=p[0] * u.degree, dec=[1] * u.degree)
+            sep = p.separation(GS_pointing)
+            FGS_radius = np.sqrt(2 * (fgs_fov_length / 2) ** 2)
+            if sep > FGS_radius:
+                raise ValueError('Segment {} at RA, Dec = ({}, {}) is outside the FGS{} FOV. Cannot generate segment override file that will not fail.'
+                                 .format(i + 1, p.ra, p.dec, self.fgsNum))
+
 
     def get_gs_params(self, vss_infile, guide_star_params_dict):
         """Get guide star parameters from dictionary or VSS file
