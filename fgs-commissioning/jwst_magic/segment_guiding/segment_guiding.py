@@ -472,7 +472,7 @@ class SegmentGuidingCalculator:
         GS_pointing = SkyCoord(ra=self.RA * u.degree, dec=self.Dec * u.degree)
         fgs_fov_length = 2.3 * u.arcmin
         for i, p in enumerate(seg_pointings):
-            p = SkyCoord(ra=p[0] * u.degree, dec=[1] * u.degree)
+            p = SkyCoord(ra=p[0] * u.degree, dec=p[1] * u.degree)
             sep = p.separation(GS_pointing)
             FGS_radius = np.sqrt(2 * (fgs_fov_length / 2) ** 2)
             if sep > FGS_radius:
