@@ -85,17 +85,17 @@ import logging
 # Third Party Imports
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.io import ascii as asc
+from astropy.table import Table
 import matplotlib
 matplotlib.use("Qt5Agg")
 import matplotlib.path as mpltPath
 import matplotlib.pyplot as plt
-import pysiaf
-from pysiaf.utils import rotations
 import numpy as np
-from astropy.io import ascii as asc
-from astropy.table import Table
 from PyQt5 import uic
 from PyQt5.QtWidgets import QDialog
+import pysiaf
+from pysiaf.utils import rotations
 
 # Local Imports
 from .. import coordinate_transforms, utils
@@ -478,11 +478,11 @@ class SegmentGuidingCalculator:
 
         # And because I don't trust anything anymore, straight up check that the
         # segments are within a guider ~FOV of the commanded GS RA/Dec
-        GS_pointing = SkyCoord(ra=self.ra * u.degree, dec=self.dec * u.degree)
+        gs_pointing = SkyCoord(ra=self.ra * u.degree, dec=self.dec * u.degree)
         fgs_fov_length = 2.3 * u.arcmin
         for i, p in enumerate(seg_pointings):
             p = SkyCoord(ra=p[0] * u.degree, dec=p[1] * u.degree)
-            sep = p.separation(GS_pointing)
+            sep = p.separation(gs_pointing)
             FGS_radius = np.sqrt(2 * (fgs_fov_length / 2) ** 2)
             if sep > FGS_radius:
                 raise ValueError('Segment {} at RA, Dec = ({}, {}) is outside the FGS{} FOV. Cannot generate segment override file that will not fail.'
