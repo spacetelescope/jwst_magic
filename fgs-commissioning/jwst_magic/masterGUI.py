@@ -392,8 +392,6 @@ class MasterGui(QMainWindow):
                 GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
                 selected_segs = self.lineEdit_regfileStarSelector.text()
 
-                # Determine whether to use "ref-only" syntax
-                refonly = self.checkBox_refonly.isChecked()
 
             # Run the tool
             segment_guiding.run_tool(segment_infile, guider, program_id=program_id,
