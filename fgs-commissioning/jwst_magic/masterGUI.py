@@ -391,8 +391,6 @@ class MasterGui(QMainWindow):
                 GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
                 selected_segs = self.lineEdit_regfileStarSelector.text()
 
-                print('master gui app:', self.app)
-
                 # Run the tool and generate the file
                 segment_guiding.generate_segment_override_file(
                     segment_infile, guider, program_id, observation_num, visit_num,
