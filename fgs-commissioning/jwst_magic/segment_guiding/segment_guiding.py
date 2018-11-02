@@ -148,8 +148,6 @@ class SegmentGuidingCalculator:
         selected_segs : str, optional
             Filepath to regfile.txt file with list of locations and
             countrates for the selected segments (guide and reference stars)
-        vss_infile : str, optional
-            Filepath to guide star report provided by VSS
         out_dir : str, optional
             Location of out/ directory
         ct_uncert_fctr : float, optional
@@ -491,58 +489,19 @@ class SegmentGuidingCalculator:
                 raise ValueError('Segment {} at RA, Dec = ({}, {}) is outside the FGS{} FOV. Cannot generate segment override file that will not fail.'
                                  .format(i + 1, p.ra, p.dec, self.fgs_num))
 
-    def get_gs_params(self, vss_infile, guide_star_params_dict):
-        """Get guide star parameters from dictionary or VSS file
+    def get_gs_params(self, guide_star_params_dict):
+        """Map guide_star_params_dict values and keys to attributes
         """
-        if vss_infile and guide_star_params_dict:
-            LOGGER.info(
-                'Segment Guiding: Reading RA, Dec, and PA from VSS file {}'.
-                format(vss_infile)
-            )
-            LOGGER.info(
-                'Segment Guiding: Reading boresight offset and segment '
-                'number from user-provided dictionary.'
-            )
-            self.get_guidestar_params_from_visit_file(vss_infile)
-            self.v2_boff = guide_star_params_dict['v2_boff']
-            self.v3_boff = guide_star_params_dict['v3_boff']
-            self.seg_num = guide_star_params_dict['seg_num']
 
-        elif vss_infile:
-            LOGGER.info(
-                'Segment Guiding: Reading RA, Dec, and PA from VSS file {}'.
-                format(vss_infile)
-            )
-            LOGGER.info(
-                'Segment Guiding: Setting boresight offset = 0 and segment '
-                'number = 0.'
-            )
-            self.get_guidestar_params_from_visit_file(vss_infile)
-            self.v2_boff = 0
-            self.v3_boff = 0
-            self.seg_num = 0
-
-        elif guide_star_params_dict:
-            LOGGER.info(
-                'Segment Guiding: Reading all GS parameters from user-provided dictionary.'
-            )
-            # Map guide_star_params_dict keys to attributes
-            for attr_name in guide_star_params_dict.keys():
+        for attr_name in guide_star_params_dict.keys():
+            try:
                 if attr_name == "seg_num" or attr_name == "fgs_num":
-                    try:
-                        setattr(self, attr_name, int(guide_star_params_dict[attr_name]))
-                    except TypeError:
-                        setattr(self, attr_name, guide_star_params_dict[attr_name])
+                    setattr(self, attr_name, int(guide_star_params_dict[attr_name]))
                 else:
-                    try:
-                        setattr(self, attr_name, float(guide_star_params_dict[attr_name]))
-                    except TypeError:
-                        setattr(self, attr_name, guide_star_params_dict[attr_name])
-
-        else:
-            LOGGER.info('If running the tool outside of the GUI, and '
-                         'no dictionary of parameters in provided, will create'
-                         'photometry override file.')
+                    setattr(self, attr_name, float(guide_star_params_dict[attr_name]))
+            except:
+                raise ValueError('Guide star parameter {} = {} is not valid. Ensure conversion to int or float is possible.'
+                      .format(attr_name, guide_star_params_dict[attr_name]))
 
     def parse_infile(self, segment_infile):
         """Get the segment positions and count rates from a file.
@@ -694,63 +653,6 @@ class SegmentGuidingCalculator:
             )
 
         self.selected_segment_ids = [selected_segs_ids]
-
-    def get_guidestar_params_from_visit_file(self, visit_file):
-        """Parse the Short Term Schedule file provided by VSS to
-        determine the RA, Dec, and PA of the guide star.
-
-        Parameters
-        ----------
-        visit_file : str
-            Short term schedule file
-
-        Raises
-        ------
-        ValueError
-            Incompatible VSS file provided
-        """
-        # Open provided visit file, verify formatting, and get index of data start
-        with open(visit_file) as vf:
-            lines = vf.readlines()
-
-            i_start = 0
-            for i_line, line in enumerate(lines):
-                if 'Corrected RA' in line:
-                    i_start = i_line
-                    break
-
-            if ('Short Term Schedule Display' not in lines[0]) or \
-               (i_start == 0):
-                raise ValueError(
-                    'Provided visit file {} has unknown formatting; cannot parse.'.
-                    format(visit_file)
-                )
-
-        # Read in as Astropy table
-        names = ['Order', 'Star IDs', 'FGS', 'Corrected RA', 'Corrected Dec',
-                 'Probability', 'ID V2', 'ID V3', 'ID X', 'ID Y', 'ID PA @ star',
-                 'FGS Magnitude', 'FGS Mag Uncert', 'Count Rate', 'Count Rate Uncert']
-        selected_guide_stars = asc.read(visit_file, data_start=i_start - 1, names=names)
-
-        # Verify only one set of GS parameters are provided and extract them
-        guide_star_params = []
-        for col in ['Corrected RA', 'Corrected Dec', 'ID PA @ star', 'FGS']:
-            values = set(selected_guide_stars[col])
-            if len(values) > 1:
-                raise ValueError(
-                    'Cannot parse {} from input visit file; too many values provided: {}'.
-                    format(col, list(values))
-                )
-            param = list(values)[0]
-            guide_star_params.append(param)
-        ra, dec, pa, fgs_num = guide_star_params
-
-        # Update class attributes
-        self.ra = ra
-        self.dec = dec
-        self.pa = pa
-        self.fgs_num = fgs_num
-
 
     def plot_segments(self):
         """Generate and save plots of segments in V2/V3 and RA/Dec.
