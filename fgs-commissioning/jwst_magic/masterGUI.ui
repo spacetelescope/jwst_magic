@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1433</width>
-    <height>1078</height>
+    <height>950</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -47,7 +47,7 @@
          <x>0</x>
          <y>0</y>
          <width>1433</width>
-         <height>1066</height>
+         <height>938</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -251,16 +251,7 @@
            <property name="spacing">
             <number>-1</number>
            </property>
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>0</number>
            </property>
            <item>
@@ -1069,36 +1060,10 @@ p, li { white-space: pre-wrap; }
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
-           <item row="1" column="2">
-            <widget class="QPushButton" name="pushButton_regfileSegmentGuiding">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>Open Finder window to select file with segment list</string>
-             </property>
-             <property name="text">
-              <string>Open</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="1">
             <widget class="QLineEdit" name="lineEdit_regfileSegmentGuiding">
              <property name="toolTip">
               <string>File containing guide and reference star locations and brightness</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0" colspan="2">
-            <widget class="QCheckBox" name="checkBox_refonly">
-             <property name="toolTip">
-              <string>Use the ref-only notation added in VSS build 14.3</string>
-             </property>
-             <property name="text">
-              <string>Designate reference stars with &quot;refonly&quot;</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -1143,6 +1108,19 @@ p, li { white-space: pre-wrap; }
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_segmentGuiding</string>
              </attribute>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QPushButton" name="pushButton_regfileSegmentGuiding">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Open Finder window to select file with segment list</string>
+             </property>
+             <property name="text">
+              <string>Open</string>
+             </property>
             </widget>
            </item>
           </layout>
