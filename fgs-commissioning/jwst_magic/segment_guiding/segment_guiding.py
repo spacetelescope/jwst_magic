@@ -166,10 +166,13 @@ class SegmentGuidingCalculator:
         self.program_id = program_id
         self.observation_num = observation_num
         self.visit_num = visit_num
-        self.refonly = refonly  # Implement "refonly" label for reference stars?
         self.ct_uncert_fctr = ct_uncert_fctr
         self.countrate_factor = countrate_factor
         self.oss_factor = oss_factor
+
+        # Initialize other attributes
+        # Will the override file be written out using the 'ref-only' syntax? Should be yes.
+        self._refonly = True
 
         # Ensure the output directory exists
         utils.ensure_dir_exists(self.out_dir)
