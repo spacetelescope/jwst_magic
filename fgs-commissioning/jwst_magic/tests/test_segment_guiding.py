@@ -236,8 +236,8 @@ def test_segment_override_command_out_of_fov(caplog, capsys):
     sg.y_det_segs = np.random.rand(18) * 10000 - 5000
     with pytest.raises(ValueError):
         sg.check_segments_inside_fov(attitude)
-    # Eventually: check that the log is raising a warning
-    # assert "off detector" in stdout
+    # Check that the log is raising a warning
+    assert 'off detector' in caplog.text
 
 
 def test_generate_photometry_override_file():
