@@ -370,11 +370,10 @@ class MasterGui(QMainWindow):
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():
-                segment_infile = None
-                data = None
-                GUI = False
-                selected_segs = None
-                refonly = False
+                # Generate the file
+                segment_guiding.generate_photometry_override_file(
+                    root, program_id, observation_num, visit_num, out_dir=out_dir
+                )
             else:
                 # Verify that the ALLpsfs.txt file exists
                 segment_infile = self.ALLpsfs
@@ -392,16 +391,13 @@ class MasterGui(QMainWindow):
                 GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
                 selected_segs = self.lineEdit_regfileStarSelector.text()
 
-                # Determine whether to use "ref-only" syntax
-                refonly = self.checkBox_refonly.isChecked()
+                # Run the tool and generate the file
+                segment_guiding.generate_segment_override_file(
+                    segment_infile, guider, program_id, observation_num, visit_num,
+                    root=root, out_dir=out_dir, selected_segs=selected_segs,
+                    click_to_select_gui=GUI, data=data, master_gui_app=self.app
+                )
 
-            # Run the tool
-            segment_guiding.run_tool(segment_infile, guider, program_id=program_id,
-                                     observation_num=observation_num,
-                                     visit_num=visit_num, root=root, click_to_select_GUI=GUI,
-                                     out_dir=out_dir, data=data,
-                                     selected_segs=selected_segs,
-                                     masterGUIapp=self.app, refonly=refonly)
             print("** Run Complete **")
 
             # Update converted image preview
