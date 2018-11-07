@@ -402,6 +402,9 @@ def make_root(root, filename):
 
 def make_out_dir(out_dir, default_out_path, root):
     # Determine output directory
+    if root is None:
+        raise TypeError('Please define the root directory.')
+
     if out_dir is None:
         out_dir = os.path.join(default_out_path, 'out', root)
     else:
