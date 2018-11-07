@@ -1,13 +1,14 @@
 """Generate segment guiding override files.
 
-The JWST MAGIC Segment Guiding Tool (SGT) is used during early
-wavefront commissioning, when the mirror segments are still unstacked.
+The JWST MAGIC Segment Guiding Tool is used during early wavefront
+commissioning, when the mirror segments are still unstacked and/or unphased.
 The tool takes a list of segment locations and guide star parameters,
 using them to calculates the effective RA and Dec where each segment
 appears in the sky. The user then specifies which segments to select as
-the "guide star" and as the "reference stars". Finally, the tool
-generates a segment guiding override file (gs-override*.txt) that the
-Visit Scheduling System (VSS) will use to generate a visit.
+the "guide star" and as the "reference stars". Finally, the tool generates
+either a segment override file (SOF) or a photometry override file (POF),
+in the form of gs-override*.txt file that the Visit Scheduling System
+(VSS) will use to generate a visit.
 
 Authors
 -------
@@ -17,65 +18,23 @@ Authors
 
 Use
 ---
-    The segment_guiding module can be used either with the Segment Guiding GUI:
+    To generate a segment override file (SOF), the segment_guiding module
+    can be used in the following way:
     ::
         from jwst_magic.segment_guiding import segment_guiding
-        segment_guiding.run_tool(segment_infile=segment_infile, guider=guider)
+        segment_guiding.generate_segment_override_file(
+            segment_infile, guider, program_id, observation_num, visit_num,
+            root=None, out_dir=None, selected_segs=None,
+            click_to_select_GUI=True, data=None, guide_star_params_dict=None,
+            threshold_factor=0.9, parameter_dialog=True, oss_factor=0.6,
+            masterGUIapp=None):
 
-    Or with the segment dialog box:
+
+    Or to generate a photometry override file (POF):
     ::
-        from jwst_magic.segment_guiding import segment_guiding
-        segment_guiding.run_tool(program_id=program_id, observation=observation,
-                                 visit=visit, parameter_dialog=True)
-
-    Or from dictionary of parameters:
-    ::
-        from jwst_magic.segment_guiding import segment_guiding
-        segment_guiding.run_tool(program_id=program_id, observation=observation,
-                                 visit=visit, guide_star_params_dict=guide_star_params_dict,
-                                 parameter_dialog=False)
-
-    Optional arguments:
-        ``segment_infile`` - filepath to ALLpsfs.txt file with list
-            of all segment locations and countrates
-        ``guider`` - which guider is being used: 1 or 2
-        ``root`` - name used to generate output folder and output
-            filenames. If not specified, will be derived from the
-            segment_infile name
-        ``out_dir`` - location of out/ directory. If not provided,
-            the image(s) will be saved within the repository at
-            tools/fgs-commissioning/
-        ``selected_segs`` - filepath to regfile.txt file with list of
-            locations and countrates for the selected segments (guide
-            and reference stars). If not provided, will default to
-            {out_dir}/out/{root}/{root}_G{guider}_regfile.txt
-        ``GUI`` - will the tool use the segment guiding GUI? If not
-            specified, set to True.
-        ``vss_infile`` - filepath to guide star report provided by VSS
-        ``data`` - image that will be displayed in the click-to-select GUI
-        ``masterGUIapp`` - qApplication instance of parent GUI
-        ``refonly`` - will the override file be written out using the
-            'ref-only' syntax?
-        ``parameter_dialog`` - prompt the user to enter parameters
-            (countrate factors, APT numbers, RA, Dec, PA, and boresight
-            offset) from a dialog box rather than manually providing
-            arguments. If True, the remaining arguments are not necessary.
-        ``program_id`` - APT program number
-        ``observation_num`` - observation number
-        ``visit_num`` - visit number
-        ``guide_star_params_dict`` - dictionary containing guide star
-            parameters, for example:
-            {'v2_boff': 0.1,  # boresight offset in V2 (arcsec)
-             'v3_boff': 0.2,  # boresight offset in V3 (arcsec)
-             'fgs_num': 1,  # guider number
-             'ra': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
-             'dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
-             'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
-             'seg_num': 0}  # selected segment to guide on
-        ``ct_uncert_fctr`` - the factor by which countrates are
-            multiplied to determine the countrate uncertainty
-        ``countrate_factor`` - the factor by which countrates are
-            multipled by to simulate diffuse PSFs (e.g. in MIMF)
+         segment_guiding.generate_photometry_override_file(
+            root, program_id, observation_num, visit_num,
+            countrate_factor, out_dir=None):
 """
 
 # Standard Library Imports
@@ -114,26 +73,32 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SegmentGuidingCalculator:
-    def __init__(self, program_id, observation_num, visit_num, segment_infile,
-                 root=None, guide_star_params_dict=None, refonly=False,
-                 selected_segs=None, vss_infile=None, out_dir=None,
-                 ct_uncert_fctr=0.9, countrate_factor=None, oss_factor=0.6):
-        """Initialize the class.
+    def __init__(self, override_type, program_id, observation_num, visit_num,
+                 root, out_dir, segment_infile=None, guide_star_params_dict=None,
+                 selected_segs=None, threshold_factor=0.9, countrate_factor=None,
+                 oss_factor=0.6):
+        """Initialize the segment guiding calculator class.
 
         Parameters
         ----------
+        override_type: str
+            What kind of file to generate. Options are "SOF" (segment override
+            file) or "POF" (photometry override file)
         program_id : int
             APT program number
         observation_num : int
             Observation number
         visit_num : int
             Visit number
+        root : str
+            Name used to generate output folder and output filenames.
+        out_dir : str
+            Location of out/ directory.
+
         segment_infile : str, optional
             Filepath to ALLpsfs.txt file with list of all segment locations
             and countrates
-        root : str, optional
-            Name used to generate output folder and output filenames. If not
-            specified, will be derived from the segment_infile name
+            Used for SOF Generation
         guide_star_params_dict : dict, optional
             Dictionary containing guide star parameters, for example:
             {'v2_boff': 0.1,  # boresight offset in V2 (arcsec)
@@ -143,79 +108,69 @@ class SegmentGuidingCalculator:
              'dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
              'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
              'seg_num': 0}  # selected segment to guide on
-        refonly : bool, optional
-            Will the override file be written out using the 'ref-only' syntax?
+             Used for SOF Generation
         selected_segs : str, optional
             Filepath to regfile.txt file with list of locations and
             countrates for the selected segments (guide and reference stars)
-        vss_infile : str, optional
-            Filepath to guide star report provided by VSS
-        out_dir : str, optional
-            Location of out/ directory
-        ct_uncert_fctr : float, optional
+            Used for SOF Generation
+        threshold_factor : float, optional
             The factor by which countrates are multiplied to determine
             the countrate uncertainty
+            Used for SOF Generation
         countrate_factor : float, optional
             The factor by which countrates are multiplied by to simulate
             diffuse PSFs (e.g. in MIMF)
+            Used for POF Generation
         """
 
-        # Initialize attributes
-        self.root = root
-        self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, self.root)
+        # Initialize parameters into attributes
+        self.override_type = override_type
         self.program_id = program_id
         self.observation_num = observation_num
         self.visit_num = visit_num
-        self.refonly = refonly  # Implement "refonly" label for reference stars?
-        self.ct_uncert_fctr = ct_uncert_fctr
+        self.root = root
+        self.out_dir = out_dir
+        self.threshold_factor = threshold_factor
         self.countrate_factor = countrate_factor
         self.oss_factor = oss_factor
+
+        # Initialize other attributes
+        # Will the override file be written out using the 'ref-only' syntax? Should be yes.
+        self._refonly = True
 
         # Ensure the output directory exists
         utils.ensure_dir_exists(self.out_dir)
 
-        # Parse the input file type (ALLpsfs.txt, regfile.txt, and VSS infile)
-        self.get_gs_params(vss_infile, guide_star_params_dict)
-        if segment_infile:
+        # Set up to do segment override calculations
+        if self.override_type == "SOF":
+            self.get_gs_params(guide_star_params_dict)
+            self.get_guider_aperture()
             self.parse_infile(segment_infile)
-        if selected_segs is not None:
             self.get_selected_segs(selected_segs)
 
-        # Get aperture parameters from FGS SIAF
-        if self.fgs_num:
-            self.get_guider_aperture()
-        else:
-            LOGGER.warning('Segment Guiding: No guider information provided, creating photometry override file.')
-
-    def get_chosen_segment_position(self):
+    def get_center_pointing(self):
         """Determine the V2/V3 position of the chosen segment.
 
         Check that the user-provided segment ID number is valid (0 to
         18). Calculate the central V2/V3 point of either the provided
         segment or the center of the segment array.
         """
-        # Try to convert provided segment ID number to an integer
-        try:
-            seg_n = int(self.seg_num)
-        except ValueError:
-            raise ValueError('Unrecognized segment number: {}'.format(self.seg_num))
-
-        # Refresh FGS data
-        self.get_guider_aperture()
 
         # Ensure the provided segment ID is valid
         segment_max = len(self.v2_seg_array)
-        if (seg_n < 0) or (seg_n > segment_max):
-            msg = 'Segment number {} out of range (0, {})'.format(seg_n, segment_max)
+        if (self.seg_num < 0) or (self.seg_num > segment_max):
+            msg = 'Segment number {} out of range (0, {})'.format(self.seg_num, segment_max)
             raise ValueError(msg)
 
         # Determine the central V2/V3 point from the given segment ID
 
+        # FIXME: is this wrong? adding the V2/V3 reference twice...?
+
         # If a specific segment was provided, set the V2/V3 ref point to be
         # that segment's location
-        if seg_n > 0:
-            self.v2_seg_n = self.v2_seg_array[seg_n - 1]
-            self.v3_seg_n = self.v3_seg_array[seg_n - 1]
+        if self.seg_num > 0:
+            self.v2_seg_n = self.v2_seg_array[self.seg_num - 1]
+            self.v3_seg_n = self.v3_seg_array[self.seg_num - 1]
         # Otherwise, if the input segment ID was 0, set the V2/V3 ref point to
         # be the mean of all segments' locations
         else:
@@ -231,7 +186,7 @@ class SegmentGuidingCalculator:
         self.v3_aim = self.v3_ref + dv3_aim
 
         # Convert to Ideal coordinates
-        self.x_idl, self.y_idl = self.fgs_siaf_aperture.tel_to_idl(self.v2_aim, self.v3_aim)
+        self.x_idl_aim, self.y_idl_aim = self.fgs_siaf_aperture.tel_to_idl(self.v2_aim, self.v3_aim)
 
     def get_guider_aperture(self):
         """Extract needed parameters from the SIAF file for the given FGS.
@@ -257,12 +212,7 @@ class SegmentGuidingCalculator:
     def calculate_effective_ra_dec(self):
         """Calculate the effective RAs and Decs for each segment.
         """
-        self.nseg = len(self.seg_id_array)
-
-        # Convert V2/V3 coordinates to ideal coordinates
-        idl_coords = self.fgs_siaf_aperture.tel_to_idl(self.v2_seg_array + self.v2_ref,
-                                                       self.v3_seg_array + self.v3_ref)
-        self.x_idl_segs, self.y_idl_segs = idl_coords
+        self.n_segments = len(self.seg_id_array)
 
         # Get the attitude matrix
         attitude = rotations.attitude(self.v2_aim + self.v2_boff,
@@ -270,37 +220,31 @@ class SegmentGuidingCalculator:
                                       self.ra, self.dec, self.pa)
 
         # Get RA and Dec for each segment.
-        self.seg_ra = np.zeros(self.nseg)
-        self.seg_dec = np.zeros(self.nseg)
-        for i in range(self.nseg):
-            V2 = self.v2_ref + self.v2_seg_array[i]
-            V3 = self.v3_ref + self.v3_seg_array[i]
-            self.seg_ra[i], self.seg_dec[i] = rotations.pointing(attitude, V2, V3,
-                                                               positive_ra=True)
+        self.seg_ra = np.zeros(self.n_segments)
+        self.seg_dec = np.zeros(self.n_segments)
+        for i in range(self.n_segments):
+            v2 = self.v2_ref + self.v2_seg_array[i]
+            v3 = self.v3_ref + self.v3_seg_array[i]
+            self.seg_ra[i], self.seg_dec[i] = rotations.pointing(attitude, v2, v3,
+                                                                 positive_ra=True)
 
+        # Convert V2/V3 coordinates to ideal coordinates and detector frame coordinates
+        idl_coords = self.fgs_siaf_aperture.tel_to_idl(self.v2_seg_array + self.v2_ref,
+                                                       self.v3_seg_array + self.v3_ref)
+        self.x_idl_segs, self.y_idl_segs = idl_coords
+        self.x_det_segs, self.y_det_segs = self.fgs_siaf_aperture.idl_to_det(self.x_idl_segs,
+                                                                             self.y_idl_segs)
+
+        # Check to make sure all the computed segment locations are within
+        # the needed FOV
         self.check_segments_inside_fov(attitude)
 
-        # Convert segment coordinates to detector frame
-        self.x_det, self.y_det = self.fgs_siaf_aperture.idl_to_det(self.x_idl_segs, self.y_idl_segs)
-
-        # Check to make sure no segments are off the detector
-        for x, y, i_seg in zip(self.x_det, self.y_det, self.seg_id_array):
-            if x < 0.5 or x > 2048.5:
-                LOGGER.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
-            if y < 0.5 or y > 2048.5:
-                LOGGER.warning('Segment Guiding: %8s off detector in Y direction' % i_seg)
-
-        # Check to make sure that RA is between 0 and 360 and Dec is between -90 and 90
-        self.check_coords()
-
-    def write_override_file(self, nseg=None, verbose=True):
+    def write_override_file(self, verbose=True):
         """Write the segment guiding override file: {out_dir}/out/{root}/
         gs-override_{program_id}_{observation_num}_{visit_num}.txt
 
         Parameters
         ----------
-        nseg : int
-            The number of segments in the image
         verbose : bool, optional
             Log results of calculations and file content
         """
@@ -310,7 +254,7 @@ class SegmentGuidingCalculator:
         out_file = os.path.join(self.out_dir, out_file)
 
         # Print summary of input data (guide star RA, Dec, and PA, etc...)
-        if verbose and self.fgs_num:
+        if verbose and self.override_type == "SOF":
             # Print guide star and boresight parameters
             summary_output = """Guide Star Parameters
                 Aperture FGS: {0}
@@ -323,17 +267,16 @@ class SegmentGuidingCalculator:
                        self.v2_boff, self.v3_boff, self.ra, self.dec, self.pa)
             LOGGER.info('Segment Guiding: ' + summary_output)
 
-            if nseg:
-                all_segments = 'All Segment Locations'
-                all_segments += '\n                Segment     dV2    dV3    xIdl' +\
-                                '   yIdl     RA         Dec         xDet     yDet'
-                for p in range(nseg):
-                    all_segments += ('\n                %5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f'
-                                     % (self.seg_id_array[p], self.v2_seg_array[p],
-                                        self.v3_seg_array[p], self.x_idl_segs[p],
-                                        self.y_idl_segs[p], self.seg_ra[p],
-                                        self.seg_dec[p], self.x_det[p], self.x_det[p]))
-                LOGGER.info('Segment Guiding: ' + all_segments)
+            all_segments = 'All Segment Locations'
+            all_segments += '\n                Segment     dV2    dV3    xIdl' +\
+                            '   yIdl     RA         Dec         xDet     yDet'
+            for p in range(self.n_segments):
+                all_segments += ('\n                %5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f'
+                                 % (self.seg_id_array[p], self.v2_seg_array[p],
+                                    self.v3_seg_array[p], self.x_idl_segs[p],
+                                    self.y_idl_segs[p], self.seg_ra[p],
+                                    self.seg_dec[p], self.x_det_segs[p], self.x_det_segs[p]))
+            LOGGER.info('Segment Guiding: ' + all_segments)
 
         # Write out override file with RA/Decs of selected segments
         with open(out_file, 'w') as f:
@@ -343,41 +286,31 @@ class SegmentGuidingCalculator:
             out_string = 'sts -gs_select {:4d}:{}:{}{}'.\
                 format(int(self.program_id), self.observation_num,
                        self.visit_num, countrate_qualifier)
-            if nseg:
-                ##FIXME everything below needs to be optional
-                # If segments have been selected, only use those
-                try:
-                    orientations = list(self.selected_segment_ids)
-                    guide_segments = [s[0] for s in orientations]
-                    all_selected_segs = list(set(np.concatenate(orientations)))
+            if self.override_type == "SOF":
+                # Determine which segments have been selected
+                orientations = list(self.selected_segment_ids)
+                guide_segments = [s[0] for s in orientations]
+                all_selected_segs = list(set(np.concatenate(orientations)))
 
-                    if self.refonly:
-                        n_guide_segments = len(guide_segments)
+                if self._refonly:
+                    n_guide_segments = len(guide_segments)
 
-                    for i in range(len(all_selected_segs)):
-                        # Reorder all possible segments
-                        all_selected_segs.append(all_selected_segs[0])
-                        all_selected_segs.remove(all_selected_segs[0])
-                        new_seg = list(np.copy(all_selected_segs))
+                for i in range(len(all_selected_segs)):
+                    # Reorder all possible segments
+                    all_selected_segs.append(all_selected_segs[0])
+                    all_selected_segs.remove(all_selected_segs[0])
+                    new_seg = list(np.copy(all_selected_segs))
 
-                        # Add to orientation list if not already provided as guide star
-                        if new_seg[0] not in guide_segments:
-                            orientations.append(new_seg)
-                            guide_segments.append(new_seg[0])
-
-                # If not, use all 18 segments as default
-                except AttributeError:
-                    orientations = np.array([np.linspace(1, nseg, nseg).astype(int)])
+                    # Add to orientation list if not already provided as guide star
+                    if new_seg[0] not in guide_segments:
+                        orientations.append(new_seg)
+                        guide_segments.append(new_seg[0])
 
                 # If countrates were included in the input file, use them!
                 # The OSS factor is multiplied by OSS to account for the 3x3 countrates
                 # So we need to divide it out here and for every segment override file
-                try:
-                    rate = self.counts_array / self.oss_factor
-                    uncertainty = self.counts_array * self.ct_uncert_fctr / self.oss_factor
-                except AttributeError:
-                    rate = [0.0] * nseg / self.oss_factor
-                    uncertainty = [0.0] * nseg / self.oss_factor
+                rate = self.counts_array / self.oss_factor
+                uncertainty = self.counts_array * self.threshold_factor / self.oss_factor
 
                 # Write the commands for each orientation
                 for i_o, orientation in enumerate(orientations):
@@ -387,7 +320,7 @@ class SegmentGuidingCalculator:
                     seg = i_o + 1
                     # If implementing "ref_only" labels, determine if star is guide
                     # or reference star, and alter label and ID accordingly
-                    if self.refonly:
+                    if self._refonly:
                         if i_o >= n_guide_segments:
                             label = 'ref_only'
                             seg = i_o + 1 - n_guide_segments
@@ -398,7 +331,7 @@ class SegmentGuidingCalculator:
                         self.seg_dec[guide_seg_id], rate[guide_seg_id],
                         uncertainty[guide_seg_id])
 
-                    if not self.refonly or (self.refonly and label == 'star'):
+                    if not self._refonly or (self._refonly and label == 'star'):
                         # Add list of segment IDs for all reference stars
                         for ref_seg_id in orientation:
                             if ref_seg_id != guide_seg_id:
@@ -406,39 +339,14 @@ class SegmentGuidingCalculator:
 
                     out_string += star_string
 
-                f.write(out_string)
+            f.write(out_string)
 
             if verbose:
                 LOGGER.info('Segment Guiding: Guide Star Override: ' +
                             out_string.replace('-star', '\n                -star').
                             replace('-ref_only', '\n                -ref_only'))
-                if nseg:
-                    LOGGER.info('Segment Guiding: Saved {} segment commands to {}'.
-                            format(len(orientations), out_file))
-
-    def check_coords(self):
-        """Check to make sure that RA is between 0 and 360 and Dec
-        between -90 and 90
-        """
-        for i, ra in enumerate(self.seg_ra):
-            if ra > 360.0:
-                LOGGER.warning('Segment Guiding: RA = {}'.format(ra))
-                self.seg_ra -= 360.0
-            elif ra < 0.0:
-                LOGGER.warning('Segment Guiding: RA = {}'.format(ra))
-                self.seg_ra += 360.0
-            else:
-                continue
-
-        for i, dec in enumerate(self.seg_dec):
-            if dec > 90.0:
-                LOGGER.warning('Segment Guiding: Dec = {}'.format(dec))
-                self.seg_dec -= 180.0
-            elif dec < -90.0:
-                LOGGER.warning('Segment Guiding: Dec = {}'.format(dec))
-                self.seg_dec += 180.0
-            else:
-                continue
+                LOGGER.info('Segment Guiding: Saved override command to {}'.
+                            format(out_file))
 
     def check_segments_inside_fov(self, attitude):
         """Check to make sure that the calculated RA and Dec of each
@@ -449,6 +357,13 @@ class SegmentGuidingCalculator:
         attitude : 3 x 3 numpy array
             Attitude matrix generated by pysiaf.utils.rotations.attitude
         """
+        # Check to make sure no segments are off the detector, pixel-wise
+        for x, y, i_seg in zip(self.x_det_segs, self.y_det_segs, self.seg_id_array):
+            if x < 0.5 or x > 2048.5:
+                LOGGER.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
+            if y < 0.5 or y > 2048.5:
+                LOGGER.warning('Segment Guiding: %8s off detector in Y direction' % i_seg)
+
         # Get the vertices of the given FGS detector
         vertices = [(self.fgs_siaf_aperture.XIdlVert1, self.fgs_siaf_aperture.YIdlVert1),
                     (self.fgs_siaf_aperture.XIdlVert2, self.fgs_siaf_aperture.YIdlVert2),
@@ -470,76 +385,37 @@ class SegmentGuidingCalculator:
         seg_pointings = [(seg_ra, seg_dec) for seg_ra, seg_dec in zip(self.seg_ra, self.seg_dec)]
         segs_in_fov = fov_path.contains_points(seg_pointings)
         if not segs_in_fov.all():
-            segments_outside = np.where(segs_in_fov == False)[0]
+            segments_outside = np.where(segs_in_fov is False)[0]
             raise ValueError(
                 'Incorrect segment guiding calculations. Segment(s) {} is outside of the FGS{} FOV. Cannot generate segment override file that will not fail.'
-                    .format(segments_outside, self.fgs_num)
+                .format(segments_outside, self.fgs_num)
             )
 
         # And because I don't trust anything anymore, straight up check that the
         # segments are within a guider ~FOV of the commanded GS RA/Dec
         gs_pointing = SkyCoord(ra=self.ra * u.degree, dec=self.dec * u.degree)
         fgs_fov_length = 2.3 * u.arcmin
+        fgs_radius = np.sqrt(2 * (fgs_fov_length / 2) ** 2)
         for i, p in enumerate(seg_pointings):
             p = SkyCoord(ra=p[0] * u.degree, dec=p[1] * u.degree)
             sep = p.separation(gs_pointing)
-            FGS_radius = np.sqrt(2 * (fgs_fov_length / 2) ** 2)
-            if sep > FGS_radius:
+            if sep > fgs_radius:
                 raise ValueError('Segment {} at RA, Dec = ({}, {}) is outside the FGS{} FOV. Cannot generate segment override file that will not fail.'
                                  .format(i + 1, p.ra, p.dec, self.fgs_num))
 
-    def get_gs_params(self, vss_infile, guide_star_params_dict):
-        """Get guide star parameters from dictionary or VSS file
+    def get_gs_params(self, guide_star_params_dict):
+        """Map guide_star_params_dict values and keys to attributes
         """
-        if vss_infile and guide_star_params_dict:
-            LOGGER.info(
-                'Segment Guiding: Reading RA, Dec, and PA from VSS file {}'.
-                format(vss_infile)
-            )
-            LOGGER.info(
-                'Segment Guiding: Reading boresight offset and segment '
-                'number from user-provided dictionary.'
-            )
-            self.get_guidestar_params_from_visit_file(vss_infile)
-            self.v2_boff = guide_star_params_dict['v2_boff']
-            self.v3_boff = guide_star_params_dict['v3_boff']
-            self.seg_num = guide_star_params_dict['seg_num']
 
-        elif vss_infile:
-            LOGGER.info(
-                'Segment Guiding: Reading RA, Dec, and PA from VSS file {}'.
-                format(vss_infile)
-            )
-            LOGGER.info(
-                'Segment Guiding: Setting boresight offset = 0 and segment '
-                'number = 0.'
-            )
-            self.get_guidestar_params_from_visit_file(vss_infile)
-            self.v2_boff = 0
-            self.v3_boff = 0
-            self.seg_num = 0
-
-        elif guide_star_params_dict:
-            LOGGER.info(
-                'Segment Guiding: Reading all GS parameters from user-provided dictionary.'
-            )
-            # Map guide_star_params_dict keys to attributes
-            for attr_name in guide_star_params_dict.keys():
+        for attr_name in guide_star_params_dict.keys():
+            try:
                 if attr_name == "seg_num" or attr_name == "fgs_num":
-                    try:
-                        setattr(self, attr_name, int(guide_star_params_dict[attr_name]))
-                    except TypeError:
-                        setattr(self, attr_name, guide_star_params_dict[attr_name])
+                    setattr(self, attr_name, int(guide_star_params_dict[attr_name]))
                 else:
-                    try:
-                        setattr(self, attr_name, float(guide_star_params_dict[attr_name]))
-                    except TypeError:
-                        setattr(self, attr_name, guide_star_params_dict[attr_name])
-
-        else:
-            LOGGER.info('If running the tool outside of the GUI, and '
-                         'no dictionary of parameters in provided, will create'
-                         'photometry override file.')
+                    setattr(self, attr_name, float(guide_star_params_dict[attr_name]))
+            except:
+                raise ValueError('Guide star parameter {} = {} is not valid. Ensure conversion to int or float is possible.'
+                      .format(attr_name, guide_star_params_dict[attr_name]))
 
     def parse_infile(self, segment_infile):
         """Get the segment positions and count rates from a file.
@@ -692,63 +568,6 @@ class SegmentGuidingCalculator:
 
         self.selected_segment_ids = [selected_segs_ids]
 
-    def get_guidestar_params_from_visit_file(self, visit_file):
-        """Parse the Short Term Schedule file provided by VSS to
-        determine the RA, Dec, and PA of the guide star.
-
-        Parameters
-        ----------
-        visit_file : str
-            Short term schedule file
-
-        Raises
-        ------
-        ValueError
-            Incompatible VSS file provided
-        """
-        # Open provided visit file, verify formatting, and get index of data start
-        with open(visit_file) as vf:
-            lines = vf.readlines()
-
-            i_start = 0
-            for i_line, line in enumerate(lines):
-                if 'Corrected RA' in line:
-                    i_start = i_line
-                    break
-
-            if ('Short Term Schedule Display' not in lines[0]) or \
-               (i_start == 0):
-                raise ValueError(
-                    'Provided visit file {} has unknown formatting; cannot parse.'.
-                    format(visit_file)
-                )
-
-        # Read in as Astropy table
-        names = ['Order', 'Star IDs', 'FGS', 'Corrected RA', 'Corrected Dec',
-                 'Probability', 'ID V2', 'ID V3', 'ID X', 'ID Y', 'ID PA @ star',
-                 'FGS Magnitude', 'FGS Mag Uncert', 'Count Rate', 'Count Rate Uncert']
-        selected_guide_stars = asc.read(visit_file, data_start=i_start - 1, names=names)
-
-        # Verify only one set of GS parameters are provided and extract them
-        guide_star_params = []
-        for col in ['Corrected RA', 'Corrected Dec', 'ID PA @ star', 'FGS']:
-            values = set(selected_guide_stars[col])
-            if len(values) > 1:
-                raise ValueError(
-                    'Cannot parse {} from input visit file; too many values provided: {}'.
-                    format(col, list(values))
-                )
-            param = list(values)[0]
-            guide_star_params.append(param)
-        ra, dec, pa, fgs_num = guide_star_params
-
-        # Update class attributes
-        self.ra = ra
-        self.dec = dec
-        self.pa = pa
-        self.fgs_num = fgs_num
-
-
     def plot_segments(self):
         """Generate and save plots of segments in V2/V3 and RA/Dec.
         """
@@ -770,9 +589,9 @@ class SegmentGuidingCalculator:
         plt.figure(2)
         plt.clf()
         plt.plot(self.seg_ra, self.seg_dec, 'b*')
-        RAmean = self.seg_ra.mean()
-        Decmean = self.seg_dec.mean()
-        plt.plot(RAmean, Decmean, 'ro')
+        ra_mean = self.seg_ra.mean()
+        dec_mean = self.seg_dec.mean()
+        plt.plot(ra_mean, dec_mean, 'ro')
         seg_n = int(self.seg_num)
         if seg_n > 0:
             plt.plot(self.seg_ra[seg_n - 1], self.seg_dec[seg_n - 1], 'mx', markersize=12)
@@ -786,68 +605,77 @@ class SegmentGuidingCalculator:
         plt.gca().ticklabel_format(useOffset=False)
         plt.savefig(os.path.join(self.out_dir, self.root + '_RADecsegments.png'))
 
-    def check_guidestar_params(self):
+    def check_guidestar_params(self, override_type):
         """Ensure all guidestar parameters (RA, Dec, PA, and boresight
         offset) fall within appropriate ranges.
+
+        Parameters
+        ----------
+        override_type: str
+            What kind of file to generate. Options are "SOF" (segment override
+            file) or "POF" (photometry override file)
         """
-        # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ BORESIGHT OFFSET ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        # Guide star information
-        msg = ["OK", "Boresight parameter conversion error",
-               "Boresight parameter out of range"]
+        if override_type == "SOF":
+            # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ BORESIGHT OFFSET ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+            # Guide star information
+            msg = ["OK", "Boresight parameter conversion error",
+                   "Boresight parameter out of range"]
 
-        if self.v2_boff:
-            errcode = self.checkout(self.v2_boff, -10.0, 10.0)
-            if errcode != 0:
-                error = msg[errcode]
-                raise ValueError(error)
-            else:
-                self.v2_boff = float(self.v2_boff)
+            if self.v2_boff:
+                errcode = self.checkout(self.v2_boff, -10.0, 10.0)
+                if errcode != 0:
+                    error = msg[errcode]
+                    raise ValueError(error)
+                else:
+                    self.v2_boff = float(self.v2_boff)
 
-        if self.v3_boff:
-            errcode = self.checkout(self.v3_boff, -10.0, 10.0)
-            if errcode != 0:
-                error = msg[errcode]
-                raise ValueError(error)
-            else:
-                self.v3_boff = float(self.v3_boff)
+            if self.v3_boff:
+                errcode = self.checkout(self.v3_boff, -10.0, 10.0)
+                if errcode != 0:
+                    error = msg[errcode]
+                    raise ValueError(error)
+                else:
+                    self.v3_boff = float(self.v3_boff)
 
-        # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ RA, DEC, AND POSITION ANGLE ~ ~ ~ ~ ~ ~
-        # These values can be set to None, otherwise, have to be in range
-        msg = ["OK", "Guide Star parameter conversion error",
-               "Guide Star parameter out of range"]
+            # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ RA, DEC, AND POSITION ANGLE ~ ~ ~ ~ ~ ~
+            # These values can be set to None, otherwise, have to be in range
+            msg = ["OK", "Guide Star parameter conversion error",
+                   "Guide Star parameter out of range"]
 
-        if self.ra:
-            errcode = self.checkout(self.ra, 0.0, 360.0)
-            if errcode != 0:
-                error = "{} for RA. Expecting between 0.0 and 360.0 degrees.".format(msg[errcode])
-                raise ValueError(error)
-            else:
-                self.ra = float(self.ra)
+            if self.ra:
+                errcode = self.checkout(self.ra, 0.0, 360.0)
+                if errcode != 0:
+                    error = "{} for RA. Expecting between 0.0 and 360.0 degrees.".format(msg[errcode])
+                    raise ValueError(error)
+                else:
+                    self.ra = float(self.ra)
 
-        if self.dec:
-            errcode = self.checkout(self.dec, -90.0, 90.0)
-            if errcode != 0:
-                error = "{} for DEC. Expecting between -90.0 and 90.0 degrees.".format(msg[errcode])
-                raise ValueError(error)
-            else:
-                self.dec = float(self.dec)
+            if self.dec:
+                errcode = self.checkout(self.dec, -90.0, 90.0)
+                if errcode != 0:
+                    error = "{} for DEC. Expecting between -90.0 and 90.0 degrees.".format(msg[errcode])
+                    raise ValueError(error)
+                else:
+                    self.dec = float(self.dec)
 
-        if self.pa:
-            errcode = self.checkout(self.pa, 0.0, 360.0)
-            error = "{} for POSITION ANGLE. Expecting between 0.0 and 360.0 degrees.".format(msg[errcode])
-            if errcode != 0:
-                raise ValueError(error)
-            else:
-                self.pa = float(self.pa)
+            if self.pa:
+                errcode = self.checkout(self.pa, 0.0, 360.0)
+                error = "{} for POSITION ANGLE. Expecting between 0.0 and 360.0 degrees.".format(msg[errcode])
+                if errcode != 0:
+                    raise ValueError(error)
+                else:
+                    self.pa = float(self.pa)
 
-        # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ COUNT RATE FACTOR ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        # Count rate factor has to be between 0 and 1 (required by VSS)
-        if self.countrate_factor:
-            errcode = self.checkout(self.countrate_factor, 0.0, 1.0)
-            if errcode != 0:
-                error = "{} for count_rate_factor. Expecting between 0.0 and 1.0.".format(msg[errcode])
-                raise ValueError(error)
-
+        elif override_type == "POF":
+            # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ COUNT RATE FACTOR ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+            # Count rate factor has to be between 0 and 1 (required by VSS)
+            msg = ["OK", "Countrate factor conversion error",
+                   "Countrate factor out of range"]
+            if self.countrate_factor:
+                errcode = self.checkout(self.countrate_factor, 0.0, 1.0)
+                if errcode != 0:
+                    error = "{} for count_rate_factor. Expecting between 0.0 and 1.0.".format(msg[errcode])
+                    raise ValueError(error)
 
     @staticmethod
     def checkout(value, low, high):
@@ -867,40 +695,208 @@ class SegmentGuidingCalculator:
         return errcode
 
 
-def convert_nrca3pixel_offset_to_v2v3_offset(x_offset, y_offset):
-    """Convert a boresight offset from NIRCam A3 pixels to V2/V3 arcsec
+def generate_segment_override_file(segment_infile, guider,
+                                   program_id, observation_num, visit_num,
+                                   root=None, out_dir=None, selected_segs=None,
+                                   click_to_select_gui=True,
+                                   data=None, guide_star_params_dict=None,
+                                   threshold_factor=0.9, parameter_dialog=True,
+                                   oss_factor=0.6, master_gui_app=None):
+    """Run the segment guiding tool to select guide and reference stars and
+    generate a segment guiding override file.
 
     Parameters
     ----------
-    x_offset : float
-        Boresight offset in NIRCam A3 X pixels
-    y_offset : float
-        Boresight offset in NIRCam A3 Y pixels
+    segment_infile : str
+        File path to ALLpsfs.txt file with list of all segment locations
+        and countrates
+    guider : int
+        Which guider is being used: 1 or 2
+    program_id : int
+        APT program number
+    observation_num : int
+        Observation number
+    visit_num : int
+        Visit number
 
-    Returns
-    -------
-    v2_offset, v3_offset : tup
-        Boresight offset in V2/V3 (arcsec)
+    root : str, optional
+        Name used to generate output folder and output filenames. If not
+        specified, will be derived from the segment_infile name.
+    out_dir : str, optional
+        Location of out/ directory. If not specified, will be placed
+        within the repository: .../tools/fgs_commissioning/out/
+    selected_segs : str, optional
+        File path to regfile.txt file with list of locations and
+        countrates for the selected segments (guide and reference stars)
+        Required if click_to_select_GUI=False
+    click_to_select_gui : bool, optional
+        Will the tool use the segment guiding GUI?
+        Required if selected_segs=None
+    data : 2-D numpy array, optional
+        Image that will be displayed in the click-to-select GUI
+        Required if click_to_select_GUI=True
+    guide_star_params_dict : dict, optional
+        Dictionary containing guide star parameters, for example:
+            {'v2_boff': 0.1,  # boresight offset in V2 (arcsec)
+             'v3_boff': 0.2,  # boresight offset in V3 (arcsec)
+             'fgs_num': 1,  # guider number
+             'ra': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
+             'dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
+             'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
+             'seg_num': 0}  # selected segment to guide on
+        Required if parameter_dialog=False
+    threshold_factor : float, optional
+        The factor by which countrates are multiplied to determine
+        the countrate uncertainty
+    parameter_dialog : bool, optional
+        Prompt the user to enter parameters (countrate factors, APT
+        numbers, RA, Dec, PA, and boresight offset) from a dialog box
+        rather than manually providing arguments.
+        Required if guide_star_params_dict=None
+    oss_factor : float, optional
+        The factor that OSS applies to the 3x3 box counts in order to represent
+        the full number of counts that we care about.
+    master_gui_app : qApplication, optional
+        qApplication instance of parent GUI
     """
-    # Get pixel scale
-    nrc_siaf = pysiaf.Siaf('NIRCam')
-    nrca3 = nrc_siaf['NRCA3_FULL_OSS']
-    nircam_sw_x_scale = nrca3.XSciScale  # arcsec/pixel
-    nircam_sw_y_scale = nrca3.YSciScale  # arcsec/pixel
 
-    # Convert x/y offsets to V2/V3
-    v2_offset = x_offset * nircam_sw_x_scale  # arcsec
-    v3_offset = y_offset * nircam_sw_y_scale  # arcsec
+    root = utils.make_root(root, segment_infile)
+    utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
 
-    return v2_offset, v3_offset
+    try:
+        # Get the guide star parameters
+        if parameter_dialog:
+            guide_star_params_dict, program_id, observation_num, visit_num, \
+                threshold_factor, _ = _open_segment_guiding_dialog(
+                    "SOF", guider, program_id, observation_num, visit_num)
+        elif guide_star_params_dict is None:
+            raise ValueError(
+                'In order to run the segment guiding tool with '
+                '`parameter_dialog=False`, you must provide a dictionary '
+                'of guide star parameters to the `guide_star_params_dict` '
+                'argument in `segment_guiding.generate_segment_override_file()`.'
+            )
+
+        # Determine which segments are the guide and reference segments
+        if click_to_select_gui:
+            if data is None:
+                raise ValueError(
+                    'In order to run the segment guiding tool with '
+                    '`click_to_select_GUI=True`, you must provide a 2-D '
+                    'numpy array of the image to the `data` argument in '
+                    '`segment_guiding.generate_segment_override_file()`.'
+                )
+
+            guide_star_params_dict, selected_segs = _click_to_select_segments(
+                segment_infile, data, guide_star_params_dict,
+                master_gui_app, selected_segs=selected_segs
+            )
+        elif selected_segs is None:
+            raise ValueError(
+                'In order to run the segment guiding tool with '
+                '`click_to_select_GUI=False`, you must provide a file '
+                'specifying the locations and count rates of the guide '
+                'and reference stars as the `selected_segs` argument in'
+                '`segment_guiding.generate_segment_override_file()`.'
+            )
+
+        # Set up guiding calculator object
+        sg = SegmentGuidingCalculator(
+            "SOF", program_id, observation_num, visit_num, root, out_dir,
+            segment_infile=segment_infile,
+            guide_star_params_dict=guide_star_params_dict,
+            selected_segs=selected_segs, threshold_factor=threshold_factor,
+            oss_factor=oss_factor
+        )
+        # Verify all guidestar parameters are valid
+        sg.check_guidestar_params("SOF")
+
+        # Determine the V2/V3 of the pointing center
+        sg.get_center_pointing()
+
+        # Write a SOF
+        sg.calculate_effective_ra_dec()
+        sg.write_override_file()  # Print and save final output
+        sg.plot_segments()  # Save .pngs of plots
+
+    except Exception as e:
+        LOGGER.exception(e)
+        raise
 
 
-def open_segment_guiding_dialog(guider, program_id, observation_num, visit_num):
+def generate_photometry_override_file(root, program_id, observation_num, visit_num,
+                                      countrate_factor=None, out_dir=None,
+                                      parameter_dialog=True):
+    """Generate a photometry override file (used for commissioning activities
+    where the PSFs are stacked but unphased, like during MIMF).
+
+    Parameters
+    ----------
+    root : str
+        Name used to generate output folder and output filenames. If not
+        specified, will be derived from the segment_infile name
+    program_id : int
+        APT program number
+    observation_num : int
+        Observation number
+    visit_num : int
+        Visit number
+
+    countrate_factor : float, optional
+        The factor by which countrates are multiplied by to simulate
+        diffuse PSFs (e.g. in MIMF).
+        Required if parameter_dialog=False
+    out_dir : str, optional
+        Location of out/ directory. If not specified, will be placed
+        within the repository: .../tools/fgs_commissioning/out/
+    parameter_dialog : bool, optional
+        Prompt the user to enter parameters (countrate factors, APT
+        numbers) from a dialog box rather than manually providing arguments.
+        Required if countrate_factor=None
+    """
+
+    utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+
+    try:
+        # Get the program parameters and countrate factor
+        if parameter_dialog:
+            _, program_id, observation_num, visit_num, _, countrate_factor = \
+                _open_segment_guiding_dialog("POF", None, program_id, observation_num, visit_num)
+        elif countrate_factor is None:
+            raise ValueError(
+                'In order to run the segment guiding tool with '
+                '`parameter_dialog=False`, you must provide a countrate factor '
+                'between 0 and 1 to the `countrate_factor` argument in '
+                '`segment_guiding.generate_photometry_override_file()`.'
+            )
+
+        # Set up guiding calculator object
+        sg = SegmentGuidingCalculator(
+            "POF", program_id, observation_num, visit_num, root, out_dir,
+            countrate_factor=countrate_factor
+        )
+        # Verify all guidestar parameters are valid
+        sg.check_guidestar_params("POF")
+
+        # Write the POF
+        sg.write_override_file()
+
+    except Exception as e:
+        LOGGER.exception(e)
+        raise
+
+
+def _open_segment_guiding_dialog(override_type, guider, program_id, observation_num, visit_num):
     """Raise a dialog window to prompt user for guide star parameters
     and other parameters needed to generate the override file.
 
     Parameters
     ----------
+    override_type: str
+            What kind of file to generate. Options are "SOF" (segment override
+            file) or "POF" (photometry override file)
     guider : int
         Guider number (1 or 2)
     program_id : int
@@ -910,18 +906,23 @@ def open_segment_guiding_dialog(guider, program_id, observation_num, visit_num):
     visit_num : int
         Visit number
 
+
+
     Returns
     -------
     tup
         Tuple containing the following arguments: (guide_star_params_dict,
-        program_id, observation_num, visit_num, ct_uncert_fctr,
+        program_id, observation_num, visit_num, threshold_factor,
         countrate_factor)
     """
     # Initialize dialog widget
     segment_guiding_dialog = QDialog()
 
     # Import .ui file
-    uic.loadUi(os.path.join(__location__, 'segmentGuidingDialog.ui'), segment_guiding_dialog)
+    if override_type == "SOF":
+        uic.loadUi(os.path.join(__location__, 'segmentOverrideFileDialog.ui'), segment_guiding_dialog)
+    elif override_type == "POF":
+        uic.loadUi(os.path.join(__location__, 'photometryOverrideFileDialog.ui'), segment_guiding_dialog)
 
     # Set defaults from parsed header
     segment_guiding_dialog.lineEdit_programNumber.setText(str(program_id))
@@ -932,13 +933,15 @@ def open_segment_guiding_dialog(guider, program_id, observation_num, visit_num):
     segment_guiding_dialog.exec()
 
     # Get parameters for dictionary from dialog
-    try:
+    # try:
+
+    if override_type == "SOF":
         # Parse what the boresight offset is
         if segment_guiding_dialog.radioButton_boresightNIRCam.isChecked():
             x_offset = float(segment_guiding_dialog.lineEdit_boresightX.text())
             y_offset = float(segment_guiding_dialog.lineEdit_boresightY.text())
-            v2_offset, v3_offset = convert_nrca3pixel_offset_to_v2v3_offset(x_offset,
-                                                                            y_offset)
+            v2_offset, v3_offset = _convert_nrca3pixel_offset_to_v2v3_offset(x_offset,
+                                                                                 y_offset)
             LOGGER.info(
                 'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} pixels)'.
                 format(v2_offset, v3_offset, x_offset, y_offset)
@@ -975,170 +978,118 @@ def open_segment_guiding_dialog(guider, program_id, observation_num, visit_num):
             'seg_num': 0
         }
 
-        # Get APT information and other necessary parameters
-        program_id = segment_guiding_dialog.lineEdit_programNumber.text()
-        observation_num = segment_guiding_dialog.lineEdit_observationNumber.text()
-        visit_num = segment_guiding_dialog.lineEdit_visitNumber.text()
-        ct_uncert_fctr = float(segment_guiding_dialog.lineEdit_countrateUncertainty.text())
-        if segment_guiding_dialog.checkBox_countrateFactor.isChecked():
-            countrate_factor = float(segment_guiding_dialog.doubleSpinBox_countrateFactor.value())
-        else:
-            countrate_factor = None
-    except ValueError as e:
-        if "could not convert string to float:" not in str(e):
-            raise
-        else:
-            return
+        # Countrate factors
+        threshold_factor = float(segment_guiding_dialog.lineEdit_countrateUncertainty.text())
+        countrate_factor = None
 
-    return guide_star_params_dict, program_id, observation_num, visit_num, ct_uncert_fctr, countrate_factor
+    elif override_type == "POF":
+        countrate_factor = float(segment_guiding_dialog.doubleSpinBox_countrateFactor.value())
+        threshold_factor = None
+        guide_star_params_dict = None
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# MAIN FUNCTION
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Get APT information and other necessary parameters
+    program_id = segment_guiding_dialog.lineEdit_programNumber.text()
+    observation_num = segment_guiding_dialog.lineEdit_observationNumber.text()
+    visit_num = segment_guiding_dialog.lineEdit_visitNumber.text()
+
+    # except ValueError as e:
+    #     if "could not convert string to float:" not in str(e):
+    #         raise
+    #     else:
+    #         return
+
+    return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor
 
 
-def run_tool(segment_infile=None, guider=None, root=None, program_id=0, observation_num=0,
-             visit_num=0, click_to_select_GUI=True, guide_star_params_dict=None,
-             selected_segs=None, vss_infile=None, out_dir=None, data=None,
-             masterGUIapp=None, refonly=False, ct_uncert_fctr=0.9,
-             countrate_factor=None, parameter_dialog=True, oss_factor=0.6):
-    """Run the segment guiding tool to generate a segment guiding
-    override file.
+def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
+                              master_gui_app, selected_segs=None):
+    """Raise the segment guiding GUI and prompt the user to select which segments
+    to use as the guide and reference stars.
 
     Parameters
     ----------
-    segment_infile : str, optional
-        Filepath to ALLpsfs.txt file with list of all segment locations
+    segment_infile : str
+        File path to ALLpsfs.txt file with list of all segment locations
         and countrates
-    guider : int, optional
-        Which guider is being used: 1 or 2
-    root : str, optional
-        Name used to generate output folder and output filenames. If not
-        specified, will be derived from the segment_infile name
-    program_id : int, optional
-        APT program number
-    observation_num : int, optional
-        Observation number
-    visit_num : int, optional
-        Visit number
-    click_to_select_GUI : bool, optional
-        Will the tool use the segment guiding GUI?
-    guide_star_params_dict : dict, optional
-        Reuired if parameter_dialog=False
-        Dictionary containing guide star parameters, for example:
-        {'v2_boff': 0.1,  # boresight offset in V2 (arcsec)
-         'v3_boff': 0.2,  # boresight offset in V3 (arcsec)
-         'fgs_num': 1,  # guider number
-         'ra': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
-         'dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
-         'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
-         'seg_num': 0}  # selected segment to guide on
-    selected_segs : str, optional
-        Filepath to regfile.txt file with list of locations and
-        countrates for the selected segments (guide and reference stars)
-    vss_infile : str, optional
-        Filepath to guide star report provided by VSS
-    out_dir : str, optional
-        Location of out/ directory
-    data : 2-D numpy array, optional
+    data : 2-D numpy array
         Image that will be displayed in the click-to-select GUI
-    masterGUIapp : qApplication, optional
+    guide_star_params_dict : dict
+        Dictionary containing guide star parameters
+    master_gui_app : qApplication or None
         qApplication instance of parent GUI
-    refonly : bool, optional
-        Will the override file be written out using the 'ref-only' syntax?
-    ct_uncert_fctr : float, optional
-        The factor by which countrates are multiplied to determine
-        the countrate uncertainty
-    countrate_factor : float, optional
-        The factor by which countrates are multiplied by to simulate
-        diffuse PSFs (e.g. in MIMF)
-    parameter_dialog : bool, optional
-        Prompt the user to enter parameters (countrate factors, APT
-        numbers, RA, Dec, PA, and boresight offset) from a dialog box
-        rather than manually providing arguments
-    oss_factor : float
-        The factor that OSS applies to the 3x3 box counts in order to represent
-        the full number of counts that we care about. This needs to be
-        compensated for in the Sement Override file.
+    selected_segs : str, optional
+        File path to regfile.txt file with list of locations and
+        countrates for the pre-selected segments (guide and reference stars)
+
+    Returns
+    -------
+    guide_star_params_dict : dict
+        Dictionary containing guide star parameters with redefined seg_num
+        value based on user selection
+    selected_segs : str
+        Array of indices corresponding to the segments to use as guide and
+        reference stars
+
     """
+    if selected_segs is not None:
+        # Parse ALLpsfs.txt for locations of segments
+        all_segment_locations = asc.read(segment_infile)
+        x = all_segment_locations['x']
+        y = all_segment_locations['y']
+        coords = [(x_i, y_i) for x_i, y_i in zip(x, y)]
 
-    root = utils.make_root(root, segment_infile)
-    utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-
-    if not guide_star_params_dict:
-        guide_star_params_dict = {'v2_boff': None,
-                                  'v3_boff': None,
-                                  'fgs_num': None,
-                                  'ra': None,
-                                  'dec': None,
-                                  'pa': None,
-                                  'seg_num': None}
-    try:
-        # Run the SGT dialog to get the rest of the parameters from the user
-        if parameter_dialog:
-            guide_star_params_dict, program_id, observation_num, visit_num, \
-                ct_uncert_fctr, countrate_factor = open_segment_guiding_dialog(
-                    guider, program_id, observation_num, visit_num)
-
-        if click_to_select_GUI:
-            if data is None:
-                raise ValueError(
-                    'In order to run the segment guiding tool with '
-                    '`click_to_select_GUI=True`, you must provide a 2-D '
-                    'numpy array of the image to the `data` argument in '
-                    '`segment_guiding.run_tool`.'
-                )
-            # Parse ALLpsfs.txt for locations of segments
-            all_segment_locations = asc.read(segment_infile)
-            x = all_segment_locations['x']
-            y = all_segment_locations['y']
-            coords = [(x_i, y_i) for x_i, y_i in zip(x, y)]
-
-            # Find the minimum distance between PSFs
-            if len(coords) < 2:
-                # For cases where we only have star, we assume that we are sufficiently
-                # isolated from other stars, but also that the guide star's PSF may be
-                # distorted enough that it might appear quite large on the detector
-                dist = 20
-            else:
-                dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
-
-            # Run the GUI to select guide and reference stars
-            inds, seg_num = SegmentGuidingGUI.run_segment_override_gui(
-                data, x, y, dist, selected_segs=selected_segs,
-                masterGUIapp=masterGUIapp
-            )
-            LOGGER.info(
-                'Segment Guiding: {} segment override commands generated with seg_num = {}'.
-                format(len(inds), seg_num)
-            )
-            guide_star_params_dict['seg_num'] = seg_num
-
-            # Turn index list into selected segments file
-            selected_segs = np.array(inds)
-
-        # Set up guiding calculator object
-        sg = SegmentGuidingCalculator(program_id, observation_num, visit_num,
-                                      segment_infile=segment_infile, root=root,
-                                      guide_star_params_dict=guide_star_params_dict,
-                                      selected_segs=selected_segs,
-                                      vss_infile=vss_infile, out_dir=out_dir,
-                                      refonly=refonly, ct_uncert_fctr=ct_uncert_fctr,
-                                      countrate_factor=countrate_factor, oss_factor=oss_factor)
-        # Verify all guidestar parameters are valid
-        sg.check_guidestar_params()
-
-        if guide_star_params_dict['ra'] and guide_star_params_dict['dec']: #FIXME
-            # Write a SOF
-            sg.get_chosen_segment_position()
-            sg.calculate_effective_ra_dec()
-            sg.write_override_file(nseg=sg.nseg) # Print and save final output
-            sg.plot_segments() # Save .pngs of plots
+        # Find the minimum distance between PSFs
+        if len(coords) < 2:
+            # For cases where we only have star, we assume that we are sufficiently
+            # isolated from other stars, but also that the guide star's PSF may be
+            # distorted enough that it might appear quite large on the detector
+            dist = 20
         else:
-            # Write a POF
-            sg.write_override_file()
+            dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
+    else:
+        x = []
+        y = []
+        dist = 20
 
+    # Run the GUI to select guide and reference stars
+    inds, seg_num = SegmentGuidingGUI.run_segment_override_gui(
+        data, x, y, dist, selected_segs=selected_segs,
+        masterGUIapp=master_gui_app
+    )
+    LOGGER.info(
+        'Segment Guiding: {} segment override commands generated with seg_num = {}'.
+        format(len(inds), seg_num)
+    )
+    guide_star_params_dict['seg_num'] = seg_num
 
-    except Exception as e:
-        LOGGER.exception(e)
-        raise
+    # Turn index list into selected segments file
+    selected_segs = np.array(inds)
+
+    return guide_star_params_dict, selected_segs
+
+def _convert_nrca3pixel_offset_to_v2v3_offset(x_offset, y_offset):
+    """Convert a boresight offset from NIRCam A3 pixels to V2/V3 arcsec
+
+    Parameters
+    ----------
+    x_offset : float
+        Boresight offset in NIRCam A3 X pixels
+    y_offset : float
+        Boresight offset in NIRCam A3 Y pixels
+
+    Returns
+    -------
+    v2_offset, v3_offset : tup
+        Boresight offset in V2/V3 (arcsec)
+    """
+    # Get pixel scale
+    nrc_siaf = pysiaf.Siaf('NIRCam')
+    nrca3 = nrc_siaf['NRCA3_FULL_OSS']
+    nircam_sw_x_scale = nrca3.XSciScale  # arcsec/pixel
+    nircam_sw_y_scale = nrca3.YSciScale  # arcsec/pixel
+
+    # Convert x/y offsets to V2/V3
+    v2_offset = x_offset * nircam_sw_x_scale  # arcsec
+    v3_offset = y_offset * nircam_sw_y_scale  # arcsec
+
+    return v2_offset, v3_offset
