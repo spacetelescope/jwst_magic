@@ -933,8 +933,6 @@ def _open_segment_guiding_dialog(override_type, guider, program_id, observation_
     segment_guiding_dialog.exec()
 
     # Get parameters for dictionary from dialog
-    # try:
-
     if override_type == "SOF":
         # Parse what the boresight offset is
         if segment_guiding_dialog.radioButton_boresightNIRCam.isChecked():
@@ -954,18 +952,19 @@ def _open_segment_guiding_dialog(override_type, guider, program_id, observation_
                 format(v2_offset, v3_offset)
             )
 
-        if segment_guiding_dialog.lineEdit_RA.text():
-            ra = float(segment_guiding_dialog.lineEdit_RA.text())
-        else:
-            ra = None
-        if segment_guiding_dialog.lineEdit_Dec.text():
-            dec = float(segment_guiding_dialog.lineEdit_Dec.text())
-        else:
-            dec = None
-        if segment_guiding_dialog.lineEdit_PA.text():
-            pa = float(segment_guiding_dialog.lineEdit_PA.text())
-        else:
-            pa = None
+        # Parse the RA, Dec, and PA
+        ra_value = segment_guiding_dialog.lineEdit_RA.text()
+        if segment_guiding_dialog.comboBox_RAUnit.currentText() == 'Degrees':
+            ra_unit = u.deg
+        elif segment_guiding_dialog.comboBox_RAUnit.currentText() == 'Hours':
+            ra_unit = u.hourangle
+        dec_value = segment_guiding_dialog.lineEdit_Dec.text()
+
+        gs_coord = SkyCoord(ra_value, dec_value, unit=(ra_unit, u.deg))
+        ra = gs_coord.ra.degree
+        dec = gs_coord.dec.degree
+
+        pa = float(segment_guiding_dialog.lineEdit_PA.text())
 
         # Populate the parameter dictionary
         guide_star_params_dict = {
@@ -991,12 +990,6 @@ def _open_segment_guiding_dialog(override_type, guider, program_id, observation_
     program_id = segment_guiding_dialog.lineEdit_programNumber.text()
     observation_num = segment_guiding_dialog.lineEdit_observationNumber.text()
     visit_num = segment_guiding_dialog.lineEdit_visitNumber.text()
-
-    # except ValueError as e:
-    #     if "could not convert string to float:" not in str(e):
-    #         raise
-    #     else:
-    #         return
 
     return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor
 
