@@ -5,7 +5,7 @@ Multi-Application Guiding Interface for Commissioning (MAGIC)
     <img width="275" src ="magic_logo.png" alt="MAGIC logo" />
 </p>
 
-The Multifunctional wavefront Guiding Interface for Commissioning (MAGIC) package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
+The Multi-Application Guiding Interface for Commissioning (MAGIC) package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
 
 These tools comprise of four main components that can be run individually
 or together:
