@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>314</width>
-    <height>758</height>
+    <height>790</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -118,53 +118,28 @@
       <string>Guide Star Parameters</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="toolTip">
-         <string>Right acension of the guide star in degrees</string>
-        </property>
-        <property name="text">
-         <string>Right Acension (0 - 360°)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="toolTip">
-         <string>Position or roll angle of the telescope in degrees</string>
-        </property>
-        <property name="accessibleName">
-         <string/>
-        </property>
-        <property name="text">
-         <string>Position Angle (0 - 360°)</string>
-        </property>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="comboBox_RAUnit">
+        <item>
+         <property name="text">
+          <string>Degrees</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Hours</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="label_5">
+       <widget class="QLineEdit" name="lineEdit_RA">
         <property name="toolTip">
-         <string>Declination of the guide star in degrees</string>
-        </property>
-        <property name="statusTip">
-         <string/>
-        </property>
-        <property name="text">
-         <string>Declination (-90 - 90°) </string>
+         <string>Right acension of the guide star in degrees</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="lineEdit_PA">
-        <property name="toolTip">
-         <string>Position or roll angle of the telescope in degrees</string>
-        </property>
-        <property name="accessibleName">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
+      <item row="3" column="0">
        <widget class="QLineEdit" name="lineEdit_Dec">
         <property name="toolTip">
          <string>Declination of the guide star in degrees</string>
@@ -177,10 +152,63 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="lineEdit_RA">
+      <item row="5" column="0">
+       <widget class="QLineEdit" name="lineEdit_PA">
+        <property name="toolTip">
+         <string>Position or roll angle of the telescope in degrees</string>
+        </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>Degrees</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="label_13">
+        <property name="text">
+         <string>Degrees</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QLabel" name="label_4">
         <property name="toolTip">
          <string>Right acension of the guide star in degrees</string>
+        </property>
+        <property name="text">
+         <string>Right Acension (0 - 360° or 0-24 hours):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QLabel" name="label_5">
+        <property name="toolTip">
+         <string>Declination of the guide star in degrees</string>
+        </property>
+        <property name="statusTip">
+         <string/>
+        </property>
+        <property name="text">
+         <string>Declination (-90 - 90°):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="2">
+       <widget class="QLabel" name="label_6">
+        <property name="toolTip">
+         <string>Position or roll angle of the telescope in degrees</string>
+        </property>
+        <property name="accessibleName">
+         <string/>
+        </property>
+        <property name="text">
+         <string>Position Angle (0 - 360°):</string>
         </property>
        </widget>
       </item>
@@ -444,6 +472,23 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_programNumber</tabstop>
+  <tabstop>lineEdit_observationNumber</tabstop>
+  <tabstop>lineEdit_visitNumber</tabstop>
+  <tabstop>lineEdit_RA</tabstop>
+  <tabstop>comboBox_RAUnit</tabstop>
+  <tabstop>lineEdit_Dec</tabstop>
+  <tabstop>lineEdit_PA</tabstop>
+  <tabstop>radioButton_boresightNIRCam</tabstop>
+  <tabstop>lineEdit_boresightX</tabstop>
+  <tabstop>lineEdit_boresightY</tabstop>
+  <tabstop>radioButton_boresightV2V3</tabstop>
+  <tabstop>lineEdit_boresightV2</tabstop>
+  <tabstop>lineEdit_boresightV3</tabstop>
+  <tabstop>lineEdit_countrateUncertainty</tabstop>
+  <tabstop>buttonBox</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
