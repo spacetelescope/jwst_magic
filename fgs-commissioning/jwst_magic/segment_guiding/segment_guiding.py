@@ -104,8 +104,8 @@ class SegmentGuidingCalculator:
             {'v2_boff': 0.1,  # boresight offset in V2 (arcsec)
              'v3_boff': 0.2,  # boresight offset in V3 (arcsec)
              'fgs_num': 1,  # guider number
-             'ra': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
-             'dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
+             'ra': '271d 05m 14.85s',  # RA of guide star (Allowed range: 0 - 360 degrees; flexible format)
+             'dec': '-29:31:08.9',  # Dec of guide star (Allowed range: 0 - 360 degrees; flexible format)
              'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
              'seg_num': 0}  # selected segment to guide on
              Used for SOF Generation
@@ -407,15 +407,18 @@ class SegmentGuidingCalculator:
         """Map guide_star_params_dict values and keys to attributes
         """
 
-        for attr_name in guide_star_params_dict.keys():
-            try:
-                if attr_name == "seg_num" or attr_name == "fgs_num":
-                    setattr(self, attr_name, int(guide_star_params_dict[attr_name]))
-                else:
-                    setattr(self, attr_name, float(guide_star_params_dict[attr_name]))
-            except:
-                raise ValueError('Guide star parameter {} = {} is not valid. Ensure conversion to int or float is possible.'
-                      .format(attr_name, guide_star_params_dict[attr_name]))
+        self.v2_boff = float(guide_star_params_dict['v2_boff'])
+        self.v3_boff = float(guide_star_params_dict['v3_boff'])
+        self.fgs_num = int(guide_star_params_dict['fgs_num'])
+
+        ra_value = guide_star_params_dict['ra']
+        dec_value = guide_star_params_dict['dec']
+        gs_coord = SkyCoord(ra_value, dec_value, unit=(u.deg, u.deg))
+        self.ra = gs_coord.ra.degree
+        self.dec = gs_coord.dec.degree
+
+        self.pa = float(guide_star_params_dict['pa'])
+        self.seg_num = int(guide_star_params_dict['seg_num'])
 
     def parse_infile(self, segment_infile):
         """Get the segment positions and count rates from a file.
