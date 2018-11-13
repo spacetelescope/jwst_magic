@@ -114,8 +114,6 @@ def test_generate_segment_override_file(seg_num, selected_segs, correct_command)
         segment_override_command = f.read()
     assert segment_override_command == correct_command
 
-    print(segment_override_command)
-
     # Remove the test_sgt directory
     shutil.rmtree(test_output_directory)
 
