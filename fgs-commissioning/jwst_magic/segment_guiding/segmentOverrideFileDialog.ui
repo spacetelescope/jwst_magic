@@ -137,6 +137,9 @@
         <property name="toolTip">
          <string>Right acension of the guide star in degrees</string>
         </property>
+        <property name="placeholderText">
+         <string>decimal, d/m/s, or h/m/s</string>
+        </property>
        </widget>
       </item>
       <item row="3" column="0">
@@ -149,6 +152,9 @@
         </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="placeholderText">
+         <string>decimal or d/m/s</string>
         </property>
        </widget>
       </item>
