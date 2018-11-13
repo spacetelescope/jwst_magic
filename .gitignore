@@ -33,6 +33,11 @@ fgs-commissioning/jwst_fgs_commissioning_tools.egg-info/*
 *.sql
 *.sqlite
 
+# Testing #
+###########
+fgs-commissioning/jwst_magic/htmlcov/*
+fgs-commissioning/jwst_magic/tests/out/*
+
 # OS generated files #
 ######################
 .DS_Store
@@ -49,14 +54,13 @@ Thumbs.db
 fgs-commissioning/notebooks/playground_*
 fgs-commissioning/notebooks/WFR Testing/*
 fgs-commissioning/notebooks/.ipynb_checkpoints/*
-.ipynb_checkpoints/*
+*.ipynb_checkpoints*
 
 # Other #
 #########
-fgs-commissioning/tests/out/*
-fgs-commissioning/out/*
 fgs-commissioning/.cache/*
+fgs-commissioning/.idea/*
+fgs-commissioning/out/*
+fgs-commi
 fgs-commissioning/logs/*
 fgs-commissioning/comm_tool_obsolete/*
-fgs-commissioning/segment_guiding_files/*
-test_gui.py
