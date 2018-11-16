@@ -45,7 +45,7 @@ Once the merge request has been accepted and merged, switch to master and delete
 
 Expected Additional Changes to be Made
 ---------------------------
-When you make a code change to `fgs-commissioning` you are requested to make sure that accompanying documentation is also up-to-date with that change. For example, if your change alters the GUIs or the steps that a user will take, please update the [JWST MAGIC User's Guide](./documentation/JWST_MaGIC_User_Guide.docx). Your merge request will not be accepted by the reviewer until these updates have been made.
+When you make a code change to `fgs-commissioning` you are requested to make sure that accompanying documentation is also up-to-date with that change. For example, if your change alters the GUIs or the steps that a user will take, please update the [JWST MAGIC User's Guide](../documentation/JWST_MaGIC_User_Guide.docx). Your merge request will not be accepted by the reviewer until these updates have been made.
 
 JIRA Issue Creation
 -------------------

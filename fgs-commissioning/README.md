@@ -93,7 +93,7 @@ The first is our [style guide](./style_guide/style_guide.md) and the second is o
 which contains an in-depth explanation of the workflow.
 
 The following is an example of a best work flow for contributing to the project
-(adapted from the `spacetelescope` [`jwql`](https://github.com/spacetelescope/jwql) contribution guidelines):
+(adapted from the [`spacetelescope` `jwql` contribution guidelines](https://github.com/spacetelescope/jwql)):
 
 1. Create a brach off of the `tools` repository using the JIRA issue name or a
 descriptive name if a JIRA issue is not necessary (it will be in most cases)
