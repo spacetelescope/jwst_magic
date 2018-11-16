@@ -11,30 +11,30 @@ Following that, any changes that you want to eventually make to the master branc
 1. Make a local copy of the repository by cloning the `tools` repository by visiting the repository and clone via SSH or HTTPS (e.g. `git clone https://grit.stsci.edu/wfsc/tools.git` or by using a Git GUI such as SourceTree - our developers use SourceTree so we have included the instructions for SourceTree here, as well as the commands necessary to complete these steps in a terminal).  Note that, unless you explicitly delete your clone, this only has to be done once.
 
 2. Create a branch on the cloned repository to develop software changes on. Branch names should start with the name of the JIRA issue (e.g. so that they are linked) with a short description of issue; e.g. `JWSTFGS-375-fix-fgs-image-conversion`. Consistent use of hyphens is encouraged.
-In a terminal:
-i. git branch <branchname> - you only need to do this when you first create your branch.
-ii. git checkout <branchname> - you can use this command to switch back and forth between existing branches.
-iii. Perform local software changes using the nominal git add/git commit -m cycle.
-a. `git status` - allows you to see which files have changed.
-b. `git add` <new or changed files you want to commit>
-c. `git commit -m` 'Explanation of changes you've done with these files'
+#####In a terminal:
+   i. git branch <branchname> - you only need to do this when you first create your branch.
+   ii. git checkout <branchname> - you can use this command to switch back and forth between existing branches.
+   iii. Perform local software changes using the nominal git add/git commit -m cycle.
+        a. `git status` - allows you to see which files have changed.
+        b. `git add` <new or changed files you want to commit>
+        c. `git commit -m` 'Explanation of changes you've done with these files'
 
-In SourceTree:
-i. Click on the Branch icon in the top bar
-ii. Give your branch a name and choose if you want to commit to the working copy parent (standard) or if there is specific commit you would like to commit to. If you want to immediately start working in this branch, make sure that the "Checkout new branch" box is checked. Click "Create Branch". Note: The branch that you are working in will be bolded under "Branches" in the menu on the left. Double click on different branches to switch branches (make sure you have committed your work before doing so).
-iii. Perform local software changes using the nominal commit cycle
-a. Click on "File Status" at the top of the menu on the left (there there should be number next to this that indicates how many files have been changed) *or* by clicking on "Uncommitted changes" in the Description column showing the workflow in the repository.
-b. Select the files or changes to be committed by selecting the check boxes next to each changed or added file in the box at the bottom of the GUI.
-c. Once selected, click Commit icon in the top menu.
-d. In the dialog that opens, include your commit message (as you would with `git commit -m` in the terminal)
-e. Click "Commit"
+#####In SourceTree:
+   i. Click on the Branch icon in the top bar
+   ii. Give your branch a name and choose if you want to commit to the working copy parent (standard) or if there is specific commit you would like to commit to. If you want to immediately start working in this branch, make sure that the "Checkout new branch" box is checked. Click "Create Branch". Note: The branch that you are working in will be bolded under "Branches" in the menu on the left. Double click on different branches to switch branches (make sure you have committed your work before doing so).
+   iii. Perform local software changes using the nominal commit cycle
+        a. Click on "File Status" at the top of the menu on the left (there there should be number next to this that indicates how many files have been changed) *or* by clicking on "Uncommitted changes" in the Description column showing the workflow in the repository.
+        b. Select the files or changes to be committed by selecting the check boxes next to each changed or added file in the box at the bottom of the GUI.
+        c. Once selected, click Commit icon in the top menu.
+        d. In the dialog that opens, include your commit message (as you would with `git commit -m` in the terminal)
+        e. Click "Commit"
 
 3. Push the branch to the GitHub repository - this will deliver all committed changes to the branch version on the web which makes it accessible to other team members. The following are the commands to do this:
-In a terminal:
-i. git push origin <branchname> for your first push, or
-ii. git push <branchname> will also work after the first push of your branch.
-In SourceTree:
-i. Click the Push icon in the top menu
+#####In a terminal:
+   i. git push origin <branchname> for your first push, or
+   ii. git push <branchname> will also work after the first push of your branch.
+#####In SourceTree:
+   i. Click the Push icon in the top menu
 4. On the `tools` `fgs-commissioning` [GitLab repository](https://grit.stsci.edu/wfsc/tools/tree/master/fgs-commissioning), create a merge request - there will be a button ("Create Merge Request") for this after you have pushed your changes at the top of the page. Note that if the branch is still under heavy development, you can put WIP: at the beginning of the merge request title to signify that the merge request is still a work in progress (i.e. WIP: Example Merge Request Title). Not until the WIP: tag is explicitly removed will the merge request be deemed 'mergable'.
 
 Assign the merge request a reviewer, selecting a member of the `fgs-commissioning` team. They will review your merge request and either accept the request and merge, or ask for additional changes.
