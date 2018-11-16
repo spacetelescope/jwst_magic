@@ -1,4 +1,5 @@
-# git & GitLab Workflow for Contributing
+git & GitLab Workflow for Contributing
+========================================
 Note on language: In GitHub, "pull request" is used to indicate a request for code to be merged. In GitLab "merge request" is used. Since this repo exists in GitLab we will use the appropriate language however it is important to note this slight difference if you use both GitHub and GitLab.
 
 The best method for contributing software to the `fgs-commissioning` project is a workflow that involves making a branch off of the `fgs-commissioning` repository, developing changes on those branches, and opening merge requests through GitLab.
