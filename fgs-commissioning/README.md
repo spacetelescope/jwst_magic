@@ -71,7 +71,10 @@ The following supplemental packages are required, and will be **automatically in
 
 Running the Tools
 -----------------
-These tools are best run in the IPython terminal. Simply activate your Python 3 (preferably Astroconda) environment, and launch the GUI with the following steps:
+These tools are best run in the IPython terminal, in an AstroConda environment 
+(see the [AstroConda installation page](https://astroconda.readthedocs.io/en/latest/getting_started.html) 
+for installing AstroConda). Simply activate your Python 3 environment, and 
+launch the GUI with the following steps:
 
     In[1]: import jwst_magic
 
@@ -80,7 +83,42 @@ These tools are best run in the IPython terminal. Simply activate your Python 3 
 
 Tutorial
 -----------------
-See the [`FGS Commissioning Tool Tutorial.ipynb`](notebooks/FGS Commissioning Tool Tutorial.ipynb) notebook for examples on how to run the tools on a modular level from within a Jupyter notebook.
+See the [`FGS Commissioning Tool Tutorial.ipynb`](./notebooks/FGS%20Commissioning%20Tool%20Tutorial.ipynb) 
+notebook for examples on how to run the tools on a modular level from within a Jupyter notebook.
+
+Contributing
+-----------------
+There are two pages to review before you begin contributing to the MAGIC development. 
+The first is our style guide and the second is our suggested [git workflow page](./WORKFLOW.md), 
+which contains an in-depth explanation of the workflow.
+
+The following is an example of a best work flow for contributing to the project
+(adapted from the `spacetelescope` [`jwql`](https://github.com/spacetelescope/jwql) contribution guidelines):
+
+1. Create a brach off of the `tools` repository using the JIRA issue name or a 
+descriptive name if a JIRA issue is not necessary (it will be in most cases)
+2. Make your software changes.
+3. Push that branch to your personal GitHub repository (i.e. origin).
+4. On the `tools` repository, create a pull request that merges the branch into `tools:master`.
+5. Assign a reviewer from the team for the pull request.
+6. Iterate with the reviewer over any needed changes until the reviewer accepts and merges your branch.
+7. Delete your local copy of your branch.
+ 
+
+Code of Conduct
+-----------------
+Users and contributors to `fgs-commissioning` should adhere to the [Code of Conduct](./CODE-OF-CONDUCT.md). 
+Any issues or violations pertaining to the Code of Conduct should be brought to 
+the attention of a `MAGIC` team member list below.
+
+Questions
+-----------------
+Any questions regarding the `MAGIC` project or its software should be directed to 
+`kbrooks@stsci.edu` and `lchambers@stsci.edu`.
+
+Current Developement Team
+-----------------
+* Lauren Chambers @lchambers
+* Keira Brooks @kbrooks
 
 
-###### Developed by Keira Brooks, Lauren Chambers, Kathryn St. Laurent and collaborators, 2016-2018.
