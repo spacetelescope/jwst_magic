@@ -89,7 +89,7 @@ notebook for examples on how to run the tools on a modular level from within a J
 Contributing
 -----------------
 There are two pages to review before you begin contributing to `fgs-commissioning` development.
-The first is our [style guide](./style_guide/style_guide) and the second is our suggested [git workflow page](./style_guide/git_workflow.md),
+The first is our [style guide](./style_guide/style_guide.md) and the second is our suggested [git workflow page](./style_guide/git_workflow.md),
 which contains an in-depth explanation of the workflow.
 
 The following is an example of a best work flow for contributing to the project
@@ -107,7 +107,7 @@ descriptive name if a JIRA issue is not necessary (it will be in most cases)
 
 Code of Conduct
 -----------------
-Users and contributors to `fgs-commissioning` should adhere to the [Code of Conduct](./CODE-OF-CONDUCT.md).
+Users and contributors to `fgs-commissioning` should adhere to the [Code of Conduct](./CODE_OF_CONDUCT.md).
 Any issues or violations pertaining to the Code of Conduct should be brought to
 the attention of a `MAGIC` team member list below.
 
@@ -116,7 +116,7 @@ Questions
 Any questions regarding the `fgs-commissioning` project or its software should be directed to
 `kbrooks@stsci.edu` and `lchambers@stsci.edu`.
 
-Current Developement Team
+Current Development Team
 -----------------
-* Lauren Chambers @lchambers
-* Keira Brooks @kbrooks
+* Lauren Chambers (@lchambers)
+* Keira Brooks (@kbrooks)
