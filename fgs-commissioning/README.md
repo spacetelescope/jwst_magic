@@ -95,8 +95,8 @@ which contains an in-depth explanation of the workflow.
 The following is an example of a best work flow for contributing to the project
 (adapted from the [`spacetelescope` `jwql` contribution guidelines](https://github.com/spacetelescope/jwql)):
 
-1. Create a brach off of the `tools` repository using the JIRA issue name or a
-descriptive name if a JIRA issue is not necessary (it will be in most cases)
+1. Create a branch off of the `tools` repository using the JIRA issue name plus a
+   short description of the issue (e.g. `JWSTFGS-375-fix-fgs-image-conversion`)
 2. Make your software changes.
 3. Push that branch to your personal GitHub repository (i.e. origin).
 4. On the `tools` repository, create a pull request that merges the branch into `tools:master`.
@@ -109,7 +109,7 @@ Code of Conduct
 -----------------
 Users and contributors to `fgs-commissioning` should adhere to the [Code of Conduct](./CODE_OF_CONDUCT.md).
 Any issues or violations pertaining to the Code of Conduct should be brought to
-the attention of a `MAGIC` team member list below.
+the attention of a `MAGIC` team member listed below.
 
 Questions
 -----------------
