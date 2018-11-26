@@ -173,14 +173,11 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # create reg file
     if star_selection:
-        if star_selection_gui:
-            select_psfs.create_reg_file(fgs_im, root, guider,
-                                        return_nref=False,
-                                        global_alignment=global_alignment,
-                                        in_file=in_file, out_dir=out_dir,
-                                        logger_passed=True, masterGUIapp=masterGUIapp)
-        else:
-            LOGGER.info("Star Selection: Reading guide and reference star positions from {}".format(in_file))
+        select_psfs.create_reg_file(fgs_im, root, guider,
+                                    return_nref=False,
+                                    global_alignment=global_alignment,
+                                    in_file=in_file, out_dir=out_dir,
+                                    logger_passed=True, masterGUIapp=masterGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
 
     # create all files for FSW/DHAS/FGSES/etc.
@@ -189,5 +186,6 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
         for step in steps:
             buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step,
-                                        out_dir=out_dir, logger_passed=True)
+                                        out_dir=out_dir, logger_passed=True,
+                                        reg_file=in_file)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
