@@ -658,6 +658,7 @@ def create_reg_file(data, root, guider, in_file=None,
         if in_file:
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
+            LOGGER.info("Star Selection: Reading guide and reference star positions from {}".format(in_file))
             cols, coords, nref = parse_in_file(in_file)
             all_cols = None
         else:
