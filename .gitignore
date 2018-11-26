@@ -25,18 +25,12 @@
 *.rar
 *.tar
 *.zip
-fgs-commissioning/jwst_fgs_commissioning_tools.egg-info/*
 
 # Logs and databases #
 ######################
 *.log
 *.sql
 *.sqlite
-
-# Testing #
-###########
-fgs-commissioning/jwst_magic/htmlcov/*
-fgs-commissioning/jwst_magic/tests/out/*
 
 # OS generated files #
 ######################
@@ -51,16 +45,9 @@ Thumbs.db
 
 # Notebooks #
 #############
-fgs-commissioning/notebooks/playground_*
-fgs-commissioning/notebooks/WFR Testing/*
-fgs-commissioning/notebooks/.ipynb_checkpoints/*
-*.ipynb_checkpoints*
+**/.ipynb_checkpoints*
 
-# Other #
-#########
-fgs-commissioning/.cache/*
-fgs-commissioning/.idea/*
-fgs-commissioning/out/*
-fgs-commi
-fgs-commissioning/logs/*
-fgs-commissioning/comm_tool_obsolete/*
+# Testing #
+###########
+**/htmlcov/*
+**/.coverage
