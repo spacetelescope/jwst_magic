@@ -933,68 +933,72 @@ def _open_segment_guiding_dialog(override_type, guider, program_id, observation_
     segment_guiding_dialog.lineEdit_visitNumber.setText(str(visit_num))
 
     # Run window and wait for response
-    segment_guiding_dialog.exec()
+    accepted = segment_guiding_dialog.exec()
 
-    # Get parameters for dictionary from dialog
-    if override_type == "SOF":
-        # Parse what the boresight offset is
-        if segment_guiding_dialog.radioButton_boresightNIRCam.isChecked():
-            x_offset = float(segment_guiding_dialog.lineEdit_boresightX.text())
-            y_offset = float(segment_guiding_dialog.lineEdit_boresightY.text())
-            v2_offset, v3_offset = _convert_nrca3pixel_offset_to_v2v3_offset(x_offset,
-                                                                                 y_offset)
-            LOGGER.info(
-                'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} pixels)'.
-                format(v2_offset, v3_offset, x_offset, y_offset)
-            )
-        else:
-            v2_offset = float(segment_guiding_dialog.lineEdit_boresightV2.text())
-            v3_offset = float(segment_guiding_dialog.lineEdit_boresightV3.text())
-            LOGGER.info(
-                'Segment Guiding: Applying boresight offset of {}, {} arcsec'.
-                format(v2_offset, v3_offset)
-            )
+    if accepted:
+        # Get parameters for dictionary from dialog
+        if override_type == "SOF":
+            # Parse what the boresight offset is
+            if segment_guiding_dialog.radioButton_boresightNIRCam.isChecked():
+                x_offset = float(segment_guiding_dialog.lineEdit_boresightX.text())
+                y_offset = float(segment_guiding_dialog.lineEdit_boresightY.text())
+                v2_offset, v3_offset = _convert_nrca3pixel_offset_to_v2v3_offset(x_offset,
+                                                                                     y_offset)
+                LOGGER.info(
+                    'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} pixels)'.
+                    format(v2_offset, v3_offset, x_offset, y_offset)
+                )
+            else:
+                v2_offset = float(segment_guiding_dialog.lineEdit_boresightV2.text())
+                v3_offset = float(segment_guiding_dialog.lineEdit_boresightV3.text())
+                LOGGER.info(
+                    'Segment Guiding: Applying boresight offset of {}, {} arcsec'.
+                    format(v2_offset, v3_offset)
+                )
 
-        # Parse the RA, Dec, and PA
-        ra_value = segment_guiding_dialog.lineEdit_RA.text()
-        if segment_guiding_dialog.comboBox_RAUnit.currentText() == 'Degrees':
-            ra_unit = u.deg
-        elif segment_guiding_dialog.comboBox_RAUnit.currentText() == 'Hours':
-            ra_unit = u.hourangle
-        dec_value = segment_guiding_dialog.lineEdit_Dec.text()
+            # Parse the RA, Dec, and PA
+            ra_value = segment_guiding_dialog.lineEdit_RA.text()
+            if segment_guiding_dialog.comboBox_RAUnit.currentText() == 'Degrees':
+                ra_unit = u.deg
+            elif segment_guiding_dialog.comboBox_RAUnit.currentText() == 'Hours':
+                ra_unit = u.hourangle
+            dec_value = segment_guiding_dialog.lineEdit_Dec.text()
 
-        gs_coord = SkyCoord(ra_value, dec_value, unit=(ra_unit, u.deg))
-        ra = gs_coord.ra.degree
-        dec = gs_coord.dec.degree
+            gs_coord = SkyCoord(ra_value, dec_value, unit=(ra_unit, u.deg))
+            ra = gs_coord.ra.degree
+            dec = gs_coord.dec.degree
 
-        pa = float(segment_guiding_dialog.lineEdit_PA.text())
+            pa = float(segment_guiding_dialog.lineEdit_PA.text())
 
-        # Populate the parameter dictionary
-        guide_star_params_dict = {
-            'v2_boff': v2_offset,
-            'v3_boff': v3_offset,
-            'fgs_num': guider,
-            'ra': ra,
-            'dec': dec,
-            'pa': pa,
-            'seg_num': 0
-        }
+            # Populate the parameter dictionary
+            guide_star_params_dict = {
+                'v2_boff': v2_offset,
+                'v3_boff': v3_offset,
+                'fgs_num': guider,
+                'ra': ra,
+                'dec': dec,
+                'pa': pa,
+                'seg_num': 0
+            }
 
-        # Countrate factors
-        threshold_factor = float(segment_guiding_dialog.lineEdit_countrateUncertainty.text())
-        countrate_factor = None
+            # Countrate factors
+            threshold_factor = float(segment_guiding_dialog.lineEdit_countrateUncertainty.text())
+            countrate_factor = None
 
-    elif override_type == "POF":
-        countrate_factor = float(segment_guiding_dialog.doubleSpinBox_countrateFactor.value())
-        threshold_factor = None
-        guide_star_params_dict = None
+        elif override_type == "POF":
+            countrate_factor = float(segment_guiding_dialog.doubleSpinBox_countrateFactor.value())
+            threshold_factor = None
+            guide_star_params_dict = None
 
-    # Get APT information and other necessary parameters
-    program_id = segment_guiding_dialog.lineEdit_programNumber.text()
-    observation_num = segment_guiding_dialog.lineEdit_observationNumber.text()
-    visit_num = segment_guiding_dialog.lineEdit_visitNumber.text()
+        # Get APT information and other necessary parameters
+        program_id = segment_guiding_dialog.lineEdit_programNumber.text()
+        observation_num = segment_guiding_dialog.lineEdit_observationNumber.text()
+        visit_num = segment_guiding_dialog.lineEdit_visitNumber.text()
 
-    return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor
+        return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor
+
+    else:
+        return None
 
 
 def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
