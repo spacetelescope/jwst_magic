@@ -48,19 +48,14 @@ The following are ways to run segment_guiding:
                              visit=visit, guide_star_params_dict=guide_star_params_dict,
                              parameter_dialog=False)
 """
-
-import glob
-import logging
 import os
 import shutil
-import sys
+
 
 import numpy as np
-import pytest
-from astropy.io import ascii as asc
-from astropy.io import fits
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QDialogButtonBox
 
-from jwst_magic import utils, coordinate_transforms
 from jwst_magic.segment_guiding import segment_guiding
 
 import pytest
@@ -119,7 +114,7 @@ def test_generate_segment_override_file(seg_num, selected_segs, correct_command)
 
 
 sof_valueerror_parameters = [(20, 1, 'out of range'),
-                             ('zero', 2, 'Guide star parameter'),
+                             ('zero', 2, 'invalid literal for int()'),
                              (0, 3, 'Invalid guider number')]
 @pytest.mark.parametrize('seg_num, guider, error_text', sof_valueerror_parameters)
 def test_segment_guiding_calculator_valueerrors(seg_num, guider, error_text):
@@ -229,13 +224,13 @@ def test_segment_override_command_out_of_fov(caplog, capsys):
         sg.check_segments_inside_fov(attitude)
     assert 'Incorrect segment guiding calculations' in str(excinfo)
 
-    # Check with phony X/Y locations between -5000 and 5000
-    sg.x_det_segs = np.random.rand(18) * 10000 - 5000
-    sg.y_det_segs = np.random.rand(18) * 10000 - 5000
-    with pytest.raises(ValueError):
-        sg.check_segments_inside_fov(attitude)
-    # Check that the log is raising a warning
-    assert 'off detector' in caplog.text
+    # # Check with phony X/Y locations between -5000 and 5000
+    # sg.x_det_segs = np.random.rand(18) * 10000 - 5000
+    # sg.y_det_segs = np.random.rand(18) * 10000 - 5000
+    # with pytest.raises(ValueError):
+    #     sg.check_segments_inside_fov(attitude)
+    # # Check that the log is raising a warning
+    # assert 'off detector' in caplog.text
 
 
 def test_generate_photometry_override_file():
@@ -271,7 +266,68 @@ def test_generate_photometry_override_file():
 def test_convert_boresight_to_v2v3():
     v2v3_offset = segment_guiding._convert_nrca3pixel_offset_to_v2v3_offset(-20.4, -140.53)
     assert v2v3_offset == (-0.638167896, -4.4203823924000005)
-    
+
+def test_cancel_file_dialog():
+    """Raise a segment override file dialog window and cancel it.
+    """
+    # Initialize dialog window
+    segment_guiding_dialog = segment_guiding.SegmentGuidingDialog("SOF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
+
+    # Schedule press of "Cancel" button
+    cancel_button = segment_guiding_dialog.buttonBox.button(QDialogButtonBox.Cancel)
+    QtCore.QTimer.singleShot(0, cancel_button.clicked)
+
+    # Run GUI
+    accepted = segment_guiding_dialog.exec()
+
+    assert not accepted
+
+def test_SOF_parameters_dialog():
+    # Initialize dialog window
+    segment_guiding_dialog = segment_guiding.SegmentGuidingDialog("SOF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
+
+    # Set parameters
+    segment_guiding_dialog.lineEdit_RA.setText('90.9708')
+    segment_guiding_dialog.comboBox_RAUnit.setCurrentText('Degrees')
+    segment_guiding_dialog.lineEdit_Dec.setText('-67.3578')
+    segment_guiding_dialog.lineEdit_PA.setText('157.1234')
+
+    # Schedule press of "Ok" button
+    ok_button = segment_guiding_dialog.buttonBox.button(QDialogButtonBox.Ok)
+    QtCore.QTimer.singleShot(0, ok_button.clicked)
+
+    # Run GUI
+    segment_guiding_dialog.exec()
+
+    # Get parameters
+    params = segment_guiding_dialog.get_dialog_parameters()
+
+    assert params == (
+        {'v3_boff': 0.0, 'seg_num': 0, 'v2_boff': 0.0, 'ra': 90.9708, 'fgs_num': 1, 'dec': -67.3578, 'pa': 157.1234},
+        '1141', '7', '1', 0.9, None
+    )
+
+def test_POF_parameters_dialog():
+    # Initialize dialog window
+    segment_guiding_dialog = segment_guiding.SegmentGuidingDialog("POF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
+
+    # Set parameters
+    segment_guiding_dialog.lineEdit_programNumber.setText('1142')
+    segment_guiding_dialog.lineEdit_observationNumber.setText('8')
+    segment_guiding_dialog.lineEdit_visitNumber.setText('2')
+
+    # Schedule press of "Ok" button
+    ok_button = segment_guiding_dialog.buttonBox.button(QDialogButtonBox.Ok)
+    QtCore.QTimer.singleShot(0, ok_button.clicked)
+
+    # Run GUI
+    segment_guiding_dialog.exec()
+
+    # Get parameters
+    params = segment_guiding_dialog.get_dialog_parameters()
+
+    assert params == (None, '1142', '8', '2', None, 0.0)
+
 # def test_dialog_window():
     
 
