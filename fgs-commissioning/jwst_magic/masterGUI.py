@@ -557,7 +557,7 @@ class MasterGui(QMainWindow):
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}
 
-        if isinstance(self.bkgd_stars, dict):
+        if isinstance(self.bkgd_stars, dict) and method is None:
             self.textEdit_backgroundStars.setText('{} background stars added {}'.
                                                   format(len(self.bkgd_stars['x']), method_adverb[method]))
 
