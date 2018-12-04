@@ -113,31 +113,52 @@ def test_fgs_itm():
 
 def test_transform_sci_to_fgs_raw():
     with fits.open(FGS_CMIMF_IM) as hdulist:
-        hdulist.info()
         data = hdulist[1].data
 
-    sources = find_peaks(data, np.max(data)*.05, box_size=5)
-    print(sources)
+    # Transform sci to FGS1 raw
+    image = convert_image_to_raw_fgs.transform_sci_to_fgs_raw(data, 1)
+    sources = find_peaks(image, np.max(image) * .05, box_size=5)
     coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
+    assert coords == [(993, 975), (1021, 975), (1050, 975), (1007, 999), (1061, 999), (1035, 1000), (981, 1002), (1216, 1023), (965, 1024), (993, 1025), (1078, 1026), (982, 1049), (1007, 1050), (1062, 1050), (1035, 1051)], \
+        'Incorrect transformation from DMS/science frame to raw FGS1 frame'
 
-    print(coords)
+    # Transform sci to FGS2 raw
+    image = convert_image_to_raw_fgs.transform_sci_to_fgs_raw(data, 2)
+    sources = find_peaks(image, np.max(image) * .05, box_size=5)
+    coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
+    assert coords == [(997, 975), (1026, 975), (1054, 975), (986, 999), (1040, 999), (1012, 1000), (1066, 1002), (831, 1023), (1082, 1024), (1054, 1025), (969, 1026), (1065, 1049), (985, 1050), (1040, 1050), (1012, 1051)], \
+        'Incorrect transformation from DMS/science frame to raw FGS2 frame'
+
+
+def test_transform_nircam_raw_to_fgs_raw():
+    with fits.open(FGS_CMIMF_IM) as hdulist:
+        data = hdulist[1].data
 
     # Transform NRCA3 raw to FGS1 raw
+    image = convert_image_to_raw_fgs.transform_nircam_raw_to_fgs_raw(data, 'A3', 1)
+    sources = find_peaks(image, np.max(image) * .05, box_size=5)
+    coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
+    assert coords == [(1035, 996), (1007, 997), (1062, 997), (982, 998), (1078, 1021), (993, 1022), (965, 1023), (1216, 1024), (981, 1045), (1035, 1047), (1007, 1048), (1061, 1048), (993, 1072), (1021, 1072), (1050, 1072)], \
+        'Incorrect transformation from raw NRCA3 (thus also A1, A5, B2, B4) frame to raw FGS1 frame'
 
     # Transform NRCB1 raw to FGS1 raw
+    image = convert_image_to_raw_fgs.transform_nircam_raw_to_fgs_raw(data, 'B1', 1)
+    sources = find_peaks(image, np.max(image) * .05, box_size=5)
+    coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
+    assert coords == [(997, 975), (1026, 975), (1054, 975), (986, 999), (1040, 999), (1012, 1000), (1066, 1002), (831, 1023), (1082, 1024), (1054, 1025), (969, 1026), (1065, 1049), (985, 1050), (1040, 1050), (1012, 1051)], \
+        'Incorrect transformation from raw NRCB1 (thus also A2, A4, B3, B5) frame to raw FGS1 frame'
 
     # Transform NRCA5 raw to FGS2 raw
+    image = convert_image_to_raw_fgs.transform_nircam_raw_to_fgs_raw(data, 'A5', 2)
+    sources = find_peaks(image, np.max(image) * .05, box_size=5)
+    coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
+    assert coords == [(1012, 996), (985, 997), (1040, 997), (1065, 998), (969, 1021), (1054, 1022), (1082, 1023), (831, 1024), (1066, 1045), (1012, 1047), (986, 1048), (1040, 1048), (997, 1072), (1026, 1072), (1054, 1072)], \
+        'Incorrect transformation from raw NRCA5 (thus also A1, A3, B2, B4) frame to raw FGS2 frame'
 
     # Transform NRCB1 raw to FGS2 raw
+    image = convert_image_to_raw_fgs.transform_nircam_raw_to_fgs_raw(data, 'B1', 2)
+    sources = find_peaks(image, np.max(image) * .05, box_size=5)
+    coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
+    assert coords == [(993, 975), (1021, 975), (1050, 975), (1007, 999), (1061, 999), (1035, 1000), (981, 1002), (1216, 1023), (965, 1024), (993, 1025), (1078, 1026), (982, 1049), (1007, 1050), (1062, 1050), (1035, 1051)], \
+        'Incorrect transformation from raw NRCB1 (thus also A2, A4, B3, B5) frame to raw FGS2 frame'
 
-    # Transform NRCA3 sci to FGS1 raw
-
-    # Transform NRCB3 sci to FGS2 raw
-
-    # Transform FGS1 sci to FGS1 raw
-
-    # Transform FGS1 sci to FGS2 raw
-
-    # Transform FGS2 sci to FGS1 raw
-
-    # Transform FGS2 sci to FGS2 raw
