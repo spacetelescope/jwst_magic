@@ -560,7 +560,7 @@ class MasterGui(QMainWindow):
             norm_value = float(self.lineEdit_normalize.text())
             norm_unit = self.comboBox_normalize.currentText()
             norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
-            fgs_countrate = norm_obj.to_counts()
+            fgs_countrate = norm_obj.to_countrate()
             jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider)
         # If not, determine the FGS counts of the input image
         else:
