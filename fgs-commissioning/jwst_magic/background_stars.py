@@ -637,8 +637,8 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     nstars_random = 5
 
     # Determine jmag and fgs_countrate of guide star
-    norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
-    fgs_countrate = norm_obj.to_counts()
+    norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
+    fgs_countrate = norm_obj.to_countrate()
     jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider)
 
     # If the flag is simply set to "True", randomly place 5 stars on the image
