@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1433</width>
-    <height>950</height>
+    <height>937</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -46,8 +46,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1433</width>
-         <height>938</height>
+         <width>1418</width>
+         <height>931</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -251,7 +251,16 @@
            <property name="spacing">
             <number>-1</number>
            </property>
-           <property name="margin">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
             <number>0</number>
            </property>
            <item>
@@ -507,7 +516,7 @@ Image:</string>
               <bool>true</bool>
              </property>
              <property name="toolTip">
-              <string>Normalize the final image to a specified value</string>
+              <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
              </property>
              <property name="text">
               <string>Normalize to:</string>
@@ -545,7 +554,7 @@ Image:</string>
              </item>
              <item>
               <property name="text">
-               <string>FGS counts</string>
+               <string>FGS countrate</string>
               </property>
              </item>
             </widget>
@@ -1791,9 +1800,9 @@ p, li { white-space: pre-wrap; }
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_instrument"/>
   <buttongroup name="buttonGroup_guider"/>
   <buttongroup name="buttonGroup_segmentGuiding"/>
   <buttongroup name="buttonGroup_starSelector"/>
+  <buttongroup name="buttonGroup_instrument"/>
  </buttongroups>
 </ui>

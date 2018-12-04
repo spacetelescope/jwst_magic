@@ -65,7 +65,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
-            coarse_pointing=False, jitter_rate_arcsec=None):
+            coarse_pointing=False, jitter_rate_arcsec=None, itm=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -74,6 +74,29 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     Parameters
     ----------
+    image: str
+        The path to the image.
+    guider: int
+        Which guider is being used: 1 or 2
+    root: str, optional
+        The root desired for output images if different than root in image
+    norm_value: float, optional
+        The value to be used for normalization (depends on norm_unit)
+    norm_unit: str, optional
+        The unit to be used for normalization (expecting "FGS Counts" or "FGS Magnitude")
+    nircam_det: str, optional
+        The NIRCam detector used for this observation. Only applicable for NIRCam
+        images and if cannot be parsed from header.
+    nircam: bool, optional
+        If this is a FGS image, set this flag to False
+    global_alignment: bool, optional
+        If this is not a global_alignment image, set this flag to False
+    steps: list of strings, optional
+        List of the steps to be completed
+    in_file: str, optional
+        If this image comes with an incat or reg file, the file path
+    bkgd_stars : boolean, optional
+        Add background stars to the image?
     out_dir : str, optional
         Where output FGS image(s) will be saved. If not provided, the
         image(s) will be saved to ../out/{root}.
@@ -97,29 +120,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     jitter_rate_arcsec : float, optional
         If coarse_pointing is true, the rate of jitter in arcseconds
         per second to apply in the form of a Gaussian filter.
-    bkgd_stars : boolean, optional
-        Add background stars to the image?
-    image: str
-        The path to the image.
-    guider: int
-        Which guider is being used: 1 or 2
-    root: str, optional
-        The root desired for output images if different than root in image
-    norm_value: float, optional
-        The value to be used for normalization (depends on norm_unit)
-    norm_unit: str, optional
-        The unit to be used for normalization (expecting "FGS Counts" or "FGS Magnitude")
-    nircam_det: str, optional
-        The NIRCam detector used for this observation. Only applicable for NIRCam
-        images and if cannot be parsed from header.
-    nircam: bool, optional
-        If this is a FGS image, set this flag to False
-    global_alignment: bool, optional
-        If this is not a global_alignment image, set this flag to False
-    steps: list of strings, optional
-        List of the steps to be completed
-    in_file: str, optional
-        If this image comes with an incat or reg file, the file path
+    itm: bool, Optional
+        If this image come from the ITM simulator (important for normalization).
     """
 
     # Determine filename root
@@ -148,15 +150,17 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     if convert_im:
         fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
                                                      nircam=nircam,
+                                                     nircam_det=nircam_det,
+                                                     normalize=normalize,
                                                      norm_value=norm_value,
                                                      norm_unit=norm_unit,
-                                                     nircam_det=nircam_det,
-                                                     logger_passed=True,
-                                                     normalize=normalize,
                                                      coarse_pointing=coarse_pointing,
-                                                     jitter_rate_arcsec=jitter_rate_arcsec)
+                                                     jitter_rate_arcsec=jitter_rate_arcsec,
+                                                     logger_passed=True,
+                                                     itm=itm)
+
         if bkgd_stars:
-            if not normalize:
+            if not normalize and not itm:
                 norm_value = np.sum(fgs_im[fgs_im > np.median(fgs_im)])
                 norm_unit = "FGS Counts"
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars,
