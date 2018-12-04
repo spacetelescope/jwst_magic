@@ -224,6 +224,7 @@ class MasterGui(QMainWindow):
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
         self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
         self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
+        self.checkBox_useConvertedImage.toggled.connect(self.toggle_convert_im)
 
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
@@ -586,6 +587,10 @@ class MasterGui(QMainWindow):
         self.canvas_converted.peaks.set_visible(show)
 
         self.canvas_converted.draw()
+
+    def toggle_convert_im(self):
+        if self.itm:
+            self.checkBox_normalize.setEnabled(False)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
