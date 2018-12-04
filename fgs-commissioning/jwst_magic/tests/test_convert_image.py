@@ -45,11 +45,11 @@ NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
 FGS_IM = os.path.join(__location__, 'data', 'fgs_data_1_beforelos2ga.fits')
 
 
-def test_nircam_normalization():
+def test_nircam_itm():
     # Test that the normalization with FGS Mag = 12.0 returns a specific value
-    #for a NIRCam image
+    # for a NIRCam image
 
-    #Guider 1
+    # Guider 1
     data_g1 = convert_image_to_raw_fgs.convert_im(NIRCAM_IM, guider=1, root=ROOT,
                                                   nircam=True, norm_value=12.0,
                                                   norm_unit="FGS Magnitude", itm=True)
@@ -68,11 +68,11 @@ def test_nircam_normalization():
     assert data_g2.max() == 13258.757557895477
 
 
-def test_fgs_normalization():
+def test_fgs_itm():
     # Test that the normalization with FGS Mag = 12.0 returns a specific value
-    #for an FGS image
+    # for an FGS image
 
-    #Guider 1
+    # Guider 1
     data_g1 = convert_image_to_raw_fgs.convert_im(FGS_IM, guider=1, root=ROOT,
                                                   nircam=True, norm_value=12.0,
                                                   norm_unit="FGS Magnitude", itm=True)
@@ -87,7 +87,7 @@ def test_fgs_normalization():
     assert data_g2.max() == 32509.97258106546
 
 
-## This test needs to be created after we have a better understanding of how
+# This test needs to be created after we have a better understanding of how
 # to test logging in out code
 # def test_logging():
 #     header = fits.getheader(FGS_IM)
