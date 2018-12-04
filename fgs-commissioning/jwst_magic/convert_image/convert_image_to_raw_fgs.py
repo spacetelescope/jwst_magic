@@ -3,7 +3,7 @@
 This tool takes input NIRCam or FGS images, re-bins to FGS plate scale
 if necessary, applies the DQ array if necessary, rotates the image
 according to the SIAF coordinate transformations, and re-normalizes to
-the desired FGS counts/magnitude. The development of this code used
+the desired FGS countrate/magnitude. The development of this code used
 mock-up NIRCam files from Ball Aerospace's ITM tool, simulating Global
 Alignment using the short wavelength channel.
 
@@ -33,7 +33,7 @@ Use
         ``normalize`` - denotes if the image will be normalized.
         ``norm_value`` and ``norm_unit`` - If the image will be
             normalized, specifies the value to normalize to and the
-            units of that value (either FGS Magnitude or FGS Counts).
+            units of that value (either FGS Magnitude or FGS countrate).
         ``out_dir`` - where output files will be saved. If not provided,
             the image(s) will be saved within the repository at
             tools/fgs-commissioning/
@@ -493,18 +493,18 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
     return fgs_data
 
 
-def normalize_data(data, fgs_counts, threshold=5):
-    """Re-normalize data to the desired FGS counts
+def normalize_data(data, fgs_countrate, threshold=0.05):
+    """Re-normalize data to the desired FGS countrate
 
     Parameters
     ----------
     data : 2-D numpy array
         Image data
-    fgs_counts : float
-        The FGS counts value to normalize to
-    threshold : int, optional
-        The value above which pixels are considered "data" and below
-        which pixels are considered "background" and thus are not
+    fgs_countrate : float
+        The FGS countrate value to normalize to
+    threshold : float, optional
+        The percentage of the maximum above which pixels are considered "data"
+        and below which pixels are considered "background" and thus are not
         included in the normalization calculation
 
     Returns
@@ -517,9 +517,9 @@ def normalize_data(data, fgs_counts, threshold=5):
         Threshold of 5 assumes background is very low.
         *This will need to be automated later.*
     """
-    mask = data > threshold
+    mask = data > (data * threshold)
     data_norm = np.copy(mask * data.astype(np.float64))
-    data_norm *= (fgs_counts / data_norm.sum())  # renormalize by sum of non-masked data
+    data_norm *= (fgs_countrate / data_norm.sum())  # renormalize by sum of non-masked data
     data_norm[mask == 0] = data[mask == 0]  # background is not normalized
 
     return data_norm
@@ -566,7 +566,7 @@ def remove_pedestal(data):
 def convert_im(input_im, guider, root, nircam=True,
                nircam_det=None, normalize=True, norm_value=12.0,
                norm_unit="FGS Magnitude", coarse_pointing=False,
-               jitter_rate_arcsec=None, logger_passed=False):
+               jitter_rate_arcsec=None, logger_passed=False, itm=False):
     """Takes NIRCam or FGS image and converts it into an FGS-like image.
 
     Parameters
@@ -592,7 +592,7 @@ def convert_im(input_im, guider, root, nircam=True,
     norm_value : float, optional
         Specifies the value to which to normalize.
     norm_unit : str, optional
-        Specifies the unit of norm_value (FGS Magnitude or FGS Counts)
+        Specifies the unit of norm_value (FGS Magnitude or FGS countrate)
     coarse_pointing : bool, optional
         Denotes if the image will have a Gaussian filter applied to
         simulate the effects of jitter when the observatory is in
@@ -603,6 +603,8 @@ def convert_im(input_im, guider, root, nircam=True,
         coarse_pointing is True.
     logger_passed : bool, optional
         Denotes if a logger object has already been generated.
+    itm : bool, optional
+        If this image come from the ITM simulator (important for normalization).
 
     Returns
     -------
@@ -616,7 +618,6 @@ def convert_im(input_im, guider, root, nircam=True,
     ValueError
         An input NIRCam file has an obstruction in the pupil.
     """
-
     # Start logging
     if not logger_passed:
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
@@ -624,16 +625,29 @@ def convert_im(input_im, guider, root, nircam=True,
     try:
         LOGGER.info("Image Conversion: " +
                     "Beginning image conversion to guider {} FGS image".format(guider))
+        LOGGER.info("Image Conversion: Input image is expected to be in units of ADU/sec (countrate)")
 
         data = fits.getdata(input_im, header=False)
         header = fits.getheader(input_im, ext=0)
 
         if len(data.shape) > 2:
-            print(data.shape)
             raise TypeError('Expecting a single frame or slope image.')
 
-        # Create raw FGS image...
-        # From a NIRCam image
+        ## Check if this is an ITM image and the itm flag is set correctly (backwards compatibility)
+        try:
+            origin = header['ORIGIN'].strip()
+            if origin == 'ITM':
+                try:
+                    assert itm == True
+                except AssertionError:
+                    itm = True
+                    LOGGER.warning("Deprecation Warning: This is an ITM image, setting itm flag to 'True'")
+        except KeyError:
+            pass
+
+
+        ### Create raw FGS image...
+        ## From a NIRCam image
         if nircam:
             LOGGER.info("Image Conversion: This is a NIRCam image")
 
@@ -647,11 +661,10 @@ def convert_im(input_im, guider, root, nircam=True,
                         'NIRCam "PUPIL" header keyword for provided file is {}. '.format(pupil_keyword) +
                         'Only the CLEAR/Imaging Pupil can be used to realistically simulate FGS images.'
                     )
-
             except KeyError:
                 pass
 
-            # (Try to) Pull out DQ array for this image
+            # Pull out DQ array for this image
             try:
                 dq_arr = fits.getdata(input_im, extname='DQ')
                 if not dq_arr.min() == 1 and not dq_arr.max() == 1:
@@ -666,20 +679,16 @@ def convert_im(input_im, guider, root, nircam=True,
             # Pad image
             data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
-        # From an FGS image (i.e. do nothing)
+        ## From an FGS image (i.e. do nothing)
         else:
             LOGGER.info("Image Conversion: This is an FGS image")
             guider = utils.get_guider(header)
 
-            try:
-                origin = header['ORIGIN'].strip()
-                if origin == 'ITM':
-                    LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
-                    data = rotate_sci_to_fgs_raw(data, guider)
-            except KeyError:
-                pass
+            if itm:
+                LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
+                data = rotate_sci_to_fgs_raw(data, guider)
 
-        # Apply Gaussian filter to simulate coarse pointing
+        ## Apply Gaussian filter to simulate coarse pointing
         if coarse_pointing:
             pixel_scale = nircam_scale if nircam else FGS_SCALE
 
@@ -687,16 +696,22 @@ def convert_im(input_im, guider, root, nircam=True,
             LOGGER.info("Image Conversion: Applied Gaussian filter to simulate "
                         "coarse pointing with jitter of {:.3f} arcsec/sec".format(jitter_rate_arcsec))
 
-        # Normalize the image, if the "normalize" flag is True
-        if normalize:
-            norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
-            fgs_counts = norm_obj.to_counts()
+        ## Normalize the image, if the "normalize" flag is True
+        # The ITM simulations are only created for relative SNR so they need to
+        #  normalized to one before anything else happens
+        if itm:
+            LOGGER.info("Image Conversion: This is an ITM image.")
+            data -= data.min() #set minimum at 0.
+            data /= data.sum()  # set total countrate to 1.
+
+        if normalize or itm:
+            norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
+            fgs_countrate = norm_obj.to_countrate()
             fgs_mag = norm_obj.to_fgs_mag()
 
             # Normalize the data
-            data = normalize_data(data, fgs_counts)
-            LOGGER.info("Image Conversion: Normalizing to FGS Magnitude of {:.1f} ({} FGS counts)".
-                        format(fgs_mag, fgs_counts))
+            data = normalize_data(data, fgs_countrate)
+            LOGGER.info("Image Conversion: Normalizing to FGS Magnitude of {:.1f} ({} FGS Countrate)".format(fgs_mag, fgs_countrate))
 
     except Exception as e:
         LOGGER.exception(e)
