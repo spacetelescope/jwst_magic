@@ -68,8 +68,9 @@ import os
 import logging
 
 # Third Party Imports
-import numpy as np
 from astropy.io import fits
+import numpy as np
+import pysiaf
 from scipy import signal
 from scipy.ndimage.filters import gaussian_filter
 
@@ -257,156 +258,139 @@ def fgs_add_dq(image, guider):
     return image
 
 
-def rotate_nircam_raw_to_fgs_raw(image, nircam_detector, fgs_guider):
-    """Rotate image from NIRCam detector (raw) coordinate frame to FGS
+def transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector):
+    """Transform image from NIRCam detector raw/det coordinate frame to FGS
     raw, using transformations as defined by the Science Instrument
     Aperture File (SIAF).
 
     Parameters
     ----------
     image : 2-D numpy array
-        Image data
-    nircam_detector : str
-        Name of NIRCam detector
-        Expects: A1, A2, A3, A4, A5, B1, B2, B3, B4, or B5
-    fgs_guider : int
-        Guider number (1 or 2)
+        Input image data
+    from_nircam_detector : str
+        Name of NIRCam detector of the input image (A1, A2, A3, A4, A5,
+        B1, B2, B3, B4, or B5)
+    to_fgs_detector : int
+        Guider number of the desired output image (1 or 2)
 
     Returns
     -------
     image : 2-D numpy array
         Image data with coordinate frame transformation applied
-
-    Use
-    ---
-        See 'notebooks/Convert from NIRCam to FGS coordinate frames.ipynb'
-
-    Raises
-    ------
-    ValueError
-        Description
     """
 
-    # Based on the specific detector frame, rotate to match the raw FGS frame
-    if nircam_detector in ['A2', 'A4', 'B1', 'B3', 'B5']:
-        if fgs_guider == 1:
-            # FGS guider = 1; Perform 270 degree rotation
-            image = np.rot90(image, k=3)
-        elif fgs_guider == 2:
-            # FGS guider = 2; Perform a 180 degree rotation and swap axes
-            image = np.rot90(image, k=2)
-            image = np.swapaxes(image, 0, 1)
+    # 1) Transform to NIRCam sci
+    # Get the Det2Sci angle and parity from the SIAF
+    from_nircam_detector = 'NRC' + from_nircam_detector
+    nircam_siaf = pysiaf.Siaf('NIRCam')
+    aperture = nircam_siaf['{}_FULL'.format(from_nircam_detector)]
+    angle = aperture.DetSciYAngle
+    parity = aperture.DetSciParity
 
-    elif nircam_detector in ['A1', 'A3', 'A5', 'B2', 'B4']:
-        if fgs_guider == 1:
-            # FGS guider = 1; One 90 degree rotation
-            image = np.rot90(image, k=1)
-        elif fgs_guider == 2:
-            # FGS guider = 2; Swap axes!
-            image = np.swapaxes(image, 0, 1)
+    # Flip the X axis according to the parity
+    if parity == -1:
+        image = np.fliplr(image)
 
-    else:
-        raise ValueError('Unfamiliar NIRCam detector provided. Check the header '
-                         'keyword "DETECTOR" for the NIRCAM module, then re-run '
-                         'using the "nircam_det" keyword to bypass the header query.')
+    # Rotate the image according to the angle
+    n_90_deg_rots = angle // 90
+    image = np.rot90(image, k=n_90_deg_rots)
+
+    # 2) Transform to FGS raw
+    image = transform_sci_to_fgs_raw(image, to_fgs_detector)
+
     return image
 
 
-def rotate_sci_to_fgs_raw(image, fgs_guider):
+def transform_sci_to_fgs_raw(image, to_fgs_detector):
     """Rotate NIRCam or FGS image from DMS/science coordinate frame
-    (the expected frame for output DMS images) to FGS raw.
+    (the expected frame for output DMS images) to FGS raw. Note that
+    it is not necessary to specify the input image detector because
+    the DMS coordinate frame is identical for all FGS and NIRCam
+    detectors.
 
     Parameters
     ----------
     image : 2-D numpy array
-        Image data
-    fgs_guider : int
-        Guider number (1 or 2)
+        Input image data
+    to_fgs_detector : int
+        Guider number of the desired output image (1 or 2)
 
     Returns
     -------
     image : 2-D numpy array
         Image data with coordinate frame transformation applied
 
-    Use
-    ---
-        See 'notebooks/Convert from NIRCam to FGS coordinate frames.ipynb'
-        and 'notebooks/Convert FGS coordinate frames.ipynb'
     """
-    if fgs_guider == 1:
-        # FGS guider = 1; Swap axes
-        image = np.swapaxes(image, 0, 1)
-    elif fgs_guider == 2:
-        # FGS guider = 2; Perform 90 degree rotation
-        image = np.rot90(image, k=1)
+    # Get the Det2Sci angle and parity from the SIAF
+    to_fgs_detector = 'FGS' + str(to_fgs_detector)
+    fgs_siaf = pysiaf.Siaf('FGS')
+    aperture = fgs_siaf['{}_FULL'.format(to_fgs_detector)]
+    angle = aperture.DetSciYAngle
+    parity = aperture.DetSciParity
+
+    # Flip the X axis according to the parity
+    if parity == -1:
+        image = np.fliplr(image)
+
+    # Rotate the image according to the angle
+    n_90_deg_rots = angle // 90
+    image = np.rot90(image, k=n_90_deg_rots)
+
+    # Because goal is FGS raw (not det), swap X and Y
+    image = np.swapaxes(image, 0, 1)
 
     return image
 
 
-def rotate_nircam_image(image, fgs_guider, header, nircam_det,
-                        nircam_coord_frame='sci'):
-    """Given NIRCam image from module A or B (as defined in the header
-    in your original NIRCam image), rotate/flip to put in correct
-    orientation for FGS 1 or 2.
+def transform_nircam_image(image, to_fgs_detector, from_nircam_detector, header,
+                           nircam_coord_frame='sci'):
+    """Given NIRCam image and detector, rotate and flip to put in
+    correct orientation for FGS 1 or 2.
 
     Parameters
     ----------
-    image
-        2-D numpy array
+    image : 2-D numpy array
         NIRCam image to be rotated into correct FGS frame
-    fgs_guider
-        int
+    to_fgs_detector : int
         Guider 1 or 2
-    header
-        .fits header object
+    header : astropy.io.fits.Header object
         The header of the input NIRCam image
-    nircam_det
-        str
+    from_nircam_detector : str
         The NIRCam detector with which the image was taken.
         Expects: A1, A2, A3, A4, A5, B1, B2, B3, B4, or B5
-    nircam_coord_frame
-        str, optional
+    nircam_coord_frame : str, optional
         The coordinate frame that the input image is in.
         Expects: 'sci' for the science/DMS frame, or 'raw' or 'det' for
         the raw detector frame
-    -----------
 
     Returns
-    -------
     --------
-    nircam_scale
-        float
+    nircam_scale : float
         Detector pixel scale depending on if the input image is from a
         long- or shortwave detector
-    image
-        2-D numpy array
-        The rotated NIRCam image
-
-    Raises
-    ------
-    ValueError
-        Description
+    image : 2-D numpy array
+        The transformed NIRCam image
     """
-
-    # The Detector keyword returns 'NRCA*' or 'NRCB*', so to simplify matters
-    # just pull out the 4th character in the string
-    if nircam_det not in [None, "-Parse from Header-"]:
-        detector = nircam_det
-    else:
-        detector = header['DETECTOR'][3:].strip()
-    LOGGER.info("Image Conversion: NIRCAM Detector = {}".format(detector))
+    # If the NIRCam detector isn't specified, get it from the header
+    if from_nircam_detector in [None, "-Parse from Header-"]:
+        # The Detector keyword returns 'NRCA*' or 'NRCB*', so to simplify matters
+        # just pull out the 4th & 5th character in the string
+        from_nircam_detector = header['DETECTOR'][3:].strip()
+    LOGGER.info("Image Conversion: Transforming from NIRCAM Detector = {}".format(from_nircam_detector))
 
     # Determine whether the NIRCam image is short- or long-wave to determine
     # the pixel scale
-    nircam_scale = NIRCAM_LW_SCALE if '5' in detector else NIRCAM_SW_SCALE
+    nircam_scale = NIRCAM_LW_SCALE if '5' in from_nircam_detector else NIRCAM_SW_SCALE
 
-    # Perform the rotation
+    # Perform the transformation
     if nircam_coord_frame == 'sci':
-        LOGGER.info("Image Conversion: Input image in SCI coordinate frame.")
-        image = rotate_sci_to_fgs_raw(image, fgs_guider)
+        LOGGER.info("Image Conversion: Input NIRCam image in SCI coordinate frame.")
+        image = transform_sci_to_fgs_raw(image, to_fgs_detector)
+
     elif nircam_coord_frame == 'raw' or nircam_coord_frame == 'det':
-        LOGGER.info("Image Conversion: Input image in RAW/DET coordinate frame.")
-        image = rotate_nircam_raw_to_fgs_raw(image, detector, fgs_guider)
+        LOGGER.info("Image Conversion: Input NIRCam image in RAW/DET coordinate frame.")
+        image = transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector)
+
     else:
         raise ValueError('Unrecognized coordinate frame name.')
 
@@ -662,7 +646,7 @@ def convert_im(input_im, guider, root, nircam=True,
             # Remove pedestal from NIRCam data
             data = remove_pedestal(data)
             # Rotate the NIRCAM image into FGS frame
-            nircam_scale, data = rotate_nircam_image(data, guider, header, nircam_det)
+            nircam_scale, data = transform_nircam_image(data, guider, nircam_det, header)
             # Pad image
             data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
@@ -674,8 +658,8 @@ def convert_im(input_im, guider, root, nircam=True,
             try:
                 origin = header['ORIGIN'].strip()
                 if origin == 'ITM':
-                    LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
-                    data = rotate_sci_to_fgs_raw(data, guider)
+                    LOGGER.info("Image Conversion: FGS data provided in science/DMS frame; rotating to raw FGS frame.")
+                    data = transform_sci_to_fgs_raw(data, guider)
             except KeyError:
                 pass
 
