@@ -54,14 +54,14 @@ def test_nircam_itm():
                                                   norm_unit="FGS Magnitude", itm=True)
 
 
-    assert data_g1.max() == 11963.361704537854
+    assert round(np.max(data_g1), 2) == 11963.36
 
     # Guider 2
     data_g2 = convert_image_to_raw_fgs.convert_im(NIRCAM_IM, guider=2, root=ROOT,
                                                   nircam=True, norm_value=12.0,
                                                   norm_unit="FGS Magnitude", itm=True)
 
-    assert data_g2.max() == 13258.757557895477
+    assert round(np.max(data_g2), 2) == 13258.76
 
 
 def test_fgs_itm():
@@ -73,14 +73,14 @@ def test_fgs_itm():
                                                   nircam=True, norm_value=12.0,
                                                   norm_unit="FGS Magnitude", itm=True)
 
-    assert data_g1.max() == 29333.710892110994
+    assert round(np.max(data_g1), 2) == 29333.71
 
     # Guider 2
     data_g2 = convert_image_to_raw_fgs.convert_im(FGS_GA_IM, guider=2, root=ROOT,
                                                   nircam=True, norm_value=12.0,
                                                   norm_unit="FGS Magnitude", itm=True)
 
-    assert data_g2.max() == 32509.97258106546
+    assert round(np.max(data_g2), 2) == 32509.97
 
 # This test needs to be created after we have a better understanding of how
 # to test logging in out code
