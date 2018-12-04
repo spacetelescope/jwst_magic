@@ -132,13 +132,14 @@ class MasterGui(QMainWindow):
                  nircam_det=None, nircam=True, global_alignment=False, steps=None,
                  in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                  star_selection=True, star_selection_gui=True, file_writer=True,
-                 segment_guiding=False, app=None):
+                 segment_guiding=False, app=None, itm=False):
 
         # Initialize attributes
         self.app = app
         self.root_default = root
         self.converted_im_circles = []
         self.bkgd_stars = None
+        self.itm = itm
 
         # Initialize SGT attributes
         self.prognum = None
@@ -298,6 +299,7 @@ class MasterGui(QMainWindow):
         coarse_point = self.checkBox_coarsePointing.isChecked()
         jitter_rate_arcsec = float(self.lineEdit_coarsePointing.text())
         bkgd_stars = self.bkgd_stars
+        itm = self.itm
 
         # Handle the case where we want to use a pre-existing converted image
         if self.checkBox_useConvertedImage.isChecked() and convert_im and \
@@ -406,12 +408,27 @@ class MasterGui(QMainWindow):
             return
 
         if convert_im or star_selection or file_writer:
-            run_magic.run_all(input_image, guider, root, norm_value, norm_unit,
-                              nircam_det, nircam, global_alignment, steps,
-                              in_file, bkgd_stars, out_dir, convert_im,
-                              star_selection, star_selectiongui, file_writer,
-                              self.app, copy_original, normalize, coarse_point,
-                              jitter_rate_arcsec)
+            run_magic.run_all(input_image, guider,
+                              root=root,
+                              norm_value=norm_value,
+                              norm_unit=norm_unit,
+                              nircam_det=nircam_det,
+                              nircam=nircam,
+                              global_alignment=global_alignment,
+                              steps=steps,
+                              in_file=in_file,
+                              bkgd_stars=bkgd_stars,
+                              out_dir=out_dir,
+                              convert_im=convert_im,
+                              star_selection=star_selection,
+                              star_selection_gui=star_selectiongui,
+                              file_writer=file_writer,
+                              masterGUIapp=self.app,
+                              copy_original=copy_original,
+                              normalize=normalize,
+                              coarse_pointing=coarse_point,
+                              jitter_rate_arcsec=jitter_rate_arcsec,
+                              itm=itm)
             print("** Run Complete **")
 
             # Update converted image preview
@@ -705,6 +722,17 @@ class MasterGui(QMainWindow):
         except KeyError:
             self.comboBox_detector.setCurrentIndex(0)
 
+        # Parse for ITM
+        try:
+            origin = header['ORIGIN'].strip()
+            if origin == 'ITM':
+                setattr(self, 'itm', True)
+                self.checkBox_normalize.setEnabled(False)
+            else:
+                setattr(self, 'itm', False)
+        except KeyError:
+            pass
+
         # Parse APT program, observation, and visit information
         keywords = ['PROGRAM', 'OBSERVTN', 'VISIT']
         attributes = ['prognum', 'obsnum', 'visitnum']
@@ -843,7 +871,7 @@ def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_
                   nircam=True, global_alignment=False, steps=None, in_file=None,
                   bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
-                  segment_guiding=False):
+                  segment_guiding=False, itm=False):
     # RUN GUI
     app = QtCore.QCoreApplication.instance()  # Use existing instance, if there is one
     if app is None:
@@ -851,7 +879,7 @@ def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_
 
     ex = MasterGui(root, norm_value, norm_unit, nircam_det, nircam, global_alignment, steps,
                    in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
-                   file_writer, segment_guiding, app=app)
+                   file_writer, segment_guiding, app=app, itm=itm)
     # #return ex.settings
     out = app.exec()
 
