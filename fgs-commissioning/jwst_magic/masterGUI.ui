@@ -554,7 +554,7 @@ Image:</string>
              </item>
              <item>
               <property name="text">
-               <string>FGS counts</string>
+               <string>FGS countrate</string>
               </property>
              </item>
             </widget>

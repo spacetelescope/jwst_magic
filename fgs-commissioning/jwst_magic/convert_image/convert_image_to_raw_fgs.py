@@ -633,7 +633,7 @@ def convert_im(input_im, guider, root, nircam=True,
         if len(data.shape) > 2:
             raise TypeError('Expecting a single frame or slope image.')
 
-        ## Check if this is an ITM image and the itm flag is set correctly (backwards compatibility)
+        # Check if this is an ITM image and the itm flag is set correctly (backwards compatibility)
         try:
             origin = header['ORIGIN'].strip()
             if origin == 'ITM':
@@ -646,8 +646,8 @@ def convert_im(input_im, guider, root, nircam=True,
             pass
 
 
-        ### Create raw FGS image...
-        ## From a NIRCam image
+        # Create raw FGS image...
+        # From a NIRCam image
         if nircam:
             LOGGER.info("Image Conversion: This is a NIRCam image")
 
@@ -679,7 +679,7 @@ def convert_im(input_im, guider, root, nircam=True,
             # Pad image
             data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
-        ## From an FGS image (i.e. do nothing)
+        # From an FGS image (i.e. do nothing)
         else:
             LOGGER.info("Image Conversion: This is an FGS image")
             guider = utils.get_guider(header)
@@ -688,7 +688,7 @@ def convert_im(input_im, guider, root, nircam=True,
                 LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
                 data = rotate_sci_to_fgs_raw(data, guider)
 
-        ## Apply Gaussian filter to simulate coarse pointing
+        # Apply Gaussian filter to simulate coarse pointing
         if coarse_pointing:
             pixel_scale = nircam_scale if nircam else FGS_SCALE
 
@@ -696,9 +696,9 @@ def convert_im(input_im, guider, root, nircam=True,
             LOGGER.info("Image Conversion: Applied Gaussian filter to simulate "
                         "coarse pointing with jitter of {:.3f} arcsec/sec".format(jitter_rate_arcsec))
 
-        ## Normalize the image, if the "normalize" flag is True
+        # Normalize the image, if the "normalize" flag is True
         # The ITM simulations are only created for relative SNR so they need to
-        #  normalized to one before anything else happens
+        # normalized to one before anything else happens
         if itm:
             LOGGER.info("Image Conversion: This is an ITM image.")
             data -= data.min() #set minimum at 0.
