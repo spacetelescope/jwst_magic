@@ -38,15 +38,19 @@ Use
 # Standard Library Imports
 import os
 import logging
+from shutil import copyfile
 
 # Third Party Imports
+from astropy.io import ascii as asc
 from astropy.io import fits
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+from scipy.ndimage import shift
 
 # Local imports
 from .. import utils
+from ..star_selector import select_psfs
 from ..fsw_file_writer import config, detector_effects, write_files
 
 # Paths
@@ -68,7 +72,7 @@ class BuildFGSSteps(object):
     to be used with DHAS.
     """
     def __init__(self, im, guider, root, step, reg_file=None, configfile=None,
-                 out_dir=None, logger_passed=False):
+                 out_dir=None, logger_passed=False, shift_id_attitude=None):
         """Initialize the class and call build_fgs_steps().
         """
         # Set up logger
@@ -82,14 +86,34 @@ class BuildFGSSteps(object):
             self.step = step
             self.yoffset = 12
 
+            # Define out directory
+            self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+
+            # READ IN IMAGE
+            if isinstance(im, str):
+                data = fits.getdata(im)
+                self.input_im = data
+            else:
+                self.input_im = im
+
+            # Shift image to ID attitude
+            if shift_id_attitude:
+                shift_id_attitude_bool = shift_id_attitude['shift_id_attitude']
+                crowded_field = shift_id_attitude['crowded_field']
+                replace = shift_id_attitude['replace']
+
+                if shift_id_attitude_bool and step == 'ID':
+                    self.input_im = self.shift_to_id_attitude(self.input_im, reg_file,
+                                                          crowded_field=crowded_field, replace=replace)
+
             # Build FGS steps
-            self.build_fgs_steps(im, root, out_dir, reg_file, configfile)
+            self.build_fgs_steps(im, root, reg_file, configfile)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, im, root, out_dir, reg_file, configfile):
+    def build_fgs_steps(self, im, root, reg_file, configfile):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
@@ -111,17 +135,9 @@ class BuildFGSSteps(object):
             defined, defaults to jwst_magic/data/config.ini
         """
         # Define paths
-        self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
-
-        # READ IN IMAGE
-        if isinstance(im, str):
-            data = fits.getdata(im)
-            self.input_im = data
-        else:
-            self.input_im = im
 
         # *** SHOULD THIS BE HAPPENING HERE?? ***
         # Correct for negative, saturated pixels and other nonsense
@@ -321,6 +337,166 @@ class BuildFGSSteps(object):
             image = image / np.sum(image) * 1000
 
         return image
+
+    def shift_to_id_attitude(self, image, reg_file, crowded_field=False, replace=None):
+        """Shift the FGS image such that the guide star is at the ID
+        attitude. Rewrite the FGS FITS file, reg_file, and ALLpsfs catalog
+        file for this shifted case. (Rename old versions of those files
+        to be "_unshifted".)
+
+        Parameters
+        ----------
+        image : 2D numpy array
+            Image data
+        reg_file : str
+            Path to existing regfile.txt
+        crowded_field : bool, optional
+            Denotes whether the current case is a crowded field,
+            in which the ID attitude changes.
+
+        Returns
+        -------
+        shifted_image : 2D numpy array
+            The image data shifted so that the guide star falls on the
+            ID attitude
+        """
+
+        # 0) Fetch existing information and determine ID attitude
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Define filenames
+        file_root = '{}_G{}'.format(self.root, self.guider)
+        FGS_img = os.path.join(self.out_dir, 'FGS_imgs', file_root + '.fits')
+        reg_file = reg_file or os.path.join(self.out_dir,
+                                    file_root + '_regfile.txt')
+        ALLpsfs = os.path.join(self.out_dir,
+                                    file_root + '_ALLpsfs.txt')
+        unshifted_FITS_filename = os.path.join(self.out_dir, 'FGS_imgs',
+                                               file_root + '_unshifted.fits')
+        unshifted_reg_file_name = os.path.join(self.out_dir,
+                                               file_root + '_regfile_unshifted.txt')
+        unshifted_ALLpsfs_name = os.path.join(self.out_dir,
+                                              file_root + '_ALLpsfs_unshifted.txt')
+
+        print('REPLACE IS', replace)
+
+        # Check if any _unshifted files exist. If so, load those instead
+        shifted_already = os.path.isfile(unshifted_reg_file_name)
+        if not shifted_already or replace is not None:
+            reg_file_cat = asc.read(reg_file)
+            ALLpsfs_cat = asc.read(ALLpsfs)
+
+        if shifted_already and replace == 'reg_file':
+            LOGGER.warning('FSW File Writing: This file has already been '
+                           'shifted, but new selections have been made. '
+                           'Reading unshifted image and '
+                           'rewriting old unshifted catalog '
+                           'to shift again.')
+            with fits.open(unshifted_FITS_filename) as hdulist:
+                image = hdulist[0].data
+        elif shifted_already and replace is None:
+            LOGGER.warning('FSW File Writing: This file has already been '
+                           'shifted. Reading unshifted image and catalogs '
+                           'to shift again.')
+            with fits.open(unshifted_FITS_filename) as hdulist:
+                image = hdulist[0].data
+            reg_file_cat = asc.read(unshifted_reg_file_name)
+            ALLpsfs_cat = asc.read(unshifted_ALLpsfs_name)
+
+        if crowded_field:
+            # Locations obtained from Beverly Owens
+            if self.guider == 1:
+                xend, yend = (986, 1688)  # Converted from Ideal = (-45.6799, 1.2244)
+            elif self.guider == 2:
+                xend, yend = (1003, 1697)  # Converted from Ideal = (-45.6701, -0.8757)
+            hdr_keyword = '{}'.format((xend, yend))
+            file_suffix = 'crowdedIDattitude'
+        else:
+            xend, yend = (1024, 1024)  # ID attitude; Different for crowded fields
+            # Note this should actually be 1024.5, but the reg_file needs an integer shift
+            hdr_keyword = '{}'.format((xend, yend))
+            file_suffix = 'IDattitude'
+
+
+        # 1) Shift the image array
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        xstart, ystart = reg_file_cat['x', 'y'][0] # Guide star location
+        dx = xend - xstart
+        dy = yend - ystart
+        if (dx, dy) == (0, 0):
+            LOGGER.info('FSW File Writing: No need to shift file; guide star already at ID attitude.')
+            return image
+
+        bkg = np.median(image)
+
+        LOGGER.info("FSW File Writing: Shifting guide star to ID attitude ({}, {})".format(xend, yend))
+        shifted_image = shift(image, (dy, dx), mode='constant', cval=bkg, prefilter=True)
+
+        # 2) Rewrite regfile.txt and save old file as regfile_unshifted.txt
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        shifted_reg_file_cat = reg_file_cat.copy()
+        shifted_reg_file_cat['x'] += dx
+        shifted_reg_file_cat['y'] += dy
+
+        if not shifted_already or replace is not None:
+            # Rename the old file "*_regfile_unshifted.txt"
+            os.rename(reg_file, unshifted_reg_file_name)
+            print('Successfully rewrote:', reg_file, '-> _unshifted')
+
+        # Write new reg_file.txts
+        utils.write_cols_to_file(self.out_dir,
+                                 filename=reg_file,
+                                 labels=['y', 'x', 'countrate'],
+                                 cols=shifted_reg_file_cat)
+        copyfile(reg_file,
+                 os.path.join(self.out_dir, '{}_regfile_{}.txt'.format(file_root, file_suffix)))
+
+
+        # 3) Rewrite ALLpsfs.txt and save old file as ALLpsfs_unshifted.txt
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        shifted_ALLpsfs_cat = ALLpsfs_cat.copy()
+        shifted_ALLpsfs_cat['x'] += dx
+        shifted_ALLpsfs_cat['y'] += dy
+
+        if not shifted_already or replace == 'image':
+            # Rename the old file "*_ALLpsfs_unshifted.txt"
+            os.rename(ALLpsfs, unshifted_ALLpsfs_name)
+            print('Successfully rewrote:', ALLpsfs, '-> _unshifted')
+
+        all_cols = select_psfs.create_cols_for_coords_counts(shifted_ALLpsfs_cat['x'],
+                                                             shifted_ALLpsfs_cat['y'],
+                                                             shifted_ALLpsfs_cat['countrate'],
+                                                             None,
+                                                             labels=shifted_ALLpsfs_cat['label'],
+                                                             inds=range(len(shifted_ALLpsfs_cat['x'])))
+
+        # Write new ALLpsfs.txts
+        utils.write_cols_to_file(self.out_dir,
+                                 filename=ALLpsfs,
+                                 labels=['label', 'y', 'x', 'countrate'],
+                                 cols=all_cols)
+
+        copyfile(ALLpsfs,
+                 os.path.join(self.out_dir, '{}_ALLpsfs_{}.txt'.format(file_root, file_suffix)))
+
+
+        # 4) Rewrite the shifted FGS image and save old file as _unshifted.fits
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        if not shifted_already or replace == 'image':
+            # Rename the old file "*_unshifted.fits"
+            os.rename(FGS_img, unshifted_FITS_filename)
+            print('Successfully rewrote:', FGS_img, '-> _unshifted')
+
+        # Load header file
+        header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(self.guider))
+        hdr = fits.getheader(header_file, ext=0)
+        hdr['IDATTPIX'] = (hdr_keyword, 'Image shifted to place GS at ID attitude')
+
+        # Write new FITS files
+        utils.write_fits(FGS_img, shifted_image, header=hdr)
+        copyfile(FGS_img,
+                 os.path.join(self.out_dir, 'FGS_imgs', '{}_{}.fits'.format(file_root, file_suffix)))
+
+        return shifted_image
 
 # ------------------------------------------------------------------------------
 # ANCILLARY FUNCTIONS
