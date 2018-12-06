@@ -66,7 +66,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
             coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True):
+            shift_id_attitude=True, crowded_field=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -192,5 +192,6 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         for step in steps:
             buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step,
                                         out_dir=out_dir, logger_passed=True,
-                                        reg_file=in_file, shift_id_attitude=shift_id_attitude)
+                                        reg_file=in_file, shift_id_attitude=shift_id_attitude,
+                                        crowded_field=crowded_field)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
