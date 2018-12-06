@@ -303,8 +303,10 @@ class MasterGui(QMainWindow):
         itm = self.itm
 
         # Handle the case where we want to use a pre-existing converted image
-        if self.checkBox_useConvertedImage.isChecked() and convert_im and \
-                self.checkBox_useConvertedImage.isEnabled():
+        pre_existing_im = self.checkBox_useConvertedImage.isChecked() and \
+                          convert_im and \
+                          self.checkBox_useConvertedImage.isEnabled()
+        if pre_existing_im:
             convert_im = False
             input_image = self.converted_im_file
             copy_original = False
@@ -333,6 +335,18 @@ class MasterGui(QMainWindow):
             steps.append('TRK')
         if self.checkBox_LOSTRK.isChecked():
             steps.append('LOSTRK')
+
+        # Shift image to ID attitude:
+        if not pre_existing_im:
+            replace = 'image'
+        elif in_file is None or in_file != self.regfile:
+            print('REGFILE IS', in_file, '(saved as', self.regfile)
+            replace = 'reg_file'
+        else:
+            replace = None
+        shift_id_attitude = {'shift_id_attitude': self.checkBox_id_attitude.isChecked(),
+                             'crowded_field': self.radioButton_crowded_id_attitude.isChecked(),
+                             'replace': replace}
 
         # Rewrite .prc and regfile.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
@@ -429,7 +443,9 @@ class MasterGui(QMainWindow):
                               normalize=normalize,
                               coarse_pointing=coarse_point,
                               jitter_rate_arcsec=jitter_rate_arcsec,
-                              itm=itm)
+                              itm=itm,
+                              shift_id_attitude=shift_id_attitude
+                              )
             print("** Run Complete **")
 
             # Update converted image preview
