@@ -24,7 +24,7 @@ Use
         ``step`` - name of guiding step for which to create images
             (expecting 'ID', 'ACQ1', 'ACQ2', 'TRK', or 'LOSTRK')
     Optional arguments:
-        ``reg_file`` - file containing X/Y positions and countrates for
+        ``regfile`` - file containing X/Y positions and countrates for
             all stars in an image
         ``configfile`` - file defining parameters for each guider step.
             If not defined, defaults to jwst_magic/data/config.ini
@@ -71,9 +71,9 @@ class BuildFGSSteps(object):
     """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
     to be used with DHAS.
     """
-    def __init__(self, im, guider, root, step, reg_file=None, configfile=None,
+    def __init__(self, im, guider, root, step, regfile=None, configfile=None,
                  out_dir=None, logger_passed=False, shift_id_attitude=True,
-                 crowded_field=False):
+                 crowded_field=False, catalog=None):
         """Initialize the class and call build_fgs_steps().
         """
         # Set up logger
@@ -99,17 +99,17 @@ class BuildFGSSteps(object):
 
             # Shift image to ID attitude
             if shift_id_attitude and step == 'ID':
-                self.input_im = self.shift_to_id_attitude(self.input_im, reg_file,
+                self.input_im = self.shift_to_id_attitude(self.input_im, regfile, catalog,
                                                           crowded_field=crowded_field)
 
             # Build FGS steps
-            self.build_fgs_steps(im, root, reg_file, configfile)
+            self.build_fgs_steps(im, root, regfile, configfile)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, im, root, reg_file, configfile):
+    def build_fgs_steps(self, im, root, regfile, configfile):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
@@ -123,7 +123,7 @@ class BuildFGSSteps(object):
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
             tools/fgs-commissioning/
-        reg_file : str
+        regfile : str
             File containing X/Y positions and countrates for all stars
             in the provided image
         configfile : str
@@ -144,7 +144,7 @@ class BuildFGSSteps(object):
 
         # LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
 
-        self.get_coords_and_counts(reg_file=reg_file)
+        self.get_coords_and_counts(regfile=regfile)
 
         section = '{}_dict'.format(self.step.lower())
         config_ini = self.build_step(section, configfile)
@@ -154,29 +154,29 @@ class BuildFGSSteps(object):
         LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
         write_files.write_all(self)
 
-    def get_coords_and_counts(self, reg_file=None):
+    def get_coords_and_counts(self, regfile=None):
         """Get coordinate information and countrates of guide star and
         reference stars.
 
         Parameters
         ----------
-        reg_file : str, optional
+        regfile : str, optional
             File containing X/Y positions and countrates for all stars
             in the provided image
         """
-        if reg_file is None:
-            reg_file = os.path.join(self.out_dir,
+        if regfile is None:
+            regfile = os.path.join(self.out_dir,
                                     '{0}_G{1}_regfile.txt'.format(self.root,
                                                                   self.guider))
-        LOGGER.info("FSW File Writing: Using {} as the reg file".format(reg_file))
+        LOGGER.info("FSW File Writing: Using {} as the reg file".format(regfile))
 
-        if reg_file.endswith('reg'):
-            self.xarr, self.yarr = np.loadtxt(reg_file)
+        if regfile.endswith('reg'):
+            self.xarr, self.yarr = np.loadtxt(regfile)
             self.countrate = []
             for xa, ya, in zip(self.xarr, self.yarr):
                 self.countrate.append(utils.countrate_3x3(xa, ya, self.input_im))
         else:
-            self.yarr, self.xarr, self.countrate = np.loadtxt(reg_file, delimiter=' ',
+            self.yarr, self.xarr, self.countrate = np.loadtxt(regfile, delimiter=' ',
                                                               skiprows=1).T
         # Add y offset to all coordinates
         # self.yarr = self.yarr - self.yoffset
@@ -334,9 +334,9 @@ class BuildFGSSteps(object):
 
         return image
 
-    def shift_to_id_attitude(self, image, reg_file, crowded_field=False):
+    def shift_to_id_attitude(self, image, regfile, catalog, crowded_field=False):
         """Shift the FGS image such that the guide star is at the ID
-        attitude. Rewrite the FGS FITS file, reg_file, and ALLpsfs catalog
+        attitude. Rewrite the FGS FITS file, regfile, and ALLpsfs catalog
         file for this shifted case. (Rename old versions of those files
         to be "_unshifted".)
 
@@ -344,7 +344,7 @@ class BuildFGSSteps(object):
         ----------
         image : 2D numpy array
             Image data
-        reg_file : str
+        regfile : str
             Path to existing regfile.txt
         crowded_field : bool, optional
             Denotes whether the current case is a crowded field,
@@ -362,16 +362,16 @@ class BuildFGSSteps(object):
         # Define filenames
         file_root = '{}_G{}'.format(self.root, self.guider)
         FGS_img = os.path.join(self.out_dir, 'FGS_imgs', file_root + '.fits')
-        reg_file = reg_file or os.path.join(self.out_dir,
+        regfile = regfile or os.path.join(self.out_dir,
                                     file_root + '_regfile.txt')
-        ALLpsfs = os.path.join(self.out_dir,
+        ALLpsfs = catalog or os.path.join(self.out_dir,
                                     file_root + '_ALLpsfs.txt')
 
         # Make sure shifted directory exists
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'shifted'))
 
         # Load the catalogs
-        reg_file_cat = asc.read(reg_file)
+        regfile_cat = asc.read(regfile)
         ALLpsfs_cat = asc.read(ALLpsfs)
 
         # Determine the pixel shift
@@ -385,14 +385,14 @@ class BuildFGSSteps(object):
             file_suffix = 'crowdedIDattitude'
         else:
             xend, yend = (1024, 1024)  # ID attitude; Different for crowded fields
-            # Note this should actually be 1024.5, but the reg_file needs an integer shift
+            # Note this should actually be 1024.5, but the regfile needs an integer shift
             hdr_keyword = '{}'.format((xend, yend))
             file_suffix = 'IDattitude'
 
 
         # 1) Shift the image array
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        xstart, ystart = reg_file_cat['x', 'y'][0] # Guide star location
+        xstart, ystart = regfile_cat['x', 'y'][0] # Guide star location
         dx = xend - xstart
         dy = yend - ystart
         if (dx, dy) == (0, 0):
@@ -407,18 +407,18 @@ class BuildFGSSteps(object):
         # 2) Rewrite regfile.txt and save old file as regfile_unshifted.txt
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Shift the regfile catalog
-        shifted_reg_file_cat = reg_file_cat.copy()
-        shifted_reg_file_cat['x'] += dx
-        shifted_reg_file_cat['y'] += dy
+        shifted_regfile_cat = regfile_cat.copy()
+        shifted_regfile_cat['x'] += dx
+        shifted_regfile_cat['y'] += dy
 
-        shifted_reg_file = os.path.join(self.out_dir, 'shifted',
+        shifted_regfile = os.path.join(self.out_dir, 'shifted',
                                             file_root + '_regfile.txt')
 
-        # Write new reg_file.txts
+        # Write new regfile.txts
         utils.write_cols_to_file(self.out_dir,
-                                 filename=shifted_reg_file,
+                                 filename=shifted_regfile,
                                  labels=['y', 'x', 'countrate'],
-                                 cols=shifted_reg_file_cat)
+                                 cols=shifted_regfile_cat)
 
 
         # 3) Rewrite ALLpsfs.txt and save old file as ALLpsfs_unshifted.txt
