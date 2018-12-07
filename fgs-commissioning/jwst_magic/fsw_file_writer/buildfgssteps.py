@@ -414,7 +414,7 @@ class BuildFGSSteps(object):
         shifted_regfile_cat['y'] += dy
 
         shifted_regfile = os.path.join(self.out_dir, 'shifted',
-                                            file_root + '_regfile.txt')
+                                       file_root + '_regfile.txt')
 
         # Write new regfile.txts
         utils.write_cols_to_file(self.out_dir,
@@ -431,7 +431,7 @@ class BuildFGSSteps(object):
         shifted_ALLpsfs_cat['y'] += dy
 
         shifted_ALLpsfs = os.path.join(self.out_dir, 'shifted',
-                                        file_root + '_ALLpsfs.txt')
+                                       file_root + '_ALLpsfs.txt')
 
         all_cols = select_psfs.create_cols_for_coords_counts(shifted_ALLpsfs_cat['x'],
                                                              shifted_ALLpsfs_cat['y'],
@@ -456,7 +456,7 @@ class BuildFGSSteps(object):
         hdr['IDATTPIX'] = (hdr_keyword, 'Image shifted to place GS at ID attitude')
 
         shifted_FGS_img = os.path.join(self.out_dir, 'shifted',
-                                      file_root + '.fits')
+                                       file_root + '.fits')
 
         # Write new FITS files
         utils.write_fits(shifted_FGS_img, shifted_image, header=hdr)
