@@ -239,7 +239,8 @@ class MasterGui(QMainWindow):
 
         # Segment guiding widgets
         self.pushButton_regfileSegmentGuiding.clicked.connect(self.on_click_infile)
-        self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_regfile)
+        self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
+        self.groupBox_segmentGuiding.toggled.connect(self.update_segment_guiding_shift)
 
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
@@ -630,11 +631,18 @@ class MasterGui(QMainWindow):
         if self.itm:
             self.checkBox_normalize.setEnabled(False)
 
-    def update_segment_guiding_regfile(self):
-        if self.radioButton_shifted.isChecked():
-            self.lineEdit_regfileSegmentGuiding.setText(self.shifted_regfile)
-        elif self.radioButton_unshifted.isChecked():
-            self.lineEdit_regfileSegmentGuiding.setText(self.regfile)
+    def update_segment_guiding_shift(self):
+        if self.sender() == self.groupBox_segmentGuiding:
+            if self.groupBox_segmentGuiding.isChecked():
+                self.radioButton_shifted.setEnabled(os.path.exists(self.shifted_im_file))
+            else:
+                self.radioButton_shifted.setEnabled(False)
+
+        else:
+            if self.radioButton_shifted.isChecked():
+                self.lineEdit_regfileSegmentGuiding.setText(self.shifted_regfile)
+            elif self.radioButton_unshifted.isChecked():
+                self.lineEdit_regfileSegmentGuiding.setText(self.regfile)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
@@ -888,7 +896,6 @@ class MasterGui(QMainWindow):
 
             # Toggle the "use shifted image" buttons
             self.radioButton_shifted.setChecked(True)
-            self.update_segment_guiding_regfile()
 
             # if self.groupBox_segmentGuiding.isChecked():
             #     self.radioButton_unshifted.setEnabled(True)
@@ -942,7 +949,7 @@ class MasterGui(QMainWindow):
             # Disable the "use shifted image" buttons
             self.radioButton_unshifted.setChecked(True)
             # self.radioButton_unshifted.setEnabled(False)
-            # self.radioButton_shifted.setEnabled(False)
+            self.radioButton_shifted.setEnabled(False)
 
             # Disable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(False)
