@@ -346,6 +346,8 @@ class BuildFGSSteps(object):
             Image data
         regfile : str
             Path to existing regfile.txt
+        catalog : str
+            Path to existing ALLpsfs.txt
         crowded_field : bool, optional
             Denotes whether the current case is a crowded field,
             in which the ID attitude changes.
