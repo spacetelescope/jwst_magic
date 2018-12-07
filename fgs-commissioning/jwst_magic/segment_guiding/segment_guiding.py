@@ -38,8 +38,10 @@ Use
 """
 
 # Standard Library Imports
+import getpass
 import os
 import logging
+import time
 
 # Third Party Imports
 from astropy import units as u
@@ -339,6 +341,9 @@ class SegmentGuidingCalculator:
 
                     out_string += star_string
 
+                # Write out the override report
+                self.write_override_report(orientations, n_guide_segments)
+
             f.write(out_string)
 
             if verbose:
@@ -347,6 +352,53 @@ class SegmentGuidingCalculator:
                             replace('-ref_only', '\n                -ref_only'))
                 LOGGER.info('Segment Guiding: Saved override command to {}'.
                             format(out_file))
+
+
+
+    def write_override_report(self, orientations, n_guide_segments):
+        # Define path and name of output override report
+        out_file = 'gs-override-{}_{}_{}_REPORT.txt'.format(self.program_id, self.observation_num,
+                                                     self.visit_num)
+        out_file = os.path.join(self.out_dir, out_file)
+
+        username = getpass.getuser()
+
+        with open(out_file, 'w') as f:
+            f.write('Guide Star Override Report\n')
+            f.write('Generated on {} at {} by {}\n'.format(time.strftime("%Y/%m/%d"), time.strftime("%H:%M:%S"), username))
+            f.write('\n')
+            f.write('{:14s}: {:s}'.format('Program ID', str(self.program_id)) + '\n')
+            f.write('{:14s}: {:s}'.format('Observation #', str(self.observation_num)) + '\n')
+            f.write('{:14s}: {:s}'.format('Visit #', str(self.visit_num)) + '\n')
+            f.write('{:14s}: {:d}'.format('FGS Detector', self.fgs_num) + '\n')
+            f.write('{:14s}: {:f}'.format('Guide Star RA', self.ra) + '\n')
+            f.write('{:14s}: {:f}'.format('Guide Star Dec', self.dec) + '\n')
+            f.write('{:14s}: {:f}'.format('V3 PA @ GS', self.pa) + '\n')
+            f.write('\n')
+            columns = 'Star Name, MAGIC ID, RA, Dec, Ideal X, Ideal Y, OSS Ideal X, OSS Ideal Y, Detector X, Detector Y'.split(', ')
+            header_string_to_format = '{:^13s}| '* len(columns)
+            header_string = header_string_to_format[:-2].format(*columns) + '\n'
+            f.write(header_string)
+            f.write('-'*len(header_string) + '\n')
+
+            for i_o, orientation in enumerate(orientations):
+                guide_seg_id = orientation[0]
+
+                label = 'star'
+                seg = i_o + 1
+                if self._refonly:
+                    if i_o >= n_guide_segments:
+                        label = 'ref_only'
+                        seg = i_o + 1 - n_guide_segments
+
+                values = [label + str(seg), int(guide_seg_id + 1), self.seg_ra[guide_seg_id], self.seg_dec[guide_seg_id],
+                           self.x_idl_segs[guide_seg_id], self.y_idl_segs[guide_seg_id],
+                           -self.x_idl_segs[guide_seg_id], self.y_idl_segs[guide_seg_id],
+                           self.x_det_segs[guide_seg_id], self.y_det_segs[guide_seg_id]]
+
+                row_string_to_format = '{:<13s}| ' + '{:<13d}| ' +  '{:<13f}| '* (len(values) - 2)
+                row_string = row_string_to_format[:-2].format(*values) + '\n'
+                f.write(row_string)
 
     def check_segments_inside_fov(self, attitude):
         """Check to make sure that the calculated RA and Dec of each

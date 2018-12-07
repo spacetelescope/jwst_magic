@@ -331,6 +331,56 @@ def test_POF_parameters_dialog():
 
     assert params == (None, '1142', '8', '2', None, 0.0)
 
+def test_write_override_report(test_directory):
+    # Define the input file locations and parameters
+    guider = 1
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': guider,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'seg_num': 0}
+    selected_segs = np.array([[1, 2, 3], [4, 0, 17, 12, 2]])
+
+    segment_guiding.generate_segment_override_file(
+        SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
+        out_dir=__location__, selected_segs=selected_segs, click_to_select_gui=False,
+        guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
+    )
+
+    report_file = 'gs-override-{}_{}_{}_REPORT.txt'.format(PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
+    report_file = os.path.join(test_directory, report_file)
+    assert os.path.isfile(report_file)
+
+    correct_file = '''Guide Star Override Report
+Generated on 2018/12/07 at 11:59:16 by lchambers
+
+Program ID    : 1141
+Observation # : 7
+Visit #       : 1
+FGS Detector  : 1
+Guide Star RA : 90.970800
+Guide Star Dec: -67.357800
+V3 PA @ GS    : 157.123400
+
+  Star Name  |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |  Detector X  |  Detector Y  
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+star1        | 1            | 90.987850    | -67.355022   | -12.648238   | -22.174651   | 12.648238    | -22.174651   | 840.000187   | 1344.998823  
+star2        | 4            | 90.986120    | -67.362103   | -0.034250    | 0.106095     | 0.034250     | 0.106095     | 1024.000008  | 1023.000013  
+ref_only1    | 2            | 90.986990    | -67.358569   | -6.338517    | -11.010128   | 6.338517     | -11.010128   | 932.000192   | 1183.999172  
+ref_only2    | 3            | 90.980194    | -67.352832   | -6.188804    | -33.708446   | 6.188804     | -33.708446   | 933.999283   | 1504.998775  
+ref_only3    | 12           | 90.963123    | -67.355541   | 19.393433    | -34.482825   | -19.393433   | -34.482825   | 1304.997893  | 1503.997675  
+ref_only4    | 17           | 90.954592    | -67.356915   | 32.206292    | -34.798421   | -32.206292   | -34.798421   | 1489.998298  | 1501.997517  
+ref_only5    | 0            | 90.953775    | -67.360493   | 38.500751    | -23.505004   | -38.500751   | -23.505004   | 1581.997741  | 1339.996887  
+'''.split('\n')
+
+    with open(report_file) as f:
+        lines = f.read().split('\n')
+
+    assert lines[2:] == correct_file[2:]
+
+    
 # def test_dialog_window():
     
 
