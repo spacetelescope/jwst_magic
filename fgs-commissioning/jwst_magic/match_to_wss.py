@@ -37,6 +37,8 @@ import os
 from astropy.io import fits
 import numpy as np
 from scipy import ndimage
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
 # Local Imports
 from . import utils
@@ -44,7 +46,7 @@ from .star_selector import select_psfs
 
 # Constants
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-JWST_PUPIL = os.path.join(__location__, 'data', 'JWST_pupil_no_struts.fits')
+JWST_PUPIL = os.path.join(__location__, 'data', 'JWST_pupil_no_struts_fgs_frame.fits')
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
@@ -52,7 +54,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class MatchToWss(object):
-    def __init__(self, data, global_alignment, match_top=True, match_left=True):
+    def __init__(self, data, global_alignment, match_top=True, match_left=True,
+                 plot=False):
         '''
         Given an image (GA, Image Array, some CMIMF images as of 12/06/2018),
         match each PSF with it's WSS segment number and # IDEA:
@@ -67,38 +70,43 @@ class MatchToWss(object):
             header = fits.getheader(data)
             # Check that data is in raw FGS image frame
             if not (header['INSTRUME'] == 'FGS' or header['INSTRUME'] == 'GUIDER') and header['FILETYPE'] == 'raw':
-                raise TypeError("This image is not in the FGS raw frame. Cannot continue.")
+                raise KeyError("This image is not in the FGS raw frame. Cannot continue.")
         else:
             self.data = data
             LOGGER.warning("Match WSS: If data is not in the FGS raw frame, the " +
                            "matching will NOT be correct.")
 
         # Define variables
-        self.npix_im = np.shape(self.data)[0]
         self.match_top = match_top
         self.match_left = match_left
 
         self.coords = self.get_coords(global_alignment=global_alignment)
-        self.npix_im = np.shape(data)[0]
-        self.top_y_im, self.bottom_y_im, self.left_x_im, self.right_x_im, self.outliers = self.define_edges_of_psfs_in_image()
-
+        self.npix_im = np.shape(self.data)[0]
+        # Using the coordinates, find the extent of the PSF array
+        coords_array = self.check_for_outliers()
+        self.define_edges_of_image_array(coords_array)
 
         # Get pupil information
-        pupil = fits.getdata(JWST_PUPIL)
+        self.pupil = fits.getdata(JWST_PUPIL)
         npix_mask = np.shape(pupil)[0]
+        self.top_seg, self.bottom_seg, self.left_seg, self.right_seg = MatchToWss.determine_edge_segments(pupil)
         ratio = self.define_scaling_factor_for_pupil(pupil)
+
         # Resize the pupil based on scaling factor
-        pupil_scaled = utils.resize_array(pupil, int(np.round(npix_mask*ratio)),
+        self.pupil_scaled = utils.resize_array(pupil, int(np.round(npix_mask*ratio)),
                                           int(np.round(npix_mask*ratio)))
 
-        full_pupil = self.resize_pupil_to_match_im(pupil_scaled)
-
+        self.full_pupil = self.resize_pupil_to_match_im(pupil_scaled)
         # Shift it!
         self.matched_pupil = self.shift_pupil_to_match_im(full_pupil)
+        self.center_of_array = ndimage.measurements.center_of_mass(self.matched_pupil != 0)
 
         # Grab dictionary and then update it
         wss_segs_dict = MatchToWss.create_wss_seg_dict()
         self.dictionary = self.match_seg_to_psf(wss_segs_dict, self.matched_pupil)
+
+        if plot:
+            self.plot_found_segs(self.matched_pupil)
 
 
     @staticmethod
@@ -122,17 +130,13 @@ class MatchToWss(object):
         '''
         From start selector get the coordinates of the PSFs associated with the PM
         '''
-        _, self.coords, _, _ = select_psfs.manual_star_selection(self.data,
-                                                                 global_alignment=global_alignment,
-                                                                 testing=True)
+        _, coords, _, _ = select_psfs.manual_star_selection(self.data,
+                                                            global_alignment=global_alignment,
+                                                            testing=True)
+        return coords
 
 
-
-    def define_edges_of_psfs_in_image(self):
-        """
-        Use the image and found coordinates in order to determine the edges (and
-        therefore scale and extent) of the PSF array in the image
-        """
+    def check_for_outliers(self):
         # Check for outliers
         avg = np.mean(self.coords, axis=0)
         std = np.std(self.coords, axis=0)
@@ -141,8 +145,17 @@ class MatchToWss(object):
 
         if len(self.outlier) > 1:
             LOGGER.warning("WSS Matching: More than two PSFs lie outside the pupil mask. " +
-                             "These will be considered missing.")
+                           "These will be considered missing.")
+        return coords_array
 
+    def define_edges_of_image_array(self, coords_array):
+        """
+        Use the image and found coordinates in order to determine the edges (and
+        therefore scale and extent) of the PSF array in the image
+        """
+        # Check to see if coords_array is different than the list of all coords
+        if coords_array == self.coords:
+            coords_array = self.coords
         #Unzip coordinates
         x, y = zip(*coords_array)
 
@@ -151,49 +164,76 @@ class MatchToWss(object):
         self.right_x_im = np.asarray(x).max()
         self.left_x_im = np.asarray(x).min()
 
+    @staticmethod
+    def determine_edge_segments(pupil):
+        '''Find the top, bottom, left, right segments'''
+        pupil_shape = np.shape(pupil)[0]
+        vertical = pupil[:, pupil_shape//2] # left, right
+        bottom_seg = int(next((value for value in vertical if value != 0), None))
+        top_seg = int(next((value for value in vertical[::-1] if value != 0), None))
 
-    def define_edges_of_pupil_mask(self, pupil, top=7, bottom=13, left=16, right=10):
+        horizontal = pupil[pupil_shape//2, :] # bottom, top
+        left_seg = int(next((value for value in horizontal if value != 0), None))
+        right_seg = int(next((value for value in horizontal[::-1] if value != 0), None))
+
+        return top_seg, bottom_seg, left_seg, right_seg
+
+    def define_edges_of_pupil_mask(self, pupil):
         """
         Use scipy's center of mass function to find the centers of the top-, bottom-,
         left-, and right-most segments. This will give boundaries on the shape of the
         pupil. This makes the assumption that the PSF will approximately line up with
-        the center of the segment.
+        the center of the segment based on the rotation of the FGS raw frame.
 
-        WARNING: This may not acutally be the case and we need to make sure we test
-        many different GA images
+        THIS IS ONLY VALID FOR THE FOLLOWING PUPIL CONFIGURATION:
+                    15 16 17              B5  C5  B6
+                  14  5   6  18          C4  A5  A6  C6
+        +Y      13  14      1  7       B4  A4      A1  B1
+        ^         12  3   2   8          C3  A3  A2  C1
+        |           11  10  9              B3  C2  B2
+         -> +X
 
-        A1 on top of image:
-        Top segment = 7
-        Bottom segment = 13
-        Left segment (middle) = 16
-        Right segment (middle) = 10
         """
         # Center_of_mass returns values in y, x
-        top_y, _ = ndimage.measurements.center_of_mass(pupil == top)
-        bottom_y, _ = ndimage.measurements.center_of_mass(pupil == bottom)
+        top_y, top_x = ndimage.measurements.center_of_mass(pupil == self.top_seg)
+        bottom_y, bottom_x = ndimage.measurements.center_of_mass(pupil == self.bottom_seg)
+        if top_x == bottom_x:
+            top_pupil, bottom_pupil = top_y, bottom_y
+        elif top_y == bottom_y:
+            top_pupil, bottom_pupil = top_x, bottom_x
 
-        _, left_x = ndimage.measurements.center_of_mass(pupil == left)
-        _, right_x = ndimage.measurements.center_of_mass(pupil == right)
+        left_y, left_x = ndimage.measurements.center_of_mass(pupil == self.left_seg)
+        right_y, right_x = ndimage.measurements.center_of_mass(pupil == self.right_seg)
+        if left_x == right_x:
+            left_pupil, right_pupil = left_y, right_y
+        elif left_y == right_y:
+            left_pupil, right_pupil = left_x, right_x
 
-        return top_y, bottom_y, left_x, right_x
+
+        return top_pupil, bottom_pupil, left_pupil, right_pupil
 
     def define_scaling_factor_for_pupil(self, pupil):
         '''
         Find a scaling factor to go between the pupil and the dimentions of the image
         array being fit.
         '''
-        top_y_ma, bottom_y_ma, left_x_ma, right_x_ma = self.define_edges_of_pupil_mask(pupil)
-        mask_y_dist = int(np.round(top_y_ma - bottom_y_ma))
-        mask_x_dist = int(np.round(right_x_ma - left_x_ma))
+        top_ma, bottom_ma, left_ma, right_ma = self.define_edges_of_pupil_mask(pupil)
+        mask_vert_dist = int(np.round(top_ma - bottom_ma))
+        mask_hor_dist = int(np.round(right_ma - left_ma))
 
-        im_y_dist = self.top_y_im - self.bottom_y_im
-        im_x_dist = self.right_x_im - self.left_x_im
+        im_vert_dist = self.top_y_im - self.bottom_y_im
+        im_hor_dist = self.right_x_im - self.left_x_im
 
+        print("mask y:{}, mask x:{}, im y:{}, im x:{}".format(mask_vert_dist,
+                                                              mask_hor_dist,
+                                                              im_vert_dist,
+                                                              im_hor_dist))
         # Find the ratios in x and y, they may not match, that's okay, I hope
-        ratio_y = im_y_dist / mask_y_dist
-        ratio_x = im_x_dist / mask_x_dist
+        ratio_vert = im_vert_dist / mask_vert_dist
+        ratio_hor = im_hor_dist / mask_hor_dist
+
         # Find maximum ratio - pupil should be bigger rather than smaller
-        ratio = np.max([ratio_y, ratio_x])
+        ratio = np.max([ratio_vert, ratio_hor])
 
         return ratio
 
@@ -238,7 +278,6 @@ class MatchToWss(object):
             right side (match_left=False). Default: True
         """
         top_pup, bottom_pup, left_pup, right_pup = self.define_edges_of_pupil_mask(full_pupil)
-
         if self.match_top:
             y_im = self.top_y_im
             y_pupil = top_pup
@@ -254,8 +293,8 @@ class MatchToWss(object):
             x_pupil = right_pup
 
         # Shift
-        shifted_pupil = ndimage.shift(full_pupil, (y_im - y_pupil, x_im - x_pupil),
-                                      mode='constant', cval=0.0)
+        shiftx = np.roll(full_pupil, int((x_im - x_pupil)), axis=0)
+        shifted_pupil = np.roll(shiftx, int((y_im - y_pupil)), axis=1)
 
         return shifted_pupil
 
@@ -264,27 +303,56 @@ class MatchToWss(object):
         '''
         Use the pupil to pull out the segment number for each PSF.
         '''
+        missing = 0
         for (x, y) in self.coords:
             try:
                 seg = int(pupil[y, x]) # Yes, this should be y, x
                 wss_segs_dict[seg]['coords'] = (x, y)
-                error = False
             except KeyError:
-                error = True
+                missing += 1
+
 
         # If there was an error assigning coords, then either a segment has been
         # kicked out, segments are missing (off the detector or worse), or this
         # image is not going to work for WSS seg matching
-        if error:
+        if missing == 1:
             for k in wss_segs_dict:
                 try:
                     wss_segs_dict[k]['coords']
                 except KeyError:
                     if self.outlier:
-                        wss_segs_dict[k]['coords'] = (self.outlier[0][0], self.outlier[0][1])
+                        wss_segs_dict[k]['coords'] = (self.outlier[0][0],
+                                                      self.outlier[0][1])
                     else:
                         wss_segs_dict[k]['coords'] = None
                         LOGGER.warning("WSS Matching: Segment %(k)d (%(seg)s) is missing!",
                                        extra={'k':k, 'seg':wss_segs_dict['segid']})
+        elif missing > 1:
+            LOGGER.error("There is more than one missing segment. Cannot"+
+                         " match the WSS segment number to the PSFs accurately.")
 
         return wss_segs_dict
+
+    def plot_found_segs(self, pupil):
+        top_final, bottom_final, left_final, right_final = self.define_edges_of_pupil_mask(pupil)
+
+        plt.figure(figsize=(10, 8))
+        plt.imshow(pupil, origin='lower')
+        plt.axhline(top_final, color='C4', label='pupil edges')
+        plt.axhline(bottom_final, color='C4')
+        plt.axvline(left_final, color='C4')
+        plt.axvline(right_final, color='C4')
+
+        #plt.imshow(self.data, norm=LogNorm(), alpha=0.5, origin='lower')
+        plt.axhline(self.top_y_im, color='C1', label='image edges')
+        plt.axhline(self.bottom_y_im, color='C1')
+        plt.axvline(self.right_x_im, color='C1')
+        plt.axvline(self.left_x_im, color='C1')
+
+        for c in self.coords:
+            plt.scatter(c[0], c[1], color='C1')
+
+        # plt.ylim(self.bottom_y_im-30, self.top_y_im+30)
+        # plt.xlim(self.left_x_im-30, self.right_x_im+30)
+        plt.legend()
+        plt.show()

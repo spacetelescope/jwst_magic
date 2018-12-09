@@ -150,7 +150,7 @@ def choose_threshold(smoothed_data, gauss_sigma):
     ax1.imshow(smoothed_data, cmap='bone', interpolation='nearest',
                clim=(0.1, 100), norm=LogNorm())
     ax1.scatter(sources_std['x_peak'], sources_std['y_peak'], c='r', marker='+')
-    ax1.set_title('Threshold = 3$\sigma$ ({} sources found)'.format(len(sources_std)))
+    ax1.set_title(r'Threshold = 3$\sigma$ ({} sources found)'.format(len(sources_std)))
 
     ax2.imshow(smoothed_data, cmap='bone', interpolation='nearest',
                clim=(0.1, 100), norm=LogNorm())

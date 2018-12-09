@@ -362,7 +362,6 @@ class StarSelectorWindow(QDialog):
         self.epsilon = dist
         self._ind = None
         self.inds = []
-        self.inds_of_inds = []
         self.n_stars_max = 11
         self.gs_ind = None
         self.current_row = -1
