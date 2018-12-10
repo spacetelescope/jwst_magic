@@ -2,9 +2,9 @@ before_script:
   - bash
   - echo $USER
   - echo $PATH
-  - export PATH="/user/lchambers/miniconda3/bin:$PATH"
+  - cp -r /user/lchambers/miniconda3 ~/miniconda3
+  - export PATH="~/miniconda3/bin:$PATH"
   - echo $PATH
-  - cp /user/lchambers/miniconda3 ~/miniconda3
   - conda env list
   # - create -n magic-test stsci pysiaf pip -y
   # - source activate test
