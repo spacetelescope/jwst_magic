@@ -636,10 +636,10 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     size = 2048
     nstars_random = 5
 
-    # Determine jmag and fgs_counts of guide star
-    norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
-    fgs_counts = norm_obj.to_counts()
-    jmag = renormalize.fgs_counts_to_j_mag(fgs_counts, guider)
+    # Determine jmag and fgs_countrate of guide star
+    norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
+    fgs_countrate = norm_obj.to_countrate()
+    jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider)
 
     # If the flag is simply set to "True", randomly place 5 stars on the image
     if stars is True:
@@ -675,8 +675,8 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     image[image < mean] = 0
     for x, y, jmag_back in zip(x_back, y_back, jmags_back):
         if not isinstance(jmag_back, np.ma.core.MaskedConstant):
-            star_fgs_counts = renormalize.j_mag_to_fgs_counts(jmag_back, guider)
-            scale_factor = star_fgs_counts / fgs_counts
+            star_fgs_countrate = renormalize.j_mag_to_fgs_countrate(jmag_back, guider)
+            scale_factor = star_fgs_countrate / fgs_countrate
 
             star_data = image * scale_factor
             psfx = psfy = 2048

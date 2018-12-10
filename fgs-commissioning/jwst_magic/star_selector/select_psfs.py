@@ -99,6 +99,8 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
 
         sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
         num_psfs = len(sources)
+        if num_psfs == 0:
+            raise ValueError("You have no sources in your data.")
         coords = sources['x_peak', 'y_peak']
         coords = [(x, y) for [x, y] in coords]
 
