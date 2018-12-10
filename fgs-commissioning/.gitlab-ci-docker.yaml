@@ -1,14 +1,18 @@
-before-script:
-  - pip install -r requirements.txt
+image: python:3.6
 
-test:
+stages:
+  - build
+  - test
+
+build:
+  stage: build
   script:
-    - echo 'something happened, maybe.'
+    # - apt-get -y python-pip
+    - pip install -r requirements.txt
 
-
-# test_py36:
-#   stage: test
-#   script: pytest
+test_py36:
+  stage: test
+  script: pytest
 
 # Resources:
 # - https://henningtimm.gitlab.io/post/first_steps_with_gitlabci/
