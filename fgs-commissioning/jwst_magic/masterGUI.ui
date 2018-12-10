@@ -6,28 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1433</width>
-    <height>937</height>
+    <width>1424</width>
+    <height>949</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
-     <number>12</number>
-    </property>
-    <item>
+   <layout class="QGridLayout" name="gridLayout_9">
+    <item row="0" column="0">
      <widget class="QScrollArea" name="scrollArea_mainGUI">
       <property name="minimumSize">
        <size>
@@ -46,8 +34,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1418</width>
-         <height>931</height>
+         <width>1385</width>
+         <height>943</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -251,16 +239,7 @@
            <property name="spacing">
             <number>-1</number>
            </property>
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>0</number>
            </property>
            <item>
@@ -287,7 +266,7 @@
                  <enum>QTabWidget::Rounded</enum>
                 </property>
                 <property name="currentIndex">
-                 <number>1</number>
+                 <number>2</number>
                 </property>
                 <widget class="QWidget" name="tab_input">
                  <attribute name="title">
@@ -426,6 +405,85 @@ Image:</string>
                       <width>600</width>
                       <height>600</height>
                      </size>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="tab_shifted">
+                 <attribute name="title">
+                  <string>Shifted FGS Image</string>
+                 </attribute>
+                 <layout class="QGridLayout" name="gridLayout_10">
+                  <item row="2" column="0" colspan="2">
+                   <widget class="QWidget" name="canvas_shifted_slot" native="true">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>600</width>
+                      <height>600</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_showingShifted">
+                    <property name="toolTip">
+                     <string>Path to the converted FGS image found at the out and root directories specified</string>
+                    </property>
+                    <property name="text">
+                     <string>Showing
+Image:</string>
+                    </property>
+                    <property name="buddy">
+                     <cstring>label_showingInput</cstring>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QTextEdit" name="textEdit_showingShifted">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>60</height>
+                     </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>Path to the converted FGS image found at the out and root directories specified</string>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0" colspan="2">
+                   <widget class="QCheckBox" name="checkBox_showStars_shifted">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="toolTip">
+                     <string>Show or hide the locations of stars and star selections as found in the ALLpsfs.txt and regfile in the root directory</string>
+                    </property>
+                    <property name="text">
+                     <string>Show most recent guide and reference star selections (shifted/*regfile.txt)</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -944,13 +1002,26 @@ p, li { white-space: pre-wrap; }
            <bool>true</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_2">
-           <item row="0" column="0">
-            <widget class="QCheckBox" name="checkBox_CAL">
+           <item row="1" column="4" colspan="2">
+            <widget class="QRadioButton" name="radioButton_crowded_id_attitude">
+             <property name="text">
+              <string>Crowded Field (-45, 0)</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_idAttitude</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QCheckBox" name="checkBox_ACQ1">
              <property name="toolTip">
-              <string>Calibration</string>
+              <string>Acquisition 1</string>
              </property>
              <property name="text">
-              <string>CAL</string>
+              <string>ACQ1</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -967,16 +1038,13 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
-            <widget class="QCheckBox" name="checkBox_ACQ1">
+           <item row="0" column="0">
+            <widget class="QCheckBox" name="checkBox_CAL">
              <property name="toolTip">
-              <string>Acquisition 1</string>
+              <string>Calibration</string>
              </property>
              <property name="text">
-              <string>ACQ1</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
+              <string>CAL</string>
              </property>
             </widget>
            </item>
@@ -1019,7 +1087,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="1" column="0" colspan="4">
+           <item row="2" column="0" colspan="4">
             <widget class="QCheckBox" name="checkBox_rewritePRC">
              <property name="enabled">
               <bool>true</bool>
@@ -1032,6 +1100,32 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
+           <item row="1" column="3">
+            <widget class="QRadioButton" name="radioButton_nominal_id_attitude">
+             <property name="text">
+              <string>Nominal (0,0)</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_idAttitude</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="3">
+            <widget class="QCheckBox" name="checkBox_id_attitude">
+             <property name="text">
+              <string>Place the guide star at the ID attitude</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="tristate">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
           </layout>
           <zorder>checkBox_CAL</zorder>
           <zorder>checkBox_ID</zorder>
@@ -1040,6 +1134,9 @@ p, li { white-space: pre-wrap; }
           <zorder>checkBox_TRK</zorder>
           <zorder>checkBox_rewritePRC</zorder>
           <zorder>checkBox_LOSTRK</zorder>
+          <zorder>checkBox_id_attitude</zorder>
+          <zorder>radioButton_nominal_id_attitude</zorder>
+          <zorder>radioButton_crowded_id_attitude</zorder>
          </widget>
         </item>
         <item row="4" column="0" colspan="2">
@@ -1069,14 +1166,14 @@ p, li { white-space: pre-wrap; }
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
-           <item row="1" column="1">
+           <item row="3" column="1">
             <widget class="QLineEdit" name="lineEdit_regfileSegmentGuiding">
              <property name="toolTip">
               <string>File containing guide and reference star locations and brightness</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
+           <item row="3" column="0">
             <widget class="QRadioButton" name="radioButton_regfileSegmentGuiding">
              <property name="toolTip">
               <string>Define one command with guide and reference stars by loading their locations and brightness loaded from a file</string>
@@ -1090,7 +1187,7 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
-           <item row="2" column="0" colspan="2">
+           <item row="4" column="0" colspan="2">
             <widget class="QRadioButton" name="radioButton_segmentGuidingGUI">
              <property name="toolTip">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create one or more segment guiding override commands by clicking on guide and reference stars in the image&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1106,7 +1203,7 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
-           <item row="0" column="0">
+           <item row="2" column="0">
             <widget class="QRadioButton" name="radioButton_photometryOverride">
              <property name="toolTip">
               <string>Have a stacked PSFs so only need to override the photometry</string>
@@ -1119,7 +1216,7 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
-           <item row="1" column="2">
+           <item row="3" column="2">
             <widget class="QPushButton" name="pushButton_regfileSegmentGuiding">
              <property name="enabled">
               <bool>false</bool>
@@ -1129,6 +1226,42 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="text">
               <string>Open</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QRadioButton" name="radioButton_shifted">
+             <property name="text">
+              <string>Use image shifted to ID attitude</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_segmentGuiding_idAttitude</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QRadioButton" name="radioButton_unshifted">
+             <property name="text">
+              <string>Use original image</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_segmentGuiding_idAttitude</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="3">
+            <widget class="Line" name="line">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>
@@ -1217,8 +1350,8 @@ p, li { white-space: pre-wrap; }
      <y>766</y>
     </hint>
     <hint type="destinationlabel">
-     <x>299</x>
-     <y>636</y>
+     <x>310</x>
+     <y>629</y>
     </hint>
    </hints>
   </connection>
@@ -1229,8 +1362,8 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>345</x>
-     <y>721</y>
+     <x>377</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
      <x>271</x>
@@ -1245,12 +1378,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>345</x>
-     <y>721</y>
+     <x>377</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
-     <x>299</x>
-     <y>636</y>
+     <x>310</x>
+     <y>629</y>
     </hint>
    </hints>
   </connection>
@@ -1261,8 +1394,8 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>345</x>
-     <y>721</y>
+     <x>377</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
      <x>279</x>
@@ -1277,12 +1410,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>345</x>
-     <y>721</y>
+     <x>377</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
-     <x>355</x>
-     <y>700</y>
+     <x>356</x>
+     <y>693</y>
     </hint>
    </hints>
   </connection>
@@ -1293,12 +1426,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>345</x>
-     <y>721</y>
+     <x>377</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
-     <x>463</x>
-     <y>700</y>
+     <x>469</x>
+     <y>693</y>
     </hint>
    </hints>
   </connection>
@@ -1309,12 +1442,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>345</x>
-     <y>721</y>
+     <x>377</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
-     <x>138</x>
-     <y>700</y>
+     <x>141</x>
+     <y>693</y>
     </hint>
    </hints>
   </connection>
@@ -1325,12 +1458,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>345</x>
-     <y>721</y>
+     <x>377</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
-     <x>246</x>
-     <y>700</y>
+     <x>248</x>
+     <y>693</y>
     </hint>
    </hints>
   </connection>
@@ -1341,12 +1474,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>345</x>
-     <y>721</y>
+     <x>377</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
-     <x>572</x>
-     <y>700</y>
+     <x>576</x>
+     <y>693</y>
     </hint>
    </hints>
   </connection>
@@ -1357,12 +1490,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>263</x>
-     <y>381</y>
+     <x>267</x>
+     <y>374</y>
     </hint>
     <hint type="destinationlabel">
-     <x>170</x>
-     <y>408</y>
+     <x>180</x>
+     <y>401</y>
     </hint>
    </hints>
   </connection>
@@ -1373,12 +1506,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>263</x>
-     <y>381</y>
+     <x>267</x>
+     <y>374</y>
     </hint>
     <hint type="destinationlabel">
-     <x>500</x>
-     <y>412</y>
+     <x>504</x>
+     <y>405</y>
     </hint>
    </hints>
   </connection>
@@ -1389,12 +1522,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>304</x>
-     <y>592</y>
+     <x>326</x>
+     <y>585</y>
     </hint>
     <hint type="destinationlabel">
-     <x>599</x>
-     <y>623</y>
+     <x>603</x>
+     <y>616</y>
     </hint>
    </hints>
   </connection>
@@ -1405,12 +1538,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>304</x>
-     <y>592</y>
+     <x>326</x>
+     <y>585</y>
     </hint>
     <hint type="destinationlabel">
-     <x>677</x>
-     <y>630</y>
+     <x>681</x>
+     <y>623</y>
     </hint>
    </hints>
   </connection>
@@ -1421,12 +1554,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>304</x>
-     <y>833</y>
+     <x>336</x>
+     <y>909</y>
     </hint>
     <hint type="destinationlabel">
-     <x>599</x>
-     <y>801</y>
+     <x>603</x>
+     <y>877</y>
     </hint>
    </hints>
   </connection>
@@ -1437,12 +1570,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>304</x>
-     <y>833</y>
+     <x>336</x>
+     <y>909</y>
     </hint>
     <hint type="destinationlabel">
-     <x>677</x>
-     <y>809</y>
+     <x>669</x>
+     <y>859</y>
     </hint>
    </hints>
   </connection>
@@ -1453,12 +1586,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>389</x>
-     <y>307</y>
+     <x>411</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>176</x>
-     <y>393</y>
+     <x>180</x>
+     <y>371</y>
     </hint>
    </hints>
   </connection>
@@ -1469,12 +1602,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>389</x>
-     <y>307</y>
+     <x>411</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>263</x>
-     <y>381</y>
+     <x>267</x>
+     <y>374</y>
     </hint>
    </hints>
   </connection>
@@ -1485,12 +1618,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>446</x>
-     <y>307</y>
+     <x>468</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>429</x>
-     <y>381</y>
+     <x>433</x>
+     <y>374</y>
     </hint>
    </hints>
   </connection>
@@ -1501,12 +1634,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>428</x>
-     <y>307</y>
+     <x>450</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>176</x>
-     <y>408</y>
+     <x>180</x>
+     <y>401</y>
     </hint>
    </hints>
   </connection>
@@ -1517,12 +1650,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>236</x>
-     <y>307</y>
+     <x>258</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>500</x>
-     <y>412</y>
+     <x>504</x>
+     <y>405</y>
     </hint>
    </hints>
   </connection>
@@ -1533,12 +1666,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>201</x>
-     <y>307</y>
+     <x>223</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>166</x>
-     <y>508</y>
+     <x>180</x>
+     <y>486</y>
     </hint>
    </hints>
   </connection>
@@ -1549,12 +1682,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>289</x>
-     <y>307</y>
+     <x>311</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>435</x>
-     <y>493</y>
+     <x>501</x>
+     <y>486</y>
     </hint>
    </hints>
   </connection>
@@ -1565,12 +1698,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>494</x>
-     <y>307</y>
+     <x>510</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>677</x>
-     <y>491</y>
+     <x>681</x>
+     <y>484</y>
     </hint>
    </hints>
   </connection>
@@ -1581,12 +1714,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>363</x>
-     <y>438</y>
+     <x>367</x>
+     <y>431</y>
     </hint>
     <hint type="destinationlabel">
-     <x>497</x>
-     <y>439</y>
+     <x>501</x>
+     <y>432</y>
     </hint>
    </hints>
   </connection>
@@ -1597,12 +1730,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>363</x>
-     <y>438</y>
+     <x>367</x>
+     <y>431</y>
     </hint>
     <hint type="destinationlabel">
-     <x>674</x>
-     <y>442</y>
+     <x>678</x>
+     <y>435</y>
     </hint>
    </hints>
   </connection>
@@ -1613,12 +1746,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>126</x>
-     <y>307</y>
+     <x>148</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>104</x>
-     <y>408</y>
+     <x>128</x>
+     <y>401</y>
     </hint>
    </hints>
   </connection>
@@ -1629,12 +1762,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>67</x>
-     <y>307</y>
+     <x>89</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>78</x>
-     <y>439</y>
+     <x>102</x>
+     <y>432</y>
     </hint>
    </hints>
   </connection>
@@ -1645,12 +1778,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>107</x>
-     <y>307</y>
+     <x>129</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>363</x>
-     <y>438</y>
+     <x>367</x>
+     <y>431</y>
     </hint>
    </hints>
   </connection>
@@ -1661,12 +1794,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>126</x>
-     <y>307</y>
+     <x>148</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>497</x>
-     <y>439</y>
+     <x>501</x>
+     <y>432</y>
     </hint>
    </hints>
   </connection>
@@ -1677,12 +1810,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>183</x>
-     <y>307</y>
+     <x>205</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>674</x>
-     <y>442</y>
+     <x>678</x>
+     <y>435</y>
     </hint>
    </hints>
   </connection>
@@ -1693,12 +1826,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>363</x>
-     <y>358</y>
+     <x>367</x>
+     <y>336</y>
     </hint>
     <hint type="destinationlabel">
-     <x>372</x>
-     <y>344</y>
+     <x>675</x>
+     <y>342</y>
     </hint>
    </hints>
   </connection>
@@ -1709,12 +1842,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>363</x>
-     <y>358</y>
+     <x>367</x>
+     <y>336</y>
     </hint>
     <hint type="destinationlabel">
-     <x>665</x>
-     <y>361</y>
+     <x>669</x>
+     <y>339</y>
     </hint>
    </hints>
   </connection>
@@ -1725,12 +1858,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>69</x>
-     <y>322</y>
+     <x>101</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>92</x>
-     <y>364</y>
+     <x>128</x>
+     <y>342</y>
     </hint>
    </hints>
   </connection>
@@ -1741,12 +1874,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>73</x>
-     <y>322</y>
+     <x>105</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>237</x>
-     <y>341</y>
+     <x>367</x>
+     <y>336</y>
     </hint>
    </hints>
   </connection>
@@ -1757,12 +1890,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>178</x>
-     <y>322</y>
+     <x>210</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>671</x>
-     <y>364</y>
+     <x>675</x>
+     <y>342</y>
     </hint>
    </hints>
   </connection>
@@ -1773,12 +1906,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>373</x>
-     <y>322</y>
+     <x>405</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
-     <x>665</x>
-     <y>361</y>
+     <x>669</x>
+     <y>339</y>
     </hint>
    </hints>
   </connection>
@@ -1793,16 +1926,66 @@ p, li { white-space: pre-wrap; }
      <y>729</y>
     </hint>
     <hint type="destinationlabel">
-     <x>591</x>
-     <y>706</y>
+     <x>684</x>
+     <y>693</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_fileWriter</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>radioButton_nominal_id_attitude</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>146</x>
+     <y>658</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>460</x>
+     <y>713</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_id_attitude</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>radioButton_crowded_id_attitude</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>86</x>
+     <y>712</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>675</x>
+     <y>713</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_id_attitude</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>radioButton_nominal_id_attitude</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>197</x>
+     <y>712</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>388</x>
+     <y>713</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
+  <buttongroup name="buttonGroup_instrument"/>
+  <buttongroup name="buttonGroup_idAttitude"/>
   <buttongroup name="buttonGroup_guider"/>
   <buttongroup name="buttonGroup_segmentGuiding"/>
   <buttongroup name="buttonGroup_starSelector"/>
-  <buttongroup name="buttonGroup_instrument"/>
  </buttongroups>
 </ui>

@@ -138,6 +138,7 @@ class MasterGui(QMainWindow):
         self.app = app
         self.root_default = root
         self.converted_im_circles = []
+        self.shifted_im_circles = []
         self.bkgd_stars = None
         self.itm = itm
 
@@ -195,6 +196,11 @@ class MasterGui(QMainWindow):
             parent=self.canvas_converted_slot, data=None, x=None, y=None,
             left=0.12, bottom=0, right=0.87, top=1
         )
+        self.canvas_shifted = StarClickerMatplotlibCanvas(
+            parent=self.canvas_shifted_slot, data=None, x=None, y=None,
+            left=0.12, bottom=0, right=0.87, top=1
+        )
+
 
         # Set the dimensions to be square and as big as possible
         max_dim = max(self.canvas_converted_slot.width(), self.canvas_converted_slot.height())
@@ -202,6 +208,8 @@ class MasterGui(QMainWindow):
         self.canvas_input.setMinimumSize(max_dim, max_dim)
         self.canvas_converted_slot.setMinimumSize(max_dim, max_dim)
         self.canvas_converted.setMinimumSize(max_dim, max_dim)
+        self.canvas_shifted_slot.setMinimumSize(max_dim, max_dim)
+        self.canvas_shifted.setMinimumSize(max_dim, max_dim)
 
     def define_MainGUI_connections(self):
         # Standard output and error
@@ -231,9 +239,12 @@ class MasterGui(QMainWindow):
 
         # Segment guiding widgets
         self.pushButton_regfileSegmentGuiding.clicked.connect(self.on_click_infile)
+        self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
+        self.groupBox_segmentGuiding.toggled.connect(self.update_segment_guiding_shift)
 
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
+        self.checkBox_showStars_shifted.toggled.connect(self.on_click_showstars)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # WIDGET CONNECTIONS
@@ -276,6 +287,7 @@ class MasterGui(QMainWindow):
         Takes inputs provided by user and runs run_magic
         """
         # Required
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.lineEdit_inputImage.text() == "":
             self.no_inputImage_dialog()
             return
@@ -284,6 +296,7 @@ class MasterGui(QMainWindow):
             return
 
         # General input
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         input_image = self.lineEdit_inputImage.text()
         guider = int(self.buttonGroup_guider.checkedButton().text())
         root = self.lineEdit_root.text()
@@ -291,6 +304,7 @@ class MasterGui(QMainWindow):
         copy_original = True
 
         # Convert image
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         convert_im = True
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
@@ -303,13 +317,16 @@ class MasterGui(QMainWindow):
         itm = self.itm
 
         # Handle the case where we want to use a pre-existing converted image
-        if self.checkBox_useConvertedImage.isChecked() and convert_im and \
-                self.checkBox_useConvertedImage.isEnabled():
+        pre_existing_im = self.checkBox_useConvertedImage.isChecked() and \
+                          convert_im and \
+                          self.checkBox_useConvertedImage.isEnabled()
+        if pre_existing_im:
             convert_im = False
             input_image = self.converted_im_file
             copy_original = False
 
         # Star selection
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         global_alignment = self.checkBox_globalAlignment.isChecked()
         star_selection = self.groupBox_starSelector.isChecked()
         star_selectiongui = self.radioButton_starSelectorGUI.isChecked()
@@ -319,6 +336,7 @@ class MasterGui(QMainWindow):
             in_file = self.lineEdit_regfileStarSelector.text()
 
         # File writer
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         file_writer = self.groupBox_fileWriter.isChecked()
         steps = []
         if self.checkBox_CAL.isChecked():
@@ -333,6 +351,10 @@ class MasterGui(QMainWindow):
             steps.append('TRK')
         if self.checkBox_LOSTRK.isChecked():
             steps.append('LOSTRK')
+
+        # Shift image to ID attitude:
+        shift_id_attitude = self.checkBox_id_attitude.isChecked()
+        crowded_field =  self.radioButton_crowded_id_attitude.isChecked()
 
         # Rewrite .prc and regfile.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
@@ -359,11 +381,11 @@ class MasterGui(QMainWindow):
             print("** Run Complete **\n\n")
 
             # Update converted image preview
-            self.update_converted_image_preview()
             self.update_filepreview()
             return
 
         # Segment guiding
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.groupBox_segmentGuiding.isChecked():
             # Get APT program information from parsed header
             self.parse_header(input_image)
@@ -378,15 +400,22 @@ class MasterGui(QMainWindow):
                     root, program_id, observation_num, visit_num, out_dir=out_dir
                 )
             else:
+                # Define location of ALLpsfs catalog file
+                if self.radioButton_shifted.isChecked():
+                    segment_infile = self.shifted_ALLpsfs
+                else:
+                    segment_infile = self.ALLpsfs
+
                 # Verify that the ALLpsfs.txt file exists
-                segment_infile = self.ALLpsfs
                 if not os.path.exists(segment_infile):
                     raise OSError('Provided segment infile {} not found.'.format(segment_infile))
 
-                # Determine which image to use
-                if os.path.exists(self.converted_im_file):
+                # Determine which image to use and load it
+                if self.radioButton_shifted.isChecked():
+                    fgs_filename = self.shifted_im_file
+                elif self.radioButton_unshifted.isChecked() and os.path.exists(self.converted_im_file):
                     fgs_filename = self.converted_im_file
-                else:
+                elif self.radioButton_unshifted.isChecked():
                     fgs_filename = input_image
                 data, _ = utils.get_data_and_header(fgs_filename)
 
@@ -404,9 +433,9 @@ class MasterGui(QMainWindow):
             print("** Run Complete **")
 
             # Update converted image preview
-            self.update_converted_image_preview()
             self.update_filepreview()
             return
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         if convert_im or star_selection or file_writer:
             run_magic.run_all(input_image, guider,
@@ -429,11 +458,13 @@ class MasterGui(QMainWindow):
                               normalize=normalize,
                               coarse_pointing=coarse_point,
                               jitter_rate_arcsec=jitter_rate_arcsec,
-                              itm=itm)
+                              itm=itm,
+                              shift_id_attitude=shift_id_attitude,
+                              crowded_field=crowded_field
+                              )
             print("** Run Complete **")
 
             # Update converted image preview
-            self.update_converted_image_preview()
             self.update_filepreview()
 
     def on_change_jitter(self):
@@ -582,15 +613,36 @@ class MasterGui(QMainWindow):
     def on_click_showstars(self, show):
         """Show or hide plots of star positions and selected stars.
         """
-        for line in self.converted_im_circles:
-            line[0].set_visible(show)
-        self.canvas_converted.peaks.set_visible(show)
+        if self.sender == self.checkBox_showStars:
+            for line in self.converted_im_circles:
+                line[0].set_visible(show)
+            self.canvas_converted.peaks.set_visible(show)
 
-        self.canvas_converted.draw()
+            self.canvas_converted.draw()
+
+        elif self.sender == self.checkBox_showStars_shifted:
+            for line in self.shifted_im_circles:
+                line[0].set_visible(show)
+            self.canvas_shifted.peaks.set_visible(show)
+
+            self.canvas_shifted.draw()
 
     def toggle_convert_im(self):
         if self.itm:
             self.checkBox_normalize.setEnabled(False)
+
+    def update_segment_guiding_shift(self):
+        if self.sender() == self.groupBox_segmentGuiding:
+            if self.groupBox_segmentGuiding.isChecked():
+                self.radioButton_shifted.setEnabled(os.path.exists(self.shifted_im_file))
+            else:
+                self.radioButton_shifted.setEnabled(False)
+
+        else:
+            if self.radioButton_shifted.isChecked():
+                self.lineEdit_regfileSegmentGuiding.setText(self.shifted_regfile)
+            elif self.radioButton_unshifted.isChecked():
+                self.lineEdit_regfileSegmentGuiding.setText(self.regfile)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
@@ -826,6 +878,84 @@ class MasterGui(QMainWindow):
 
         return self.canvas_converted.draw()
 
+    def update_shifted_image_preview(self):
+        # Are all the necessary fields filled in? If not, don't even try.
+        if not (self.textEdit_out.toPlainText() != "" and self.lineEdit_root.text() != ""
+                and self.buttonGroup_guider.checkedButton()):
+            return
+
+        # Does a shift image exist? If so, show it!
+        if os.path.exists(self.shifted_im_file):
+            # Prepare to show shifted image
+            self.canvas_shifted.axes.set_visible(True)
+            self.tabWidget.setCurrentIndex(2)
+            self.textEdit_showingShifted.setEnabled(True)
+
+            # Update filepath
+            self.textEdit_showingShifted.setText(self.shifted_im_file)
+
+            # Toggle the "use shifted image" buttons
+            self.radioButton_shifted.setChecked(True)
+
+            # Enable the "show stars" button
+            self.checkBox_showStars_shifted.setEnabled(True)
+
+            # Load data
+            data, _ = utils.get_data_and_header(self.shifted_im_file)
+            data[data <= 0] = 1
+
+            # Load ALLpsfs.text
+            x, y = [None, None]
+            if os.path.exists(self.shifted_ALLpsfs):
+                psf_list = asc.read(self.shifted_ALLpsfs)
+                x = psf_list['x']
+                y = psf_list['y']
+
+            # Plot data image and peak locations from ALLpsfs.txt
+            self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
+
+            # If possible, plot the selected stars in the regfile.txt
+            if os.path.exists(self.shifted_regfile):
+                selected_psf_list = asc.read(self.shifted_regfile)
+                x_selected = selected_psf_list['x']
+                y_selected = selected_psf_list['y']
+
+                # Remove old circles
+                for line in self.shifted_im_circles:
+                    self.canvas_shifted.axes.lines.remove(line[0])
+                self.shifted_im_circles = [
+                    self.canvas_shifted.axes.plot(x_selected[0], y_selected[0],
+                                                    'o', ms=25, mfc='none',
+                                                    mec='yellow', mew=2, lw=0)
+                ]
+                self.shifted_im_circles.append(
+                    self.canvas_shifted.axes.plot(x_selected[1:], y_selected[1:],
+                                                    'o', ms=25, mfc='none',
+                                                    mec='darkorange', mew=2, lw=0)
+                )
+
+        # If not, show nothing.
+        else:
+            # Update textbox showing filepath
+            self.textEdit_showingShifted.setText(
+                'No shifted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
+                                                                   self.shifted_im_file))
+            self.textEdit_showingShifted.setEnabled(False)
+
+            # Disable the "use shifted image" buttons
+            self.radioButton_unshifted.setChecked(True)
+            self.radioButton_shifted.setEnabled(False)
+
+            # Disable the "show stars" button
+            self.checkBox_showStars_shifted.setEnabled(False)
+
+            # Update plot to not show anything
+            dummy_img = self.canvas_shifted.axes.imshow(
+                np.array([[1e4, 1e4], [1e4, 1e4]]), cmap='bone', clim=(1e-1, 1e2)
+            )
+
+        return self.canvas_shifted.draw()
+
     def update_filepreview(self):
         # If the root, out_dir, and guider have been defined, show an example filepath
         # to a simulated image, and auto-populate the regfile.text filepath.
@@ -849,10 +979,12 @@ class MasterGui(QMainWindow):
                                                                     self.buttonGroup_guider.checkedButton().text()))
             if os.path.exists(self.regfile):
                 self.lineEdit_regfileStarSelector.setText(self.regfile)
-                self.lineEdit_regfileSegmentGuiding.setText(self.regfile)
+                if not self.radioButton_shifted.isChecked():
+                    self.lineEdit_regfileSegmentGuiding.setText(self.regfile)
             else:
                 self.lineEdit_regfileStarSelector.setText("")
-                self.lineEdit_regfileSegmentGuiding.setText("")
+                if not self.radioButton_shifted.isChecked():
+                    self.lineEdit_regfileSegmentGuiding.setText("")
 
             # Update ALLpsfs.txt filepath
             self.ALLpsfs = os.path.join(root_dir,
@@ -864,8 +996,20 @@ class MasterGui(QMainWindow):
                                                   '{}_G{}.fits'.format(self.lineEdit_root.text(),
                                                                        self.buttonGroup_guider.checkedButton().text()))
 
-            # If possible, show converted image preview, too
+            # Update shifted FGS image & catalog filepaths
+            self.shifted_im_file = os.path.join(root_dir, 'shifted',
+                                                '{}_G{}.fits'.format(self.lineEdit_root.text(),
+                                                                     self.buttonGroup_guider.checkedButton().text()))
+            self.shifted_ALLpsfs = os.path.join(root_dir,'shifted',
+                                                '{}_G{}_ALLpsfs.txt'.format(self.lineEdit_root.text(),
+                                                                            self.buttonGroup_guider.checkedButton().text()))
+            self.shifted_regfile = os.path.join(root_dir, 'shifted',
+                                                '{}_G{}_regfile.txt'.format(self.lineEdit_root.text(),
+                                                                            self.buttonGroup_guider.checkedButton().text()))
+
+            # If possible, show converted and shifted image previews, too
             self.update_converted_image_preview()
+            self.update_shifted_image_preview()
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
