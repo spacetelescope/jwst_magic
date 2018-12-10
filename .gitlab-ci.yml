@@ -1,5 +1,18 @@
-test_jwst_magic:
-  image: python:3.6
+before-script:
+  - pip install -r requirements.txt
+
+test:
   script:
-    - pip install fgs-commissioning/.
-    - pytest fgs-commissioning/tests/test*.py
+    - echo 'something happened, maybe.'
+
+
+# test_py36:
+#   stage: test
+#   script: pytest
+
+# Resources:
+# - https://henningtimm.gitlab.io/post/first_steps_with_gitlabci/
+# - https://docs.gitlab.com/ee/ci/examples/test-and-deploy-python-application-to-heroku.html
+# - https://medium.com/@farshid.ghods/using-gitlab-ci-feature-to-build-and-test-python-flask-application-and-mongodb-6e2de21a4219
+
+
