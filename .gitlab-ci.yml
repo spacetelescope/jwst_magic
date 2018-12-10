@@ -1,5 +1,7 @@
 before_script:
   - bash
+  - echo $USER
+  - conda env list
   - source activate astroconda
   - pip install -r requirements.txt
 
