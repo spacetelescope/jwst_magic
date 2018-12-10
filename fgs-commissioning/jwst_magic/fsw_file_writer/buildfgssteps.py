@@ -398,6 +398,10 @@ class BuildFGSSteps(object):
         xstart, ystart = regfile_cat['x', 'y'][0] # Guide star location
         dx = xend - xstart
         dy = yend - ystart
+        
+        assert dx % 1 == 0, 'Trying to shift by a non-integer in x'
+        assert dy % 1 == 0, 'Trying to shift by a non-integer in y'
+
         if (dx, dy) == (0, 0):
             LOGGER.info('FSW File Writing: No need to shift file; guide star already at ID attitude.')
             return image
