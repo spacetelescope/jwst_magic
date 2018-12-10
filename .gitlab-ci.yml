@@ -2,13 +2,13 @@ before_script:
   - bash
   - echo $USER
   - echo $PATH
-  - cp -r /user/lchambers/miniconda3 ~/miniconda3
-  - export PATH="~/miniconda3/bin:$PATH"
+  # - cp -r /user/lchambers/miniconda3 ~/miniconda3
+  - export PATH="/home/lchambers/gitlab-runner-env/miniconda3/bin:$PATH"
   - echo $PATH
   - conda env list
   # - create -n magic-test stsci pysiaf pip -y
-  # - source activate test
-  # - pip install -r fgs-commissioning/requirements.txt
+  - source activate test_magic
+  - pip install fgs_commissioning/
 
 test:
   script:
