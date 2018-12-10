@@ -2,6 +2,7 @@ before_script:
   - bash
   - echo $USER
   - echo $PATH
+  - rm -r ~/miniconda3
   # - cp -r /user/lchambers/miniconda3 ~/miniconda3
   - export PATH="/home/lchambers/gitlab-runner-env/miniconda3/bin:$PATH"
   - echo $PATH
