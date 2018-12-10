@@ -303,7 +303,7 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
         List of segment positions, count rates, and maybe labels for
         each selected segments
     """
-    if labels:
+    if labels is not None:
         # NOTE: these coordinates are y, x
         cols = [[ll, '{:.4f}'.format(yy),
                  '{:.4f}'.format(xx),
