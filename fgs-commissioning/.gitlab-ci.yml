@@ -1,10 +1,20 @@
+image: "python:3.6"
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script: pip install -r requirements.txt
+
 test_py36:
-  image: python:3.6
-  script:
-  # this configures Django application to use attached postgres database that is run on `postgres` host
-  # - export DATABASE_URL=postgres://postgres:@postgres:5432/python-test-app
-  # - apt-get update -qy
-  - apt-get update -q -y
-  - pip install -r requirements.txt
-  - pytest
+  stage: test
+  script: pytest
+
+# Resources:
+# - https://henningtimm.gitlab.io/post/first_steps_with_gitlabci/
+# - https://docs.gitlab.com/ee/ci/examples/test-and-deploy-python-application-to-heroku.html
+# - https://medium.com/@farshid.ghods/using-gitlab-ci-feature-to-build-and-test-python-flask-application-and-mongodb-6e2de21a4219
+
 
