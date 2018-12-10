@@ -4,14 +4,19 @@ before_script:
   - echo $PATH
   - export PATH="/user/lchambers/miniconda3/bin:$PATH"
   - echo $PATH
+  - cp /user/lchambers/miniconda3 ~/miniconda3
   - conda env list
-  - source activate astroconda
-  - pip install -r requirements.txt
+  # - create -n magic-test stsci pysiaf pip -y
+  # - source activate test
+  # - pip install -r fgs-commissioning/requirements.txt
 
 test:
   script:
     - echo 'something happened, maybe.'
     - pytest
+
+after_script:
+  - conda
 
 
 # test_py36:
