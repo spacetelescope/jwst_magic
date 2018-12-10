@@ -320,6 +320,7 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
 
 
 def match_psfs_to_segments(x, y, global_alignment):
+    #FIXME match to WSS segs
     """Match PSFs found in the image to their alphabetic label (between A and R)
 
     Parameters

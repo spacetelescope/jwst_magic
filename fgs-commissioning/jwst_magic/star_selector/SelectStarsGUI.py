@@ -75,6 +75,9 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
 from PyQt5.QtCore import pyqtSlot, QSize
 from PyQt5.QtGui import QIcon
 
+# Local Imports
+from ..match_to_wss import MatchToWss
+
 # Adjust matplotlib parameters
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['font.weight'] = 'light'
@@ -361,11 +364,17 @@ class StarSelectorWindow(QDialog):
         self.y = y
         self.epsilon = dist
         self._ind = None
-        self.inds = []
+        self.inds = [] # FIXME! What is this?
         self.n_stars_max = 11
         self.gs_ind = None
         self.current_row = -1
         self.circles = []
+
+        # Get WSS seg numbers
+        #FIXME!
+        coords = list(map(list, zip(x, y)))
+        wss_obj = MatchToWss(coords)
+        self.wss_dict = wss_obj.dictionary
 
         # Import .ui file
         # (It is imported as a widget, rather than a QDialog window, so that it
@@ -712,10 +721,13 @@ class StarSelectorWindow(QDialog):
             dist = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
             indseq = np.nonzero(np.equal(dist, np.amin(dist)))[0]
             ind = indseq[0]
+            #FIXME! - add real numbering
+            segnum = next((name for name, seg in self.wss_dict.items() if seg['coords'] == (self.x[ind], self.y[ind])), None)
 
             if dist[ind] <= self.epsilon:
                 # Update the tool tip to show the segment ID
-                self.canvas.setToolTip(str(ind + 1))
+                #self.canvas.setToolTip(str(ind + 1))
+                self.canvas.setToolTip(str(segnum))
 
             else:
                 # Update the tool tip to be blank
@@ -734,7 +746,9 @@ class StarSelectorWindow(QDialog):
             return
         if event.button != 1:
             return
+
         self._ind = self.get_ind_under_point(event)
+
 
     def set_guidestar(self):
         """Set the currently selected star to be the guide star.
@@ -907,8 +921,17 @@ class StarSelectorWindow(QDialog):
         """
 
         dist = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
+        # TODO - this is probably where we want to check the number of the segment
+        #FIXME!self.wss_dict
+        # Index of the coord in the list of coords
         indseq = np.nonzero(np.equal(dist, np.amin(dist)))[0]
-        ind = indseq[0]
+        ind = indseq[0] #Index of the x,y that is closest to where the user clicked
+        #WSS segumber
+        if len(dist) <= 16:
+            LOGGER.warning("Do not have enough PSFs to match to WSS numberings.")
+            segnum = indseq[0]
+        else:
+            segnum = next((name for name, seg in self.wss_dict.items() if seg['coords'] == (self.x[ind], self.y[ind])), None)
 
         # If the user has already selected the maximum number of stars
         if len(self.inds) == self.n_stars_max:
@@ -988,9 +1011,12 @@ class StarSelectorWindow(QDialog):
             self.canvas.draw()
 
             # Add to the list of indices
-            self.inds.append(ind)
+            #self.inds.append(ind)
+            self.inds.append(segnum)
+            #FIXME!
+            #self.inds.append(segnum)
 
-        return ind
+        return segnum #ind
 
     def reorder_indices(self):
         """Re-order self.inds such that the desired guide star is the
@@ -999,6 +1025,7 @@ class StarSelectorWindow(QDialog):
 
         # Determine which ID is the guide star
         guide_star_id = self.inds[self.gs_ind]
+        # FIXME - rearrange segnums... this code should actually be sufficient
 
         # Remove it from the list
         self.inds.pop(self.gs_ind)

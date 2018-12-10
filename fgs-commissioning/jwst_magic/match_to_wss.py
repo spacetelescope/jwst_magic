@@ -54,51 +54,42 @@ LOGGER = logging.getLogger(__name__)
 
 
 class MatchToWss(object):
-    def __init__(self, data, global_alignment, match_top=True, match_left=True,
+    def __init__(self, coords, npix_im=2048, match_top=True, match_left=True,
                  plot=False):
         '''
         Given an image (GA, Image Array, some CMIMF images as of 12/06/2018),
-        match each PSF with it's WSS segment number and # IDEA:
+        match each PSF with it's WSS segment number and #.
+
+        This code is meant to be matched with an image in the FGS raw frame.
 
         parameters
         ==========
         data: str or array-like
         '''
-        # Get data information
-        if isinstance(data, str):
-            self.data = fits.getdata(data)
-            header = fits.getheader(data)
-            # Check that data is in raw FGS image frame
-            if not (header['INSTRUME'] == 'FGS' or header['INSTRUME'] == 'GUIDER') and header['FILETYPE'] == 'raw':
-                raise KeyError("This image is not in the FGS raw frame. Cannot continue.")
-        else:
-            self.data = data
-            LOGGER.warning("Match WSS: If data is not in the FGS raw frame, the " +
-                           "matching will NOT be correct.")
 
         # Define variables
         self.match_top = match_top
         self.match_left = match_left
 
-        self.coords = self.get_coords(global_alignment=global_alignment)
-        self.npix_im = np.shape(self.data)[0]
+        self.coords = coords
+        self.npix_im = npix_im
         # Using the coordinates, find the extent of the PSF array
         coords_array = self.check_for_outliers()
         self.define_edges_of_image_array(coords_array)
 
         # Get pupil information
         self.pupil = fits.getdata(JWST_PUPIL)
-        npix_mask = np.shape(pupil)[0]
-        self.top_seg, self.bottom_seg, self.left_seg, self.right_seg = MatchToWss.determine_edge_segments(pupil)
-        ratio = self.define_scaling_factor_for_pupil(pupil)
+        npix_mask = np.shape(self.pupil)[0]
+        self.top_seg, self.bottom_seg, self.left_seg, self.right_seg = MatchToWss.determine_edge_segments(self.pupil)
+        ratio = self.define_scaling_factor_for_pupil(self.pupil)
 
         # Resize the pupil based on scaling factor
-        self.pupil_scaled = utils.resize_array(pupil, int(np.round(npix_mask*ratio)),
-                                          int(np.round(npix_mask*ratio)))
+        self.pupil_scaled = utils.resize_array(self.pupil, int(np.round(npix_mask*ratio)),
+                                               int(np.round(npix_mask*ratio)))
 
-        self.full_pupil = self.resize_pupil_to_match_im(pupil_scaled)
+        self.full_pupil = self.resize_pupil_to_match_im(self.pupil_scaled)
         # Shift it!
-        self.matched_pupil = self.shift_pupil_to_match_im(full_pupil)
+        self.matched_pupil = self.shift_pupil_to_match_im(self.full_pupil)
         self.center_of_array = ndimage.measurements.center_of_mass(self.matched_pupil != 0)
 
         # Grab dictionary and then update it
@@ -122,18 +113,7 @@ class MatchToWss(object):
         for (seg_num, seg_id) in zip(seg_nums, seg_ids):
             wss_segs_dict[seg_num] = {}
             wss_segs_dict[seg_num]['segid'] = seg_id
-
         return wss_segs_dict
-
-
-    def get_coords(self, global_alignment=False):
-        '''
-        From start selector get the coordinates of the PSFs associated with the PM
-        '''
-        _, coords, _, _ = select_psfs.manual_star_selection(self.data,
-                                                            global_alignment=global_alignment,
-                                                            testing=True)
-        return coords
 
 
     def check_for_outliers(self):
@@ -141,7 +121,7 @@ class MatchToWss(object):
         avg = np.mean(self.coords, axis=0)
         std = np.std(self.coords, axis=0)
         self.outlier = [c for c in self.coords if (np.array(c) > (avg+std)).all() or (np.array(c) < (avg-std)).all()]
-        coords_array = list(set(self.coords)^set(self.outlier))
+        coords_array = [c for c in self.coords if (np.array(c) <= (avg+std)).all() or (np.array(c) >= (avg-std)).all()]
 
         if len(self.outlier) > 1:
             LOGGER.warning("WSS Matching: More than two PSFs lie outside the pupil mask. " +
@@ -224,10 +204,6 @@ class MatchToWss(object):
         im_vert_dist = self.top_y_im - self.bottom_y_im
         im_hor_dist = self.right_x_im - self.left_x_im
 
-        print("mask y:{}, mask x:{}, im y:{}, im x:{}".format(mask_vert_dist,
-                                                              mask_hor_dist,
-                                                              im_vert_dist,
-                                                              im_hor_dist))
         # Find the ratios in x and y, they may not match, that's okay, I hope
         ratio_vert = im_vert_dist / mask_vert_dist
         ratio_hor = im_hor_dist / mask_hor_dist
