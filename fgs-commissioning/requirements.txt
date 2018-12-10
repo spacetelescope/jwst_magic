@@ -1,0 +1,10 @@
+numpy
+astropy
+ipython
+matplotlib
+PyQt5
+pysiaf
+pyyaml
+requests
+pytest
+photutils
