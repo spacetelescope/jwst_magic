@@ -1,9 +1,11 @@
-before-script:
+before_script:
+  - apt-get -y python3-pip
   - pip install -r requirements.txt
 
 test:
   script:
     - echo 'something happened, maybe.'
+    - pytest
 
 
 # test_py36:
