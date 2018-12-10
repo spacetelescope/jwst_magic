@@ -1,6 +1,9 @@
 before_script:
   - bash
   - echo $USER
+  - echo $PATH
+  - export PATH="/user/lchambers/miniconda3/bin:$PATH"
+  - echo $PATH
   - conda env list
   - source activate astroconda
   - pip install -r requirements.txt
