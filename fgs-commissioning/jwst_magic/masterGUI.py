@@ -897,10 +897,6 @@ class MasterGui(QMainWindow):
             # Toggle the "use shifted image" buttons
             self.radioButton_shifted.setChecked(True)
 
-            # if self.groupBox_segmentGuiding.isChecked():
-            #     self.radioButton_unshifted.setEnabled(True)
-            #     self.radioButton_shifted.setEnabled(True)
-
             # Enable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(True)
 
@@ -948,7 +944,6 @@ class MasterGui(QMainWindow):
 
             # Disable the "use shifted image" buttons
             self.radioButton_unshifted.setChecked(True)
-            # self.radioButton_unshifted.setEnabled(False)
             self.radioButton_shifted.setEnabled(False)
 
             # Disable the "show stars" button

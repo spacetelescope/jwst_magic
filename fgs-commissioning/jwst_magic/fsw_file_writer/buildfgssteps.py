@@ -378,7 +378,8 @@ class BuildFGSSteps(object):
 
         # Determine the pixel shift
         if crowded_field:
-            # Locations obtained from Beverly Owens
+            # Locations obtained from Beverly Owens, 12/3/18:
+            # https://innerspace.stsci.edu/display/INSTEL/FGS+Specifications
             if self.guider == 1:
                 xend, yend = (986, 1688)  # Converted from Ideal = (-45.6799, 1.2244)
             elif self.guider == 2:
