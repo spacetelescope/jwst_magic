@@ -4,9 +4,10 @@ before_script:
   - echo $PATH
   - conda env list
   - source activate test_magic
+  - cd fgs_commissioning/
   - pwd
   - ls
-  - pip install ./fgs_commissioning/
+  - pip install .
 
 test:
   script:
