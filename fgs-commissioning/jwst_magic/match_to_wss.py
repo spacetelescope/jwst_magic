@@ -282,8 +282,9 @@ class MatchToWss(object):
         missing = 0
         for (x, y) in self.coords:
             try:
-                seg = int(pupil[y, x]) # Yes, this should be y, x
-                wss_segs_dict[seg]['coords'] = (x, y)
+                seg = int(pupil[int(y), int(x)]) # Yes, this should be y, x
+                print(seg, int(x), int(y))
+                wss_segs_dict[seg]['coords'] = (int(x), int(y))
             except KeyError:
                 missing += 1
 

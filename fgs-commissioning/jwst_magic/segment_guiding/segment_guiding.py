@@ -1126,6 +1126,7 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
         dist = 20
 
     # Run the GUI to select guide and reference stars
+    #FIXME! WHAT????
     inds, seg_num = SegmentGuidingGUI.run_segment_override_gui(
         data, x, y, dist, selected_segs=selected_segs,
         masterGUIapp=master_gui_app
