@@ -6,7 +6,7 @@ before_script:
   - source activate test_magic
   - pwd
   - ls -lrta
-  - cd fgs_commissioning/
+  - cd fgs-commissioning/
   - pwd
   - ls -lrta
   - pip install .
