@@ -4,12 +4,7 @@ before_script:
   - echo $PATH
   - conda env list
   - source activate test_magic
-  - pwd
-  - ls -lrta
-  - cd fgs-commissioning/
-  - pwd
-  - ls -lrta
-  - pip install .
+  - pip install fgs-commissioning/
 
 test:
   script:
