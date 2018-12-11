@@ -1,27 +1,16 @@
 before_script:
   - bash
-  - echo $USER
-  - echo $PATH
-  # - cp -r /user/lchambers/miniconda3 ~/miniconda3
   - export PATH="/home/lchambers/gitlab-runner-env/miniconda3/bin:$PATH"
   - echo $PATH
   - conda env list
-  # - create -n magic-test stsci pysiaf pip -y
   - source activate test_magic
-  - pip install fgs_commissioning/
+  - pwd
+  - ls
+  - pip install ./fgs_commissioning/
 
 test:
   script:
-    - echo 'something happened, maybe.'
     - pytest
-
-after_script:
-  -  rm -r ~/miniconda3
-
-
-# test_py36:
-#   stage: test
-#   script: pytest
 
 # Resources:
 # - https://henningtimm.gitlab.io/post/first_steps_with_gitlabci/
