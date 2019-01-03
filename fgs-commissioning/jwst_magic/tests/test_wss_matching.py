@@ -53,27 +53,33 @@ ob_cmimf_17 = MatchToWss(FGS_IM_CMIMF_17_RAW, global_alignment=True)
 
 
 
-dict_valueerror_parameters = [(obj_ga.dictionary),
-                              (obj_cmimf.dictionary),
-                              (ob_cmimf_17.dictionary)]
+dict_valueerror_parameters = [(obj_ga.dictionary, WSS_SEGS_DICT_GA),
+                              (obj_cmimf.dictionary, WSS_SEGS_DICT_CMIMF),
+                              (ob_cmimf_17.dictionary, WSS_SEGS_DICT_CMIMF_17)]
 @pytest.mark.parametrize('dictionary', dict_valueerror_parameters)
-def test_wss_segs_dict(dictionary):
-    assert dictionary is WSS_SEGS_DICT
+def test_wss_segs_dict(dictionary, truth_dictionary):
+    assert dictionary is truth_dictionary
 
 
 
-edge_valueerror_parameters = [(obj_ga.top_y_im, obj_ga.bottom_y_im, obj_ga.left_x_im, obj_ga.right_x_im),
-                              (top_final, bottom_final, left_final, right_final)]
+edge_valueerror_parameters = [(obj_ga.top_y_im, obj_ga.bottom_y_im, obj_ga.left_x_im,
+                               obj_ga.right_x_im),
+                              (obj_ga.top_final, obj_ga.bottom_final, obj_ga.left_final,
+                               obj_ga.right_final)]
 @pytest.mark.parametrize('top, bottom, left, right', edge_valueerror_parameters)
 def test_define_edges(top, bottom, left, right):
     assert top > bottom
-    assert right > leftm
+    assert right > left
 
 
-pupil_valueerror_parameters = [(obj_ga.pupil, obj_ga.top_seg, obj_ga.bottom_seg, obj_ga.left_seg, obj_ga.right_seg),
-                               (obj_ga.pupil_scaled, obj_ga.top_seg, obj_ga.bottom_seg, obj_ga.left_seg, obj_ga.right_seg),
-                               (obj_ga.fill_pupil, obj_ga.top_seg, obj_ga.bottom_seg, obj_ga.left_seg, obj_ga.right_seg),
-                               (obj_ga.matched_pupil, obj_ga.top_seg, obj_ga.bottom_seg, obj_ga.left_seg, obj_ga.right_seg)]
+pupil_valueerror_parameters = [(obj_ga.pupil, obj_ga.top_seg, obj_ga.bottom_seg,
+                                obj_ga.left_seg, obj_ga.right_seg),
+                               (obj_ga.pupil_scaled, obj_ga.top_seg, obj_ga.bottom_seg,
+                                obj_ga.left_seg, obj_ga.right_seg),
+                               (obj_ga.fill_pupil, obj_ga.top_seg, obj_ga.bottom_seg,
+                                obj_ga.left_seg, obj_ga.right_seg),
+                               (obj_ga.matched_pupil, obj_ga.top_seg, obj_ga.bottom_seg,
+                                obj_ga.left_seg, obj_ga.right_seg)]
 @pytest.mark.parametrize('pupil, top_seg, bottom_seg, left_seg, right_seg', pupil_valueerror_parameters)
 def test_pupil_edges(pupil, top_seg, bottom_seg, left_seg, right_seg):
     '''

@@ -98,7 +98,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         """
         # Initialize attributes
         self.n_orientations = 0
-        self.segNum = None
+        self.center_seg = None
         self.center = None
         self.selected_segs = selected_segs
 
@@ -227,6 +227,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         # Determine what are the indices of the stars to load
 
         # Read them from a regfile
+        print(self.segnums)
         if self.selected_segs is not None:
             regfile_locations = asc.read(self.selected_segs)
             x_reg = regfile_locations['x']
@@ -235,7 +236,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             for x, y in zip(x_reg, y_reg):
                 for i in range(len(self.x)):
                     if self.x[i] == x and self.y[i] == y:
-                        selected_indices.append(i + 1)
+                        selected_indices.append(self.segnums[i])
             regfile_message = ' from regfile.txt'
 
             # If the regfile doesn't match the ALLpsfs locations,
@@ -251,7 +252,9 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             # Read the table
             selected_row = self.tableWidget_commands.selectedItems()[0].row()
             selected_orientation = self.tableWidget_commands.item(selected_row, 0).text()
-            selected_indices = [int(s) for s in selected_orientation.split(', ')]
+            print(selected_orientation)
+            selected_indices = [int(s) for s in selected_orientation.split(', ')] #FIXME - this is wrong
+
             regfile_message = ''
 
         # Update the table and canvas
@@ -328,6 +331,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
     def update_center_seg(self):
         """Use the location of a specific segment as the pointing center.
         """
+        #FIXME -- add center of pupil center from match_to_wss here
         # Uncheck "use segment center" box
         self.checkBox_meanCenter.setChecked(False)
 
@@ -335,7 +339,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
             self.center = None
-        self.segNum = None
+        self.center_seg = None
 
         if self.comboBox_segmentCenter.currentText() != "-Select Segment-":
             # Replace with new center
@@ -345,7 +349,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
                                                 alpha=0.8, mfc='red',
                                                 mec='red', mew=5, lw=0)
 
-            self.segNum = int(self.comboBox_segmentCenter.currentText())
+            self.center_seg = int(self.comboBox_segmentCenter.currentText())
 
         self.canvas.draw()
 
@@ -356,7 +360,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
             self.center = None
-        self.segNum = None
+        self.center_seg = None
 
         if use_mean_as_center:
             self.comboBox_segmentCenter.setCurrentIndex(0)
@@ -369,7 +373,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             self.center = self.canvas.axes.plot(x_mean, y_mean, 'x', ms=20, alpha=0.8,
                                                 mfc='red', mec='red', mew=5, lw=0)
 
-            self.segNum = 0
+            self.center_seg = 0
 
         self.canvas.draw()
 
@@ -378,11 +382,11 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         closes the segment guiding window.
         """
         # If the center segment number hasn't been set, don't quit.
-        if self.segNum is None:
+        if self.center_seg is None:
             no_segNum_selected_dialog = QMessageBox()
             no_segNum_selected_dialog.setText('No center segment number' + ' ' * 50)
             no_segNum_selected_dialog.setInformativeText(
-                'The center of override pointing (segNum) has not been defined.'
+                'The center of override pointing (center_seg) has not been defined.'
                 ' Please define before quitting.'
             )
             no_segNum_selected_dialog.setStandardButtons(QMessageBox.Ok)
@@ -446,9 +450,9 @@ def run_segment_override_gui(data, x, y, dist, print_output=False,
     -------
     inds : list
         List of indices of positions of selected stars
-    segNum : int
+    center_seg : int
         Number of the segment used as the center of the pointing (the
-        mean of the array was used if segNum is 0)
+        mean of the array was used if center_seg is 0)
     """
 
     # Alter data to accurately display null or negative values in log scale plot
@@ -483,6 +487,6 @@ def run_segment_override_gui(data, x, y, dist, print_output=False,
         inds.append(selected_indices)
 
     # Save index of center segment (pointing)
-    segNum = window.segNum
-
-    return inds, segNum
+    center_seg = window.center_seg
+    print(inds)
+    return inds, center_seg

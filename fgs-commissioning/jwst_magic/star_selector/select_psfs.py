@@ -48,6 +48,7 @@ from scipy import ndimage
 # Local Imports
 from .. import utils
 from ..star_selector import SelectStarsGUI
+from ..match_to_wss import MatchToWss
 
 # Adjust matplotlib parameters
 rcParams['image.origin'] = 'upper'
@@ -92,7 +93,7 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
 
     else:
         # Perform statistics
-        mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
+        _, median, std = sigma_clipped_stats(smoothed_data, sigma=0, maxiters=0)
 
         # Find PSFs
         threshold = median + (3 * std)  # Used to be median + 3 * std
@@ -136,7 +137,7 @@ def choose_threshold(smoothed_data, gauss_sigma):
         User did not accept either of the threshold options.
     """
     # Perform statistics
-    mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
+    mean, _, std = sigma_clipped_stats(smoothed_data, sigma=0, maxiters=0)
 
     # Run find_peaks with two different threshold options
     thresholds = [3 * std, mean]
@@ -321,8 +322,7 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
     return cols
 
 
-def match_psfs_to_segments(x, y, global_alignment):
-    #FIXME match to WSS segs
+def match_psfs_to_segments_old(x, y, global_alignment):
     """Match PSFs found in the image to their alphabetic label (between A and R)
 
     Parameters
@@ -386,6 +386,44 @@ def match_psfs_to_segments(x, y, global_alignment):
 
     return matched_labels
 
+def match_psfs_to_segments(x, y):
+    #FIXME match to WSS segs
+    """Match PSFs found in the image to their alphabetic label (between A and R)
+
+    Parameters
+    ----------
+    x : list
+        List of x-coordinates of identified PSFs
+    y : list
+        List of y-coordinates of identified PSFs
+    global_alignment : bool
+        Denotes that the image is from unphased, unstacked early
+        commissioning data
+
+    Returns
+    -------
+    matched_labels : list
+        List of WSS segment numbers for each identified PSF
+    """
+    coords = list(map(list, zip(x, y)))
+    if coords > 16:
+        wss_obj = MatchToWss(coords)
+        wss_dict = MatchToWss.WSS_DICTIONARY
+        matched_labels = []
+        for coordx, coordy in zip(x, y):
+            try:
+                matched_labels.append(next((name for name,
+                                                     seg in wss_dict.items() if seg['coords'] == (coordx,
+                                                                                                  coordy)), None))
+            except KeyError:
+                LOGGER.error('The WSS segment dictionary has not yet been populated '
+                             'with coordinates from this image.')
+    else:
+        LOGGER.warning('Could not accurately map labels to segments. The labels '
+                       'here are meaningless.')
+        matched_labels = np.arange(len(coords))
+
+    return matched_labels
 
 def parse_in_file(in_file):
     """Get the position and countrates from a provided regfile.txt

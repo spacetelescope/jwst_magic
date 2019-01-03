@@ -1107,6 +1107,7 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
     """
     if selected_segs is not None:
         # Parse ALLpsfs.txt for locations of segments
+        #FIXME -- if we add segment names to ALLPSFs this might help with the issue at hand
         all_segment_locations = asc.read(segment_infile)
         x = all_segment_locations['x']
         y = all_segment_locations['y']

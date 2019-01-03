@@ -38,11 +38,9 @@ from astropy.io import fits
 import numpy as np
 from scipy import ndimage
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 
 # Local Imports
 from . import utils
-from .star_selector import select_psfs
 
 # Constants
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -283,7 +281,6 @@ class MatchToWss(object):
         for (x, y) in self.coords:
             try:
                 seg = int(pupil[int(y), int(x)]) # Yes, this should be y, x
-                print(seg, int(x), int(y))
                 wss_segs_dict[seg]['coords'] = (int(x), int(y))
             except KeyError:
                 missing += 1

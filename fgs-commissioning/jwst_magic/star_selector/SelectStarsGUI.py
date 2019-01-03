@@ -375,7 +375,15 @@ class StarSelectorWindow(QDialog):
         coords = list(map(list, zip(x, y)))
         wss_obj = MatchToWss(coords)
         self.wss_dict = wss_obj.dictionary
-
+        # FIXME
+        # I think I might want to set these here so that you don't need to select segs
+        # in order to have this attached to the class
+        # self.inds will match order of x, y unless otherwise states??
+        # Or inds are selected stars and self.segnums are the associated segment numbers
+        self.segnums = []
+        for coordx, coordy in zip(self.x, self.y):
+            self.segnums.append(next((name for name, seg in self.wss_dict.items() if seg['coords'] == (coordx, coordy)), None))
+        print(self.segnums)
         # Import .ui file
         # (It is imported as a widget, rather than a QDialog window, so that it
         # can also be imported into the SegmentGuidingGUI module)
@@ -1136,5 +1144,5 @@ def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
     else:
         qApp.exec_()
     inds = window.inds
-
+    print(inds)
     return inds
