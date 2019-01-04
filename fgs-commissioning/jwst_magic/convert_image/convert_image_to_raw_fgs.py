@@ -498,10 +498,11 @@ def normalize_data(data, fgs_countrate, threshold=0.05):
 
     Notes
     -----
-        Threshold of 5 assumes background is very low.
+        Threshold of 0.05 assumes background is very low.
         *This will need to be automated later.*
     """
-    mask = data > (data * threshold)
+    mask = data > (data * threshold) #FIXME This doesn't actually mask anything. This entire process needs to be reevaluated
+
     data_norm = np.copy(mask * data.astype(np.float64))
     data_norm *= (fgs_countrate / data_norm.sum())  # renormalize by sum of non-masked data
     data_norm[mask == 0] = data[mask == 0]  # background is not normalized
@@ -666,7 +667,7 @@ def convert_im(input_im, guider, root, nircam=True,
         # From an FGS image (i.e. do nothing)
         else:
             LOGGER.info("Image Conversion: This is an FGS image")
-            guider = utils.get_guider(header)
+            #guider = utils.get_guider(header) #FIXME this renames the guider so you may never convert it to what you want
 
             if itm:
                 LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
@@ -689,6 +690,7 @@ def convert_im(input_im, guider, root, nircam=True,
             data /= data.sum()  # set total countrate to 1.
 
         if normalize or itm:
+            # Convert magnitude/countrate to FGS countrate
             norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
             fgs_countrate = norm_obj.to_countrate()
             fgs_mag = norm_obj.to_fgs_mag()
