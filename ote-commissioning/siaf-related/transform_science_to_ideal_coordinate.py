@@ -8,6 +8,11 @@ Authors
 Content
 -------
     ote_2_nircam_to_fgs : support OTE-02
+        Example output to stdout:
+        ==================================================
+        Science pixel coordinates X=300 Y=400 in NRCA1_FULL correspond to
+        Ideal frame coordinates X_idl=60.50 arcsec Y_idl=151.95 arcsec in FGS1_FULL
+        ==================================================
 
 """
 import numpy as np
