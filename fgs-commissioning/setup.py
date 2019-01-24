@@ -25,6 +25,7 @@ INSTALL_REQUIRES = [
     'astropy',
     'ipython',
     'matplotlib',
+    'notebook',
     'pysiaf',
     'pyyaml',
     'requests',
