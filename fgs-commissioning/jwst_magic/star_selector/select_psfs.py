@@ -92,8 +92,9 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
 
     else:
         # Perform statistics
-        mean, median, std = sigma_clipped_stats(smoothed_data, sigma=1, maxiters=0)
-        print(mean, median, std)
+        median = np.median(smoothed_data)
+        std = np.std(smoothed_data)
+
         # Find PSFs
         threshold = median + (3 * std)  # Used to be median + 3 * std
 
