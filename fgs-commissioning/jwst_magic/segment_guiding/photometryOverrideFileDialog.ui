@@ -133,7 +133,7 @@
       <item row="0" column="1" colspan="2">
        <widget class="QDoubleSpinBox" name="doubleSpinBox_countrateFactor">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="toolTip">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A factor by which to multiply the count rate of the guide star; for use in MIMF and CP where segments are stacked but unphased and the brightness might vary&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
