@@ -40,9 +40,8 @@ from matplotlib.colors import LogNorm
 from matplotlib import rcParams
 from astropy.io import fits
 from astropy.io import ascii as asc
-from astropy.stats import sigma_clipped_stats
 import numpy as np
-from photutils import detect_threshold, find_peaks
+from photutils import find_peaks
 from scipy import ndimage
 
 # Local Imports
@@ -98,8 +97,6 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
         # Find PSFs
         threshold = median + (3 * std)  # Used to be median + 3 * std
 
-        # threshold = detect_threshold(smoothed_data, snr=5, background=0.0, sigclip_sigma=5) #FIXME does not work for all images
-
         sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
         num_psfs = len(sources)
         if num_psfs == 0:
@@ -139,10 +136,11 @@ def choose_threshold(smoothed_data, gauss_sigma):
         User did not accept either of the threshold options.
     """
     # Perform statistics
-    mean, _, std = sigma_clipped_stats(smoothed_data, sigma=5, maxiters=0)
+    mean = np.mean(smoothed_data)
+    std = np.std(smoothed_data)
 
     # Run find_peaks with two different threshold options
-    thresholds = [3 * std, mean] #FIXME- why are these so different from above
+    thresholds = [3 * std, mean]
 
     sources_std = find_peaks(smoothed_data, thresholds[0], box_size=gauss_sigma)
     sources_mean = find_peaks(smoothed_data, thresholds[1], box_size=gauss_sigma)
