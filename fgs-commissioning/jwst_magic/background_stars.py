@@ -64,7 +64,6 @@ import os
 import numpy as np
 import matplotlib as mpl
 from astropy import units as u
-from astropy.stats import sigma_clipped_stats
 from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from PyQt5 import QtCore, uic
@@ -671,7 +670,9 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     add_data = np.copy(image)
 
     # (Try to) only use the data for added stars, not the noise
-    mean, median, std = sigma_clipped_stats(image, sigma=0, iters=0)
+    mean = np.mean(image)
+    median = np.median(image)
+    std = np.std(image)
     image[image < mean] = 0
     for x, y, jmag_back in zip(x_back, y_back, jmags_back):
         if not isinstance(jmag_back, np.ma.core.MaskedConstant):

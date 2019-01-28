@@ -667,7 +667,6 @@ def convert_im(input_im, guider, root, nircam=True,
         # From an FGS image (i.e. do nothing)
         else:
             LOGGER.info("Image Conversion: This is an FGS image")
-            #guider = utils.get_guider(header) #FIXME this renames the guider so you may never convert it to what you want
 
             if itm:
                 LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
