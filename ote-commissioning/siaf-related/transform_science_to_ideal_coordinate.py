@@ -20,7 +20,7 @@ import pylab as pl
 
 import pysiaf
 
-def ote_2_nircam_to_fgs(nircam_science_pixel_coordinates):
+def ote_2_nircam_to_fgs(nircam_science_pixel_coordinates, nircam_aperture_name, fgs_aperture_name):
     """Use operational SIAF in pysiaf to transform between science and ideal frames of two apertures.
 
     Parameters
@@ -31,9 +31,6 @@ def ote_2_nircam_to_fgs(nircam_science_pixel_coordinates):
     # get SIAF
     nircam_siaf = pysiaf.Siaf('nircam')
     fgs_siaf = pysiaf.Siaf('fgs')
-
-    nircam_aperture_name = 'NRCA1_FULL'
-    fgs_aperture_name = 'FGS1_FULL'
 
     # get aperture objects
     nircam_aperture = nircam_siaf[nircam_aperture_name]
@@ -61,5 +58,7 @@ def ote_2_nircam_to_fgs(nircam_science_pixel_coordinates):
     pl.show()
 
 # run code with NIRCam input coordinates determined as part of OTE-02
+nircam_aperture_name = 'NRCA1_FULL'
+fgs_aperture_name = 'FGS1_FULL'
 nircam_science_pixel_coordinates = np.array([300, 400])
-ote_2_nircam_to_fgs(nircam_science_pixel_coordinates)
+ote_2_nircam_to_fgs(nircam_science_pixel_coordinates, nircam_aperture_name, fgs_aperture_name)
