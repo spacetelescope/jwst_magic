@@ -673,24 +673,24 @@ class SegmentGuidingCalculator:
         if override_type == "SOF":
             # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ BORESIGHT OFFSET ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
             # Guide star information
-            msg = ["OK", "Boresight parameter conversion error",
-                   "Boresight parameter out of range"]
-
-            if self.v2_boff:
-                errcode = self.checkout(self.v2_boff, -10.0, 10.0)
-                if errcode != 0:
-                    error = msg[errcode]
-                    raise ValueError(error)
-                else:
-                    self.v2_boff = float(self.v2_boff)
-
-            if self.v3_boff:
-                errcode = self.checkout(self.v3_boff, -10.0, 10.0)
-                if errcode != 0:
-                    error = msg[errcode]
-                    raise ValueError(error)
-                else:
-                    self.v3_boff = float(self.v3_boff)
+            # msg = ["OK", "Boresight parameter conversion error",
+            #        "Boresight parameter out of range"]
+            #
+            # if self.v2_boff:
+            #     errcode = self.checkout(self.v2_boff, -10.0, 10.0)
+            #     if errcode != 0:
+            #         error = msg[errcode]
+            #         raise ValueError(error)
+            #     else:
+            #         self.v2_boff = float(self.v2_boff)
+            #
+            # if self.v3_boff:
+            #     errcode = self.checkout(self.v3_boff, -10.0, 10.0)
+            #     if errcode != 0:
+            #         error = msg[errcode]
+            #         raise ValueError(error)
+            #     else:
+            #         self.v3_boff = float(self.v3_boff)
 
             # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ RA, DEC, AND POSITION ANGLE ~ ~ ~ ~ ~ ~
             # These values can be set to None, otherwise, have to be in range
