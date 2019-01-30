@@ -450,7 +450,7 @@
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The uncertainty in the brightness of the guide and reference stars; e.g. if the uncertainty factor is 0.9, then a star with a countrate of 100 will have an uncertainty of 90&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
-         <string>0.9</string>
+         <string>0.6</string>
         </property>
        </widget>
       </item>
