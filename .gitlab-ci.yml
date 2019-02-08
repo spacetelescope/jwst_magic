@@ -1,5 +1,6 @@
 before_script:
   - bash
+  - echo "I am heeeere"
   - export PATH="/home/lchambers/gitlab-runner-env/miniconda3/bin:$PATH"
   - echo $PATH
   - conda env list
