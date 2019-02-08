@@ -1,10 +1,12 @@
 before_script:
   - bash
   - echo "I am heeeere"
-  # - export PATH="/home/lchambers/gitlab-runner-env/miniconda3/bin:$PATH"
-  # - echo $PATH
-  # - conda env list
+  - echo $PATH
+  - export PATH="/user/lchambers/miniconda3/bin:$PATH"
+  - echo $PATH
+  - conda env list
   - conda env create -f fgs-commissioning/environment.yml
+  - conda env list
   - source activate jwst_magic
   - pip install fgs-commissioning/
 
