@@ -100,6 +100,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.n_orientations = 0
         self.segNum = None
         self.center = None
+        self.selected_segs = selected_segs
 
         # Initialize dialog object
         QDialog.__init__(self, modal=True)
@@ -115,16 +116,21 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         starSelectorCentralWidget = self.central_widget
         self.frame_selectStarsGUI.layout().addWidget(starSelectorCentralWidget)
 
-        # Create and load sgement guiding GUI session
+        # Create and load segment guiding GUI session
         self.show()
         self.setWindowTitle('JWST MaGIC - Segment Guiding Command Generator')
         self.adjust_screen_size_segment_guiding()
         self.define_SegmentGuidingGUI_connections()
         self.show()
 
+        # Add the number of stars/segments to the pointing center dropdown menu
+        for i in range(len(x)):
+            self.comboBox_segmentCenter.addItem('{}'.format(i+1))
+
         # Load stars from regfile, if it exists
-        if selected_segs is not None and os.path.exists(selected_segs):
-            self.load_orientation(selected_segs)
+        if self.selected_segs is not None and os.path.exists(self.selected_segs):
+            self.load_orientation()
+        self.selected_segs = None
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
@@ -160,7 +166,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         """Connect widgets' signals to the appropriate methods.
         """
         # Main dialog window widgets
-        self.pushButton_done.clicked.connect(self.fileQuit)  # Redefine
+        self.pushButton_done.clicked.connect(self.quit_segment_guiding)  # Redefine
 
         # General segment guiding widgets
         self.pushButton_save.clicked.connect(self.save_orientation_to_list)
@@ -183,7 +189,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         """Save the currently selected segment orientation to the list
         of override commands.
         """
-        if self.inds == []:
+        if not self.inds:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
             no_stars_selected_dialog.setInformativeText(
@@ -208,7 +214,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         self.clear_selected_stars()
         self.n_orientations += 1
 
-    def load_orientation(self, selected_segs=None):
+    def load_orientation(self):
         """Plot the segments in the currently selected override command
         on the matplotlib canvas
 
@@ -221,8 +227,8 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         # Determine what are the indices of the stars to load
 
         # Read them from a regfile
-        if selected_segs is not None:
-            regfile_locations = asc.read(selected_segs)
+        if self.selected_segs is not None:
+            regfile_locations = asc.read(self.selected_segs)
             x_reg = regfile_locations['x']
             y_reg = regfile_locations['y']
             selected_indices = []
@@ -234,11 +240,11 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 
             # If the regfile doesn't match the ALLpsfs locations,
             # don't try to load anything.
-            if selected_indices == []:
+            if not selected_indices:
                 return
 
         # Read them from a table
-        elif selected_segs is None:
+        elif self.selected_segs is None:
             # Remove the stars that are currently shown
             self.clear_selected_stars()
 
@@ -336,8 +342,8 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             i_seg_center = int(self.comboBox_segmentCenter.currentText()) - 1
             self.center = self.canvas.axes.plot(self.x[i_seg_center],
                                                 self.y[i_seg_center], 'x', ms=20,
-                                                alpha=0.8, mfc='white',
-                                                mec='white', mew=5, lw=0)
+                                                alpha=0.8, mfc='red',
+                                                mec='red', mew=5, lw=0)
 
             self.segNum = int(self.comboBox_segmentCenter.currentText())
 
@@ -361,21 +367,24 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 
             # Plot mean location of array on canvas
             self.center = self.canvas.axes.plot(x_mean, y_mean, 'x', ms=20, alpha=0.8,
-                                                mfc='white', mec='white', mew=5, lw=0)
+                                                mfc='red', mec='red', mew=5, lw=0)
 
             self.segNum = 0
 
         self.canvas.draw()
 
-    def fileQuit(self):
-        """Ensures that all necessay values have been defined and
+    def quit_segment_guiding(self):
+        """Ensures that all necessary values have been defined and
         closes the segment guiding window.
         """
         # If the center segment number hasn't been set, don't quit.
         if self.segNum is None:
             no_segNum_selected_dialog = QMessageBox()
             no_segNum_selected_dialog.setText('No center segment number' + ' ' * 50)
-            no_segNum_selected_dialog.setInformativeText('The center of override pointing (segNum) has not been defined. Please define before quitting.')
+            no_segNum_selected_dialog.setInformativeText(
+                'The center of override pointing (segNum) has not been defined.'
+                ' Please define before quitting.'
+            )
             no_segNum_selected_dialog.setStandardButtons(QMessageBox.Ok)
             no_segNum_selected_dialog.exec()
             return

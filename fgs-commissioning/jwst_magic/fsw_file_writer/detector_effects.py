@@ -51,7 +51,7 @@ BIASZERO_G2 = fits.getdata(os.path.join(DATA_PATH, 'g2bias0.fits'))
 READ_NOISE = os.path.join(DATA_PATH, 'readnoise.yaml')
 
 
-class FGSDetectorEffects():
+class FGSDetectorEffects:
     """Fetch the bias file for the specified guider, crop to the
     appropriate array size, multiply to have the appropriate number of
     ramps and reads, and add kTc  and read noise.
@@ -67,7 +67,7 @@ class FGSDetectorEffects():
     nreads : int
         Number of reads in the ramp
     nramps : int
-        Numer of ramps in the integraion
+        Number of ramps in the integration
     imgsize : int
         Dimension of the image array (pixels)
 
@@ -182,12 +182,12 @@ class FGSDetectorEffects():
         """Add read noise to every frame.
         """
         # Load all the read noise values from the yaml
-        with open(READ_NOISE) as f:
+        with open(READ_NOISE, encoding="utf-8") as f:
             read_noise_dict = yaml.load(f.read())
 
         # Get the read noise value for the current step
-        array = 'full' if self.imgsize == 2048 else 'subarray'
-        read_noise = read_noise_dict['guider{}'.format(self.guider)][array]
+        array_size = self.imgsize if self.imgsize != 43 else 32
+        read_noise = read_noise_dict['guider{}'.format(self.guider)][array_size]
 
         # Add normally distributed read noise to the bias
         # *** What should the standard deviation be??? ***
