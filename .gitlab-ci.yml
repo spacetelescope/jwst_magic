@@ -1,13 +1,14 @@
 before_script:
   - bash
-  - echo "I am heeeere"
-  - echo $PATH
   - export PATH="/user/lchambers/miniconda3/bin:$PATH"
-  - echo $PATH
-  - conda env list
-  - conda env create -f fgs-commissioning/environment.yml
-  - conda env list
-  - source activate jwst_magic
+  - conda_envs= $( conda env list )
+  - if [[ $conda_envs = *"/user/lchambers/miniconda3/envs/magic"* ]];
+      then echo "MAGIC environment already installed. Updating from environment.yml." &&
+           conda env update -f fgs-commissioning/environment.yml;
+      else echo "MAGIC environment installing from environment.yml." &&
+           conda env create -f fgs-commissioning/environment.yml;
+    fi
+  - source activate magic
   - pip install fgs-commissioning/
 
 test:
@@ -18,5 +19,3 @@ test:
 # - https://henningtimm.gitlab.io/post/first_steps_with_gitlabci/
 # - https://docs.gitlab.com/ee/ci/examples/test-and-deploy-python-application-to-heroku.html
 # - https://medium.com/@farshid.ghods/using-gitlab-ci-feature-to-build-and-test-python-flask-application-and-mongodb-6e2de21a4219
-
-
