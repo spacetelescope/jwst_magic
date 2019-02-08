@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1110</width>
-    <height>927</height>
+    <height>922</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -942,6 +942,11 @@ colorbar limits</string>
         <property name="toolTip">
          <string>Use selected stars to write regfile.txt and close window</string>
         </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+	background-color: rgb(90, 190, 125);
+}</string>
+        </property>
         <property name="text">
          <string>Done</string>
         </property>
@@ -957,6 +962,11 @@ colorbar limits</string>
         </property>
         <property name="toolTip">
          <string>Discard selections and close window</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+	background-color: rgb(255, 102, 102);
+}</string>
         </property>
         <property name="text">
          <string>Cancel</string>
@@ -985,7 +995,6 @@ colorbar limits</string>
   <zorder>frame_canvas</zorder>
   <zorder>frame_12</zorder>
   <zorder>label_profile</zorder>
-  <zorder>frame_profile</zorder>
   <zorder>frame</zorder>
   <zorder>textEdit_output</zorder>
  </widget>

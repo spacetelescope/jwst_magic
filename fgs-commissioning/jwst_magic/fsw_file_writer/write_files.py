@@ -143,15 +143,14 @@ def write_all(obj):
 
         # Write files for use in the DHAS
         write_image(obj)
-        write_dat(obj)
 
     elif obj.step == 'LOSTRK':
         # Write files for use by folks at STScI
         write_sky(obj)
         write_stc(obj)
-
-        # Write files for use in the DHAS and FGSES
         write_image(obj)
+
+        # Write files for use in the FGSES
         write_dat(obj)
 
 
@@ -169,7 +168,8 @@ def write_sky(obj):
     """
     filename_sky = os.path.join(obj.out_dir, 'stsci',
                                 obj.filename_root + 'sky.fits')
-    utils.write_fits(filename_sky, obj.time_normed_im)
+    obj.time_normed_im = utils.correct_image(obj.time_normed_im)
+    utils.write_fits(filename_sky, np.uint16(obj.time_normed_im))
 
 
 def write_bias(obj):
@@ -188,7 +188,8 @@ def write_bias(obj):
         filename_bias = os.path.join(obj.out_dir,
                                      'stsci',
                                      obj.filename_root + 'bias.fits')
-        utils.write_fits(filename_bias, obj.bias)
+        obj.bias = utils.correct_image(obj.bias)
+        utils.write_fits(filename_bias, np.uint16(obj.bias))
 
 
 def write_cds(obj):
@@ -208,7 +209,8 @@ def write_cds(obj):
         filename_cds = os.path.join(obj.out_dir,
                                     'stsci',
                                     obj.filename_root + 'cds.fits')
-        utils.write_fits(filename_cds, obj.cds)
+        obj.cds = utils.correct_image(obj.cds)
+        utils.write_fits(filename_cds, np.uint16(obj.cds))
 
 
 def write_image(obj):
@@ -228,6 +230,11 @@ def write_image(obj):
         # Create "full-frame" (rather than strips) image
         location = 'stsci'
         filetype = 'ff.fits'
+    elif obj.step == 'LOSTRK':
+        # Place the FITS file in stsci/, as it is just for reference
+        # to the LOSTRK.dat file
+        location = 'stsci'
+        filetype = '.fits'
     else:
         location = 'dhas'
         filetype = '.fits'
@@ -235,8 +242,12 @@ def write_image(obj):
     # Create image fits file
     filename = os.path.join(obj.out_dir, location,
                             obj.filename_root + filetype)
-    utils.write_fits(filename, np.uint16(obj.image))
+    obj.image = utils.correct_image(obj.image)
 
+    if obj.step == 'LOSTRK':
+        utils.write_fits(filename, obj.image) # Don't make it np.uint16
+    else:
+        utils.write_fits(filename, np.uint16(obj.image))
 
 def write_strips(obj):
     """Write an ID strips image
@@ -259,7 +270,8 @@ def write_strips(obj):
     filename_hdr = os.path.join(DATA_PATH,
                                 'newG{}magicHdrImg.fits'.format(obj.guider))
     hdr0 = fits.getheader(filename_hdr, ext=0)
-    utils.write_fits(filename_id_strips, obj.strips, header=hdr0)
+    obj.strips = utils.correct_image(obj.strips)
+    utils.write_fits(filename_id_strips, np.uint16(obj.strips), header=hdr0)
 
 
 def write_prc(obj):
@@ -288,7 +300,6 @@ def write_prc(obj):
 
     else:
         raise ValueError('Unknown step {}; cannot write .prc file.'.format(obj.step))
-        return
 
     mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
                   step=step, out_dir=obj.out_dir, acq1_imgsize=acq1_imgsize,
@@ -298,8 +309,6 @@ def write_prc(obj):
 def write_dat(obj):
     """
     Convert a .fits file to a .dat file for use on the ground system
-
-    If 'data' is an array, provide 'root'.
 
     Parameters
     ----------
@@ -322,26 +331,32 @@ def write_dat(obj):
     else:
         data = data_to_write
         filename = '{}_G{}_{}.dat'.format(obj.root, obj.guider, obsmode)
+    filename = os.path.join(out_dir, filename)
+    data = utils.correct_image(data)
 
     flat = data.flatten()
 
+    # Write out TRK/LOSTRK files in ASCII float format
     if (obsmode == 'PSF') or (obsmode == 'TRK') or (obsmode == 'LOSTRK'):
         # ascii float format
         fmt = '{:16.7e} '
+        with open(filename, 'w') as file_out:
+            for dat in flat:  # Note: NOT saving out as uint16!!!
+                file_out.write(fmt.format(dat))
 
+    # Write out all other files in ASCII hex format (from uint16)
     elif (obsmode == 'ID') or (obsmode == 'ACQ1') or (obsmode == 'ACQ2') or \
          (obsmode == 'ACQ') or (obsmode == 'CAL'):
         # ascii hex dat format
         fmt = '{:04X} '
+        with open(filename, 'w') as file_out:
+            for dat in flat.astype(np.uint16):
+                file_out.write(fmt.format(dat))
 
     else:
         raise ValueError("FSW File Writing: Observation mode {} not recognized.".format(obsmode))
 
-    with open(os.path.join(out_dir, filename), 'w') as file_out:
-        for dat in flat.astype(np.uint16):
-            file_out.write(fmt.format(dat))
-
-    print("Successfully wrote: {}".format(os.path.join(out_dir, filename)))
+    print("Successfully wrote: {}".format(filename))
     return
 
 

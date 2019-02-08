@@ -72,7 +72,6 @@ from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QTableWidgetItem
 import pysiaf
 
 # Local Imports
-from . import coordinate_transforms
 from .convert_image import renormalize
 from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
@@ -83,10 +82,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class BackgroundStarsWindow(QDialog):
-
     def __init__(self, guider, jmag, qApp, in_master_GUI):
-        '''Defines attributes; calls initUI() method to set up user interface.
-        '''
+        """Defines attributes; calls initUI() method to set up user interface.
+        """
         # Initialize general attributes
         self.qApp = qApp
         self.guider = guider
@@ -125,13 +123,13 @@ class BackgroundStarsWindow(QDialog):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def init_matplotlib(self):
-        '''Set up the matplotlib canvas that will preview the locations
+        """Set up the matplotlib canvas that will preview the locations
         and magnitudes of the background stars relative to the guide
         star.
-        '''
+        """
         # Connect main matplotlib canvas and add to layout
         self.canvas = StarClickerMatplotlibCanvas(
-            parent=self.frame_canvas,  data=None, x=None, dpi=100,
+            parent=self.frame_canvas, data=None, x=None, dpi=100,
             y=None, bottom=0.23, left=0.15)
         self.frame_canvas.layout().insertWidget(0, self.canvas)
         self.canvas.axes.set_xlim(0, 2048)
@@ -163,9 +161,7 @@ class BackgroundStarsWindow(QDialog):
 
         # Randomly added stars widgets
         self.groupBox_random.toggled.connect(self.on_check_section)
-        self.lineEdit_nStars.editingFinished.connect(self.draw_random_stars)
-        self.lineEdit_magMin.editingFinished.connect(self.draw_random_stars)
-        self.lineEdit_magMax.editingFinished.connect(self.draw_random_stars)
+        self.pushButton_random.clicked.connect(self.draw_random_stars)
 
         # User-defined stars widgets
         self.groupBox_defined.toggled.connect(self.on_check_section)
@@ -191,7 +187,7 @@ class BackgroundStarsWindow(QDialog):
                     section.setChecked(False)
 
     def load_file(self):
-        '''Raise a dialog box to load and parse a file listing
+        """Raise a dialog box to load and parse a file listing
         background star positions and magnitudes; auto-populate the
         table and plot each star.
 
@@ -199,9 +195,9 @@ class BackgroundStarsWindow(QDialog):
         -------
         filename : str
             Name of the file cataloging background stars
-        '''
+        """
         filename, _ = QFileDialog.getOpenFileName(self,
-                                                 'Open Background Stars Input File',
+                                                  'Open Background Stars Input File',
                                                   "",
                                                   "Input file (*.txt);;All files (*.*)")
         if filename:
@@ -209,25 +205,21 @@ class BackgroundStarsWindow(QDialog):
 
             # Parse the file
             tab = asc.read(filename)
-            print(tab)
             for i_row, row in enumerate(tab):
                 if i_row + 1 > self.tableWidget.rowCount():
                     self.tableWidget.insertRow(i_row)
                 for i_col, value in enumerate(row):
                     item = QTableWidgetItem(str(value))
-                    print(i_row, i_col, value, type(value), item)
                     self.tableWidget.setItem(i_row, i_col, item)
-            print('through the looop')
-
             self.draw_defined_stars()
 
             return filename
 
     def draw_random_stars(self):
         # Only draw new stars if all the needed parameters exist
-        if self.lineEdit_magMin.text() == '' or\
-           self.lineEdit_magMax.text() == '' or\
-           self.lineEdit_nStars.text() == '':
+        if self.lineEdit_magMin.text() == '' or \
+                        self.lineEdit_magMax.text() == '' or \
+                        self.lineEdit_nStars.text() == '':
             return
 
         # Randomly generate x, y, and jmags
@@ -241,7 +233,7 @@ class BackgroundStarsWindow(QDialog):
         self.jmags = random.sample(
             set(np.linspace(vmin, vmax, 100)),
             nstars_random
-            )
+        )
 
         # Check if the star magnitudes are outside the colorbar limits
         self.check_colorbar_limits(vmin)
@@ -279,17 +271,17 @@ class BackgroundStarsWindow(QDialog):
                 elif self.tableWidget.item(i_row, i_col).text() == '':
                     return
                 elif not self.tableWidget.item(i_row, i_col).text().isnumeric():
-                    LOGGER.warbubg('Background Stars: There is a cell with non-numeric contents')
+                    LOGGER.warning('Background Stars: There is a cell with non-numeric contents')
                     return
 
         # Alert user if the coordinates are out of bounds
         for i_row in range(self.tableWidget.rowCount()):
-            if 0 > float(self.tableWidget.item(i_row, 0).text()) or\
-               float(self.tableWidget.item(i_row, 0).text()) > 2048:
+            if 0 > float(self.tableWidget.item(i_row, 0).text()) or \
+                            float(self.tableWidget.item(i_row, 0).text()) > 2048:
                 LOGGER.warning('Background Stars: X Location out of bounds.')
                 return
-            if 0 > float(self.tableWidget.item(i_row, 1).text()) or\
-               float(self.tableWidget.item(i_row, 1).text()) > 2048:
+            if 0 > float(self.tableWidget.item(i_row, 1).text()) or \
+                            float(self.tableWidget.item(i_row, 1).text()) > 2048:
                 LOGGER.warning('Background Stars: Y Location out of bounds.')
                 return
 
@@ -313,7 +305,7 @@ class BackgroundStarsWindow(QDialog):
         self.defined_stars = self.canvas.axes.scatter(
             self.x, self.y, c=self.jmags, marker='*', s=500, cmap='viridis_r',
             vmin=self.vmax, vmax=self.vmin
-            )
+        )
 
         # Record what method was used
         self.method = "user-defined"
@@ -325,8 +317,8 @@ class BackgroundStarsWindow(QDialog):
 
     def draw_catalog_stars(self):
         # Only draw new stars if all the needed parameters exist
-        if self.lineEdit_RA.text() == '' or\
-           self.lineEdit_Dec.text() == '':
+        if self.lineEdit_RA.text() == '' or \
+                        self.lineEdit_Dec.text() == '':
             return
 
         # Remove other stars and lines, if they have already been plotted
@@ -337,7 +329,9 @@ class BackgroundStarsWindow(QDialog):
         if position_angle == '':
             no_PA_dialog = QMessageBox()
             no_PA_dialog.setText('No PA entered' + ' ' * 50)
-            no_PA_dialog.setInformativeText('It is not possible to place results of a GSC query onto the detector without specifying the position angle (roll angle).')
+            no_PA_dialog.setInformativeText(
+                'It is not possible to place results of a GSC query onto the '
+                'detector without specifying the position angle (roll angle).')
             no_PA_dialog.setStandardButtons(QMessageBox.Ok)
             no_PA_dialog.exec()
             return
@@ -366,13 +360,13 @@ class BackgroundStarsWindow(QDialog):
             self.x[~mask], self.y[~mask], c=self.jmags[~mask], marker='*',
             s=500, cmap='viridis_r', vmin=self.vmax, vmax=self.vmin,
             label=None
-            )
+        )
         # Plot stars with unknown jmags
         if len(self.x[mask]) > 0:
             self.masked_catalog_stars = self.canvas.axes.scatter(
                 self.x[mask], self.y[mask], c='white', marker='*', s=500,
                 edgecolors='red', label='Unknown J Magnitude'
-                )
+            )
             self.legend = self.canvas.axes.legend()
 
         # # Plot extended sources
@@ -419,9 +413,9 @@ class BackgroundStarsWindow(QDialog):
     # HELPER FUNCTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     def check_colorbar_limits(self, j_magnitude):
-        '''Check if a certain magnitude is within the current colorbar
+        """Check if a certain magnitude is within the current colorbar
         limits. If not, extend the limits.
-        '''
+        """
 
         # If the new jmag_min is less than the current colorbar, extend
         if j_magnitude > self.vmin:
@@ -455,21 +449,22 @@ class BackgroundStarsWindow(QDialog):
                     print('could not remove')
 
     def query_gsc(self, coordinates, guider, position_angle):
-        '''Create and parse a web query to GSC 2.4.1 to determine the
+        """Create and parse a web query to GSC 2.4.1 to determine the
         positions and magnitudes of objects around the guide star.
 
         References
         ----------
             For information about GSC 2:
                 https://outerspace.stsci.edu/display/GC
-        '''
+        """
         # Parse RA and Dec
         RA = coordinates.ra.degree
         Dec = coordinates.dec.degree
 
         # Query MAST to get GSC 2.4.1 results in CSV form
         radius = 1.6 / 60  # 1.6 arcmin in degrees
-        web_query = "http://gsss.stsci.edu/webservices/vo/CatalogSearch.aspx?RA={:f}&DEC={:f}&DSN=+&FORMAT=CSV&CAT=GSC241&SR={:f}&".format(RA, Dec, radius)
+        web_query = "http://gsss.stsci.edu/webservices/vo/CatalogSearch.aspx?RA={:f}&DEC={:f}&DSN=+&FORMAT=CSV&CAT=GSC241&SR={:f}&".format(
+            RA, Dec, radius)
         LOGGER.info('Background Stars: Querying GSC 2.4.1 at ' + web_query)
         page = requests.get(web_query)
         csv_data = page.text
@@ -481,7 +476,7 @@ class BackgroundStarsWindow(QDialog):
         Decs = table['dec']
         jmag = table['tmassJmag']
 
-        LOGGER.info('Background Stars: Finshed query; found {} sources.'.format(len(RAs)))
+        LOGGER.info('Background Stars: Finished query; found {} sources.'.format(len(RAs)))
 
         # Only select sources that are stars
         mask_pointSources = [c == 0 for c in queried_catalog['classification']]
@@ -494,10 +489,12 @@ class BackgroundStarsWindow(QDialog):
         # Remove the guide star!
         # (Assume that is the star closest to the center, if there is a star
         # within 1" of the pointing)
-        distances = [np.sqrt((ra - RA)**2 + (dec - Dec)**2) for (ra, dec) in zip(RAs, Decs)]
+        distances = [np.sqrt((ra - RA) ** 2 + (dec - Dec) ** 2) for (ra, dec) in zip(RAs, Decs)]
         i_mindist = np.where(min(distances))[0][0]  # Probably 0
-        if distances[i_mindist] < 1/60/60:
-            LOGGER.info('Background Stars: Removing assumed guide star at {}, {}'.format(RAs[i_mindist], Decs[i_mindist]))
+        if distances[i_mindist] < 1 / 60 / 60:
+            LOGGER.info(
+                'Background Stars: Removing assumed guide star at {}, {}'.
+                format(RAs[i_mindist], Decs[i_mindist]))
             mask_guidestar = [i != i_mindist for i in range(len(RAs))]
             RAs = RAs[mask_guidestar]
             Decs = Decs[mask_guidestar]
@@ -593,10 +590,10 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
         qApp.exec_()
 
     # Create dictionary to pass to ``add_background_stars``
-    stars = {}
-    stars['x'] = window.x
-    stars['y'] = window.y
-    stars['jmag'] = window.jmags
+    if window.x != [] and window.y != [] and list(window.jmags) != []:
+        stars = {'x': window.x, 'y': window.y, 'jmag': window.jmags}
+    else:
+        stars = None
 
     # Record the method used to generate the background stars
     method = window.method
@@ -616,7 +613,7 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
         Either a boolean or a dictionary that defines how to add the
         additional stars to the image
     norm_value : float
-        Specifieds the value to which to normalize.
+        Specifies the value to which to normalize.
     norm_unit : str
         Specifies the unit of norm_value (FGS Magnitude or FGS Counts)
     guider : int
@@ -639,10 +636,10 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     size = 2048
     nstars_random = 5
 
-    # Determine jmag and fgs_counts of guide star
-    norm_obj = renormalize.NormalizeToCounts(norm_value, norm_unit, guider)
-    fgs_counts = norm_obj.to_counts()
-    jmag = renormalize.fgs_counts_to_j_mag(fgs_counts, guider)
+    # Determine jmag and fgs_countrate of guide star
+    norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
+    fgs_countrate = norm_obj.to_countrate()
+    jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider)
 
     # If the flag is simply set to "True", randomly place 5 stars on the image
     if stars is True:
@@ -665,7 +662,9 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
         jmags_back = stars['jmag']
 
     else:
-        raise TypeError('Unfamiliar value passed to bkgd_stars: {} Please pass boolean or dictionary of background star x, y, jmag.'.format(stars))
+        raise TypeError(
+            'Unfamiliar value passed to bkgd_stars: {} Please pass boolean or dictionary of background star x, y, jmag.'.
+            format(stars))
 
     # Add stars to image
     # Copy original data array
@@ -676,8 +675,8 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     image[image < mean] = 0
     for x, y, jmag_back in zip(x_back, y_back, jmags_back):
         if not isinstance(jmag_back, np.ma.core.MaskedConstant):
-            star_fgs_counts = renormalize.j_mag_to_fgs_counts(jmag_back, guider)
-            scale_factor = star_fgs_counts / fgs_counts
+            star_fgs_countrate = renormalize.j_mag_to_fgs_countrate(jmag_back, guider)
+            scale_factor = star_fgs_countrate / fgs_countrate
 
             star_data = image * scale_factor
             psfx = psfy = 2048
@@ -696,8 +695,9 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
             else:
                 star_data = star_data[:, 2048 - (y2 - y1):]
 
-            LOGGER.info('Background Stars: Adding background star with magnitude {:.1f} at location ({}, {}).'.format(jmag_back,
-                                                                                              x, y))
+            LOGGER.info(
+                'Background Stars: Adding background star with magnitude {:.1f} at location ({}, {}).'.
+                format(jmag_back, x, y))
             add_data[x1:x2, y1:y2] += star_data
 
     return add_data
