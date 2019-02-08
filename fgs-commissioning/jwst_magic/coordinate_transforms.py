@@ -1,28 +1,30 @@
-'''
+"""
 Convert between FGS raw/native frame (pixels), ideal angle frame (arcsec), and
 DHAS frame (arcsec).
-'''
+"""
 
 import pysiaf
 
 # Open SIAF with pysiaf
 FGS_SIAF = pysiaf.Siaf('FGS')
 
+
 def Raw2Det(x_raw, y_raw):
-    '''
+    """
     Pass in X Y pixels in the raw/native frame and get out X Y pixels in the
     SIAF detector frame
-    '''
+    """
     # Flip raw axes to get det axes
     x_det = y_raw
     y_det = x_raw
     return x_det, y_det
 
+
 def Raw2Idl(x_raw, y_raw, guider):
-    '''
+    """
     Pass in X Y pixels in the raw/native frame and get out X Y angles in the
     ideal frame
-    '''
+    """
     # Flip raw axes to get det axes
     x_det, y_det = Raw2Det(x_raw, y_raw)
 
@@ -40,11 +42,12 @@ def Raw2Idl(x_raw, y_raw, guider):
 
     return x_idealangle, y_idealangle
 
+
 def Raw2Tel(x_raw, y_raw, guider):
-    '''
+    """
     Pass in X Y pixels in the raw/native frame and get out X Y angles in the
     V2/V3 frame
-    '''
+    """
     # Flip raw axes to get det axes
     x_det, y_det = Raw2Det(x_raw, y_raw)
 
@@ -68,29 +71,31 @@ def Raw2Tel(x_raw, y_raw, guider):
 
     return v2, v3
 
+
 def Idl2DHAS(x_idealangle, y_idealangle):
-    '''
+    """
     Pass in X and Y angles in the ideal frame and get out X and Y angles in the
     frame DHAS requires.
-    '''
+    """
 
     x_dhas = -x_idealangle
     y_dhas = y_idealangle
 
     return x_dhas, y_dhas
 
+
 def Raw2DHAS(x_raw, y_raw, guider):
-    '''
+    """
     Pass in X and Y pixels in the raw/native frame and get out X and Y angles in
     the frame DHAS requires.
-    '''
+    """
     x_idealangle, y_idealangle = Raw2Idl(x_raw, y_raw, guider)
     x_dhas, y_dhas = Idl2DHAS(x_idealangle, y_idealangle)
 
     return x_dhas, y_dhas
 
-def DHAS2Raw(x_dhas, y_dhas, guider):
 
+def DHAS2Raw(x_dhas, y_dhas, guider):
     if int(guider) == 1:
         fgs_full = FGS_SIAF['FGS1_FULL']
     elif int(guider) == 2:
@@ -117,8 +122,9 @@ def DHAS2Raw(x_dhas, y_dhas, guider):
 
     return x_raw, y_raw
 
+
 def write_to_file(xangle, yangle):
-    ''' Write ideal angles to file'''
+    """ Write ideal angles to file"""
     with open('ideal.tmp', 'w') as f:
         f.write('index xangle yangle\n')
         try:

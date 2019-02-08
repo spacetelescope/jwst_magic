@@ -1,4 +1,4 @@
-'''Run JWST MaGIC end-to-end
+"""Run JWST MaGIC end-to-end
 
 ~Description
 
@@ -32,7 +32,7 @@ Use
             NIRCam image, to a desired number of FGS counts.
         ``out_dir`` - where output FGS image(s) will be saved. If not
             provided, the image(s) will be saved to ../out/{root}.
-'''
+"""
 
 # STDLIB
 import os
@@ -45,7 +45,6 @@ if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 print('Using backend: ', matplotlib.get_backend())
 import numpy as np
-from astropy.io import fits
 
 # LOCAL
 from . import utils, background_stars
@@ -66,7 +65,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
-            coarse_pointing=False, jitter_rate_arcsec=None):
+            coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
+            shift_id_attitude=True, crowded_field=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -74,28 +74,55 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     the guide star and reference stars necessary for the FSW.
 
     Parameters
-    ==========
+    ----------
     image: str
         The path to the image.
     guider: int
         Which guider is being used: 1 or 2
-    root: str
+    root: str, optional
         The root desired for output images if different than root in image
-    norm_value: float
+    norm_value: float, optional
         The value to be used for normalization (depends on norm_unit)
-    norm_unit: str
+    norm_unit: str, optional
         The unit to be used for normalization (expecting "FGS Counts" or "FGS Magnitude")
-    nircam_det: str
+    nircam_det: str, optional
         The NIRCam detector used for this observation. Only applicable for NIRCam
         images and if cannot be parsed from header.
-    nircam: bool
+    nircam: bool, optional
         If this is a FGS image, set this flag to False
-    global_alignment: bool
+    global_alignment: bool, optional
         If this is not a global_alignment image, set this flag to False
-    steps: list of strings
+    steps: list of strings, optional
         List of the steps to be completed
-    in_file: str
+    in_file: str, optional
         If this image comes with an incat or reg file, the file path
+    bkgd_stars : boolean, optional
+        Add background stars to the image?
+    out_dir : str, optional
+        Where output FGS image(s) will be saved. If not provided, the
+        image(s) will be saved to ../out/{root}.
+    convert_im : boolean, optional
+        Run the convert_image module?
+    star_selection : boolean, optional
+        Run the  star_selector module?
+    star_selection_gui : boolean, optional
+        Show the GUI for the star_selector module?
+    file_writer : boolean, optional
+        Run the fsw_file_writer module?
+    masterGUIapp : PyQt5.QtCore.QCoreApplication instance, optional
+        The QApplication instance of the master GUI, if it is already
+        open.
+    copy_original : boolean, optional
+        Copy the original data to {out_dir}/{root}?
+    normalize : boolean, optional
+        Normalize the provided image during convert_image?
+    coarse_pointing : boolean, optional
+        Apply jitter to simulate coarse pointing?
+    jitter_rate_arcsec : float, optional
+        If coarse_pointing is true, the rate of jitter in arcseconds
+        per second to apply in the form of a Gaussian filter.
+    itm: bool, Optional
+        If this image come from the ITM simulator (important for normalization).
     """
 
     # Determine filename root
@@ -124,15 +151,17 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     if convert_im:
         fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
                                                      nircam=nircam,
+                                                     nircam_det=nircam_det,
+                                                     normalize=normalize,
                                                      norm_value=norm_value,
                                                      norm_unit=norm_unit,
-                                                     nircam_det=nircam_det,
-                                                     logger_passed=True,
-                                                     normalize=normalize,
                                                      coarse_pointing=coarse_pointing,
-                                                     jitter_rate_arcsec=jitter_rate_arcsec)
+                                                     jitter_rate_arcsec=jitter_rate_arcsec,
+                                                     logger_passed=True,
+                                                     itm=itm)
+
         if bkgd_stars:
-            if not normalize:
+            if not normalize and not itm:
                 norm_value = np.sum(fgs_im[fgs_im > np.median(fgs_im)])
                 norm_unit = "FGS Counts"
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars,
@@ -149,14 +178,11 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # create reg file
     if star_selection:
-        if star_selection_gui:
-            select_psfs.create_reg_file(fgs_im, root, guider,
-                                        return_nref=False,
-                                        global_alignment=global_alignment,
-                                        in_file=in_file, out_dir=out_dir,
-                                        logger_passed=True, masterGUIapp=masterGUIapp)
-        else:
-            LOGGER.info("Star Selection: Reading guide and reference star positions from {}".format(in_file))
+        select_psfs.create_reg_file(fgs_im, root, guider,
+                                    return_nref=False,
+                                    global_alignment=global_alignment,
+                                    in_file=in_file, out_dir=out_dir,
+                                    logger_passed=True, masterGUIapp=masterGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
 
     # create all files for FSW/DHAS/FGSES/etc.
@@ -165,5 +191,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
         for step in steps:
             buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step,
-                                        out_dir=out_dir, logger_passed=True)
+                                        out_dir=out_dir, logger_passed=True,
+                                        regfile=in_file, shift_id_attitude=shift_id_attitude,
+                                        crowded_field=crowded_field)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")

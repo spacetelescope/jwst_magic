@@ -24,7 +24,7 @@ Use
         ``step`` - name of guiding step for which to create images
             (expecting 'ID', 'ACQ1', 'ACQ2', 'TRK', or 'LOSTRK')
     Optional arguments:
-        ``reg_file`` - file containing X/Y positions and countrates for
+        ``regfile`` - file containing X/Y positions and countrates for
             all stars in an image
         ``configfile`` - file defining parameters for each guider step.
             If not defined, defaults to jwst_magic/data/config.ini
@@ -38,15 +38,19 @@ Use
 # Standard Library Imports
 import os
 import logging
+from shutil import copyfile
 
 # Third Party Imports
+from astropy.io import ascii as asc
 from astropy.io import fits
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+from scipy.ndimage import shift
 
 # Local imports
 from .. import utils
+from ..star_selector import select_psfs
 from ..fsw_file_writer import config, detector_effects, write_files
 
 # Paths
@@ -67,8 +71,9 @@ class BuildFGSSteps(object):
     """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
     to be used with DHAS.
     """
-    def __init__(self, im, guider, root, step, reg_file=None, configfile=None,
-                 out_dir=None, logger_passed=False):
+    def __init__(self, im, guider, root, step, regfile=None, configfile=None,
+                 out_dir=None, logger_passed=False, shift_id_attitude=True,
+                 crowded_field=False, catalog=None):
         """Initialize the class and call build_fgs_steps().
         """
         # Set up logger
@@ -82,14 +87,29 @@ class BuildFGSSteps(object):
             self.step = step
             self.yoffset = 12
 
+            # Define out directory
+            self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+
+            # READ IN IMAGE
+            if isinstance(im, str):
+                data = fits.getdata(im)
+                self.input_im = data
+            else:
+                self.input_im = im
+
+            # Shift image to ID attitude
+            if shift_id_attitude and step == 'ID':
+                self.input_im = self.shift_to_id_attitude(self.input_im, regfile, catalog,
+                                                          crowded_field=crowded_field)
+
             # Build FGS steps
-            self.build_fgs_steps(im, root, out_dir, reg_file, configfile)
+            self.build_fgs_steps(im, root, regfile, configfile)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, im, root, out_dir, reg_file, configfile):
+    def build_fgs_steps(self, im, root, regfile, configfile):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
@@ -103,7 +123,7 @@ class BuildFGSSteps(object):
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
             tools/fgs-commissioning/
-        reg_file : str
+        regfile : str
             File containing X/Y positions and countrates for all stars
             in the provided image
         configfile : str
@@ -111,27 +131,20 @@ class BuildFGSSteps(object):
             defined, defaults to jwst_magic/data/config.ini
         """
         # Define paths
-        self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
 
-        # READ IN IMAGE
-        if isinstance(im, str):
-            data = fits.getdata(im)
-            self.input_im = data
-        else:
-            self.input_im = im
-
+        # *** SHOULD THIS BE HAPPENING HERE?? ***
         # Correct for negative, saturated pixels and other nonsense
         self.input_im = utils.correct_image(self.input_im)
 
-        # THEN convert to uint16
-        self.input_im = np.uint16(self.input_im)
+        # # THEN convert to uint16
+        # self.input_im = np.uint16(self.input_im)
 
         # LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
 
-        self.get_coords_and_counts(reg_file=reg_file)
+        self.get_coords_and_counts(regfile=regfile)
 
         section = '{}_dict'.format(self.step.lower())
         config_ini = self.build_step(section, configfile)
@@ -141,29 +154,29 @@ class BuildFGSSteps(object):
         LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
         write_files.write_all(self)
 
-    def get_coords_and_counts(self, reg_file=None):
+    def get_coords_and_counts(self, regfile=None):
         """Get coordinate information and countrates of guide star and
         reference stars.
 
         Parameters
         ----------
-        reg_file : str, optional
+        regfile : str, optional
             File containing X/Y positions and countrates for all stars
             in the provided image
         """
-        if reg_file is None:
-            reg_file = os.path.join(self.out_dir,
+        if regfile is None:
+            regfile = os.path.join(self.out_dir,
                                     '{0}_G{1}_regfile.txt'.format(self.root,
                                                                   self.guider))
-        LOGGER.info("FSW File Writing: Using {} as the reg file".format(reg_file))
+        LOGGER.info("FSW File Writing: Using {} as the reg file".format(regfile))
 
-        if reg_file.endswith('reg'):
-            self.xarr, self.yarr = np.loadtxt(reg_file)
+        if regfile.endswith('reg'):
+            self.xarr, self.yarr = np.loadtxt(regfile)
             self.countrate = []
             for xa, ya, in zip(self.xarr, self.yarr):
                 self.countrate.append(utils.countrate_3x3(xa, ya, self.input_im))
         else:
-            self.yarr, self.xarr, self.countrate = np.loadtxt(reg_file, delimiter=' ',
+            self.yarr, self.xarr, self.countrate = np.loadtxt(regfile, delimiter=' ',
                                                               skiprows=1).T
         # Add y offset to all coordinates
         # self.yarr = self.yarr - self.yoffset
@@ -234,19 +247,19 @@ class BuildFGSSteps(object):
         ----------
         section : str
             Name of step within the config file ('{step}_dict')
-        configfile : str, optional
-            File defining parameters for each guider step. If not
-            defined, defaults to jwst_magic/data/config.ini
+        config_ini : : obj
+            Object containing all parameters from the given config file
 
         Returns
         -------
         image : 2-D numpy array
             The final image including any necessary detector effects,
-            either full-frame or the appropriately sized subarray.
+            either full-frame or the appropriately sized subarray, in counts.
         """
 
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
+        # ** THIS MIGHT NOT BE CORRECT IF IT OCCURS AFTER THE IMAGE HAS BEEN NORMALIZED TO COUNTS ALREADY **
         self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tframe')
 
         # Add the bias, and build the array of reads with noisy data
@@ -271,7 +284,7 @@ class BuildFGSSteps(object):
             n_frametimes_in_first_read = n_drops_before_first_read + 1
             # Add signal to every first read
             noisy_signal_cube = np.random.poisson(signal_cube)
-            image[i_read::(self.nreads)] += n_frametimes_in_first_read * noisy_signal_cube
+            image[i_read::self.nreads] += n_frametimes_in_first_read * noisy_signal_cube
 
             # Second read
             # Calculate how much signal should be in the second read
@@ -280,7 +293,7 @@ class BuildFGSSteps(object):
             n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
             # Add signal to every second read
             noisy_signal_cube = np.random.poisson(signal_cube)
-            image[i_read::(self.nreads)] += n_frametimes_in_second_read * noisy_signal_cube
+            image[i_read::self.nreads] += n_frametimes_in_second_read * noisy_signal_cube
 
         else:
             # In the case of LOSTRK, just return one frame with one
@@ -289,12 +302,12 @@ class BuildFGSSteps(object):
             image = self.time_normed_im
 
         # Cut any pixels over saturation or under zero
-        image = utils.correct_image(image)
+        # image = utils.correct_image(image)
 
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
         if config_ini.getboolean(section, 'cdsimg'):
-            self.cds = create_cds(image)
+            self.cds = create_cds(image, section, config_ini)
         else:
             self.cds = None
 
@@ -311,14 +324,149 @@ class BuildFGSSteps(object):
 
         # Modify further for LOSTRK images (that will be run in FGSES)
         if self.step == 'LOSTRK':
-            # Normalize to a count sum of 1000
-            image = image / np.sum(image) * 1000
             # Resize image array to oversample by 6 (from 43x43 to 255x255)
             image = image.repeat(6, axis=0)
             image = image.repeat(6, axis=1)
             image = image[1:-2, 1:-2]
 
+            # Normalize to a count sum of 1000
+            image = image / np.sum(image) * 1000
+
         return image
+
+    def shift_to_id_attitude(self, image, regfile, catalog, crowded_field=False):
+        """Shift the FGS image such that the guide star is at the ID
+        attitude. Rewrite the FGS FITS file, regfile, and ALLpsfs catalog
+        file for this shifted case. (Rename old versions of those files
+        to be "_unshifted".)
+
+        Parameters
+        ----------
+        image : 2D numpy array
+            Image data
+        regfile : str
+            Path to existing regfile.txt
+        catalog : str
+            Path to existing ALLpsfs.txt
+        crowded_field : bool, optional
+            Denotes whether the current case is a crowded field,
+            in which the ID attitude changes.
+
+        Returns
+        -------
+        shifted_image : 2D numpy array
+            The image data shifted so that the guide star falls on the
+            ID attitude
+        """
+
+        # 0) Fetch existing information and determine ID attitude
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Define filenames
+        file_root = '{}_G{}'.format(self.root, self.guider)
+        FGS_img = os.path.join(self.out_dir, 'FGS_imgs', file_root + '.fits')
+        regfile = regfile or os.path.join(self.out_dir,
+                                    file_root + '_regfile.txt')
+        ALLpsfs = catalog or os.path.join(self.out_dir,
+                                    file_root + '_ALLpsfs.txt')
+
+        # Make sure shifted directory exists
+        utils.ensure_dir_exists(os.path.join(self.out_dir, 'shifted'))
+
+        # Load the catalogs
+        regfile_cat = asc.read(regfile)
+        ALLpsfs_cat = asc.read(ALLpsfs)
+
+        # Determine the pixel shift
+        if crowded_field:
+            # Locations obtained from Beverly Owens, 12/3/18:
+            # https://innerspace.stsci.edu/display/INSTEL/FGS+Specifications
+            if self.guider == 1:
+                xend, yend = (986, 1688)  # Converted from Ideal = (-45.6799, 1.2244)
+            elif self.guider == 2:
+                xend, yend = (1003, 1697)  # Converted from Ideal = (-45.6701, -0.8757)
+            hdr_keyword = '{}'.format((xend, yend))
+            file_suffix = 'crowdedIDattitude'
+        else:
+            xend, yend = (1024, 1024)  # ID attitude; Different for crowded fields
+            # Note this should actually be 1024.5, but the regfile needs an integer shift
+            hdr_keyword = '{}'.format((xend, yend))
+            file_suffix = 'IDattitude'
+
+
+        # 1) Shift the image array
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        xstart, ystart = regfile_cat['x', 'y'][0] # Guide star location
+        dx = xend - xstart
+        dy = yend - ystart
+        
+        assert dx % 1 == 0, 'Trying to shift by a non-integer in x'
+        assert dy % 1 == 0, 'Trying to shift by a non-integer in y'
+
+        if (dx, dy) == (0, 0):
+            LOGGER.info('FSW File Writing: No need to shift file; guide star already at ID attitude.')
+            return image
+
+        bkg = np.median(image)
+
+        LOGGER.info("FSW File Writing: Shifting guide star to ID attitude ({}, {})".format(xend, yend))
+        shifted_image = shift(image, (dy, dx), mode='constant', cval=bkg, prefilter=True)
+
+        # 2) Rewrite regfile.txt and save old file as regfile_unshifted.txt
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Shift the regfile catalog
+        shifted_regfile_cat = regfile_cat.copy()
+        shifted_regfile_cat['x'] += dx
+        shifted_regfile_cat['y'] += dy
+
+        shifted_regfile = os.path.join(self.out_dir, 'shifted',
+                                       file_root + '_regfile.txt')
+
+        # Write new regfile.txts
+        utils.write_cols_to_file(self.out_dir,
+                                 filename=shifted_regfile,
+                                 labels=['y', 'x', 'countrate'],
+                                 cols=shifted_regfile_cat)
+
+
+        # 3) Rewrite ALLpsfs.txt and save old file as ALLpsfs_unshifted.txt
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Shift the ALLpsfs catalog
+        shifted_ALLpsfs_cat = ALLpsfs_cat.copy()
+        shifted_ALLpsfs_cat['x'] += dx
+        shifted_ALLpsfs_cat['y'] += dy
+
+        shifted_ALLpsfs = os.path.join(self.out_dir, 'shifted',
+                                       file_root + '_ALLpsfs.txt')
+
+        all_cols = select_psfs.create_cols_for_coords_counts(shifted_ALLpsfs_cat['x'],
+                                                             shifted_ALLpsfs_cat['y'],
+                                                             shifted_ALLpsfs_cat['countrate'],
+                                                             None,
+                                                             labels=shifted_ALLpsfs_cat['label'],
+                                                             inds=range(len(shifted_ALLpsfs_cat['x'])))
+
+        # Write new ALLpsfs.txts
+        utils.write_cols_to_file(self.out_dir,
+                                 filename=shifted_ALLpsfs,
+                                 labels=['label', 'y', 'x', 'countrate'],
+                                 cols=all_cols)
+
+
+
+        # 4) Rewrite the shifted FGS image and save old file as _unshifted.fits
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Load header file
+        header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(self.guider))
+        hdr = fits.getheader(header_file, ext=0)
+        hdr['IDATTPIX'] = (hdr_keyword, 'Image shifted to place GS at ID attitude')
+
+        shifted_FGS_img = os.path.join(self.out_dir, 'shifted',
+                                       file_root + '.fits')
+
+        # Write new FITS files
+        utils.write_fits(shifted_FGS_img, shifted_image, header=hdr)
+
+        return shifted_image
 
 # ------------------------------------------------------------------------------
 # ANCILLARY FUNCTIONS
@@ -337,7 +485,7 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
     nstrips : int
         Number of strips to split the image into
     nramps : int
-        Numer of ramps in the integraion
+        Number of ramps in the integration
     nreads : int
         Number of reads in the ramp
     strip_height : int
@@ -364,26 +512,71 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
             nn += 1
 
     # Make sure the data is between 0 and 65,000 counts and are finite numbers
-    strips = utils.correct_image(strips)
-    strips = np.uint16(strips)
+    # strips = utils.correct_image(strips)
 
     return strips
 
 
-def create_cds(arr):
+def create_cds(arr, section, config_ini, fix_saturated_pix=True):
     """Create CDS image: Subtract the first read from the second read.
+    Option to handle saturated pixels in CDS.
 
     Parameters
     ----------
     arr : 3-D numpy array
-        Image data
+        Image data in
+    fix_saturated_pix : boolean
+        Apply a fix to saturated pixels in the CDS array?
 
     Returns
     -------
     2-D numpy array
         CDS of image
     """
-    return arr[1::2] - arr[:-1:2]
+    # Second read minus first read
+    first_reads = arr[:-1:2]
+    second_reads = arr[1::2]
+    cds_arr = second_reads - first_reads
+
+    if fix_saturated_pix:
+        # Determine which pixels are saturated in each read
+        saturated_read_2 = second_reads >= 65000
+        saturated_read_1 = first_reads >= 65000
+
+        # For pixels that are saturated in the second read, calculate their
+        # expected CDS value using the count rate from the first read and
+        # assuming linearity.
+        n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
+        n_frametimes_in_first_read = n_drops_before_first_read + 1
+        time_first_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_first_read  # seconds
+        first_read_countrates = first_reads / time_first_read  # counts / second
+
+        n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
+        n_frametimes_in_cds_read = n_drops_before_second_read + 1
+        time_cds_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_cds_read  # seconds
+
+        # If the calculated CDS value is less than saturation, set that
+        # as the pixel value. Otherwise, set the pixel value to 65000.
+        cds_counts = first_read_countrates * time_cds_read  # counts
+        cds_counts[cds_counts > 65000] = 65000
+        cds_arr[saturated_read_2] = cds_counts[saturated_read_2]
+
+        # n_sat_2 = len([p for p in saturated_read_2[0].flatten() if p])
+        n_sat_2 = len(saturated_read_2[0][saturated_read_2[0] == True].flatten())
+        if n_sat_2 > 0:
+            print('Adjusting {} pixels that are saturated in read 2.'.format(n_sat_2))
+
+        # For pixels that are saturated in both reads, set their CDS
+        # value to the saturated value (65000).
+        saturated_both_reads = saturated_read_1 * saturated_read_2
+        cds_arr[saturated_both_reads] = 65000
+
+        # n_sat_both = len([p for p in saturated_both_reads[0].flatten() if p])
+        n_sat_both = len(saturated_both_reads[0][saturated_both_reads[0] == True].flatten())
+        if n_sat_both > 0:
+            print('Adjusting {} pixels that are saturated in both reads.'.format(n_sat_both))
+
+    return cds_arr
 
 
 def display(image, ind=0, vmin=None, vmax=None, xarr=None, yarr=None):

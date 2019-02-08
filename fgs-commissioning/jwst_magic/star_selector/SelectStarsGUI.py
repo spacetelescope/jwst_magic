@@ -167,12 +167,12 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         # Plot data
         self.fitsplot = self.axes.imshow(data, cmap='bone', interpolation='nearest',
                                          clim=(0.1, 1e3), norm=LogNorm())
-        if self.peaks != []:
+        if self.peaks:
             self.peaks.remove()
         self.peaks = self.axes.scatter(x, y, c='r', marker='+')
 
         # Update colorbar
-        if self.cbar != []:
+        if self.cbar:
             self.cbar.remove()
         self.cbar = self.fig.colorbar(self.fitsplot, ax=self.axes,
                                       fraction=0.046, pad=0.04, norm=LogNorm())
@@ -282,9 +282,9 @@ class StarSelectorWindow(QDialog):
     data (2D array)
         Opened FITS image data (should be 2048 x 2048)
     x (list)
-        List of x-coordinates of indentified PSFs
+        List of x-coordinates of identified PSFs
     y (list)
-        List of y-coordinates of indentified PSFs
+        List of y-coordinates of identified PSFs
     _ind (int)
         Index of the position of the most recently selected star
     inds (list)
@@ -477,8 +477,9 @@ class StarSelectorWindow(QDialog):
     def define_StarSelectionGUI_connections(self):
         """Connect widgets' signals to the appropriate methods.
         """
-        # Main dialog widgets
-        self.pushButton_done.clicked.connect(self.quit)
+        # If not in SGT, define the main GUI widgets
+        if not self.in_SGT_GUI:
+            self.pushButton_done.clicked.connect(self.quit_star_selection)
         self.pushButton_cancel.clicked.connect(self.cancel)
 
         # Main matplotlib canvas widget
@@ -521,12 +522,12 @@ class StarSelectorWindow(QDialog):
         source : QWidget
             Widget that signalled to the event filter
         event : QEvent
-            The event that occured within the source widget
+            The event that occurred within the source widget
 
         Returns
         -------
         bool
-            Denotes an action occured within the event filter
+            Denotes an action occurred within the event filter
         """
         if hasattr(self, 'pushButton_deleteStar') and \
            hasattr(self, 'tableWidget_selectedStars') and \
@@ -537,7 +538,7 @@ class StarSelectorWindow(QDialog):
             if source == self.pushButton_deleteStar:
                 if event.type() == QtCore.QEvent.Enter and len(self.inds) > 0:
                     # Determine index of star corresponding to button
-                    star_ind = self.tableWidget_selectedStars.current_row()
+                    star_ind = self.tableWidget_selectedStars.currentRow()
 
                     # Re-draw selected star as red
                     if star_ind != -1:
@@ -547,7 +548,7 @@ class StarSelectorWindow(QDialog):
 
                 if event.type() == QtCore.QEvent.Leave and len(self.inds) > 0:
                     # Determine index of star corresponding to button
-                    star_ind = self.tableWidget_selectedStars.current_row()
+                    star_ind = self.tableWidget_selectedStars.currentRow()
 
                     # Re-draw selected star as selected color
                     if star_ind != -1:
@@ -606,7 +607,8 @@ class StarSelectorWindow(QDialog):
                     pass
                 elif previous_row == self.gs_ind:
                     self.circles[previous_row].set_markeredgecolor('yellow')
-                elif previous_row >= 0:
+                elif previous_row >= 0 and len(self.inds) > 0:
+                    # Except for the case where all the stars have been deleted
                     self.circles[previous_row].set_markeredgecolor('darkorange')
 
                 # Update current row to be the newly clicked one
@@ -655,7 +657,7 @@ class StarSelectorWindow(QDialog):
         Parameters
         ----------
         event : QEvent
-            The event that occured within the signalling widget
+            The event that occurred within the signalling widget
         """
         if event.inaxes:
             self.lineEdit_cursorPosition.setText('({:.0f}, {:.0f})'.format(event.xdata,
@@ -670,7 +672,7 @@ class StarSelectorWindow(QDialog):
         Parameters
         ----------
         event : QEvent
-            The event that occured within the signalling widget
+            The event that occurred within the signalling widget
         """
         if event.inaxes:
             # Determine profile under the cursor
@@ -704,7 +706,7 @@ class StarSelectorWindow(QDialog):
         Parameters
         ----------
         event : QEvent
-            The event that occured within the signalling widget
+            The event that occurred within the signalling widget
         """
         if event.inaxes:
             # Determine if the cursor is close to a segment
@@ -727,7 +729,7 @@ class StarSelectorWindow(QDialog):
         Parameters
         ----------
         event : QEvent
-            The event that occured within the signalling widget
+            The event that occurred within the signalling widget
         """
         if not event.inaxes:
             return
@@ -748,7 +750,7 @@ class StarSelectorWindow(QDialog):
         self.circles[ind_of_old_guide_star].set_markeredgecolor('darkorange')
 
         # Determine index of new guide star
-        guide_ind = self.tableWidget_selectedStars.current_row()
+        guide_ind = self.tableWidget_selectedStars.currentRow()
         self.gs_ind = guide_ind
 
         # Re-draw new guide star as guide star
@@ -768,7 +770,7 @@ class StarSelectorWindow(QDialog):
         """
 
         # Determine index of star being removed
-        star_ind = self.tableWidget_selectedStars.current_row()
+        star_ind = self.tableWidget_selectedStars.currentRow()
 
         # Un-draw circle
         delete_circle = self.circles.pop(star_ind)
@@ -797,7 +799,7 @@ class StarSelectorWindow(QDialog):
             self.tableWidget_selectedStars.insertRow(0)
         # Update which row is highlighted:
         if self.gs_ind is not None:
-            self.current_row = self.tableWidget_selectedStars.current_row()
+            self.current_row = self.tableWidget_selectedStars.currentRow()
             self.circles[self.current_row].set_markeredgecolor('cornflowerblue')
 
         # Update guide star
@@ -840,13 +842,13 @@ class StarSelectorWindow(QDialog):
         if self.print_output:
             print(remstar_string)
 
-    def quit(self):
+    def quit_star_selection(self):
         """Closes the star selector window.
         """
 
         self.answer = True
         # If the user didn't choose any stars, ask if they really want to quit.
-        if self.inds == []:
+        if not self.inds:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
             no_stars_selected_dialog.setInformativeText(
@@ -896,7 +898,7 @@ class StarSelectorWindow(QDialog):
         Parameters
         ----------
         event : QEvent
-            The event that occured within the signalling widget
+            The event that occurred within the signalling widget
 
         Returns
         -------
@@ -1035,7 +1037,7 @@ class StarSelectorWindow(QDialog):
         """
         # If a star earlier than the guide star was deleted
         if star_ind < self.gs_ind:
-            return False, 1
+            return False, self.gs_ind - 1
 
         # If the guide star was deleted
         elif star_ind == self.gs_ind:
@@ -1048,6 +1050,10 @@ class StarSelectorWindow(QDialog):
             else:
                 # Make the star_ind - 1 star the guide star
                 return True, star_ind - 1
+
+        # If a star after the guide star was deleted
+        elif star_ind > self.gs_ind:
+            return False, self.gs_ind
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN FUNCTION

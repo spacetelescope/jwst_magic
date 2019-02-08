@@ -92,13 +92,16 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
 
     else:
         # Perform statistics
-        mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
+        median = np.median(smoothed_data)
+        std = np.std(smoothed_data)
 
         # Find PSFs
         threshold = median + (3 * std)  # Used to be median + 3 * std
 
         sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
         num_psfs = len(sources)
+        if num_psfs == 0:
+            raise ValueError("You have no sources in your data.")
         coords = sources['x_peak', 'y_peak']
         coords = [(x, y) for [x, y] in coords]
 
@@ -237,7 +240,7 @@ def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
     objects : 2-D numpy array
         Segmentation of image data
     num_objects : int
-        Number of individidual objects in the segmentation data
+        Number of individual objects in the segmentation data
     x : list
         List of x-coordinates of identified PSFs
     y : list
@@ -289,7 +292,7 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
         List of count rates of identified PSFs
     val : list
         List of the number of pixels in each PSF's segmentation object
-    labels : bool, optional
+    labels : list, optional
         Denotes whether the PSF alphabetic labels should be included as
         a column to write out
     inds : list, optional
@@ -301,7 +304,7 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
         List of segment positions, count rates, and maybe labels for
         each selected segments
     """
-    if labels:
+    if labels is not None:
         # NOTE: these coordinates are y, x
         cols = [[ll, '{:.4f}'.format(yy),
                  '{:.4f}'.format(xx),
@@ -385,7 +388,7 @@ def match_psfs_to_segments(x, y, global_alignment):
 
 
 def parse_in_file(in_file):
-    '''Get the position and countrates from a provided regfile.txt
+    """Get the position and countrates from a provided regfile.txt
 
     Determines if the input file contains x, y, and countrate data. If
     so, extracts the locations and countrates of the stars accordingly.
@@ -410,7 +413,7 @@ def parse_in_file(in_file):
     ------
     TypeError
         Incompatible file provided to in_file
-    '''
+    """
 
     in_table = asc.read(in_file)
     colnames = in_table.colnames
@@ -441,7 +444,6 @@ def parse_in_file(in_file):
                                                                         fix_colnames)
                 raise TypeError(err_message)
                 LOGGER.error(err_message)
-                return
 
             for old_col, fix_col in zip(colnames, fix_colnames):
                 # Assign fixed column names to table
@@ -458,7 +460,6 @@ def parse_in_file(in_file):
                                                                     raw_columns.split())
             raise TypeError(err_message)
             LOGGER.error(err_message)
-            return
 
     # Make sure all the necessary columns are present
     x_check = 'x' in colnames or 'xreal' in colnames
@@ -472,7 +473,6 @@ def parse_in_file(in_file):
                        named {}. Please rename columns.'.format(in_file, colnames)
         raise TypeError(err_message)
         LOGGER.error(err_message)
-        return
 
     # Passed all the checkpoints! Move on to process the file.
     LOGGER.info('Star Selection: Selecting stars from input file {}'.format(in_file))
@@ -503,7 +503,7 @@ def parse_in_file(in_file):
 
 
 def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=None):
-    '''Launches a GUI to prompt the user to click-to-select guide and
+    """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
     Algorithmically find and locate all PSFs in image using
@@ -536,8 +536,8 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     Raises
     ------
     ValueError
-        The user closed the GUI wihout selecting any stars.
-    '''
+        The user closed the GUI without selecting any stars.
+    """
     if global_alignment:
         gauss_sigma = 26
     else:
@@ -606,14 +606,14 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
 def create_reg_file(data, root, guider, in_file=None,
                     global_alignment=False, return_nref=False, testing=False,
                     out_dir=None, masterGUIapp=None, logger_passed=False):
-    """Locate all of the segments in the provdied data, then use the
+    """Locate all of the segments in the provided data, then use the
     provided (or GUI-defined) list of selected segments to generate an
     ALLpsfs.txt file that lists all the segments in the image, and a
     regfile.txt file that lists just the guide and reference stars.
 
     Parameters
     ----------
-    data : 2-D numpy array
+    data : 2-D numpy array or str
         Image data
     root : str
         Name used to generate output folder and output filenames.
@@ -661,6 +661,7 @@ def create_reg_file(data, root, guider, in_file=None,
         if in_file:
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
+            LOGGER.info("Star Selection: Reading guide and reference star positions from {}".format(in_file))
             cols, coords, nref = parse_in_file(in_file)
             all_cols = None
         else:

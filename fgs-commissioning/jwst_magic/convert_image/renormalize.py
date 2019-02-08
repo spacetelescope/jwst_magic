@@ -1,6 +1,6 @@
-"""For given FGS counts, J mag or Jab mag, calculate the others.
+"""For given FGS countrate, J mag or Jab mag, calculate the others.
 
-Convert between FGS counts, J magnitude, and J_ab magnitude. This
+Convert between FGS countrate, J magnitude, and J_ab magnitude. This
 module is very basic and is only for a single bandpass; look at
 count_rate.f in Sherie Holfeltz's code for the procedure for more
 bandpasses.
@@ -23,23 +23,31 @@ Notes
     should be looked into at some point for consistency with other
     systems
 """
+# Standard Library Imports
+import logging
 
 # Third Party Imports
 import numpy as np
+
+# Local Imports
+from .. import utils
 
 # Constants
 FGS_ZERO_POINT = 29.057
 J_ZERO_POINT = 0.90
 CONVERSION_FACTOR = 3.1418185
 
+# Start logger
+LOGGER = logging.getLogger(__name__)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN CLASS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-class NormalizeToCounts(object):
-    """Input the user-defined value and unit (FGS Counts, FGS Magnitude
-    or J Magnitude) and convert into FGS Counts.
+class NormalizeToCountrate(object):
+    """Input the user-defined value and unit (FGS Countrate, FGS Magnitude
+    or J Magnitude) and convert into FGS Countrate.
     """
     def __init__(self, value, unit, guider):
         """Initialize the class.
@@ -48,18 +56,18 @@ class NormalizeToCounts(object):
         self.unit = unit
         self.guider = guider
 
-    def to_counts(self):
-        """Convert self.value to FGS counts
+    def to_countrate(self):
+        """Convert self.value to FGS countrate
 
         Returns
         -------
         float
-            Converted value in FGS counts
+            Converted value in FGS countrate
         """
-        if self.unit == 'FGS Counts':
+        if self.unit == 'FGS Countrate':
             return self.value
         elif self.unit == 'FGS Magnitude':
-            return fgs_mag_to_counts(self.value, self.guider)
+            return fgs_mag_to_countrate(self.value, self.guider)
 
     def to_fgs_mag(self):
         """Convert self.value to FGS magnitude
@@ -71,21 +79,21 @@ class NormalizeToCounts(object):
         """
         if self.unit == 'FGS Magnitude':
             return self.value
-        elif self.unit == 'FGS Counts':
-            return counts_to_fgs_mag(self.value, self.guider)
+        elif self.unit == 'FGS Countrate':
+            return countrate_to_fgs_mag(self.value, self.guider)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CONVERSION FUNCTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def counts_to_electrons(counts, guider):
+def countrate_to_electrons(countrate, guider):
     """Convert count rate to electrons per second
 
     Parameters
     ----------
-    counts : float
-        Input value in FGS counts
+    countrate : float
+        Input value in FGS countrate
     guider : int
         Guider number (1 or 2)
 
@@ -94,10 +102,10 @@ def counts_to_electrons(counts, guider):
     float
         Value converted to electrons per second
     """
-    return counts * find_gain(guider)
+    return countrate * find_gain(guider)
 
 
-def electrons_to_counts(electrons, guider):
+def electrons_to_countrate(electrons, guider):
     """Convert electrons per second to count rate
 
     Parameters
@@ -110,18 +118,18 @@ def electrons_to_counts(electrons, guider):
     Returns
     -------
     float
-        Value converted to FGS counts
+        Value converted to FGS countrate
     """
     return electrons / find_gain(guider)
 
 
-def counts_to_fgs_mag(counts, guider):
-    """Convert FGS counts to FGS magnitude
+def countrate_to_fgs_mag(countrate, guider):
+    """Convert FGS countrate to FGS magnitude
 
     Parameters
     ----------
-    counts : float
-        Input value in FGS counts
+    countrate : float
+        Input value in FGS countrate
     guider : int
         Guider number (1 or 2)
 
@@ -130,13 +138,13 @@ def counts_to_fgs_mag(counts, guider):
     fgs_mag : float
         Value converted to FGS magnitude
     """
-    electrons = counts_to_electrons(counts, guider)
+    electrons = countrate_to_electrons(countrate, guider)
     fgs_mag = -2.5 * np.log10(electrons/CONVERSION_FACTOR) + FGS_ZERO_POINT
     return fgs_mag
 
 
-def fgs_mag_to_counts(fgs_mag, guider):
-    """Convert FGS magnitude to FGS counts
+def fgs_mag_to_countrate(fgs_mag, guider):
+    """Convert FGS magnitude to FGS countrate
 
     Parameters
     ----------
@@ -147,12 +155,12 @@ def fgs_mag_to_counts(fgs_mag, guider):
 
     Returns
     -------
-    counts : float
-        Value converted to FGS counts
+    countrate : float
+        Value converted to FGS countrate
     """
     electrons = 10**((fgs_mag - FGS_ZERO_POINT)/-2.5) * CONVERSION_FACTOR
-    counts = electrons_to_counts(electrons, guider)
-    return counts
+    countrate = electrons_to_countrate(electrons, guider)
+    return countrate
 
 
 def fgs_mag_to_j_mag(fgs_mag):
@@ -172,13 +180,13 @@ def fgs_mag_to_j_mag(fgs_mag):
     return j_mag
 
 
-def fgs_counts_to_j_mag(counts, guider):
-    """Convert FGS counts to J magnitude
+def fgs_countrate_to_j_mag(countrate, guider):
+    """Convert FGS countrate to J magnitude
 
     Parameters
     ----------
-    counts : float
-        Input value in FGS counts
+    countrate : float
+        Input value in FGS countrate
     guider : int
         Guider number (1 or 2)
 
@@ -187,13 +195,13 @@ def fgs_counts_to_j_mag(counts, guider):
     j_mag : float
         Value converted to J magnitude
     """
-    fgs_mag = counts_to_fgs_mag(counts, guider)
+    fgs_mag = countrate_to_fgs_mag(countrate, guider)
     j_mag = fgs_mag_to_j_mag(fgs_mag)
     return j_mag
 
 
-def j_mag_to_fgs_counts(j_mag, guider):
-    """Convert J magnitude to FGS counts
+def j_mag_to_fgs_countrate(j_mag, guider):
+    """Convert J magnitude to FGS countrate
 
     Parameters
     ----------
@@ -204,12 +212,12 @@ def j_mag_to_fgs_counts(j_mag, guider):
 
     Returns
     -------
-    counts : float
-        Value converted to FGS counts
+    countrate : float
+        Value converted to FGS countrate
     """
     fgs_mag = j_mag + (FGS_ZERO_POINT + J_ZERO_POINT)
-    counts = fgs_mag_to_counts(fgs_mag, guider)
-    return counts
+    countrate = fgs_mag_to_countrate(fgs_mag, guider)
+    return countrate
 
 
 def find_gain(guider):
