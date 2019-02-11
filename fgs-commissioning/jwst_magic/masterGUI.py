@@ -43,22 +43,25 @@ of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
 
+import glob
 import os
-import sys
 import re
+import sys
 
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
-                             QDialog)
+import matplotlib
+import yaml
 from PyQt5 import QtCore, uic, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot
-import matplotlib
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
+                             QDialog)
 
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from astropy.io import ascii as asc
 import numpy as np
 
-from . import run_magic, utils, background_stars
+from . import run_magic, utils
+from jwst_magic import background_stars
 from .convert_image import renormalize
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
@@ -68,6 +71,7 @@ from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_Selec
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
+SOGS_PATH = '***REMOVED***/guiding/'
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -161,6 +165,7 @@ class MasterGui(QMainWindow):
         self.adjust_screen_size_mainGUI()
         self.init_matplotlib()
         self.define_MainGUI_connections()
+        self.setup_commissioning_naming()
         self.show()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -214,6 +219,7 @@ class MasterGui(QMainWindow):
     def define_MainGUI_connections(self):
         # Standard output and error
         self.textEdit_log.setFont(QtGui.QFont("Courier New"))
+        self.buttonGroup_name.buttonClicked.connect(self.update_naming_method)
 
         # Main window widgets
         self.pushButton_run.clicked.connect(self.run_tool)
@@ -245,6 +251,45 @@ class MasterGui(QMainWindow):
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
         self.checkBox_showStars_shifted.toggled.connect(self.on_click_showstars)
+
+    def setup_commissioning_naming(self):
+        # Load all existing practice directories
+        sogs_search = os.path.join(SOGS_PATH, '*')
+        sogs_dirs = [os.path.basename(dir) for dir in glob.glob(sogs_search)]
+
+        # # If not on SOGS, shut down selection boxes
+        # if sogs_dirs == []:
+        #     self.comboBox_practice.removeItem(0)
+        #     self.comboBox_practice.setDisabled(True)
+        #     self.practice_list = ['* NOT ON SOGS NETWORK *']
+
+        # FOR TESTING ONLY
+        if sogs_dirs == []:
+            self.practice_list = ['wfp_january_2019']
+
+        # If on SOGS, pull out practice names
+        else:
+            for d in ['data', 'processing', 'MAGIC_logs']:
+                sogs_dirs.remove(d)
+            self.practice_list = sogs_dirs
+
+        # Load all OTE cars from commissioning activities YAML file
+        commissioning_yaml = os.path.join(__location__, 'data', 'commissioning_activities.yaml')
+        with open(commissioning_yaml, encoding="utf-8") as f:
+            self.commissioning_dict = yaml.load(f.read())
+        self.cars_list = list(self.commissioning_dict.keys())
+
+        # Use to populate practice and CAR dropdown boxes
+        for practice in self.practice_list:
+            self.comboBox_practice.addItem(practice)
+        for car in self.cars_list:
+            self.comboBox_car.addItem(car.upper())
+
+        # Connect combo boxes to one another
+        self.comboBox_practice.currentIndexChanged.connect(self.update_commissioning_name)
+        self.comboBox_car.currentIndexChanged.connect(self.update_commissioning_name)
+        self.comboBox_obs.currentIndexChanged.connect(self.update_commissioning_name)
+
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # WIDGET CONNECTIONS
@@ -643,6 +688,48 @@ class MasterGui(QMainWindow):
                 self.lineEdit_regfileSegmentGuiding.setText(self.shifted_regfile)
             elif self.radioButton_unshifted.isChecked():
                 self.lineEdit_regfileSegmentGuiding.setText(self.regfile)
+
+    def update_naming_method(self):
+        if self.radioButton_name_manual.isChecked():
+            self.stackedWidget.setCurrentIndex(1)
+        elif self.radioButton_name_commissioning.isChecked():
+            self.stackedWidget.setCurrentIndex(0)
+
+    def update_commissioning_name(self):
+        # Check which values have been selected already
+        valid_practice = self.comboBox_practice.currentText() != '- Select Practice -'
+        valid_car = self.comboBox_car.currentText() != '- Select CAR -'
+        valid_obs = self.comboBox_obs.currentText() != '- Select Obs -'
+
+        # When the CAR step is changed...
+        if valid_car and self.sender() == self.comboBox_car:
+            # Update the observation dropdown box to include the possible observation numbers
+            obs_list = self.commissioning_dict[self.comboBox_car.currentText().lower()]['observations']
+            self.comboBox_obs.clear()
+            self.comboBox_obs.addItem('- Select Obs -')
+            for i_obs in range(int(obs_list)):
+                self.comboBox_obs.addItem('{:02d}'.format(i_obs + 1))
+            valid_obs = False
+
+            # Add the current APT program number
+            self.label_apt.setText('APT: {}'.format(
+                self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt'])
+            )
+
+        # Update which boxes are enabled and disabled accordingly
+        self.comboBox_car.setEnabled(valid_practice)
+        self.comboBox_obs.setEnabled(valid_practice & valid_car)
+
+        # Update the preview output path
+        if valid_practice and valid_car and valid_obs:
+            path = os.path.join(SOGS_PATH,
+                                self.comboBox_practice.currentText(),
+                                self.comboBox_car.currentText().lower().replace('-', ''),
+                                'for_obs{}'.format(self.comboBox_obs.currentText()))
+            self.textBrowser_name_preview.setText(path)
+        else:
+            self.textBrowser_name_preview.setText('')
+
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
