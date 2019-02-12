@@ -44,9 +44,9 @@ class RunningTheTool():
                                                    nircam=nircam, out_dir=OUT_PATH)
 
         # Find peaks in data and create a reg file with randomly selected PSFs
-        select_psfs.create_reg_file(data, self.root, self.guider,
-                                    global_alignment=self.global_alignment,
-                                    testing=True, out_dir=OUT_PATH)
+        select_psfs.select_psfs(data, self.root, self.guider,
+                                global_alignment=self.global_alignment,
+                                testing=True, out_dir=OUT_PATH)
 
         # Write all steps accordingly
         steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']

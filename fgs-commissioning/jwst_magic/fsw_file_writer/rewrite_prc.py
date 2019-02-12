@@ -131,7 +131,6 @@ def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
         cols = select_psfs.create_cols_for_coords_counts(all_rows['x'], all_rows['y'],
                                                          all_rows['countrate'], 0,
                                                          inds=inds)
-        utils.write_cols_to_file(out_dir,
-                                 filename='{0}_G{1}_regfile.txt'.format(root, guider),
+        utils.write_cols_to_file(os.path.join(out_dir, '{0}_G{1}_regfile.txt'.format(root, guider)),
                                  labels=['y', 'x', 'countrate'],
                                  cols=cols)

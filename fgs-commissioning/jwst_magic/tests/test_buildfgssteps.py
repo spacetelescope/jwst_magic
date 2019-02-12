@@ -66,7 +66,7 @@ def test_shift_to_id_attitude(test_directory, crowded_field, guider, regfile_coo
         fgs_data = hdulist[1].data
 
     # Run the code
-    BFS = BuildFGSSteps(fgs_data, guider, ROOT, 'ID', regfile=SELECTED_SEGS,
+    BFS = BuildFGSSteps(fgs_data, guider, ROOT, 'ID', guiding_selections_file=SELECTED_SEGS,
                         out_dir=__location__, catalog=SEGMENT_INFILE, crowded_field=crowded_field)
 
     # Define filenames
