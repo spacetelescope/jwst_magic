@@ -737,13 +737,14 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(output_path_save)
     if not fgsout_path:
-        fgsout_path = os.path.join(output_path_save, 'FGS_imgs',
-                                   '{}_G{}.fits'.format(root, guider))
+        fgsout_path = os.path.join(output_path_save, 'FGS_imgs')
+    fgsout_file = os.path.join(fgsout_path, '{}_G{}.fits'.format(root, guider))
+
     # Load header file
     header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
     hdr = fits.getheader(header_file, ext=0)
 
     # Write FITS file
-    utils.write_fits(fgsout_path, np.uint16(data), header=hdr)
+    utils.write_fits(fgsout_file, np.uint16(data), header=hdr)
 
     return fgsout_path

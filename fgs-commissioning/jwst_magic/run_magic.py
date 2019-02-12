@@ -62,7 +62,7 @@ LOGGER = logging.getLogger(__name__)
 
 def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             nircam_det=None, nircam=True, global_alignment=False, steps=None,
-            in_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
+            guiding_selections_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
             coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
@@ -94,7 +94,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         If this is not a global_alignment image, set this flag to False
     steps: list of strings, optional
         List of the steps to be completed
-    in_file: str, optional
+    guiding_selections_file: str, optional
         If this image comes with an incat or reg file, the file path
     bkgd_stars : boolean, optional
         Add background stars to the image?
@@ -176,22 +176,24 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         fgs_im = image
         LOGGER.info("Assuming that the input image is a raw FGS image")
 
-    # create reg file
+    # Select guide & reference PSFs
     if star_selection:
-        select_psfs.create_reg_file(fgs_im, root, guider,
-                                    return_nref=False,
-                                    global_alignment=global_alignment,
-                                    in_file=in_file, out_dir=out_dir,
-                                    logger_passed=True, masterGUIapp=masterGUIapp)
+        guiding_selections_file, _ = select_psfs.select_psfs(
+            fgs_im, root, guider,
+            global_alignment=global_alignment,
+            guiding_selections_file=guiding_selections_file,
+            out_dir=out_dir,
+            logger_passed=True, masterGUIapp=masterGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
 
-    # create all files for FSW/DHAS/FGSES/etc.
+    # Create all files for FSW/DHAS/FGSES/etc.
     if file_writer:
         if steps is None:
             steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
         for step in steps:
             buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step,
                                         out_dir=out_dir, logger_passed=True,
-                                        regfile=in_file, shift_id_attitude=shift_id_attitude,
+                                        guiding_selections_file=guiding_selections_file,
+                                        shift_id_attitude=shift_id_attitude,
                                         crowded_field=crowded_field)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
