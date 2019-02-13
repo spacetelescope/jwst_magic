@@ -1,8 +1,8 @@
 before_script:
   - bash
-  - export PATH="/user/lchambers/miniconda3/bin:$PATH"
+  - export PATH="/home/lchambers/miniconda3/bin:$PATH"
   - conda_envs=$( conda env list )
-  - if [[ $conda_envs = *"/user/lchambers/miniconda3/envs/magic"* ]];
+  - if [[ $conda_envs = *"/home/lchambers/miniconda3/envs/magic"* ]];
       then echo "MAGIC environment already installed. Updating from environment.yml." &&
            conda env update -f fgs-commissioning/environment.yml;
       else echo "MAGIC environment installing from environment.yml." &&
