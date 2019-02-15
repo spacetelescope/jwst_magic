@@ -300,7 +300,6 @@ def transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector
 
     return image
 
-
 def transform_sci_to_fgs_raw(image, to_fgs_detector):
     """Rotate NIRCam or FGS image from DMS/science coordinate frame
     (the expected frame for output DMS images) to FGS raw. Note that
@@ -632,7 +631,7 @@ def convert_im(input_im, guider, root, nircam=True,
 
 
         # Create raw FGS image...
-        # From a NIRCam image
+        # -------------- From NIRCam --------------
         if nircam:
             LOGGER.info("Image Conversion: This is a NIRCam image")
 
@@ -664,13 +663,15 @@ def convert_im(input_im, guider, root, nircam=True,
             # Pad image
             data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
 
-        # From an FGS image (i.e. do nothing)
+        # -------------- From FGS --------------
         else:
             LOGGER.info("Image Conversion: This is an FGS image")
-
-            if itm:
-                LOGGER.info("Image Conversion: Data provided in science/DMS frame; rotating to raw FGS frame.")
-                data = transform_sci_to_fgs_raw(data, guider)
+            #from_guider = utils.get_guider(header)
+            #if guider != from_guider:
+            # uncal_guider correct and gs-id incorrect, do not have same rotation
+            #if itm:
+            LOGGER.info("Image Conversion: Expect that data provided is in science/DMS frame; rotating to raw FGS frame.")
+            data = transform_sci_to_fgs_raw(data, guider)
 
         # Apply Gaussian filter to simulate coarse pointing
         if coarse_pointing:
