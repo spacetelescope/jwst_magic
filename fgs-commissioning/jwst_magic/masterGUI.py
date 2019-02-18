@@ -529,8 +529,9 @@ class MasterGui(QMainWindow):
         # Show input image preview
         self.load_input_image_data(filename)
 
-        # Show converted image preview, if possible
+        # Show converted and shifted image previews, if possible
         self.update_converted_image_preview()
+        self.update_shifted_image_preview()
 
         return filename
 
@@ -902,6 +903,7 @@ class MasterGui(QMainWindow):
 
             # Load data
             data, _ = utils.get_data_and_header(self.shifted_im_file)
+            print('*** MAX: {} *** MIN: {} ***'.format(np.max(data), np.min(data)))
             data[data <= 0] = 1
 
             # Load ALLpsfs.text
@@ -913,6 +915,7 @@ class MasterGui(QMainWindow):
 
             # Plot data image and peak locations from ALLpsfs.txt
             self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
+            print('*** DRAWING SHIFTED IMAGE ***')
 
             # If possible, plot the selected stars in the regfile.txt
             if os.path.exists(self.shifted_regfile):
@@ -934,6 +937,8 @@ class MasterGui(QMainWindow):
                                                     mec='darkorange', mew=2, lw=0)
                 )
 
+            self.canvas_shifted.draw()
+
         # If not, show nothing.
         else:
             # Update textbox showing filepath
@@ -953,6 +958,7 @@ class MasterGui(QMainWindow):
             dummy_img = self.canvas_shifted.axes.imshow(
                 np.array([[1e4, 1e4], [1e4, 1e4]]), cmap='bone', clim=(1e-1, 1e2)
             )
+            print('\n *** loaded the dummy img wuh oh *** \n')
 
         return self.canvas_shifted.draw()
 

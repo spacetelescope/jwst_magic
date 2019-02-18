@@ -182,6 +182,8 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.axes.set_ylabel(ylabel)
         self.draw()
 
+        print('/n*** DREW PLOTS FOR CANVAS {} *** /n'.format(self))
+
     def init_profile(self):
         """Initialize the PSF profile figure.
         """
