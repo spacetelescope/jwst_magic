@@ -24,7 +24,7 @@ env:
       # set up a conda environment for testing
       # - MAIN_CMD='python fgs-commissioning/setup.py'
       - CONDA_CHANNELS='http://ssb.stsci.edu/astroconda'
-      - CONDA_ENVIRONMENT='fgs-commissioning/environment.yml'
+      # - CONDA_ENVIRONMENT='fgs-commissioning/environment.yml'
       # - CONDA_DEPENDENCIES='pytest=3.6 sphinx'
       # - PIP_DEPENDENCIES=''
       - PYTHON_VERSION=3.6
@@ -44,6 +44,7 @@ install:
   # environment.yml
   - git clone git://github.com/astropy/ci-helpers.git
   - source ci-helpers/travis/setup_conda_$TRAVIS_OS_NAME.sh
+  - conda env update -f=fgs-commissioning/environment.yml
   # Install the package
   - python fgs-commissioning/setup.py install
   # - conda env create -f fgs-commissioning/environment.yml
