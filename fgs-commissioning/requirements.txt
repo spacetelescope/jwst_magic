@@ -8,3 +8,4 @@ pyyaml
 requests
 pytest
 photutils
+scipy
