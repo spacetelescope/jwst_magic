@@ -71,10 +71,7 @@ from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_Selec
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
-# SOGS_PATH = '***REMOVED***/guiding/'
-
-
-SOGS_PATH = '~/Desktop/SOGS/guiding/'
+SOGS_PATH = '***REMOVED***/guiding/'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OUTPUT HANDLER
@@ -256,16 +253,21 @@ class MasterGui(QMainWindow):
         self.checkBox_showStars_shifted.toggled.connect(self.on_click_showstars)
 
     def setup_commissioning_naming(self):
-        # If not on SOGS, shut down selection boxes
-        # if not utils.on_sogs_network():
-        #     self.comboBox_practice.removeItem(0)
-        #     self.comboBox_practice.setDisabled(True)
-        #     sogs_dirs = ['* NOT ON SOGS NETWORK *']
-        #     return
-
-        # FOR TESTING ONLY
+        # If not on SOGS:
         if not utils.on_sogs_network():
-            sogs_dirs = ['wfp_january_2019']
+            # Shut down selection boxes
+            self.comboBox_practice.removeItem(0)
+            self.comboBox_practice.setDisabled(True)
+            self.comboBox_practice.addItem('* NOT ON SOGS NETWORK *')
+
+            # Switch to the manual naming pane
+            self.stackedWidget.setCurrentIndex(1)
+            self.radioButton_name_manual.setChecked(True)
+            return
+
+        # # FOR TESTING ONLY
+        # if not utils.on_sogs_network():
+        #     sogs_dirs = ['wfp_january_2019']
 
         # If on SOGS, pull out practice names from existing practice directories
         else:
@@ -274,7 +276,6 @@ class MasterGui(QMainWindow):
             for d in ['data', 'processing', 'MAGIC_logs']:
                 sogs_dirs.remove(d)
 
-        # TO-DO: POST-TESTING: ALL THE FOLLOWING SHOULD BE INDENTED, maybe?
         # Load all OTE cars from commissioning activities YAML file
         commissioning_yaml = os.path.join(__location__, 'data', 'commissioning_activities.yaml')
         with open(commissioning_yaml, encoding="utf-8") as f:
