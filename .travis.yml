@@ -12,6 +12,9 @@ python:
   - 3.6
   - 3.5
 
+os:
+  - osx
+
 env:
   global:
       # Define variables that will be used by astropy/ci-helpers to
