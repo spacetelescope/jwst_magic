@@ -27,7 +27,7 @@ env:
       - CONDA_ENVIRONMENT='fgs-commissioning/environment.yml'
       # - CONDA_DEPENDENCIES='pytest=3.6 sphinx'
       # - PIP_DEPENDENCIES=''
-      # - PYTHON_VERSION=3.6
+      - PYTHON_VERSION=3.6
       # - NUMPY_VERSION=stable
       # - ASTROPY_VERSION=stable
       # - EVENT_TYPE='push pull_request'
@@ -52,4 +52,4 @@ install:
 # command to run tests, e.g. python setup.py test
 script:
   # - python -m pytest tests/
-  - pytest fgs-commissioning/tests/
+  - pytest fgs-commissioning/jwst_magic/tests/
