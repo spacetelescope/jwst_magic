@@ -48,7 +48,7 @@ install:
   - pip install -r fgs-commissioning/requirements.txt
   # - conda env update -f=fgs-commissioning/environment.yml
   # Install the package
-  - python fgs-commissioning/setup.py install
+  - pip install fgs-commissioning/setup.py
   # - conda env create -f fgs-commissioning/environment.yml
   # - conda activate magic
 
