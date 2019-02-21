@@ -1,6 +1,6 @@
-"""Rewrite .prc and regfile.txt files with new guide and reference stars
+"""Rewrite .prc and guiding_selections*.txt files with new guide and reference stars
 
-Allow the user to rewrite the ID.prc, ACQ.prc, and regfile.txt files
+Allow the user to rewrite the ID.prc, ACQ.prc, and guiding_selections*.txt files
 without rerunning image conversion and star selection.
 
 Authors
@@ -29,7 +29,8 @@ Use
         ``thresh_factor`` - factor by which to multiply the countrates
             to determine the threshold count rate
         ``prc`` - denotes whether to rewrite {root}_G{guider}_ID.prc
-        ``regfile`` - denotes whether to rewrite {root}_G{guider}_regfile.txt
+        ``guiding_selections_file`` - denotes whether to rewrite
+            guiding_selections_{root}_G{guider}.txt
 
 """
 
@@ -51,8 +52,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
-                prc=True, regfile=True):
-    """For a given dataset, rewrite the PRC and regfile to select a
+                prc=True, guiding_selections_file=True):
+    """For a given dataset, rewrite the PRC and guiding_selections*.txt to select a
     new commanded guide star and reference stars
 
     Parameters
@@ -74,24 +75,25 @@ def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
         the threshold count rate
     prc : bool, optional
         Denotes whether to rewrite {root}_G{guider}_ID.prc
-    regfile : bool, optional
-        Denotes whether to rewrite {root}_G{guider}_regfile.txt
+    guiding_selections_file : bool, optional
+        Denotes whether to rewrite guiding_selections_{root}_G{guider}.txt
 
     Raises
     ------
     TypeError
         A string of labels was provided that is not only letters.
     ValueError
-        Could not match provided segment labels to ALLpsfs.txt.
+        Could not match provided segment labels to all_found_psfs*.txt.
         Value passed to inds that is neither an alphabetic
             string or a list of integers.
     """
 
     out_dir = os.path.join(out_dir, 'out', root)
+    file_root = '{}_G{}'.format(root, guider)
 
     # Open log of all identified PSFs
     LOGGER.info("Rewrite PRC: Reading from (and writing to) {}".format(out_dir))
-    all_psfs = os.path.join(out_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))
+    all_psfs = os.path.join(out_dir, 'all_found_psfs_{}.txt'.format(file_root))
     all_rows = asc.read(all_psfs)
 
     # If the segments are specified as a string of alphabetic labels
@@ -99,7 +101,7 @@ def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
         labels = all_rows['label'].data
         if len(set(labels)) != len(labels):
             raise ValueError('Could not accurately map labels to segments. This is '
-                             'most likely due to incorrect labelling in the ALLpsfs.txt file.')
+                             'most likely due to incorrect labelling in the all_found_psfs*.txt file.')
         if not inds.isalpha():
             raise TypeError('Must enter only letters as PSF labels.')
 
@@ -126,11 +128,11 @@ def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
         Mkproc(guider, root, rows['x'], rows['y'], rows['countrate'], step='ID',
                out_dir=out_dir, thresh_factor=thresh_factor)
 
-    # Rewrite regfile.txt
-    if regfile:
+    # Rewrite guiding_selections*.txt
+    if guiding_selections_file:
         cols = select_psfs.create_cols_for_coords_counts(all_rows['x'], all_rows['y'],
                                                          all_rows['countrate'], 0,
                                                          inds=inds)
-        utils.write_cols_to_file(os.path.join(out_dir, '{0}_G{1}_regfile.txt'.format(root, guider)),
+        utils.write_cols_to_file(os.path.join(out_dir, 'guiding_selections_{}.txt'.format(file_root)),
                                  labels=['y', 'x', 'countrate'],
                                  cols=cols)

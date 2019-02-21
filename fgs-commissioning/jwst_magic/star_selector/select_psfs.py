@@ -1,12 +1,12 @@
 """Find all the relevant PSFs in the image, be it manually or using a
-file, and generate a regfile.txt and ALLpsfs.txt.
+file, and generate a guiding_selections*.txt and all_found_psfs*.txt.
 
 Analyze image data using the photutils find_peaks function to identify
 the locations and count rates of all stars (or segments) in the image.
 Either prompt the use to select which stars to use as the guide and
 reference stars, or read the guide and reference stars from a
-pre-existing regfile. Generate an ALLpsfs.txt file that lists all the
-segments in the image, and a regfile.txt file that lists just the guide
+pre-existing guiding_selections*.txt. Generate an all_found_psfs*.txt file that lists all the
+segments in the image, and a guiding_selections*.txt file that lists just the guide
 and reference stars.
 
 Authors
@@ -382,13 +382,13 @@ def match_psfs_to_segments(x, y, global_alignment):
     if len(set(matched_labels)) != len(matched_labels) and global_alignment:
         LOGGER.warning('Could not accurately map labels to segments. It will not '
                        'be possible to run fsw_file_writer.rewrite_prc using the '
-                       'ALLpsfs.txt file generated here.')
+                       'all_found_psfs*.txt file generated here.')
 
     return matched_labels
 
 
 def parse_in_file(in_file):
-    """Get the position and countrates from a provided regfile.txt
+    """Get the position and countrates from a provided guiding_selections*.txt
 
     Determines if the input file contains x, y, and countrate data. If
     so, extracts the locations and countrates of the stars accordingly.

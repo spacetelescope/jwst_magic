@@ -98,7 +98,7 @@ class SegmentGuidingCalculator:
             Location of out/ directory.
 
         segment_infile : str, optional
-            Filepath to ALLpsfs.txt file with list of all segment locations
+            Filepath to all_found_psfs*.txt file with list of all segment locations
             and countrates
             Used for SOF Generation
         guide_star_params_dict : dict, optional
@@ -112,7 +112,7 @@ class SegmentGuidingCalculator:
              'seg_num': 0}  # selected segment to guide on
              Used for SOF Generation
         selected_segs : str, optional
-            Filepath to regfile.txt file with list of locations and
+            Filepath to guiding_selections*.txt file with list of locations and
             countrates for the selected segments (guide and reference stars)
             Used for SOF Generation
         threshold_factor : float, optional
@@ -553,30 +553,30 @@ class SegmentGuidingCalculator:
             else:
                 self.selected_segment_ids = selected_segs - 1
 
-        # Else if they are a regfile, parse it.
+        # Else if they are a guiding_selections*.txt, parse it.
         elif os.path.exists(selected_segs):
             LOGGER.info('Segment Guiding: Guiding on segments selected in {}'.format(selected_segs))
-            self.parse_regfile(selected_segs)
+            self.parse_guiding_selections_file(selected_segs)
 
         # Otherwise, we don't know what it is...
         else:
             raise TypeError(
-                'Unrecognized data type passed to selected_segs ({}); must be regfile.txt path or array of indices.'.
+                'Unrecognized data type passed to selected_segs ({}); must be guiding_selections*.txt path or array of indices.'.
                 format(selected_segs)
             )
 
-    def parse_regfile(self, selected_segs):
-        """Extract the segment positions and count rates from a regfile.txt
+    def parse_guiding_selections_file(self, selected_segs):
+        """Extract the segment positions and count rates from a guiding_selections*.txt
 
         Parameters
         ----------
         selected_segs : str
-            Filepath to regfile.txt
+            Filepath to guiding_selections*.txt
 
         Raises
         ------
         TypeError
-            Incompatible regfile.txt file provided as selected_segs
+            Incompatible guiding_selections*.txt file provided as selected_segs
         """
         # Make sure the file is ascii-readable
         n_segs = len(self.seg_id_array)
@@ -588,7 +588,7 @@ class SegmentGuidingCalculator:
                 format(selected_segs)
             )
         except:
-            raise TypeError('Incompatible regfile type: ', selected_segs)
+            raise TypeError('Incompatible guiding_selections*.txt type: ', selected_segs)
 
         # Are the segment positions already in V2/V3?
         if (any(['V2Seg' == c for c in column_names])) and \
@@ -606,7 +606,7 @@ class SegmentGuidingCalculator:
 
         # If the positions aren't V2/V3 or x/y, what are they??
         else:
-            raise TypeError('Incompatible regfile type: ', selected_segs)
+            raise TypeError('Incompatible guiding_selections*.txt type: ', selected_segs)
 
         # Match locations of selected segments to IDs of known segments
         selected_segs_ids = []
@@ -763,7 +763,7 @@ def generate_segment_override_file(segment_infile, guider,
     Parameters
     ----------
     segment_infile : str
-        File path to ALLpsfs.txt file with list of all segment locations
+        File path to all_found_psfs*.txt file with list of all segment locations
         and countrates
     guider : int
         Which guider is being used: 1 or 2
@@ -781,7 +781,7 @@ def generate_segment_override_file(segment_infile, guider,
         Location of out/ directory. If not specified, will be placed
         within the repository: .../tools/fgs_commissioning/out/
     selected_segs : str, optional
-        File path to regfile.txt file with list of locations and
+        File path to guiding_selections*.txt file with list of locations and
         countrates for the selected segments (guide and reference stars)
         Required if click_to_select_GUI=False
     click_to_select_gui : bool, optional
@@ -1083,7 +1083,7 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
     Parameters
     ----------
     segment_infile : str
-        File path to ALLpsfs.txt file with list of all segment locations
+        File path to all_found_psfs*.txt file with list of all segment locations
         and countrates
     data : 2-D numpy array
         Image that will be displayed in the click-to-select GUI
@@ -1092,7 +1092,7 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
     master_gui_app : qApplication or None
         qApplication instance of parent GUI
     selected_segs : str, optional
-        File path to regfile.txt file with list of locations and
+        File path to guiding_selections*.txt file with list of locations and
         countrates for the pre-selected segments (guide and reference stars)
 
     Returns
@@ -1106,7 +1106,7 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
 
     """
     if selected_segs is not None:
-        # Parse ALLpsfs.txt for locations of segments
+        # Parse all_found_psfs*.txt for locations of segments
         all_segment_locations = asc.read(segment_infile)
         x = all_segment_locations['x']
         y = all_segment_locations['y']

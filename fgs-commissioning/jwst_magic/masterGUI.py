@@ -406,7 +406,7 @@ class MasterGui(QMainWindow):
         shift_id_attitude = self.checkBox_id_attitude.isChecked()
         crowded_field =  self.radioButton_crowded_id_attitude.isChecked()
 
-        # Rewrite .prc and regfile.txt ONLY
+        # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
             # Open converted FGS file
             data, _ = utils.get_data_and_header(self.converted_im_file)
@@ -414,7 +414,7 @@ class MasterGui(QMainWindow):
             # Update array for showing in LogNorm
             data[data <= 0] = 1
 
-            # Open ALLpsfs.txt (list of all identified segments)
+            # Open all_found_psfs*.txt (list of all identified segments)
             all_psfs = self.all_found_psfs_file
             all_rows = asc.read(all_psfs)
             x = all_rows['x'].data
@@ -454,13 +454,13 @@ class MasterGui(QMainWindow):
                     root, program_id, observation_num, visit_num, out_dir=out_dir
                 )
             else:
-                # Define location of ALLpsfs catalog file
+                # Define location of all_found_psfs catalog file
                 if self.radioButton_shifted.isChecked():
                     segment_infile = self.shifted_all_found_psfs_file
                 else:
                     segment_infile = self.all_found_psfs_file
 
-                # Verify that the ALLpsfs.txt file exists
+                # Verify that the all_found_psfs*.txt file exists
                 if not os.path.exists(segment_infile):
                     raise OSError('Provided segment infile {} not found.'.format(segment_infile))
 
@@ -473,7 +473,7 @@ class MasterGui(QMainWindow):
                     fgs_filename = input_image
                 data, _ = utils.get_data_and_header(fgs_filename)
 
-                # Determine whether to load regfile or run GUI
+                # Determine whether to load guiding_selections*.txt or run GUI
                 GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
                 selected_segs = self.lineEdit_regfileStarSelector.text()
 
@@ -944,17 +944,17 @@ class MasterGui(QMainWindow):
             data, _ = utils.get_data_and_header(self.converted_im_file)
             data[data <= 0] = 1
 
-            # Load ALLpsfs.text
+            # Load all_found_psfs*.text
             x, y = [None, None]
             if os.path.exists(self.all_found_psfs_file):
                 psf_list = asc.read(self.all_found_psfs_file)
                 x = psf_list['x']
                 y = psf_list['y']
 
-            # Plot data image and peak locations from ALLpsfs.txt
+            # Plot data image and peak locations from all_found_psfs*.txt
             self.canvas_converted.compute_initial_figure(self.canvas_converted.fig, data, x, y)
 
-            # If possible, plot the selected stars in the regfile.txt
+            # If possible, plot the selected stars in the guiding_selections*.txt
             if os.path.exists(self.guiding_selections_file):
                 selected_psf_list = asc.read(self.guiding_selections_file)
                 x_selected = selected_psf_list['x']
@@ -1021,17 +1021,17 @@ class MasterGui(QMainWindow):
             data, _ = utils.get_data_and_header(self.shifted_im_file)
             data[data <= 0] = 1
 
-            # Load ALLpsfs.text
+            # Load all_found_psfs*.text
             x, y = [None, None]
             if os.path.exists(self.shifted_all_found_psfs_file):
                 psf_list = asc.read(self.shifted_all_found_psfs_file)
                 x = psf_list['x']
                 y = psf_list['y']
 
-            # Plot data image and peak locations from ALLpsfs.txt
+            # Plot data image and peak locations from all_found_psfs*.txt
             self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
 
-            # If possible, plot the selected stars in the regfile.txt
+            # If possible, plot the selected stars in the guiding_selections*.txt
             if os.path.exists(self.shifted_guiding_selections_file):
                 selected_psf_list = asc.read(self.shifted_guiding_selections_file)
                 x_selected = selected_psf_list['x']
@@ -1078,7 +1078,7 @@ class MasterGui(QMainWindow):
         #   1) manual naming is selected and the root, out_dir, and guider have been defined, or
         #   2) commissioning naming is selected and the practice, CAR, and observation have
         #       been selected
-        # show an example filepath to a simulated image, and auto-populate the regfile.text
+        # show an example filepath to a simulated image, and auto-populate the guiding_selections*.txt.text
         # filepath. Also, auto-generate important filenames as class attributes.
 
         if self.is_valid_path_defined():
@@ -1129,7 +1129,7 @@ class MasterGui(QMainWindow):
             self.shifted_guiding_selections_file = os.path.join(root_dir, 'shifted',
                                                 'guiding_selections_{}_G{}.txt'.format(root, guider))
 
-            # Update default regfile paths in GUI
+            # Update default guiding_selections*.txt paths in GUI
             if os.path.exists(self.guiding_selections_file):
                 self.lineEdit_regfileStarSelector.setText(self.guiding_selections_file)
                 if not self.radioButton_shifted.isChecked():

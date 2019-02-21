@@ -127,7 +127,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         for i in range(len(x)):
             self.comboBox_segmentCenter.addItem('{}'.format(i+1))
 
-        # Load stars from regfile, if it exists
+        # Load stars from guiding_selections*.txt, if it exists
         if self.selected_segs is not None and os.path.exists(self.selected_segs):
             self.load_orientation()
         self.selected_segs = None
@@ -221,24 +221,24 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
         Parameters
         ----------
         selected_segs : str, optional
-            Filepath to regfile.txt file with list of locations and
+            Filepath to guiding_selections*.txt file with list of locations and
             countrates for the selected segments (guide and reference stars).
         """
         # Determine what are the indices of the stars to load
 
-        # Read them from a regfile
+        # Read them from a guiding_selections*.txt
         if self.selected_segs is not None:
-            regfile_locations = asc.read(self.selected_segs)
-            x_reg = regfile_locations['x']
-            y_reg = regfile_locations['y']
+            guiding_selections_locations = asc.read(self.selected_segs)
+            x_reg = guiding_selections_locations['x']
+            y_reg = guiding_selections_locations['y']
             selected_indices = []
             for x, y in zip(x_reg, y_reg):
                 for i in range(len(self.x)):
                     if self.x[i] == x and self.y[i] == y:
                         selected_indices.append(i + 1)
-            regfile_message = ' from regfile.txt'
+            guiding_selections_file_message = ' from guiding_selections*.txt'
 
-            # If the regfile doesn't match the ALLpsfs locations,
+            # If the guiding_selections*.txt doesn't match the all_found_psfs*.txt locations,
             # don't try to load anything.
             if not selected_indices:
                 return
@@ -252,7 +252,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
             selected_row = self.tableWidget_commands.selectedItems()[0].row()
             selected_orientation = self.tableWidget_commands.item(selected_row, 0).text()
             selected_indices = [int(s) for s in selected_orientation.split(', ')]
-            regfile_message = ''
+            guiding_selections_file_message = ''
 
         # Update the table and canvas
         for i_row, ind in enumerate(selected_indices):
@@ -293,7 +293,7 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 
         # Send message to output
         remstar_string = 'Loaded orientation{}: {}'.\
-            format(regfile_message, ', '.join([str(i) for i in selected_indices]))
+            format(guiding_selections_file_message, ', '.join([str(i) for i in selected_indices]))
         self.textEdit_output.setHtml(remstar_string + "<br>" + self.textEdit_output.toHtml())
         if self.print_output:
             print(remstar_string)

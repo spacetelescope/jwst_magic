@@ -24,8 +24,8 @@ Use
         ``step`` - name of guiding step for which to create images
             (expecting 'ID', 'ACQ1', 'ACQ2', 'TRK', or 'LOSTRK')
     Optional arguments:
-        ``regfile`` - file containing X/Y positions and countrates for
-            all stars in an image
+        ``guiding_selections_file`` - file containing X/Y positions and
+            countrates for all stars in an image
         ``configfile`` - file defining parameters for each guider step.
             If not defined, defaults to jwst_magic/data/config.ini
         ``out_dir`` - where output files will be saved. If not provided,
@@ -400,41 +400,41 @@ class BuildFGSSteps(object):
         LOGGER.info("FSW File Writing: Shifting guide star to ID attitude ({}, {})".format(xend, yend))
         shifted_image = shift(image, (dy, dx), mode='constant', cval=bkg, prefilter=True)
 
-        # 2) Rewrite regfile.txt and save old file as regfile_unshifted.txt
+        # 2) Write new shifted guiding_selections*.txt
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Shift the regfile catalog
-        shifted_regfile_cat = guiding_selections_cat.copy()
-        shifted_regfile_cat['x'] += dx
-        shifted_regfile_cat['y'] += dy
+        # Shift the guiding selections catalog
+        shifted_guiding_selections_cat = guiding_selections_cat.copy()
+        shifted_guiding_selections_cat['x'] += dx
+        shifted_guiding_selections_cat['y'] += dy
 
-        shifted_regfile = os.path.join(self.out_dir, 'shifted',
+        shifted_guiding_selections = os.path.join(self.out_dir, 'shifted',
                                        'guiding_selections_{}.txt'.format(file_root))
 
-        # Write new regfile.txts
-        utils.write_cols_to_file(os.path.join(self.out_dir, shifted_regfile),
+        # Write new guiding_selections*.txts
+        utils.write_cols_to_file(os.path.join(self.out_dir, shifted_guiding_selections),
                                  labels=['y', 'x', 'countrate'],
-                                 cols=shifted_regfile_cat)
+                                 cols=shifted_guiding_selections_cat)
 
 
-        # 3) Rewrite ALLpsfs.txt and save old file as ALLpsfs_unshifted.txt
+        # 3) Write new shifted all_found_psfs*.txt
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Shift the ALLpsfs catalog
-        shifted_ALLpsfs_cat = all_found_psfs_cat.copy()
-        shifted_ALLpsfs_cat['x'] += dx
-        shifted_ALLpsfs_cat['y'] += dy
+        # Shift the all_found_psfs*.txt catalog
+        shifted_all_psfs_cat = all_found_psfs_cat.copy()
+        shifted_all_psfs_cat['x'] += dx
+        shifted_all_psfs_cat['y'] += dy
 
-        shifted_ALLpsfs = os.path.join(self.out_dir, 'shifted',
+        shifted_all_psfs = os.path.join(self.out_dir, 'shifted',
                                        'all_found_psfs_{}.txt'.format(file_root))
 
-        all_cols = select_psfs.create_cols_for_coords_counts(shifted_ALLpsfs_cat['x'],
-                                                             shifted_ALLpsfs_cat['y'],
-                                                             shifted_ALLpsfs_cat['countrate'],
+        all_cols = select_psfs.create_cols_for_coords_counts(shifted_all_psfs_cat['x'],
+                                                             shifted_all_psfs_cat['y'],
+                                                             shifted_all_psfs_cat['countrate'],
                                                              None,
-                                                             labels=shifted_ALLpsfs_cat['label'],
-                                                             inds=range(len(shifted_ALLpsfs_cat['x'])))
+                                                             labels=shifted_all_psfs_cat['label'],
+                                                             inds=range(len(shifted_all_psfs_cat['x'])))
 
-        # Write new ALLpsfs.txts
-        utils.write_cols_to_file(os.path.join(self.out_dir, shifted_ALLpsfs),
+        # Write new all_found_psfs*.txts
+        utils.write_cols_to_file(os.path.join(self.out_dir, shifted_all_psfs),
                                  labels=['label', 'y', 'x', 'countrate'],
                                  cols=all_cols)
 
