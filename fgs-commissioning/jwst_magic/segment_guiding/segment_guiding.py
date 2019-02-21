@@ -127,9 +127,9 @@ class SegmentGuidingCalculator:
 
         # Initialize parameters into attributes
         self.override_type = override_type
-        self.program_id = program_id
-        self.observation_num = observation_num
-        self.visit_num = visit_num
+        self.program_id = int(program_id)
+        self.observation_num = int(observation_num)
+        self.visit_num = int(visit_num)
         self.root = root
         self.out_dir = out_dir
         self.threshold_factor = threshold_factor
@@ -286,7 +286,7 @@ class SegmentGuidingCalculator:
             countrate_qualifier = ' -count_rate_factor={:.3f}'.\
                 format(self.countrate_factor) if self.countrate_factor else ''
             out_string = 'sts -gs_select {:4d}:{}:{}{}'.\
-                format(int(self.program_id), self.observation_num,
+                format(self.program_id, self.observation_num,
                        self.visit_num, countrate_qualifier)
             if self.override_type == "SOF":
                 # Determine which segments have been selected

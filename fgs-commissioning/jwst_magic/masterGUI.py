@@ -146,11 +146,6 @@ class MasterGui(QMainWindow):
         self.bkgd_stars = None
         self.itm = itm
 
-        # Initialize SGT attributes
-        self.prognum = None
-        self.obsnum = None
-        self.visitnum = None
-
         # Initialize main window object
         QMainWindow.__init__(self)
 
@@ -441,9 +436,16 @@ class MasterGui(QMainWindow):
         if self.groupBox_segmentGuiding.isChecked():
             # Get APT program information from parsed header
             self.parse_header(input_image)
-            program_id = self.prognum
-            observation_num = self.obsnum
-            visit_num = self.visitnum
+
+            # If commissioning name, load the program and observation number
+            if self.radioButton_name_commissioning.isChecked():
+                program_id = int(self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt'])
+                observation_num = int(self.comboBox_obs.currentText())
+                visit_num = 1  # Will we ever have a visit that's not 1?
+            else:
+                program_id = None
+                observation_num = None
+                visit_num = None
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():
