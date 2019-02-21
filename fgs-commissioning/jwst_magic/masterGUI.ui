@@ -166,7 +166,7 @@ Image:</string>
                      <string>Show or hide the locations of stars and star selections as found in the ALLpsfs.txt and regfile in the root directory</string>
                     </property>
                     <property name="text">
-                     <string>Show most recent guide and reference star selections (regfile.txt)</string>
+                     <string>Show most recent guide and reference star selections (guiding_selections*.txt)</string>
                     </property>
                     <property name="checked">
                      <bool>true</bool>
@@ -301,7 +301,7 @@ Image:</string>
                      <string>Show or hide the locations of stars and star selections as found in the ALLpsfs.txt and regfile in the root directory</string>
                     </property>
                     <property name="text">
-                     <string>Show most recent guide and reference star selections (shifted/*regfile.txt)</string>
+                     <string>Show most recent guide and reference star selections (shifted/guiding_selections*.txt)</string>
                     </property>
                     <property name="checked">
                      <bool>true</bool>
@@ -920,7 +920,7 @@ p, li { white-space: pre-wrap; }
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rather than writing FITS images, .dat files, and .prc files for each step above, only rewrite the files needed to run DHAS. Will prompt user to re-select guide and reference stars. Requires that certain files already exist.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
-              <string>Only write ID.prc, ACQ.prc, and regfile.txt (for iterative DHAS testing)</string>
+              <string>Only write ID.prc, ACQ.prc, and guiding_selections*.txt (for iterative DHAS testing)</string>
              </property>
             </widget>
            </item>
