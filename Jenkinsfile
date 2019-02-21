@@ -2,7 +2,7 @@
 
 // - Copied from spacetelescope/jwql GitHub repo on 2/20/19
 // - More info here: https://github.com/spacetelescope/jenkinsfile_ci_examples
-
+// - Syntax defined here: https://github.com/spacetelescope/jenkins_shared_ci_utils
 
 // Obtain files from source control system.
 if (utils.scm_checkout()) return
