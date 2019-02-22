@@ -29,6 +29,7 @@ Use
 import logging
 import os
 import random
+import shutil
 import string
 
 # Third Party Imports
@@ -502,6 +503,66 @@ def parse_in_file(in_file):
     return out_cols, coords, nref
 
 
+def copy_all_found_psfs_file(guiding_selections_file, root, guider, out_dir):
+    """By parsing the name of an input guiding_selections*.txt file,
+    identify a corresponding all_found_psfs*.txt file.
+
+    Parameters
+    ----------
+    guiding_selections_file : str
+        Path to guiding_selections*.txt file
+    root : str
+        Name used to generate output folder and output file names.
+    guider : int
+        Guider number (1 or 2)
+    out_dir : str
+        Directory in which to store the copied all_found_psfs file.
+
+    Returns
+    -------
+    copied_all_found_psfs : str
+        Path to the copied all_found_psfs*.txt file
+    """
+    # Determine the root of the imported guiding selections file name
+    filename = os.path.basename(guiding_selections_file)
+    if 'guiding_selections_' in filename:
+        imported_root = filename.split('guiding_selections_')[-1].split('.txt')[0]
+    elif '_regfile' in filename:
+        imported_root = filename.split('_regfile.txt')[0]
+    else:
+        imported_root = None
+        LOGGER.warning(
+            'Could not parse root from provided guiding selections file ({}). '.format(filename) +
+            'Not able to copy over a corresponding all_found_psfs*.txt file.'
+        )
+
+    # Try to copy the corresponding all_found_psfs*.txt file, if present.
+    if imported_root is not None:
+        dir_to_look = os.path.dirname(guiding_selections_file)
+        all_found_psfs_file = os.path.join(dir_to_look,
+                                           'all_found_psfs_{}.txt'.format(imported_root))
+        all_found_psfs_file_old = os.path.join(dir_to_look,
+                                               '{}_ALLpsfs.txt'.format(imported_root))
+        file_to_copy = None
+        if os.path.exists(all_found_psfs_file):
+            file_to_copy = all_found_psfs_file
+        elif os.path.exists(all_found_psfs_file_old):
+            file_to_copy = all_found_psfs_file_old
+        else:
+            LOGGER.warning(
+                'Could not find a corresponding all_found_psfs*.txt file for '
+                'the provided guiding selections file ({}) in {}.'.format(filename, dir_to_look)
+            )
+
+        if file_to_copy is not None:
+            copied_all_found_psfs = os.path.join(out_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider))
+            shutil.copy(file_to_copy, copied_all_found_psfs)
+            LOGGER.info('Copying over {}'.format(file_to_copy))
+            LOGGER.info('Successfully wrote: {}'.format(copied_all_found_psfs))
+
+            return copied_all_found_psfs
+
+
 def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
@@ -669,9 +730,16 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         if guiding_selections_file:
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
-            LOGGER.info("Star Selection: Reading guide and reference star positions from {}".format(guiding_selections_file))
+            LOGGER.info(
+                "Star Selection: Reading guide and reference star positions from {}"
+                    .format(guiding_selections_file)
+            )
             cols, coords, nref = parse_in_file(guiding_selections_file)
+
+            # Copy over corresponding all_found_psfs file, if possible.
             all_cols = None
+            all_found_psfs_path = copy_all_found_psfs_file(guiding_selections_file, root, guider, out_dir)
+
         else:
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
@@ -679,11 +747,12 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
                                                                  global_alignment,
                                                                  testing,
                                                                  masterGUIapp)
+            all_found_psfs_path = None
 
         # Save PNG of image and all PSF locations in out_dir
         plot_centroids(data, coords, root, guider, out_dir)
 
-        all_found_psfs_path = None
+
         if all_cols:
             all_found_psfs_path = os.path.join(out_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider))
             # Write catalog of all identified PSFs
