@@ -306,7 +306,7 @@ def test_SOF_parameters_dialog():
 
     assert params == (
         {'v3_boff': 0.0, 'seg_num': 0, 'v2_boff': 0.0, 'ra': 90.9708, 'fgs_num': 1, 'dec': -67.3578, 'pa': 157.1234},
-        '1141', '7', '1', 0.9, None
+        '1141', '7', '1', 0.6, None
     )
 
 
