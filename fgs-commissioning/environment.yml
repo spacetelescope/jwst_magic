@@ -1,12 +1,13 @@
 name: magic
 channels:
-- http://ssb.stsci.edu/astroconda-dev
+- http://ssb.stsci.edu/astroconda
 - defaults
 dependencies:
 - numpy
 - astropy
 - ipython
 - matplotlib
+- pyqt<6.0
 - pysiaf
 - python>=3.5
 - pyyaml
@@ -14,5 +15,3 @@ dependencies:
 - pytest
 - photutils
 - scipy
-- pip:
-    - PyQt5
