@@ -48,12 +48,13 @@ import sys
 import re
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+__cwd__ = os.getcwd()
 print('''***
 
-LOCATION: {}
+CWD: {}
 
-***'''.format(__location__))
-jenkins = 'jenkins' in __location__
+***'''.format(__cwd__))
+jenkins = 'jenkins' in __cwd__
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
