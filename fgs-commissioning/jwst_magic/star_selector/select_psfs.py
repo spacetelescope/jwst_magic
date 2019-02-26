@@ -33,7 +33,8 @@ import logging
 
 # Third Party Imports
 import matplotlib
-if matplotlib.get_backend() != 'Qt5Agg':
+jenkins = 'jenkins' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
