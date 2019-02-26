@@ -47,21 +47,13 @@ import os
 import sys
 import re
 
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-__cwd__ = os.getcwd()
-print('''***
-
-CWD: {}
-
-***'''.format(__cwd__))
-jenkins = 'jenkins' in __cwd__
-
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
 from PyQt5 import QtCore, uic, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot
 import matplotlib
 
+jenkins = 'jenkins' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from astropy.io import ascii as asc
