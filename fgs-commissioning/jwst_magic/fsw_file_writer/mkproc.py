@@ -93,7 +93,7 @@ class Mkproc(object):
         # Find templates. If template path not given, script will assume that a
         # 'templates' directory that includes are necessary prc templates lives
         # in the same directory as this script
-        template_path = os.path.join(PACKAGE_PATH, 'templates')
+        template_path = os.path.join(PACKAGE_PATH, 'data', 'templates')
 
         self.find_templates(guider, step=step, template_path=template_path)
 

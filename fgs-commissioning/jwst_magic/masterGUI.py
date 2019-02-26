@@ -53,7 +53,8 @@ from PyQt5 import QtCore, uic, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot
 import matplotlib
 
-if matplotlib.get_backend() != 'Qt5Agg':
+jenkins = 'jenkins' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from astropy.io import ascii as asc
 import numpy as np
