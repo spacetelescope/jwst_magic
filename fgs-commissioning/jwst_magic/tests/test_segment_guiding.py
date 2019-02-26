@@ -84,7 +84,7 @@ def test_directory(test_dir=TEST_DIRECTORY):
     test_dir : str
         Path to directory used for testing
     """
-    os.mkdir(test_dir)  # creates directory with default mode=511
+    os.makedirs(test_dir)  # creates directory with default mode=511
 
     yield test_dir
     print("teardown test directory")
