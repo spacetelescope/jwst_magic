@@ -1,1 +1,2 @@
 include jwst_magic/data/*
+include *.ui
