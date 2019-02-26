@@ -41,7 +41,6 @@ from matplotlib.colors import LogNorm
 from matplotlib import rcParams
 from astropy.io import fits
 from astropy.io import ascii as asc
-from astropy.stats import sigma_clipped_stats
 import numpy as np
 from photutils import find_peaks
 from scipy import ndimage
@@ -138,10 +137,12 @@ def choose_threshold(smoothed_data, gauss_sigma):
         User did not accept either of the threshold options.
     """
     # Perform statistics
-    mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
+    mean = np.mean(smoothed_data)
+    std = np.std(smoothed_data)
 
     # Run find_peaks with two different threshold options
     thresholds = [3 * std, mean]
+
     sources_std = find_peaks(smoothed_data, thresholds[0], box_size=gauss_sigma)
     sources_mean = find_peaks(smoothed_data, thresholds[1], box_size=gauss_sigma)
 
