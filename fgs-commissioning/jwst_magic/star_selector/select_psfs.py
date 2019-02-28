@@ -37,7 +37,8 @@ from astropy.io import ascii as asc
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 import matplotlib
-if matplotlib.get_backend() != 'Qt5Agg':
+jenkins = 'jenkins' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from matplotlib import rcParams
 from matplotlib.colors import LogNorm
@@ -138,10 +139,12 @@ def choose_threshold(smoothed_data, gauss_sigma):
         User did not accept either of the threshold options.
     """
     # Perform statistics
-    mean, median, std = sigma_clipped_stats(smoothed_data, sigma=0, iters=0)
+    mean = np.mean(smoothed_data)
+    std = np.std(smoothed_data)
 
     # Run find_peaks with two different threshold options
     thresholds = [3 * std, mean]
+
     sources_std = find_peaks(smoothed_data, thresholds[0], box_size=gauss_sigma)
     sources_mean = find_peaks(smoothed_data, thresholds[1], box_size=gauss_sigma)
 
