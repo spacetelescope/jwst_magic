@@ -1,0 +1,2 @@
+recursive-include jwst_magic/data *
+global-include *.ui
