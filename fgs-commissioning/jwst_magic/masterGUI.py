@@ -279,9 +279,9 @@ class MasterGui(QMainWindow):
         cars_list = list(self.commissioning_dict.keys())
 
         # Use to populate practice and CAR dropdown boxes
-        for practice in sogs_dirs:
+        for practice in sorted(sogs_dirs):
             self.comboBox_practice.addItem(practice)
-        for car in cars_list:
+        for car in sorted(cars_list):
             self.comboBox_car.addItem(car.upper())
 
         # Connect combo boxes to one another
