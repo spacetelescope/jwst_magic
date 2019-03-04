@@ -84,9 +84,7 @@ def determine_log_path():
     SOGS, or in the default ``logs`` directory in the package directory.
     Ensure the chosen log directory exists.
     """
-    on_SOGS = "sogs" in socket.gethostname()
-
-    if on_SOGS:
+    if on_sogs_network():
         log_path = "***REMOVED***/guiding/MAGIC_logs/"
     else:
         log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
@@ -123,6 +121,12 @@ def get_logname(logdir, taskname):
     timestamp = time.strftime('%Y_%m_%d_%a_%H%M%S')
     logname = '{0}_{1}.log'.format(timestamp, taskname)
     return os.path.join(logdir, logname)
+
+
+def on_sogs_network():
+    """Determine whether MAGIC is being run on the SOGS network.
+    """
+    return "sogs" in socket.gethostname()
 
 
 def write_fits(outfile, data, header=None):
@@ -184,13 +188,12 @@ def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
                 f.write(' '.join(row) + '\n')
 
 
-def write_cols_to_file(output_path, filename, labels, cols):
+def write_cols_to_file(file_path, labels, cols):
     """
     Write columns of data to a file
     """
-    filename = os.path.join(output_path, filename)
-    write_to_file(filename, cols, labels=labels)
-    print("Successfully wrote: {}".format(filename))
+    write_to_file(file_path, cols, labels=labels)
+    print("Successfully wrote: {}".format(file_path))
 
 
 def swap_if_little_endian(data):

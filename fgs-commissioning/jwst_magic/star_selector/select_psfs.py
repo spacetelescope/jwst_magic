@@ -1,12 +1,12 @@
 """Find all the relevant PSFs in the image, be it manually or using a
-file, and generate a regfile.txt and ALLpsfs.txt.
+file, and generate a guiding_selections*.txt and all_found_psfs*.txt.
 
 Analyze image data using the photutils find_peaks function to identify
 the locations and count rates of all stars (or segments) in the image.
 Either prompt the use to select which stars to use as the guide and
 reference stars, or read the guide and reference stars from a
-pre-existing regfile. Generate an ALLpsfs.txt file that lists all the
-segments in the image, and a regfile.txt file that lists just the guide
+pre-existing guiding_selections*.txt. Generate an all_found_psfs*.txt file that lists all the
+segments in the image, and a guiding_selections*.txt file that lists just the guide
 and reference stars.
 
 Authors
@@ -26,21 +26,23 @@ Use
 """
 
 # Standard Library Imports
-import os
-import string
-import random
 import logging
+import os
+import random
+import shutil
+import string
 
 # Third Party Imports
+from astropy.io import ascii as asc
+from astropy.io import fits
+from astropy.stats import sigma_clipped_stats
 import matplotlib
 jenkins = 'jenkins' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 from matplotlib import rcParams
-from astropy.io import fits
-from astropy.io import ascii as asc
+from matplotlib.colors import LogNorm
+import matplotlib.pyplot as plt
 import numpy as np
 from photutils import find_peaks
 from scipy import ndimage
@@ -227,7 +229,7 @@ def plot_centroids(data, coords, root, guider, out_dir):
     plt.title('Centroids found for {}'.format(root))
     plt.xlim(max(0, x_mid - ax_range / 2), min(2048, x_mid + ax_range / 2))
     plt.ylim(min(2048, y_mid + ax_range / 2), max(0, y_mid - ax_range / 2))
-    plt.savefig(os.path.join(out_dir, '{}_G{}_centers.png'.format(root, guider)))
+    plt.savefig(os.path.join(out_dir, 'all_found_psfs_centroids_{}_G{}.png'.format(root, guider)))
 
     plt.close()
 
@@ -384,13 +386,13 @@ def match_psfs_to_segments(x, y, global_alignment):
     if len(set(matched_labels)) != len(matched_labels) and global_alignment:
         LOGGER.warning('Could not accurately map labels to segments. It will not '
                        'be possible to run fsw_file_writer.rewrite_prc using the '
-                       'ALLpsfs.txt file generated here.')
+                       'all_found_psfs*.txt file generated here.')
 
     return matched_labels
 
 
 def parse_in_file(in_file):
-    """Get the position and countrates from a provided regfile.txt
+    """Get the position and countrates from a provided guiding_selections*.txt
 
     Determines if the input file contains x, y, and countrate data. If
     so, extracts the locations and countrates of the stars accordingly.
@@ -504,6 +506,66 @@ def parse_in_file(in_file):
     return out_cols, coords, nref
 
 
+def copy_all_found_psfs_file(guiding_selections_file, root, guider, out_dir):
+    """By parsing the name of an input guiding_selections*.txt file,
+    identify a corresponding all_found_psfs*.txt file.
+
+    Parameters
+    ----------
+    guiding_selections_file : str
+        Path to guiding_selections*.txt file
+    root : str
+        Name used to generate output folder and output file names.
+    guider : int
+        Guider number (1 or 2)
+    out_dir : str
+        Directory in which to store the copied all_found_psfs file.
+
+    Returns
+    -------
+    copied_all_found_psfs : str
+        Path to the copied all_found_psfs*.txt file
+    """
+    # Determine the root of the imported guiding selections file name
+    filename = os.path.basename(guiding_selections_file)
+    if 'guiding_selections_' in filename:
+        imported_root = filename.split('guiding_selections_')[-1].split('.txt')[0]
+    elif '_regfile' in filename:
+        imported_root = filename.split('_regfile.txt')[0]
+    else:
+        imported_root = None
+        LOGGER.warning(
+            'Could not parse root from provided guiding selections file ({}). '.format(filename) +
+            'Not able to copy over a corresponding all_found_psfs*.txt file.'
+        )
+
+    # Try to copy the corresponding all_found_psfs*.txt file, if present.
+    if imported_root is not None:
+        dir_to_look = os.path.dirname(guiding_selections_file)
+        all_found_psfs_file = os.path.join(dir_to_look,
+                                           'all_found_psfs_{}.txt'.format(imported_root))
+        all_found_psfs_file_old = os.path.join(dir_to_look,
+                                               '{}_ALLpsfs.txt'.format(imported_root))
+        file_to_copy = None
+        if os.path.exists(all_found_psfs_file):
+            file_to_copy = all_found_psfs_file
+        elif os.path.exists(all_found_psfs_file_old):
+            file_to_copy = all_found_psfs_file_old
+        else:
+            LOGGER.warning(
+                'Could not find a corresponding all_found_psfs*.txt file for '
+                'the provided guiding selections file ({}) in {}.'.format(filename, dir_to_look)
+            )
+
+        if file_to_copy is not None:
+            copied_all_found_psfs = os.path.join(out_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider))
+            shutil.copy(file_to_copy, copied_all_found_psfs)
+            LOGGER.info('Copying over {}'.format(file_to_copy))
+            LOGGER.info('Successfully wrote: {}'.format(copied_all_found_psfs))
+
+            return copied_all_found_psfs
+
+
 def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
@@ -605,13 +667,20 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def create_reg_file(data, root, guider, in_file=None,
-                    global_alignment=False, return_nref=False, testing=False,
-                    out_dir=None, masterGUIapp=None, logger_passed=False):
-    """Locate all of the segments in the provided data, then use the
-    provided (or GUI-defined) list of selected segments to generate an
-    ALLpsfs.txt file that lists all the segments in the image, and a
-    regfile.txt file that lists just the guide and reference stars.
+def select_psfs(data, root, guider, guiding_selections_file=None,
+                global_alignment=False, testing=False,
+                out_dir=None, masterGUIapp=None, logger_passed=False):
+    """Select guide and reference segments.
+
+    Locate all of the segments in the provided data, then either parse a
+    catalog of sources or prompt the user with a GUI to select which
+    segments as the guide and reference segments. Generates two file:
+        all_found_psfs_{root}_G{guider}.txt
+            Lists the locations and count rates of all segments found
+            in the data
+        guiding_selections_{root}_G{guider}.txt
+            Lists the locations and count rates of the selected
+            guide and reference segments
 
     Parameters
     ----------
@@ -621,13 +690,11 @@ def create_reg_file(data, root, guider, in_file=None,
         Name used to generate output folder and output filenames.
     guider : int
         Guider number (1 or 2)
-    in_file : str, optional
+    guiding_selections_file : str, optional
         File containing locations and count rates of selected segments
     global_alignment : bool, optional
         Denotes that the image is from unphased, unstacked early
         commissioning data
-    return_nref : bool, optional
-        Return the number of references stars
     testing : bool, optional
         Randomly select guide and reference stars (for use with pytests)
     out_dir : str, optional
@@ -641,10 +708,13 @@ def create_reg_file(data, root, guider, in_file=None,
 
     Returns
     -------
-    cols : list
-        List of positions and countrates of selected segments
-    nref : int
-        The number of selected reference stars
+    guiding_selections_path : str
+        Path to the guiding_selections_{root}_G{guider}.txt file, which
+        contains the locations and count rates of the selected guide and
+        reference segments
+    all_found_psfs_path : str
+        Path to the all_found_psfs_{root}_G{guider}.txt file, which
+        the locations and count rates of all segments found in the data
     """
     if not logger_passed:
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
@@ -660,12 +730,19 @@ def create_reg_file(data, root, guider, in_file=None,
         # Any value above 65535 or below 0 will wrap when converted to uint16
         data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
 
-        if in_file:
+        if guiding_selections_file:
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
-            LOGGER.info("Star Selection: Reading guide and reference star positions from {}".format(in_file))
-            cols, coords, nref = parse_in_file(in_file)
+            LOGGER.info(
+                "Star Selection: Reading guide and reference star positions from {}"
+                    .format(guiding_selections_file)
+            )
+            cols, coords, nref = parse_in_file(guiding_selections_file)
+
+            # Copy over corresponding all_found_psfs file, if possible.
             all_cols = None
+            all_found_psfs_path = copy_all_found_psfs_file(guiding_selections_file, root, guider, out_dir)
+
         else:
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
@@ -673,25 +750,26 @@ def create_reg_file(data, root, guider, in_file=None,
                                                                  global_alignment,
                                                                  testing,
                                                                  masterGUIapp)
+            all_found_psfs_path = None
 
         # Save PNG of image and all PSF locations in out_dir
         plot_centroids(data, coords, root, guider, out_dir)
 
+
         if all_cols:
-            # Write out file of ALL identified PSFs
-            utils.write_cols_to_file(out_dir,
-                                     filename='{0}_G{1}_ALLpsfs.txt'.format(root, guider),
+            all_found_psfs_path = os.path.join(out_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider))
+            # Write catalog of all identified PSFs
+            utils.write_cols_to_file(all_found_psfs_path,
                                      labels=['label', 'y', 'x', 'countrate'],
                                      cols=all_cols)
 
-        # Write out regfile of selected PSFs
-        utils.write_cols_to_file(out_dir,
-                                 filename='{0}_G{1}_regfile.txt'.format(root, guider),
+        # Write catalog of selected PSFs
+        guiding_selections_path = os.path.join(out_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider))
+        utils.write_cols_to_file(guiding_selections_path,
                                  labels=['y', 'x', 'countrate'],
                                  cols=cols)
     except Exception as e:
         LOGGER.exception(e)
         raise
 
-    if return_nref:
-        return cols, nref
+    return guiding_selections_path, all_found_psfs_path
