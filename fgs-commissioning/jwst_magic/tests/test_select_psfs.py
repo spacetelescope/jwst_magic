@@ -28,8 +28,6 @@ CONVERTED_NIRCAM_IM = os.path.join(__location__, 'data', 'converted_nircam_data_
 ROOT = "test_select_psfs"
 SEGMENT_INFILE = os.path.join(__location__, 'data', 'all_found_psfs_{}.txt'.format(ROOT))
 SELECTED_SEGS = os.path.join(__location__, 'data', 'guiding_selections_{}.txt'.format(ROOT))
-# PROGRAM_ID = 1141
-# OBSERVATION_NUM = 7
 VISIT_NUM = 1
 
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
