@@ -354,10 +354,12 @@ class BuildFGSSteps(object):
         # Define filenames
         file_root = '{}_G{}'.format(self.root, self.guider)
         FGS_img = os.path.join(self.out_dir, 'FGS_imgs', file_root + '.fits')
-        guiding_selections_file = guiding_selections_file or os.path.join(self.out_dir,
-                                                                          'guiding_selections_{}.txt'.format(file_root))
-        all_found_psfs_file = all_found_psfs_file or os.path.join(self.out_dir,
-                                                      'all_found_psfs_{}.txt'.format(file_root))
+        guiding_selections_file = guiding_selections_file or os.path.join(
+            self.out_dir, 'guiding_selections_{}.txt'.format(file_root)
+        )
+        all_found_psfs_file = all_found_psfs_file or os.path.join(
+            self.out_dir, 'all_found_psfs_{}.txt'.format(file_root)
+        )
 
         # Make sure shifted directory exists
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'shifted'))

@@ -261,10 +261,6 @@ class MasterGui(QMainWindow):
             self.radioButton_name_manual.setChecked(True)
             return
 
-        # # FOR TESTING ONLY
-        # if not utils.on_sogs_network():
-        #     sogs_dirs = ['wfp_january_2019']
-
         # If on SOGS, pull out practice names from existing practice directories
         else:
             sogs_search = os.path.join(SOGS_PATH, '*')
@@ -570,8 +566,6 @@ class MasterGui(QMainWindow):
 
         # Derive the root from the filename and assume the default output
         # directory (OUT_PATH)
-        root = utils.make_root(self.root_default, self.lineEdit_inputImage.text())
-        # self.lineEdit_root.setText(root)
         if self.radioButton_name_manual.isChecked():
             if self.textEdit_out.toPlainText() == "":
                 self.textEdit_out.setEnabled(True)
@@ -1098,20 +1092,24 @@ class MasterGui(QMainWindow):
             # Note: maintaining if statements and "old" file names for backwards compatibility.
 
             # Update guiding selections file path
-            guiding_selections_file = os.path.join(root_dir,
-                                                    'guiding_selections_{}_G{}.txt'.format(root, guider))
-            guiding_selections_file_old = os.path.join(root_dir,
-                                                       '{}_G{}_regfile.txt'.format(root, guider))
+            guiding_selections_file = os.path.join(
+                root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)
+            )
+            guiding_selections_file_old = os.path.join(
+                root_dir, '{}_G{}_regfile.txt'.format(root, guider)
+            )
             if os.path.exists(guiding_selections_file_old):
                 self.guiding_selections_file = guiding_selections_file_old
             else:
                 self.guiding_selections_file = guiding_selections_file
 
             # Update all found PSFs file path
-            all_found_psfs_file = os.path.join(root_dir,
-                                               'all_found_psfs_{}_G{}.txt'.format(root, guider))
-            all_found_psfs_file_old = os.path.join(root_dir,
-                                                   '{}_G{}_ALLpsfs.txt'.format(root, guider))
+            all_found_psfs_file = os.path.join(
+                root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)
+            )
+            all_found_psfs_file_old = os.path.join(
+                root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider)
+            )
             if os.path.exists(all_found_psfs_file_old):
                 self.all_found_psfs_file = all_found_psfs_file_old
             else:
@@ -1119,16 +1117,20 @@ class MasterGui(QMainWindow):
 
 
             # Update converted FGS image filepath
-            self.converted_im_file = os.path.join(root_dir, 'FGS_imgs',
-                                                  '{}_G{}.fits'.format(root, guider))
+            self.converted_im_file = os.path.join(
+                root_dir, 'FGS_imgs', '{}_G{}.fits'.format(root, guider)
+            )
 
             # Update shifted FGS image & catalog filepaths
-            self.shifted_im_file = os.path.join(root_dir, 'shifted',
-                                                '{}_G{}.fits'.format(root, guider))
-            self.shifted_all_found_psfs_file = os.path.join(root_dir, 'shifted',
-                                                'all_found_psfs_{}_G{}.txt'.format(root, guider))
-            self.shifted_guiding_selections_file = os.path.join(root_dir, 'shifted',
-                                                'guiding_selections_{}_G{}.txt'.format(root, guider))
+            self.shifted_im_file = os.path.join(
+                root_dir, 'shifted', '{}_G{}.fits'.format(root, guider)
+            )
+            self.shifted_all_found_psfs_file = os.path.join(
+                root_dir, 'shifted', 'all_found_psfs_{}_G{}.txt'.format(root, guider)
+            )
+            self.shifted_guiding_selections_file = os.path.join(
+                root_dir, 'shifted', 'guiding_selections_{}_G{}.txt'.format(root, guider)
+            )
 
             # Update default guiding_selections*.txt paths in GUI
             if os.path.exists(self.guiding_selections_file):
