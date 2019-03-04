@@ -1,0 +1,102 @@
+los-2:
+  apt: 1410
+  observations: 2
+ote-01:
+  apt: 1134
+  observations: 7
+ote-02:
+  apt: 1135
+  observations: 3
+ote-03:
+  apt: 1136
+  observations: 5
+ote-04:
+  apt: 1137
+  observations: 18
+ote-05:
+  apt: 1138
+  observations: 3
+ote-06:
+  apt: 1140
+  observations: 6
+ote-07:
+  apt: 1141
+  observations: 13
+ote-08:
+  apt: 1142
+  observations: 3
+ote-09:
+  apt: 1143
+  observations: 15
+ote-10:
+  apt: 1144
+  observations: 7
+ote-11:
+  apt: 1145
+  observations: 5
+ote-12:
+  apt: 1147
+  observations: 4
+ote-13:
+  apt: 1148
+  observations: 31
+ote-14:
+  apt: 1149
+  observations: 1
+ote-15:
+  apt: 1150
+  observations: 6
+ote-16:
+  apt: 1151
+  observations: 20
+ote-17:
+  apt: 1153
+  observations: 6
+ote-18:
+  apt: 1155
+  observations: 8
+ote-19:
+  apt: 1156
+  observations: 3
+ote-21:
+  apt: 1158
+  observations: 10
+ote-22:
+  apt: 1159
+  observations: 3
+ote-23:
+  apt: 1160
+  observations: 10
+ote-24:
+  apt: 1161
+  observations: 7
+ote-25:
+  apt: 1162
+  observations: 10
+ote-26:
+  apt: 1163
+  observations: 5
+ote-27:
+  apt: 1164
+  observations: 0
+ote-28:
+  apt: 1165
+  observations: 6
+ote-29:
+  apt: 1166
+  observations: 77
+ote-31:
+  apt: 1168
+  observations: 1
+ote-32:
+  apt: 1169
+  observations: 2
+ote-33:
+  apt: 1170
+  observations: 5
+ote-34:
+  apt: 1171
+  observations: 0
+ote-35:
+  apt: 1172
+  observations: 1

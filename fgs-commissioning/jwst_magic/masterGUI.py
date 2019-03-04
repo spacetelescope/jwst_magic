@@ -43,15 +43,17 @@ of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
 
+import glob
 import os
-import sys
 import re
+import sys
 
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
-                             QDialog)
+import matplotlib
+import yaml
 from PyQt5 import QtCore, uic, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot
-import matplotlib
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
+                             QDialog)
 
 jenkins = 'jenkins' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
@@ -59,7 +61,8 @@ if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
 from astropy.io import ascii as asc
 import numpy as np
 
-from . import run_magic, utils, background_stars
+from . import run_magic, utils
+from jwst_magic import background_stars
 from .convert_image import renormalize
 from .fsw_file_writer import rewrite_prc
 from .segment_guiding import segment_guiding
@@ -69,7 +72,7 @@ from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_Selec
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
-
+SOGS_PATH = '/data/jwst/wss/guiding/'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OUTPUT HANDLER
@@ -137,16 +140,12 @@ class MasterGui(QMainWindow):
 
         # Initialize attributes
         self.app = app
+        self.commissioning_dict = {}
         self.root_default = root
         self.converted_im_circles = []
         self.shifted_im_circles = []
         self.bkgd_stars = None
         self.itm = itm
-
-        # Initialize SGT attributes
-        self.prognum = None
-        self.obsnum = None
-        self.visitnum = None
 
         # Initialize main window object
         QMainWindow.__init__(self)
@@ -162,6 +161,7 @@ class MasterGui(QMainWindow):
         self.adjust_screen_size_mainGUI()
         self.init_matplotlib()
         self.define_MainGUI_connections()
+        self.setup_commissioning_naming()
         self.show()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -215,6 +215,7 @@ class MasterGui(QMainWindow):
     def define_MainGUI_connections(self):
         # Standard output and error
         self.textEdit_log.setFont(QtGui.QFont("Courier New"))
+        self.buttonGroup_name.buttonClicked.connect(self.update_naming_method)
 
         # Main window widgets
         self.pushButton_run.clicked.connect(self.run_tool)
@@ -246,6 +247,44 @@ class MasterGui(QMainWindow):
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
         self.checkBox_showStars_shifted.toggled.connect(self.on_click_showstars)
+
+    def setup_commissioning_naming(self):
+        # If not on SOGS:
+        if not utils.on_sogs_network():
+            # Shut down selection boxes
+            self.comboBox_practice.removeItem(0)
+            self.comboBox_practice.setDisabled(True)
+            self.comboBox_practice.addItem('* NOT ON SOGS NETWORK *')
+
+            # Switch to the manual naming pane
+            self.stackedWidget.setCurrentIndex(1)
+            self.radioButton_name_manual.setChecked(True)
+            return
+
+        # If on SOGS, pull out practice names from existing practice directories
+        else:
+            sogs_search = os.path.join(SOGS_PATH, '*')
+            sogs_dirs = [os.path.basename(dir) for dir in glob.glob(sogs_search)]
+            for d in ['data', 'processing', 'MAGIC_logs']:
+                sogs_dirs.remove(d)
+
+        # Load all OTE cars from commissioning activities YAML file
+        commissioning_yaml = os.path.join(__location__, 'data', 'commissioning_activities.yaml')
+        with open(commissioning_yaml, encoding="utf-8") as f:
+            self.commissioning_dict = yaml.load(f.read())
+        cars_list = list(self.commissioning_dict.keys())
+
+        # Use to populate practice and CAR dropdown boxes
+        for practice in sorted(sogs_dirs):
+            self.comboBox_practice.addItem(practice)
+        for car in sorted(cars_list):
+            self.comboBox_car.addItem(car.upper())
+
+        # Connect combo boxes to one another
+        self.comboBox_practice.currentIndexChanged.connect(self.update_commissioning_name)
+        self.comboBox_car.currentIndexChanged.connect(self.update_commissioning_name)
+        self.comboBox_obs.currentIndexChanged.connect(self.update_commissioning_name)
+
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # WIDGET CONNECTIONS
@@ -300,8 +339,15 @@ class MasterGui(QMainWindow):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         input_image = self.lineEdit_inputImage.text()
         guider = int(self.buttonGroup_guider.checkedButton().text())
-        root = self.lineEdit_root.text()
-        out_dir = self.textEdit_out.toPlainText().rstrip()
+        if self.radioButton_name_manual.isChecked():
+            root = self.lineEdit_root.text()
+            out_dir = self.textEdit_out.toPlainText().rstrip()
+        elif self.radioButton_name_commissioning.isChecked():
+            root = 'for_obs{}'.format(self.comboBox_obs.currentText())
+            out_dir = os.path.join(SOGS_PATH,
+                                   self.comboBox_practice.currentText(),
+                                   self.comboBox_car.currentText().lower().replace('-', ''),
+                                   )
         copy_original = True
 
         # Convert image
@@ -357,19 +403,16 @@ class MasterGui(QMainWindow):
         shift_id_attitude = self.checkBox_id_attitude.isChecked()
         crowded_field =  self.radioButton_crowded_id_attitude.isChecked()
 
-        # Rewrite .prc and regfile.txt ONLY
+        # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
             # Open converted FGS file
-            fgs_filename = os.path.join(out_dir, 'out', root, 'FGS_imgs',
-                                        '{}_G{}.fits'.format(root, guider))
-            data, _ = utils.get_data_and_header(fgs_filename)
+            data, _ = utils.get_data_and_header(self.converted_im_file)
 
             # Update array for showing in LogNorm
             data[data <= 0] = 1
 
-            # Open ALLpsfs.txt (list of all identified segments)
-            all_psfs = os.path.join(out_dir, 'out', root,
-                                    '{}_G{}_ALLpsfs.txt'.format(root, guider))
+            # Open all_found_psfs*.txt (list of all identified segments)
+            all_psfs = self.all_found_psfs_file
             all_rows = asc.read(all_psfs)
             x = all_rows['x'].data
             y = all_rows['y'].data
@@ -390,9 +433,16 @@ class MasterGui(QMainWindow):
         if self.groupBox_segmentGuiding.isChecked():
             # Get APT program information from parsed header
             self.parse_header(input_image)
-            program_id = self.prognum
-            observation_num = self.obsnum
-            visit_num = self.visitnum
+
+            # If commissioning name, load the program and observation number
+            if self.radioButton_name_commissioning.isChecked():
+                program_id = int(self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt'])
+                observation_num = int(self.comboBox_obs.currentText())
+                visit_num = 1  # Will we ever have a visit that's not 1?
+            else:
+                program_id = None
+                observation_num = None
+                visit_num = None
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():
@@ -401,13 +451,13 @@ class MasterGui(QMainWindow):
                     root, program_id, observation_num, visit_num, out_dir=out_dir
                 )
             else:
-                # Define location of ALLpsfs catalog file
+                # Define location of all_found_psfs catalog file
                 if self.radioButton_shifted.isChecked():
-                    segment_infile = self.shifted_ALLpsfs
+                    segment_infile = self.shifted_all_found_psfs_file
                 else:
-                    segment_infile = self.ALLpsfs
+                    segment_infile = self.all_found_psfs_file
 
-                # Verify that the ALLpsfs.txt file exists
+                # Verify that the all_found_psfs*.txt file exists
                 if not os.path.exists(segment_infile):
                     raise OSError('Provided segment infile {} not found.'.format(segment_infile))
 
@@ -420,7 +470,7 @@ class MasterGui(QMainWindow):
                     fgs_filename = input_image
                 data, _ = utils.get_data_and_header(fgs_filename)
 
-                # Determine whether to load regfile or run GUI
+                # Determine whether to load guiding_selections*.txt or run GUI
                 GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
                 selected_segs = self.lineEdit_regfileStarSelector.text()
 
@@ -447,7 +497,7 @@ class MasterGui(QMainWindow):
                               nircam=nircam,
                               global_alignment=global_alignment,
                               steps=steps,
-                              in_file=in_file,
+                              guiding_selections_file=in_file,
                               bkgd_stars=bkgd_stars,
                               out_dir=out_dir,
                               convert_im=convert_im,
@@ -516,13 +566,12 @@ class MasterGui(QMainWindow):
 
         # Derive the root from the filename and assume the default output
         # directory (OUT_PATH)
-        root = utils.make_root(self.root_default, self.lineEdit_inputImage.text())
-        self.lineEdit_root.setText(root)
-        if self.textEdit_out.toPlainText() == "":
-            self.textEdit_out.setEnabled(True)
-            self.textEdit_out.setText(OUT_PATH)
-        if self.textEdit_out.toPlainText() == OUT_PATH:
-            self.textEdit_out.setEnabled(True)
+        if self.radioButton_name_manual.isChecked():
+            if self.textEdit_out.toPlainText() == "":
+                self.textEdit_out.setEnabled(True)
+                self.textEdit_out.setText(OUT_PATH)
+            if self.textEdit_out.toPlainText() == OUT_PATH:
+                self.textEdit_out.setEnabled(True)
 
         # Update the example filepath (and converted image preview, if possible)
         self.update_filepreview()
@@ -541,17 +590,16 @@ class MasterGui(QMainWindow):
         # Open the Finder directory dialog
         dirname = self.open_dirname_dialog()
 
-        # Remove any new lines from the dirname
-        dirname = dirname.rstrip()
-        self.textEdit_out.setText(dirname)
-
         # Only continue if that directory actually exists
         if dirname is not None:
+            # Remove any new lines from the dirname
+            dirname = dirname.rstrip()
+            self.textEdit_out.setText(dirname)
+
             if not os.path.exists(dirname):
                 raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
 
-        self.update_filepreview()
-        return dirname
+            self.update_filepreview()
 
     def on_click_infile(self):
         """ Using the Infile Open button (open file) """
@@ -641,9 +689,61 @@ class MasterGui(QMainWindow):
 
         else:
             if self.radioButton_shifted.isChecked():
-                self.lineEdit_regfileSegmentGuiding.setText(self.shifted_regfile)
+                self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
             elif self.radioButton_unshifted.isChecked():
-                self.lineEdit_regfileSegmentGuiding.setText(self.regfile)
+                self.lineEdit_regfileSegmentGuiding.setText(self.guiding_selections_file)
+
+    def update_naming_method(self):
+        if self.radioButton_name_manual.isChecked():
+            self.stackedWidget.setCurrentIndex(1)
+            if self.textEdit_out.toPlainText() == "":
+                self.textEdit_out.setEnabled(True)
+                self.textEdit_out.setText(OUT_PATH)
+        elif self.radioButton_name_commissioning.isChecked():
+            self.stackedWidget.setCurrentIndex(0)
+
+        self.update_filepreview()
+
+    def update_commissioning_name(self):
+        # Check which values have been selected already
+        valid_practice = self.comboBox_practice.currentText() != '- Select Practice -'
+        valid_car = self.comboBox_car.currentText() != '- Select CAR -'
+        valid_obs = self.comboBox_obs.currentText() != '- Select Obs -'
+
+        # When the CAR step is changed...
+        if valid_car and self.sender() == self.comboBox_car:
+            # Update the observation dropdown box to include the possible observation numbers
+            obs_list = self.commissioning_dict[self.comboBox_car.currentText().lower()]['observations']
+            self.comboBox_obs.clear()
+            self.comboBox_obs.addItem('- Select Obs -')
+            for i_obs in range(int(obs_list)):
+                self.comboBox_obs.addItem('{:02d}'.format(i_obs + 1))
+            valid_obs = False
+
+            # Add the current APT program number
+            self.label_apt.setText('APT: {}'.format(
+                self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt'])
+            )
+
+        # Update which boxes are enabled and disabled accordingly
+        self.comboBox_car.setEnabled(valid_practice)
+        self.comboBox_obs.setEnabled(valid_practice & valid_car)
+
+        # Update the preview output path
+        if valid_practice and valid_car and valid_obs:
+            path = os.path.join(SOGS_PATH,
+                                self.comboBox_practice.currentText(),
+                                self.comboBox_car.currentText().lower().replace('-', ''),
+                                'out',
+                                'for_obs{}'.format(self.comboBox_obs.currentText())
+                                )
+            self.textEdit_name_preview.setText(path)
+        else:
+            self.textEdit_name_preview.setText('')
+
+        # Update file previews
+        self.update_filepreview()
+
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
@@ -800,10 +900,22 @@ class MasterGui(QMainWindow):
             except KeyError:
                 pass
 
+    def is_valid_path_defined(self):
+        if self.radioButton_name_manual.isChecked():
+            if not (self.textEdit_out.toPlainText() != "" and self.lineEdit_root.text() != ""
+                    and self.buttonGroup_guider.checkedButton()):
+                return False
+            else:
+                return True
+        elif self.radioButton_name_commissioning.isChecked():
+            if self.textEdit_name_preview.toPlainText() == "":
+                return False
+            else:
+                return True
+
     def update_converted_image_preview(self):
         # Are all the necessary fields filled in? If not, don't even try.
-        if not (self.textEdit_out.toPlainText() != "" and self.lineEdit_root.text() != ""
-                and self.buttonGroup_guider.checkedButton()):
+        if not self.is_valid_path_defined():
             return
 
         # Does a converted image exist? If so, show it!
@@ -827,19 +939,19 @@ class MasterGui(QMainWindow):
             data, _ = utils.get_data_and_header(self.converted_im_file)
             data[data <= 0] = 1
 
-            # Load ALLpsfs.text
+            # Load all_found_psfs*.text
             x, y = [None, None]
-            if os.path.exists(self.ALLpsfs):
-                psf_list = asc.read(self.ALLpsfs)
+            if os.path.exists(self.all_found_psfs_file):
+                psf_list = asc.read(self.all_found_psfs_file)
                 x = psf_list['x']
                 y = psf_list['y']
 
-            # Plot data image and peak locations from ALLpsfs.txt
+            # Plot data image and peak locations from all_found_psfs*.txt
             self.canvas_converted.compute_initial_figure(self.canvas_converted.fig, data, x, y)
 
-            # If possible, plot the selected stars in the regfile.txt
-            if os.path.exists(self.regfile):
-                selected_psf_list = asc.read(self.regfile)
+            # If possible, plot the selected stars in the guiding_selections*.txt
+            if os.path.exists(self.guiding_selections_file):
+                selected_psf_list = asc.read(self.guiding_selections_file)
                 x_selected = selected_psf_list['x']
                 y_selected = selected_psf_list['y']
 
@@ -881,8 +993,7 @@ class MasterGui(QMainWindow):
 
     def update_shifted_image_preview(self):
         # Are all the necessary fields filled in? If not, don't even try.
-        if not (self.textEdit_out.toPlainText() != "" and self.lineEdit_root.text() != ""
-                and self.buttonGroup_guider.checkedButton()):
+        if not self.is_valid_path_defined():
             return
 
         # Does a shift image exist? If so, show it!
@@ -905,19 +1016,19 @@ class MasterGui(QMainWindow):
             data, _ = utils.get_data_and_header(self.shifted_im_file)
             data[data <= 0] = 1
 
-            # Load ALLpsfs.text
+            # Load all_found_psfs*.text
             x, y = [None, None]
-            if os.path.exists(self.shifted_ALLpsfs):
-                psf_list = asc.read(self.shifted_ALLpsfs)
+            if os.path.exists(self.shifted_all_found_psfs_file):
+                psf_list = asc.read(self.shifted_all_found_psfs_file)
                 x = psf_list['x']
                 y = psf_list['y']
 
-            # Plot data image and peak locations from ALLpsfs.txt
+            # Plot data image and peak locations from all_found_psfs*.txt
             self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
 
-            # If possible, plot the selected stars in the regfile.txt
-            if os.path.exists(self.shifted_regfile):
-                selected_psf_list = asc.read(self.shifted_regfile)
+            # If possible, plot the selected stars in the guiding_selections*.txt
+            if os.path.exists(self.shifted_guiding_selections_file):
+                selected_psf_list = asc.read(self.shifted_guiding_selections_file)
                 x_selected = selected_psf_list['x']
                 y_selected = selected_psf_list['y']
 
@@ -958,55 +1069,79 @@ class MasterGui(QMainWindow):
         return self.canvas_shifted.draw()
 
     def update_filepreview(self):
-        # If the root, out_dir, and guider have been defined, show an example filepath
-        # to a simulated image, and auto-populate the regfile.text filepath.
-        # Also, auto-generate important filenames as class attributes
-        if self.textEdit_out.toPlainText() != "" and self.lineEdit_root.text() != "" \
-                and self.buttonGroup_guider.checkedButton():
+        # If either:
+        #   1) manual naming is selected and the root, out_dir, and guider have been defined, or
+        #   2) commissioning naming is selected and the practice, CAR, and observation have
+        #       been selected
+        # show an example filepath to a simulated image, and auto-populate the guiding_selections*.txt.text
+        # filepath. Also, auto-generate important filenames as class attributes.
+
+        if self.is_valid_path_defined():
+            manual_naming = self.radioButton_name_manual.isChecked()
+            guider = self.buttonGroup_guider.checkedButton().text()
+
             # Determine root directory
-            root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out',
-                                    self.lineEdit_root.text())
-
-            # # Update example filepath textbox
-            # self.textbox_filepreview.setText(
-            #     os.path.join(root_dir, 'dhas',
-            #                  '{}_G{}_strips.fits'.format(self.lineEdit_root.text(),
-            #                                              self.buttonGroup_guider.checkedButton().text()))
-            #     )
-
-            # Update regfile.txt filepath
-            self.regfile = os.path.join(root_dir,
-                                        '{}_G{}_regfile.txt'.format(self.lineEdit_root.text(),
-                                                                    self.buttonGroup_guider.checkedButton().text()))
-            if os.path.exists(self.regfile):
-                self.lineEdit_regfileStarSelector.setText(self.regfile)
-                if not self.radioButton_shifted.isChecked():
-                    self.lineEdit_regfileSegmentGuiding.setText(self.regfile)
+            if manual_naming:
+                root = self.lineEdit_root.text()
+                root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out',
+                                        self.lineEdit_root.text())
             else:
-                self.lineEdit_regfileStarSelector.setText("")
-                if not self.radioButton_shifted.isChecked():
-                    self.lineEdit_regfileSegmentGuiding.setText("")
+                root = 'for_obs{}'.format(self.comboBox_obs.currentText())
+                root_dir = self.textEdit_name_preview.toPlainText()
 
-            # Update ALLpsfs.txt filepath
-            self.ALLpsfs = os.path.join(root_dir,
-                                        '{}_G{}_ALLpsfs.txt'.format(self.lineEdit_root.text(),
-                                                                    self.buttonGroup_guider.checkedButton().text()))
+            # Note: maintaining if statements and "old" file names for backwards compatibility.
+
+            # Update guiding selections file path
+            guiding_selections_file = os.path.join(
+                root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)
+            )
+            guiding_selections_file_old = os.path.join(
+                root_dir, '{}_G{}_regfile.txt'.format(root, guider)
+            )
+            if os.path.exists(guiding_selections_file_old):
+                self.guiding_selections_file = guiding_selections_file_old
+            else:
+                self.guiding_selections_file = guiding_selections_file
+
+            # Update all found PSFs file path
+            all_found_psfs_file = os.path.join(
+                root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)
+            )
+            all_found_psfs_file_old = os.path.join(
+                root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider)
+            )
+            if os.path.exists(all_found_psfs_file_old):
+                self.all_found_psfs_file = all_found_psfs_file_old
+            else:
+                self.all_found_psfs_file = all_found_psfs_file
+
 
             # Update converted FGS image filepath
-            self.converted_im_file = os.path.join(root_dir, 'FGS_imgs',
-                                                  '{}_G{}.fits'.format(self.lineEdit_root.text(),
-                                                                       self.buttonGroup_guider.checkedButton().text()))
+            self.converted_im_file = os.path.join(
+                root_dir, 'FGS_imgs', '{}_G{}.fits'.format(root, guider)
+            )
 
             # Update shifted FGS image & catalog filepaths
-            self.shifted_im_file = os.path.join(root_dir, 'shifted',
-                                                '{}_G{}.fits'.format(self.lineEdit_root.text(),
-                                                                     self.buttonGroup_guider.checkedButton().text()))
-            self.shifted_ALLpsfs = os.path.join(root_dir,'shifted',
-                                                '{}_G{}_ALLpsfs.txt'.format(self.lineEdit_root.text(),
-                                                                            self.buttonGroup_guider.checkedButton().text()))
-            self.shifted_regfile = os.path.join(root_dir, 'shifted',
-                                                '{}_G{}_regfile.txt'.format(self.lineEdit_root.text(),
-                                                                            self.buttonGroup_guider.checkedButton().text()))
+            self.shifted_im_file = os.path.join(
+                root_dir, 'shifted', '{}_G{}.fits'.format(root, guider)
+            )
+            self.shifted_all_found_psfs_file = os.path.join(
+                root_dir, 'shifted', 'all_found_psfs_{}_G{}.txt'.format(root, guider)
+            )
+            self.shifted_guiding_selections_file = os.path.join(
+                root_dir, 'shifted', 'guiding_selections_{}_G{}.txt'.format(root, guider)
+            )
+
+            # Update default guiding_selections*.txt paths in GUI
+            if os.path.exists(self.guiding_selections_file):
+                self.lineEdit_regfileStarSelector.setText(self.guiding_selections_file)
+                if not self.radioButton_shifted.isChecked():
+                    self.lineEdit_regfileSegmentGuiding.setText(self.guiding_selections_file)
+                else:
+                    self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
+            else:
+                self.lineEdit_regfileStarSelector.setText("")
+                self.lineEdit_regfileSegmentGuiding.setText("")
 
             # If possible, show converted and shifted image previews, too
             self.update_converted_image_preview()

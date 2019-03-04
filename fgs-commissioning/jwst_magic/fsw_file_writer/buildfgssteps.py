@@ -24,8 +24,8 @@ Use
         ``step`` - name of guiding step for which to create images
             (expecting 'ID', 'ACQ1', 'ACQ2', 'TRK', or 'LOSTRK')
     Optional arguments:
-        ``regfile`` - file containing X/Y positions and countrates for
-            all stars in an image
+        ``guiding_selections_file`` - file containing X/Y positions and
+            countrates for all stars in an image
         ``configfile`` - file defining parameters for each guider step.
             If not defined, defaults to jwst_magic/data/config.ini
         ``out_dir`` - where output files will be saved. If not provided,
@@ -36,16 +36,15 @@ Use
 """
 
 # Standard Library Imports
-import os
 import logging
-from shutil import copyfile
+import os
 
 # Third Party Imports
 from astropy.io import ascii as asc
 from astropy.io import fits
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+import numpy as np
 from scipy.ndimage import shift
 
 # Local imports
@@ -71,7 +70,7 @@ class BuildFGSSteps(object):
     """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
     to be used with DHAS.
     """
-    def __init__(self, im, guider, root, step, regfile=None, configfile=None,
+    def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
                  out_dir=None, logger_passed=False, shift_id_attitude=True,
                  crowded_field=False, catalog=None):
         """Initialize the class and call build_fgs_steps().
@@ -99,17 +98,17 @@ class BuildFGSSteps(object):
 
             # Shift image to ID attitude
             if shift_id_attitude and step == 'ID':
-                self.input_im = self.shift_to_id_attitude(self.input_im, regfile, catalog,
+                self.input_im = self.shift_to_id_attitude(self.input_im, guiding_selections_file, catalog,
                                                           crowded_field=crowded_field)
 
             # Build FGS steps
-            self.build_fgs_steps(im, root, regfile, configfile)
+            self.build_fgs_steps(im, root, guiding_selections_file, configfile)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, im, root, regfile, configfile):
+    def build_fgs_steps(self, im, root, guiding_selections_file, configfile):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
@@ -123,7 +122,7 @@ class BuildFGSSteps(object):
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
             tools/fgs-commissioning/
-        regfile : str
+        guiding_selections_file : str
             File containing X/Y positions and countrates for all stars
             in the provided image
         configfile : str
@@ -139,12 +138,7 @@ class BuildFGSSteps(object):
         # Correct for negative, saturated pixels and other nonsense
         self.input_im = utils.correct_image(self.input_im)
 
-        # # THEN convert to uint16
-        # self.input_im = np.uint16(self.input_im)
-
-        # LOGGER.info('FSW File Writing: Max of input image: {}'.format(np.max(self.input_im)))
-
-        self.get_coords_and_counts(regfile=regfile)
+        self.get_coords_and_counts(guiding_selections_file)
 
         section = '{}_dict'.format(self.step.lower())
         config_ini = self.build_step(section, configfile)
@@ -154,32 +148,27 @@ class BuildFGSSteps(object):
         LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
         write_files.write_all(self)
 
-    def get_coords_and_counts(self, regfile=None):
+    def get_coords_and_counts(self, guiding_selections_file):
         """Get coordinate information and countrates of guide star and
         reference stars.
 
         Parameters
         ----------
-        regfile : str, optional
+        guiding_selections_file : str
             File containing X/Y positions and countrates for all stars
             in the provided image
         """
-        if regfile is None:
-            regfile = os.path.join(self.out_dir,
-                                    '{0}_G{1}_regfile.txt'.format(self.root,
-                                                                  self.guider))
-        LOGGER.info("FSW File Writing: Using {} as the reg file".format(regfile))
+        LOGGER.info("FSW File Writing: Using {} as the guiding selections file".format(guiding_selections_file))
 
-        if regfile.endswith('reg'):
-            self.xarr, self.yarr = np.loadtxt(regfile)
+        if guiding_selections_file.endswith('reg'):
+            self.xarr, self.yarr = np.loadtxt(guiding_selections_file)
             self.countrate = []
             for xa, ya, in zip(self.xarr, self.yarr):
                 self.countrate.append(utils.countrate_3x3(xa, ya, self.input_im))
         else:
-            self.yarr, self.xarr, self.countrate = np.loadtxt(regfile, delimiter=' ',
+            self.yarr, self.xarr, self.countrate = np.loadtxt(guiding_selections_file,
+                                                              delimiter=' ',
                                                               skiprows=1).T
-        # Add y offset to all coordinates
-        # self.yarr = self.yarr - self.yoffset
 
         # Cover cases where there is only one entry in the reg file
         try:
@@ -334,20 +323,21 @@ class BuildFGSSteps(object):
 
         return image
 
-    def shift_to_id_attitude(self, image, regfile, catalog, crowded_field=False):
+    def shift_to_id_attitude(self, image, guiding_selections_file,
+                             all_found_psfs_file, crowded_field=False):
         """Shift the FGS image such that the guide star is at the ID
-        attitude. Rewrite the FGS FITS file, regfile, and ALLpsfs catalog
-        file for this shifted case. (Rename old versions of those files
+        attitude. Rewrite the FGS FITS file, guiding_selections, and all_found_psfs
+        catalog files for this shifted case. (Rename old versions of those files
         to be "_unshifted".)
 
         Parameters
         ----------
         image : 2D numpy array
             Image data
-        regfile : str
-            Path to existing regfile.txt
-        catalog : str
-            Path to existing ALLpsfs.txt
+        guiding_selections_file : str
+            Path to existing guiding_selections_{root}_G{guider}.txt
+        all_found_psfs_file : str
+            Path to existing all_found_psfs_{root}_G{guider}.txt
         crowded_field : bool, optional
             Denotes whether the current case is a crowded field,
             in which the ID attitude changes.
@@ -364,17 +354,19 @@ class BuildFGSSteps(object):
         # Define filenames
         file_root = '{}_G{}'.format(self.root, self.guider)
         FGS_img = os.path.join(self.out_dir, 'FGS_imgs', file_root + '.fits')
-        regfile = regfile or os.path.join(self.out_dir,
-                                    file_root + '_regfile.txt')
-        ALLpsfs = catalog or os.path.join(self.out_dir,
-                                    file_root + '_ALLpsfs.txt')
+        guiding_selections_file = guiding_selections_file or os.path.join(
+            self.out_dir, 'guiding_selections_{}.txt'.format(file_root)
+        )
+        all_found_psfs_file = all_found_psfs_file or os.path.join(
+            self.out_dir, 'all_found_psfs_{}.txt'.format(file_root)
+        )
 
         # Make sure shifted directory exists
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'shifted'))
 
         # Load the catalogs
-        regfile_cat = asc.read(regfile)
-        ALLpsfs_cat = asc.read(ALLpsfs)
+        guiding_selections_cat = asc.read(guiding_selections_file)
+        all_found_psfs_cat = asc.read(all_found_psfs_file)
 
         # Determine the pixel shift
         if crowded_field:
@@ -385,17 +377,16 @@ class BuildFGSSteps(object):
             elif self.guider == 2:
                 xend, yend = (1003, 1697)  # Converted from Ideal = (-45.6701, -0.8757)
             hdr_keyword = '{}'.format((xend, yend))
-            file_suffix = 'crowdedIDattitude'
         else:
             xend, yend = (1024, 1024)  # ID attitude; Different for crowded fields
-            # Note this should actually be 1024.5, but the regfile needs an integer shift
+            # Note this should actually be 1024.5, but the guiding selections file
+            # needs an integer shift
             hdr_keyword = '{}'.format((xend, yend))
-            file_suffix = 'IDattitude'
 
 
         # 1) Shift the image array
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        xstart, ystart = regfile_cat['x', 'y'][0] # Guide star location
+        xstart, ystart = guiding_selections_cat['x', 'y'][0] # Guide star location
         dx = xend - xstart
         dy = yend - ystart
         
@@ -411,43 +402,41 @@ class BuildFGSSteps(object):
         LOGGER.info("FSW File Writing: Shifting guide star to ID attitude ({}, {})".format(xend, yend))
         shifted_image = shift(image, (dy, dx), mode='constant', cval=bkg, prefilter=True)
 
-        # 2) Rewrite regfile.txt and save old file as regfile_unshifted.txt
+        # 2) Write new shifted guiding_selections*.txt
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Shift the regfile catalog
-        shifted_regfile_cat = regfile_cat.copy()
-        shifted_regfile_cat['x'] += dx
-        shifted_regfile_cat['y'] += dy
+        # Shift the guiding selections catalog
+        shifted_guiding_selections_cat = guiding_selections_cat.copy()
+        shifted_guiding_selections_cat['x'] += dx
+        shifted_guiding_selections_cat['y'] += dy
 
-        shifted_regfile = os.path.join(self.out_dir, 'shifted',
-                                       file_root + '_regfile.txt')
+        shifted_guiding_selections = os.path.join(self.out_dir, 'shifted',
+                                       'guiding_selections_{}.txt'.format(file_root))
 
-        # Write new regfile.txts
-        utils.write_cols_to_file(self.out_dir,
-                                 filename=shifted_regfile,
+        # Write new guiding_selections*.txts
+        utils.write_cols_to_file(os.path.join(self.out_dir, shifted_guiding_selections),
                                  labels=['y', 'x', 'countrate'],
-                                 cols=shifted_regfile_cat)
+                                 cols=shifted_guiding_selections_cat)
 
 
-        # 3) Rewrite ALLpsfs.txt and save old file as ALLpsfs_unshifted.txt
+        # 3) Write new shifted all_found_psfs*.txt
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Shift the ALLpsfs catalog
-        shifted_ALLpsfs_cat = ALLpsfs_cat.copy()
-        shifted_ALLpsfs_cat['x'] += dx
-        shifted_ALLpsfs_cat['y'] += dy
+        # Shift the all_found_psfs*.txt catalog
+        shifted_all_psfs_cat = all_found_psfs_cat.copy()
+        shifted_all_psfs_cat['x'] += dx
+        shifted_all_psfs_cat['y'] += dy
 
-        shifted_ALLpsfs = os.path.join(self.out_dir, 'shifted',
-                                       file_root + '_ALLpsfs.txt')
+        shifted_all_psfs = os.path.join(self.out_dir, 'shifted',
+                                       'all_found_psfs_{}.txt'.format(file_root))
 
-        all_cols = select_psfs.create_cols_for_coords_counts(shifted_ALLpsfs_cat['x'],
-                                                             shifted_ALLpsfs_cat['y'],
-                                                             shifted_ALLpsfs_cat['countrate'],
+        all_cols = select_psfs.create_cols_for_coords_counts(shifted_all_psfs_cat['x'],
+                                                             shifted_all_psfs_cat['y'],
+                                                             shifted_all_psfs_cat['countrate'],
                                                              None,
-                                                             labels=shifted_ALLpsfs_cat['label'],
-                                                             inds=range(len(shifted_ALLpsfs_cat['x'])))
+                                                             labels=shifted_all_psfs_cat['label'],
+                                                             inds=range(len(shifted_all_psfs_cat['x'])))
 
-        # Write new ALLpsfs.txts
-        utils.write_cols_to_file(self.out_dir,
-                                 filename=shifted_ALLpsfs,
+        # Write new all_found_psfs*.txts
+        utils.write_cols_to_file(os.path.join(self.out_dir, shifted_all_psfs),
                                  labels=['label', 'y', 'x', 'countrate'],
                                  cols=all_cols)
 
