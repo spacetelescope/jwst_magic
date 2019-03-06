@@ -63,7 +63,7 @@ from pysiaf.utils import rotations
 
 # Local Imports
 from .. import utils
-from jwst_magic.utils import coordinate_transforms
+from jwst_magic._utils import coordinate_transforms
 from ..segment_guiding import SegmentGuidingGUI
 
 # Establish segment guiding files directory

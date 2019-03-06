@@ -39,7 +39,7 @@ import os
 import shutil
 
 # Local Imports
-from jwst_magic.utils import coordinate_transforms
+from jwst_magic._utils import coordinate_transforms
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
