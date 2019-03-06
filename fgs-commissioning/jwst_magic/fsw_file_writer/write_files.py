@@ -56,7 +56,6 @@ Use
             stages; created by ``buildfgssteps.py``
 """
 
-
 # Standard Library Imports
 import os
 
@@ -65,8 +64,9 @@ from astropy.io import fits
 import numpy as np
 
 # Local Imports
-from .. import utils, coordinate_transforms
+from .. import utils
 from ..fsw_file_writer import mkproc
+from jwst_magic.utils import coordinate_transforms
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
