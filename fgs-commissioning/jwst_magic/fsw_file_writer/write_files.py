@@ -66,7 +66,7 @@ import numpy as np
 # Local Imports
 from .. import utils
 from ..fsw_file_writer import mkproc
-from jwst_magic.utils import coordinate_transforms
+from jwst_magic._utils import coordinate_transforms
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
