@@ -39,9 +39,10 @@ Use
 
 # Standard Library Imports
 import getpass
-import os
 import logging
+import os
 import time
+
 
 # Third Party Imports
 from astropy import units as u
@@ -61,7 +62,8 @@ import pysiaf
 from pysiaf.utils import rotations
 
 # Local Imports
-from .. import coordinate_transforms, utils
+from .. import utils
+from jwst_magic._utils import coordinate_transforms
 from ..segment_guiding import SegmentGuidingGUI
 
 # Establish segment guiding files directory
