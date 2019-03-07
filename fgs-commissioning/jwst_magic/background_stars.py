@@ -139,8 +139,7 @@ class BackgroundStarsWindow(QDialog):
         # Plot guide star
         self.vmin, self.vmax = (self.jmag + 8, self.jmag - 1)
         self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*',
-                                                   s=500, c=self.jmag,
-                                                   cmap='viridis_r',
+                                                   s=500, cmap='viridis_r',
                                                    vmin=self.vmax,
                                                    vmax=self.vmin)
 
