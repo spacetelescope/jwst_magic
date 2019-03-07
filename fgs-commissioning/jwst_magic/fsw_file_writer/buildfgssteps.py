@@ -217,7 +217,7 @@ class BuildFGSSteps(object):
 
         return config_ini
 
-    def create_img_arrays(self, section, config_ini):
+    def create_img_arrays(self, step, config_ini):
         """Create the needed image arrays for the given step.
 
         Possible arrays (created as class attributes):
@@ -235,7 +235,7 @@ class BuildFGSSteps(object):
 
         Parameters
         ----------
-        section : str
+        step : str
             Name of step within the config file ('{step}_dict')
         config_ini : : obj
             Object containing all parameters from the given config file
@@ -250,15 +250,16 @@ class BuildFGSSteps(object):
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
         # ** THIS MIGHT NOT BE CORRECT IF IT OCCURS AFTER THE IMAGE HAS BEEN NORMALIZED TO COUNTS ALREADY **
-        self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tframe')
+        # 3/7/19: I don't think it is! I think it expects input in ct/s
+        self.time_normed_im = self.input_im * config_ini.getfloat(step, 'tframe')
 
         # Add the bias, and build the array of reads with noisy data
-        if config_ini.getboolean(section, 'bias'):
+        if config_ini.getboolean(step, 'bias'):
             # Get the bias ramp
-            nramps = config_ini.getint(section, 'nramps')
+            nramps = config_ini.getint(step, 'nramps')
             det_eff = detector_effects.FGSDetectorEffects(
                 self.guider, self.xarr, self.yarr, self.nreads, nramps,
-                config_ini.getint(section, 'imgsize')
+                config_ini.getint(step, 'imgsize')
             )
             self.bias = det_eff.add_detector_effects()
 
@@ -270,7 +271,7 @@ class BuildFGSSteps(object):
             # First read
             # Calculate how much signal should be in the first read
             i_read = 0
-            n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
+            n_drops_before_first_read = int(config_ini.getfloat(step, 'ndrops1'))
             n_frametimes_in_first_read = n_drops_before_first_read + 1
             # Add signal to every first read
             noisy_signal_cube = np.random.poisson(signal_cube)
@@ -279,7 +280,7 @@ class BuildFGSSteps(object):
             # Second read
             # Calculate how much signal should be in the second read
             i_read = 1
-            n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
+            n_drops_before_second_read = int(config_ini.getfloat(step, 'ndrops2'))
             n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
             # Add signal to every second read
             noisy_signal_cube = np.random.poisson(signal_cube)
@@ -296,21 +297,21 @@ class BuildFGSSteps(object):
 
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
-        if config_ini.getboolean(section, 'cdsimg'):
-            self.cds = create_cds(image, section, config_ini)
+        if config_ini.getboolean(step, 'cdsimg'):
+            self.cds = create_cds(image, step, config_ini)
         else:
             self.cds = None
 
         # If in ID, split the full-frame image into strips
-        if config_ini.getboolean(section, 'stripsimg'):
+        if config_ini.getboolean(step, 'stripsimg'):
             self.strips = create_strips(image,
-                                        config_ini.getint(section, 'imgsize'),
-                                        config_ini.getint(section, 'nstrips'),
-                                        config_ini.getint(section, 'nramps'),
+                                        config_ini.getint(step, 'imgsize'),
+                                        config_ini.getint(step, 'nstrips'),
+                                        config_ini.getint(step, 'nramps'),
                                         self.nreads,
-                                        config_ini.getint(section, 'height'),
+                                        config_ini.getint(step, 'height'),
                                         self.yoffset,
-                                        config_ini.getint(section, 'overlap'))
+                                        config_ini.getint(step, 'overlap'))
 
         # Modify further for LOSTRK images (that will be run in FGSES)
         if self.step == 'LOSTRK':
@@ -507,16 +508,20 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
     return strips
 
 
-def create_cds(arr, section, config_ini, fix_saturated_pix=True):
+def create_cds(arr, step, config_ini, fix_saturated_pix=True):
     """Create CDS image: Subtract the first read from the second read.
     Option to handle saturated pixels in CDS.
 
     Parameters
     ----------
     arr : 3-D numpy array
-        Image data in
-    fix_saturated_pix : boolean
-        Apply a fix to saturated pixels in the CDS array?
+        Image data
+    step : str
+        Name of step within the config file ('{step}_dict')
+    config_ini : obj
+        Object containing all parameters from the given configfile
+    fix_saturated_pix : boolean, optional
+        Apply a fix to saturated pixels in the CDS array? Default is True.
 
     Returns
     -------
@@ -536,14 +541,14 @@ def create_cds(arr, section, config_ini, fix_saturated_pix=True):
         # For pixels that are saturated in the second read, calculate their
         # expected CDS value using the count rate from the first read and
         # assuming linearity.
-        n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
+        n_drops_before_first_read = int(config_ini.getfloat(step, 'ndrops1'))
         n_frametimes_in_first_read = n_drops_before_first_read + 1
-        time_first_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_first_read  # seconds
+        time_first_read = config_ini.getfloat(step, 'tframe') * n_frametimes_in_first_read  # seconds
         first_read_countrates = first_reads / time_first_read  # counts / second
 
-        n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
+        n_drops_before_second_read = int(config_ini.getfloat(step, 'ndrops2'))
         n_frametimes_in_cds_read = n_drops_before_second_read + 1
-        time_cds_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_cds_read  # seconds
+        time_cds_read = config_ini.getfloat(step, 'tframe') * n_frametimes_in_cds_read  # seconds
 
         # If the calculated CDS value is less than saturation, set that
         # as the pixel value. Otherwise, set the pixel value to 65000.
