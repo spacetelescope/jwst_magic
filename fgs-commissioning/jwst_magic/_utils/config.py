@@ -8,7 +8,7 @@ Use
 ---
     This module can be used as such:
     ::
-        from jwst_magic.fsw_file_writer import config
+        from jwst_magic._utils import config
         config_ini = config.load_config_ini(config_file_name)
 
     Required arguments:
