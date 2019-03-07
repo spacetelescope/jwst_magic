@@ -116,7 +116,7 @@ class FGSDetectorEffects:
         # bias = add_pedestal()
 
         # Correct bias image for saturated or negative pixels
-        self.bias = utils.correct_image(self.bias, upper_limit=0)
+        # self.bias = utils.correct_image(self.bias, upper_limit=0)
 
         # *** Does the bias need to be in the uint16 type?? ***
         # self.bias = self.bias.astype(np.uint16)
@@ -202,11 +202,13 @@ class FGSDetectorEffects:
         bias_file = os.path.join(DATA_PATH, 'g{}bias0.fits'.format(self.guider))
         bias0 = np.copy(fits.getdata(bias_file))
 
+        # TODO: Scale the bias to the exposure time of the current step??
+
         xlow, xhigh, ylow, yhigh = self.array_bounds
 
         # Get zeroth read bias structure from FITS file
         self.bias += bias0[xlow:xhigh, ylow:yhigh]
-        self.bias = utils.correct_image(self.bias, upper_threshold=40000., upper_limit=10000.)
+        # self.bias = utils.correct_image(self.bias, upper_threshold=40000., upper_limit=10000.)
 
     def get_subarray_location(self):
         """Get the bounds of the subarray for the given step.

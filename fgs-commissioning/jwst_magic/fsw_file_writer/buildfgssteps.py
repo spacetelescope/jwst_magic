@@ -135,9 +135,9 @@ class BuildFGSSteps(object):
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
 
-        # *** SHOULD THIS BE HAPPENING HERE?? ***
-        # Correct for negative, saturated pixels and other nonsense
-        self.input_im = utils.correct_image(self.input_im)
+        # # *** SHOULD THIS BE HAPPENING HERE?? ***
+        # # Correct for negative, saturated pixels and other nonsense
+        # self.input_im = utils.correct_image(self.input_im)
 
         self.get_coords_and_counts(guiding_selections_file)
 
@@ -293,7 +293,7 @@ class BuildFGSSteps(object):
             image = self.time_normed_im
 
         # Cut any pixels over saturation or under zero
-        # image = utils.correct_image(image)
+        image = utils.correct_image(image, upper_threshold=65535, upper_limit=65535)
 
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
