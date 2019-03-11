@@ -250,7 +250,7 @@ class BuildFGSSteps(object):
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
         # ** THIS MIGHT NOT BE CORRECT IF IT OCCURS AFTER THE IMAGE HAS BEEN NORMALIZED TO COUNTS ALREADY **
-        # 3/7/19: I don't think it is! I think it expects input in ct/s
+        # 3/7/19: I don't think it is incorrect! I think it expects input in ct/s
         self.time_normed_im = self.input_im * config_ini.getfloat(step, 'tframe')
 
         # Add the bias, and build the array of reads with noisy data
@@ -267,6 +267,8 @@ class BuildFGSSteps(object):
             # (specifically Poisson noise), adding signal over each read
             image = np.copy(self.bias)
             signal_cube = [self.time_normed_im] * nramps
+            positive_signal_cube = np.copy(signal_cube)
+            positive_signal_cube[positive_signal_cube < 0] = 0
 
             # First read
             # Calculate how much signal should be in the first read
@@ -274,7 +276,7 @@ class BuildFGSSteps(object):
             n_drops_before_first_read = int(config_ini.getfloat(step, 'ndrops1'))
             n_frametimes_in_first_read = n_drops_before_first_read + 1
             # Add signal to every first read
-            noisy_signal_cube = np.random.poisson(signal_cube)
+            noisy_signal_cube = np.random.poisson(positive_signal_cube)
             image[i_read::self.nreads] += n_frametimes_in_first_read * noisy_signal_cube
 
             # Second read
@@ -283,7 +285,7 @@ class BuildFGSSteps(object):
             n_drops_before_second_read = int(config_ini.getfloat(step, 'ndrops2'))
             n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
             # Add signal to every second read
-            noisy_signal_cube = np.random.poisson(signal_cube)
+            noisy_signal_cube = np.random.poisson(positive_signal_cube)
             image[i_read::self.nreads] += n_frametimes_in_second_read * noisy_signal_cube
 
         else:
