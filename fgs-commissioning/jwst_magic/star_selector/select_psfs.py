@@ -732,12 +732,12 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         # # Any value above 65535 or below 0 will wrap when converted to uint16
         # data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
 
-        # Convert data to reflect one ID exposure time
-        configfile = os.path.join(DATA_PATH, 'config.ini')
-        config_ini = config.load_config_ini(configfile)
-        t_id = config_ini.getfloat('id_dict', 'tframe')  # Time of one ID exp in seconds
-        data_id = data * t_id
-        data_id = utils.correct_image(data_id, upper_threshold=65535, upper_limit=65535)
+        # # Convert data to reflect one ID exposure time
+        # configfile = os.path.join(DATA_PATH, 'config.ini')
+        # config_ini = config.load_config_ini(configfile)
+        # t_id = config_ini.getfloat('id_dict', 'tframe')  # Time of one ID exp in seconds
+        # data_id = data * t_id
+        # data_id = utils.correct_image(data_id, upper_threshold=65535, upper_limit=65535)
 
         if guiding_selections_file:
             # Determine the kind of in_file and parse out the PSF locations and
@@ -755,14 +755,14 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         else:
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
-            cols, coords, nref, all_cols = manual_star_selection(data_id,
+            cols, coords, nref, all_cols = manual_star_selection(data,
                                                                  global_alignment,
                                                                  testing,
                                                                  masterGUIapp)
             all_found_psfs_path = None
 
         # Save PNG of image and all PSF locations in out_dir
-        plot_centroids(data_id, coords, root, guider, out_dir)
+        plot_centroids(data, coords, root, guider, out_dir)
 
 
         if all_cols:
