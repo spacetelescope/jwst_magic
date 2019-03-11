@@ -50,15 +50,14 @@ The following are ways to run segment_guiding:
 """
 import os
 import shutil
-
+import yaml
 
 import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialogButtonBox
+import pytest
 
 from jwst_magic.segment_guiding import segment_guiding
-
-import pytest
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_sgt"
@@ -69,6 +68,7 @@ OBSERVATION_NUM = 7
 VISIT_NUM = 1
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 JENKINS = 'jenkins' in os.getcwd()
+
 
 @pytest.fixture()
 def test_directory(test_dir=TEST_DIRECTORY):
@@ -92,10 +92,26 @@ def test_directory(test_dir=TEST_DIRECTORY):
         shutil.rmtree(test_dir)
 
 
-sof_parameters = [(0, None, 'sts -gs_select 1141:7:1 -star1 = 4, 90.986120, -67.362103, 439821.7, 395839.5, 3, 10 -ref_only1 = 3, 90.980194, -67.352832, 369223.3, 332301.0 -ref_only2 = 10, 90.963969, -67.351986, 397375.0, 357637.5'),
-                  (4, None, 'sts -gs_select 1141:7:1 -star1 = 4, 90.970810, -67.357738, 439821.7, 395839.5, 3, 10 -ref_only1 = 3, 90.964892, -67.348467, 369223.3, 332301.0 -ref_only2 = 10, 90.948671, -67.347619, 397375.0, 357637.5'),
-                  (0, np.array([[1, 12, 6]]), 'sts -gs_select 1141:7:1 -star1 = 1, 90.987850, -67.355022, 316763.3, 285087.0, 12, 6 -ref_only1 = 12, 90.963123, -67.355541, 532725.0, 479452.5 -ref_only2 = 6, 90.972558, -67.350638, 549830.0, 494847.0'),
-                  (0, np.array([[1, 2, 3], [4, 0, 17, 12, 2]]), 'sts -gs_select 1141:7:1 -star1 = 1, 90.987850, -67.355022, 316763.3, 285087.0, 2, 3 -star2 = 4, 90.986120, -67.362103, 439821.7, 395839.5, 0, 17, 12, 2 -ref_only1 = 2, 90.986990, -67.358569, 485390.0, 436851.0 -ref_only2 = 3, 90.980194, -67.352832, 369223.3, 332301.0 -ref_only3 = 12, 90.963123, -67.355541, 532725.0, 479452.5 -ref_only4 = 17, 90.954592, -67.356915, 297443.3, 267699.0 -ref_only5 = 0, 90.953775, -67.360493, 408348.3, 367513.5')]
+def parametrized_data():
+    """Load parametrized data from file.
+
+    Returns
+    -------
+    test_data : dict
+        Dictionary containing parametrized test data
+    """
+    parametrized_data_file = os.path.join(__location__, 'data', 'parametrized_test_data.yml')
+    with open(parametrized_data_file) as f:
+        test_data = yaml.load(f.read())
+
+    return test_data['test_segment_guiding']
+
+
+test_data = parametrized_data()['test_generate_segment_override_file']
+sof_parameters = [(0, None, test_data[0]),
+                  (4, None, test_data[1]),
+                  (0, np.array([[1, 12, 6]]), test_data[2]),
+                  (0, np.array([[1, 2, 3], [4, 0, 17, 12, 2]]), test_data[3])]
 @pytest.mark.parametrize('seg_num, selected_segs, correct_command', sof_parameters)
 def test_generate_segment_override_file(test_directory, seg_num, selected_segs, correct_command):
 
