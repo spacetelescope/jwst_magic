@@ -3,7 +3,7 @@ III.	Determining and Loading the Input Image
 
 MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR filter (the NIRCam weak lens (WL) filter will cause MAGIC to crash). If you want MAGIC to convert this image into a raw dectector FGS image, you can indicate this by checking the “Convert Image” check box. In most cases MAGIC can determine from the header information which instrument and detector the image is from, however if it can’t figure this out from header information, you will have to help it out by telling it which instrument and detector your input image comes from. You can also renormalize and/or add background images to your seed image.
 
-1. From your astroconda environment, start an IPython session and launch the main GUI::
+1. From your astroconda environment, start an IPython session and launch the main GUI:
 
        $ ipython
     
@@ -65,9 +65,9 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
        
       i. Click “Add Background Stars”. (*E*) The background stars dialog box will appear:
       
-          [figure6]
-          
-          Figure 6 - Background stars dialog window
+      [figure6]
+         
+      Figure 6 - Background stars dialog window
           
       ii. Select which method you wish to use to add stars to the image: randomly, with a user-defined table, or with a Guide Star Catalog (GSC) 2.4.1 query.
           
