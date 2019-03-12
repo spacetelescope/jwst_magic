@@ -40,6 +40,6 @@ The following documents will walk you through how to use each of the parts of MA
 Note: A powerful feature of MAGIC is that is retains information about the image you are working on as long as the window stays open and the file is loaded, so we recommend that while working with MAGIC, you keep the GUI open. If it crashes (which can happen) don’t worry, just following section II again and use the same input values and MAGIC will find the dataset that you are using. 
 
 ----------------------------------------------------
-
-“We’re not *really* going to use magic?” – Ronald Weasley
-
+<p align="center">
+  “We’re not <b>really</b> going to use magic?” – Ronald Weasley
+</p>
