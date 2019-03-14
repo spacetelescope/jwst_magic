@@ -54,11 +54,11 @@ calling the QApplication instance to run a window/dialog/GUI.
 """
 
 # Standard Library Imports
-import random
 import logging
+import os
+import random
 import requests
 import sys
-import os
 
 # Third Party Imports
 import numpy as np
@@ -347,7 +347,8 @@ class BackgroundStarsWindow(QDialog):
 
         # Plot every star
         mask = np.array([j is np.ma.masked for j in self.jmags])
-        LOGGER.info('Background Stars: Plotting {} stars onto GUIDER{} FOV.'.format(len(self.x[~mask]), self.guider))
+        LOGGER.info('Background Stars: Plotting {} stars onto GUIDER{} FOV.'
+                    .format(len(self.x[~mask]), self.guider))
 
         # Check if the star magnitudes are outside the colorbar limits
         for jmag in self.jmags[~mask]:
@@ -461,8 +462,8 @@ class BackgroundStarsWindow(QDialog):
 
         # Query MAST to get GSC 2.4.1 results in CSV form
         radius = 1.6 / 60  # 1.6 arcmin in degrees
-        web_query = "http://gsss.stsci.edu/webservices/vo/CatalogSearch.aspx?RA={:f}&DEC={:f}&DSN=+&FORMAT=CSV&CAT=GSC241&SR={:f}&".format(
-            RA, Dec, radius)
+        web_query = "http://gsss.stsci.edu/webservices/vo/CatalogSearch.aspx?RA=" \
+                    "{:f}&DEC={:f}&DSN=+&FORMAT=CSV&CAT=GSC241&SR={:f}&".format(RA, Dec, radius)
         LOGGER.info('Background Stars: Querying GSC 2.4.1 at ' + web_query)
         page = requests.get(web_query)
         csv_data = page.text
@@ -506,7 +507,9 @@ class BackgroundStarsWindow(QDialog):
         V2ref_arcsec = guider.V2Ref
         V3ref_arcsec = guider.V3Ref
 
-        attitude_ref = pysiaf.utils.rotations.attitude(V2ref_arcsec, V3ref_arcsec, RA, Dec, position_angle)
+        attitude_ref = pysiaf.utils.rotations.attitude(
+            V2ref_arcsec, V3ref_arcsec, RA, Dec, position_angle
+        )
         V2, V3 = pysiaf.utils.rotations.getv2v3(attitude_ref, RAs, Decs)
         x_det, y_det = guider.tel_to_det(V2, V3)
         x_raw, y_raw = y_det, x_det
@@ -523,7 +526,8 @@ class BackgroundStarsWindow(QDialog):
         self.y = y_raw[in_detector_frame]
         self.jmags = jmag[in_detector_frame]
 
-        LOGGER.info('Background Stars: Found {} sources in GUIDER{} FOV.'.format(len(self.x), self.guider))
+        LOGGER.info('Background Stars: Found {} sources in GUIDER{} FOV.'
+                    .format(len(self.x), self.guider))
 
         return queried_catalog
 
@@ -662,7 +666,8 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     else:
         raise TypeError(
             'Unfamiliar value passed to bkgd_stars: {} Please pass boolean or dictionary of background star x, y, jmag.'.
-            format(stars))
+            format(stars)
+        )
 
     # Add stars to image
     # Copy original data array
@@ -670,8 +675,6 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
 
     # (Try to) only use the data for added stars, not the noise
     mean = np.mean(image)
-    median = np.median(image)
-    std = np.std(image)
     image[image < mean] = 0
     for x, y, jmag_back in zip(x_back, y_back, jmags_back):
         if not isinstance(jmag_back, np.ma.core.MaskedConstant):
