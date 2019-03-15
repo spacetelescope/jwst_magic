@@ -134,10 +134,6 @@ class BuildFGSSteps(object):
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
 
-        # # *** SHOULD THIS BE HAPPENING HERE?? ***
-        # # Correct for negative, saturated pixels and other nonsense
-        # self.input_im = utils.correct_image(self.input_im)
-
         self.get_coords_and_counts(guiding_selections_file)
 
         section = '{}_dict'.format(self.step.lower())
@@ -177,6 +173,9 @@ class BuildFGSSteps(object):
             self.xarr = np.asarray([self.xarr])
             self.yarr = np.asarray([self.yarr])
             self.countrate = np.asarray([self.countrate])
+
+        # TODO: Add case that extracts countrates from input_im and the x/y
+        # coords/inds so this module is no longer dependent on ALLpsfs
 
     def build_step(self, section, configfile=None):
         """Read out the parameters in the config.ini, and alter class
@@ -248,8 +247,6 @@ class BuildFGSSteps(object):
 
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
-        # ** THIS MIGHT NOT BE CORRECT IF IT OCCURS AFTER THE IMAGE HAS BEEN NORMALIZED TO COUNTS ALREADY **
-        # 3/7/19: I don't think it is incorrect! I think it expects input in ct/s
         self.time_normed_im = self.input_im * config_ini.getfloat(step, 'tframe')
 
         # Add the bias, and build the array of reads with noisy data
@@ -502,9 +499,6 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
             yhigh = ylow + strip_height
             strips[nn] = image[iz, ylow:yhigh, :]
             nn += 1
-
-    # Make sure the data is between 0 and 65,000 counts and are finite numbers
-    # strips = utils.correct_image(strips)
 
     return strips
 
