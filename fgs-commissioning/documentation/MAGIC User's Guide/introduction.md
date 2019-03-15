@@ -45,9 +45,7 @@ Segment Guiding Tool (Segment Guiding)
 Used to facilitate guiding on unstacked segment PSF arrays (Segment Override), and stacked, but unphase 
 segment PSFs (Photometry Override) during commissioning. 
 
-**Segment Override**
-
-When provided with:
+**Segment Override** - When provided with:
 1. the commanded RA and Dec of a guide star, and
 2. the V2/V3 (or x/y) positions of all segments in an array
 
@@ -56,8 +54,7 @@ effective RA and Dec of all segments on the sky.
 
 [Section VII: Writing the Segment Override File (SOF)](viii_write_sof.md)
 
-**Photometry Override**
-When provided with a count rate factor, the tool will provide
+**Photometry Override** - When provided with a count rate factor, the tool will provide
 the necessary information to override the guide star catalog with 
 a new countrate for a specific guide star
 
