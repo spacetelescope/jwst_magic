@@ -80,7 +80,7 @@ a new countrate for a specific guide star
 
 ###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
 
-###### Appendix B: [Opening DHAS](appendix_b_opening_dhas.md)
+###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
 
 ###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
 
