@@ -47,7 +47,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
    c. **Position Angle**: Ask the S&OC for the visit position angle at the guide star (V3PA@GS).
       See the Figure 14 to clarify the difference between V1, the target, and the guide star.
       <p align="center">
-         <img src ="./figs/figure14_locations_of_v1.png" alt="Relative Locations of Objects" width="600"/>
+         <img src ="./figs/figure14_locations_of_v1.png" alt="Relative Locations of Objects"/>
       </p>
       <p align="center">
          Figure 14: Locations of V1, the guide star, and the target
