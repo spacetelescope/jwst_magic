@@ -52,7 +52,7 @@ segment PSFs (Photometry Override) during commissioning.
 the segment guiding tool calculates the
 effective RA and Dec of all segments on the sky.
 
-[Section VII: Writing the Segment Override File (SOF)](viii_write_sof.md)
+[Section VII: Writing the Segment Override File (SOF)](vii_write_sof.md)
 
 **Photometry Override** - When provided with a count rate factor, the tool will provide
 the necessary information to override the guide star catalog with 
@@ -74,7 +74,7 @@ a new countrate for a specific guide star
 
 ###### Section VI: [Contingency: Re-selecting Stars and Re-running DHAS](vi_contingency_reselect_stars.md)
 
-###### Section VII: [Writing the Segment Override File (SOF)](viii_write_sof.md)
+###### Section VII: [Writing the Segment Override File (SOF)](vii_write_sof.md)
 
 ###### Section VIII: [Writing the Photometry Override File (POF)](viii_write_pof.md)
 
