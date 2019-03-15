@@ -20,6 +20,7 @@ import numpy as np
 from photutils import find_peaks
 import pytest
 
+from jwst_magic.fsw_file_writer import write_files
 from jwst_magic.fsw_file_writer.buildfgssteps import BuildFGSSteps
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -83,6 +84,7 @@ def test_shift_to_id_attitude(test_directory, crowded_field, guider, guiding_sel
     # Run the code
     BFS = BuildFGSSteps(fgs_data, guider, ROOT, 'ID', guiding_selections_file=SELECTED_SEGS,
                         out_dir=__location__, catalog=SEGMENT_INFILE, crowded_field=crowded_field)
+    write_files.write_all(BFS)
 
     # Define filenames
     file_root = '{}_G{}'.format(ROOT, guider)

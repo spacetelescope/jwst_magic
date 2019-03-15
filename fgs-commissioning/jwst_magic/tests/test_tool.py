@@ -8,7 +8,7 @@ import numpy as np
 
 from jwst_magic import utils
 from jwst_magic.convert_image import convert_image_to_raw_fgs
-from jwst_magic.fsw_file_writer import buildfgssteps
+from jwst_magic.fsw_file_writer import buildfgssteps, write_files
 from jwst_magic.star_selector import select_psfs
 from jwst_magic._utils import coordinate_transforms
 
@@ -51,8 +51,11 @@ class RunningTheTool():
         # Write all steps accordingly
         steps = ['ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']
         for step in steps:
-            buildfgssteps.BuildFGSSteps(data, self.guider, self.root, step,
-                                        out_dir=OUT_PATH)
+            fgs_files_obj = buildfgssteps.BuildFGSSteps(
+                data, self.guider, self.root, step, out_dir=OUT_PATH
+            )
+            write_files.write_all(fgs_files_obj)
+
 
     def prc_coordinates_matches_peak_locations(self):
         """
