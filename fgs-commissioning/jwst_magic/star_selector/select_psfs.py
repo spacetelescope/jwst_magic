@@ -50,7 +50,6 @@ from scipy import ndimage
 # Local Imports
 from .. import utils
 from ..star_selector import SelectStarsGUI
-from jwst_magic._utils import config
 
 # Adjust matplotlib parameters
 rcParams['image.origin'] = 'upper'
