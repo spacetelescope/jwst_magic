@@ -47,10 +47,9 @@ from matplotlib.colors import LogNorm
 import numpy as np
 from scipy.ndimage import shift
 
-from jwst_magic._utils import config
 # Local imports
 from .. import utils
-from ..fsw_file_writer import detector_effects, write_files
+from ..fsw_file_writer import config, detector_effects, write_files
 from ..star_selector import select_psfs
 
 # Paths
