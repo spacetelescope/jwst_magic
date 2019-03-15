@@ -8,7 +8,7 @@
 
 IV.	Selecting Guide & Reference Stars for an Input Image and Writing Out Files
 ==============================================================================
-One of the main features of MAGIC is that it allows the user to determine the guide and reference stars for a specific scene. While during normal opterations this is determined by the Guide Star Selection System (GSSS), during commissioning the MAGIC user will determine which PSFs will be used for guiding and as reference stars. You can turn on this feature by selecting the “Star Selector” check box. 
+One of the main features of MAGIC is that it allows the user to determine the guide and reference stars for a specific scene. While during normal opterations this is determined by the Guide Star Selection System (GSSS), during commissioning the MAGIC user will determine which PSFs will be used for guiding and as reference stars. You can turn on this feature by selecting the **Star Selector** check box. 
 
 1. Set star selection parameters:
    <p align="center">
@@ -18,7 +18,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
        Figure 7: Star Selection section of the Main GUI
     </p>
 
-   1. Ensure the “Star Selector” box is checked.
+   1. Ensure the **Star Selector** box is checked.
    2. Inspect the input image and if the segment PSFs are arranged in an image array check the **Non-Standard PSFs** box. (*A*) This flag alters the PSF-finding algorithm in the star selector tool to widen the smoothing filter for diffuse images in early commissioning stages when the telescope is unphased. If you are unsure if the PSFs are phased, consult the “Guiding Method” row in the [Guider Commissioning Summary Table](https://innerspace.stsci.edu/display/INSTEL/Guider+Commissioning+Summary+Table) on Innerspace.
    3. If desired, load pre-selected guide and reference stars from a file by selecting the **Load from File** (*B*) option and selecting the desired input file. This file must include X/Y pixel coordinates and count rates in the form of a filepath to a regfile.txt or .incat file. Providing this will bypass using the Star Selection GUI to **Click-to-Select** the guide and reference stars. 
 
@@ -70,14 +70,14 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
 ###### Section VI: [Contingency: Re-selecting Stars and Re-running DHAS](vi_contingency_reselect_stars.md)
 
-###### Section VII: [Writing the Segment Override File (SOF)](viii_write_sof.md)
+###### Section VII: [Writing the Segment Override File (SOF)](vii_write_sof.md)
 
 ###### Section VIII: [Writing the Photometry Override File (POF)](viii_write_pof.md)
 
-###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_install_magic.md)
+###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
 
-###### Appendix B: [Opening DHAS](appedix_b_opening_dhas.md)
+###### Appendix B: [Opening DHAS](appendix_b_opening_dhas.md)
 
-###### Appendix C: [Using APT to Get Guide Star RA & Dec](appedix_c_apt.md)
+###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
 
 ###### Appendix D: [Mirror State Procedures](appendix_d_mirror_states.md)
