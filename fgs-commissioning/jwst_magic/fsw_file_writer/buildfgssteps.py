@@ -1,8 +1,8 @@
 """Setup to write all simulated files for CAL, ID, ACQ, and/or TRK steps
 
 This module parses the ``config.ini`` file to create an FGS simulation
-object for CAL, ID, ACQ, and/or TRK steps. This object will ultimately
-pass to ``write_files.py`` to create the necessary flight software files
+object for CAL, ID, ACQ, and/or TRK steps. This object should ultimately
+be passed to ``write_files.py`` to create the necessary flight software files
 for use with the DHAS, the FGSES/CertLab, or just for user inspection.
 
 Authors
@@ -142,7 +142,6 @@ class BuildFGSSteps(object):
 
         # Write the files
         LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
-        write_files.write_all(self)
 
     def get_coords_and_counts(self, guiding_selections_file):
         """Get coordinate information and countrates of guide star and
