@@ -3,10 +3,12 @@ channels:
 - http://ssb.stsci.edu/astroconda
 - defaults
 dependencies:
-- numpy
 - astropy
 - ipython
+- jupyter
 - matplotlib
+- notebook
+- numpy
 - pyqt<6.0
 - pysiaf
 - python>=3.5
