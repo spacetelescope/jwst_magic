@@ -16,17 +16,16 @@
 
 ###### Section VIII: [Writing the Photometry Override File (POF)](viii_write_pof.md)
 
-###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_install_magic.md)
+###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
 
-###### Appendix B: [Opening DHAS](appendix_b_opening_dhas.md)
+###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
 
 ###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
 
 -----------------------------------------
 
 Appendix D. Mirror State Procedures
-=========================================================
-Modified from Appendix D in the OTE CAR procedures.
+=====================================
 
 <p align="center">
     <img src ="./figs/appendix_d_mirror_state.png" alt="Mirror States"/>
