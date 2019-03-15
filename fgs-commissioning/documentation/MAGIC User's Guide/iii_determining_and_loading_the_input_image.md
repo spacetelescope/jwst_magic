@@ -53,7 +53,7 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    4. Select the **Observation** number (*F*) of the activity you are generating an override file for.
    
    
-   Considering these parameters all together, the output files will be saved in the ``/data/jwst/jwss/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
+   Considering these parameters all together, the output files will be saved in the ``***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
 
 
 4. If you are running MAGIC off of SOGS, or to generate test data:
