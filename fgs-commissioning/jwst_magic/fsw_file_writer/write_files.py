@@ -157,7 +157,7 @@ def write_all(obj):
 def write_sky(obj):
     """Write the time-normed image, or "sky" image
 
-    Units:  counts per one second
+    Units:  counts
     Size:   n_cols x n_rows
 
     Parameters
