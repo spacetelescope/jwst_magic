@@ -222,7 +222,7 @@ class BuildFGSSteps(object):
 
         Possible arrays (created as class attributes):
             - time_normed_im : the "sky" image, or the time-normalized
-                image (in counts per one second, AKA counts)
+                image (in counts)
             - bias : the FGS bias used to simulate the image; includes
                 0th read bias structure and KTC "shot" noise. An array
                 of size (nramps x nreads) x n_rows x n_columns
