@@ -110,10 +110,10 @@ See [Appendix D](appendix_d_mirror_states.md) for more about selecting the cente
 
 ###### Section VIII: [Writing the Photometry Override File (POF)](viii_write_pof.md)
 
-###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_install_magic.md)
+###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
 
-###### Appendix B: [Opening DHAS](appedix_b_opening_dhas.md)
+###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
 
-###### Appendix C: [Using APT to Get Guide Star RA & Dec](appedix_c_apt.md)
+###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
 
 ###### Appendix D: [Mirror State Procedures](appendix_d_mirror_states.md)
