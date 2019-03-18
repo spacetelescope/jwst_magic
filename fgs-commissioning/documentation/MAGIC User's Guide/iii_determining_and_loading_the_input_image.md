@@ -35,8 +35,8 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
        Figure 2: General Input section of the Main GUI
     </p>
 
-   a. Load the **Input Image** (*A*) and a preview of the image and the full path to the image will appear in the **Image Preview** box at right.
-   b. Specify the **Guider** (*B*) that the final image should simulate. If this is not known, check the APT file (see [Appendix B](appedix_b_opening_dhas.md) for more information about using APT).
+   1. Load the **Input Image** (*A*) and a preview of the image and the full path to the image will appear in the **Image Preview** box at right.
+   2. Specify the **Guider** (*B*) that the final image should simulate. If this is not known, check the APT file (see [Appendix B](appedix_b_opening_dhas.md) for more information about using APT).
  
 3. If you are running MAGIC on the SOGS network to generate files for commissioning:
     
