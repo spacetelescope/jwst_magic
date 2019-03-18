@@ -58,18 +58,21 @@ The following supplemental packages are required, and will be **automatically in
 
 ##### To install:
 
-1) Activate your Python 3 (preferably Astroconda) environment.
+1. Activate your Python 3 (preferably Astroconda) environment.
 
-2) Clone the gitlab repository to your local machine
+2. Clone the gitlab repository to your local machine
 
-	git clone git@grit.stsci.edu:wfsc/tools.git
+    ```
+    git clone git@grit.stsci.edu:wfsc/tools.git
+    ```
+    
+3. Install the `jwst_magic` package:
 
-3) Install the `jwst_magic` package:
+    ```
+    cd tools/fgs-commissioning
 
-	cd tools/fgs-commissioning
-
-	pip install -e .a
-
+    pip install -e .
+    ```
 
 
 Running the Tools
