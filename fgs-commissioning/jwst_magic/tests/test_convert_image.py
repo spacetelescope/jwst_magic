@@ -35,6 +35,7 @@ from astropy.io import fits
 import numpy as np
 from photutils import find_peaks
 
+from utils import parametrized_data
 from jwst_magic.convert_image import convert_image_to_raw_fgs
 
 
@@ -44,19 +45,7 @@ NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
 FGS_GA_IM = os.path.join(__location__, 'data', 'fgs_data_1_beforelos2ga.fits')
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
 
-def parametrized_data():
-    """Load parametrized data from file.
-
-    Returns
-    -------
-    test_data : dict
-        Dictionary containing parametrized test data
-    """
-    parametrized_data_file = os.path.join(__location__, 'data', 'parametrized_test_data.yml')
-    with open(parametrized_data_file) as f:
-        test_data = yaml.load(f.read())
-
-    return test_data['test_convert_image']
+PARAMETRIZED_DATA = parametrized_data()['test_convert_image']
 
 
 def test_nircam_itm():
@@ -127,7 +116,7 @@ def test_fgs_itm():
 #     l.uninstall()
 
 def test_transform_sci_to_fgs_raw():
-    test_data = parametrized_data()['test_transform_sci_to_fgs_raw']
+    test_data = PARAMETRIZED_DATA['test_transform_sci_to_fgs_raw']
 
     with fits.open(FGS_CMIMF_IM) as hdulist:
         data = hdulist[1].data
@@ -148,7 +137,7 @@ def test_transform_sci_to_fgs_raw():
 
 
 def test_transform_nircam_raw_to_fgs_raw():
-    test_data = parametrized_data()['test_transform_nircam_raw_to_fgs_raw']
+    test_data = PARAMETRIZED_DATA['test_transform_nircam_raw_to_fgs_raw']
 
     with fits.open(FGS_CMIMF_IM) as hdulist:
         data = hdulist[1].data

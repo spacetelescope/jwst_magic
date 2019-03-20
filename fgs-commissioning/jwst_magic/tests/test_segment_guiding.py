@@ -57,6 +57,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialogButtonBox
 import pytest
 
+from utils import parametrized_data
 from jwst_magic.segment_guiding import segment_guiding
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -67,7 +68,10 @@ PROGRAM_ID = 1141
 OBSERVATION_NUM = 7
 VISIT_NUM = 1
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
+
 JENKINS = 'jenkins' in os.getcwd()
+PARAMETRIZED_DATA = parametrized_data()['test_segment_guiding']
+
 
 
 @pytest.fixture()
@@ -92,22 +96,7 @@ def test_directory(test_dir=TEST_DIRECTORY):
         shutil.rmtree(test_dir)
 
 
-def parametrized_data():
-    """Load parametrized data from file.
-
-    Returns
-    -------
-    test_data : dict
-        Dictionary containing parametrized test data
-    """
-    parametrized_data_file = os.path.join(__location__, 'data', 'parametrized_test_data.yml')
-    with open(parametrized_data_file) as f:
-        test_data = yaml.load(f.read())
-
-    return test_data['test_segment_guiding']
-
-
-test_data = parametrized_data()['test_generate_segment_override_file']
+test_data = PARAMETRIZED_DATA['test_generate_segment_override_file']
 sof_parameters = [(0, None, test_data[0]),
                   (4, None, test_data[1]),
                   (0, np.array([[1, 12, 6]]), test_data[2]),
