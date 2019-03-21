@@ -26,7 +26,13 @@ Creating a photometry override file through MAGIC:
 --------------------------------------------------
 1. Load the file for this observation, select the guider, the set the out directory and root.
 2. As in section VII, in the main GUI, select the **Segment Guiding** check box. All other options in the interface will be disabled. Note: You do not need to run the other parts of MAGIC when creating a photometry override file.
-3. Select the **Create photometry override file** radio button (*A* in Figure 17 above) 
+3. Select the **Create photometry override file** radio button (*B* in Figure 13, reproduced below) 
+   <p align="center">
+       <img src ="./figs/figure13_segment_guiding.png" alt="Segment Guiding" width="600"/>
+   </p>
+   <p align="center">
+       Figure 13: Segment Guiding Section of the Main GUI
+    </p>
 4. Run the tool.
 5. When the Segment Guiding Dialog box opens (Figure 17), fill in the Program ID, Observation Number, and Visit Number just as you would for creating a segment override file. Additionally, you can add the countrate factor:
    <p align="center">
