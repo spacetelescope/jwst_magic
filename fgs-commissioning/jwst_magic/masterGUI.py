@@ -751,21 +751,20 @@ class MasterGui(QMainWindow):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    @staticmethod
-    def no_inputImage_dialog():
-        no_input_im_dialog = QMessageBox()
-        no_input_im_dialog.setText('No input image' + ' ' * 50)
-        no_input_im_dialog.setInformativeText('The tool will not be able to continue. Please pass in an input image.')
-        no_input_im_dialog.setStandardButtons(QMessageBox.Ok)
-        no_input_im_dialog.exec()
+    def no_inputImage_dialog(self):
+        self.no_input_im_dialog_box = QMessageBox()
+        self.no_input_im_dialog_box.setText('No input image' + ' ' * 50)
+        self.no_input_im_dialog_box.setInformativeText('The tool will not be able to continue. Please pass in an input image.')
+        self.no_input_im_dialog_box.setStandardButtons(QMessageBox.Ok)
+        self.no_input_im_dialog_box.exec()
 
-    @staticmethod
-    def no_guider_dialog():
-        no_guider_dialog = QMessageBox()
-        no_guider_dialog.setText('No guider chosen' + ' ' * 50)
-        no_guider_dialog.setInformativeText('The tool will not be able to continue. Please select Guider 1 or 2.')
-        no_guider_dialog.setStandardButtons(QMessageBox.Ok)
-        no_guider_dialog.exec()
+    def no_guider_dialog(self):
+        self.no_guider_dialog_box = QMessageBox()
+        self.no_guider_dialog_box.setText('No guider chosen' + ' ' * 50)
+        self.no_guider_dialog_box.setInformativeText('The tool will not be able to continue. Please select Guider 1 or 2.')
+        self.no_guider_dialog_box.setStandardButtons(QMessageBox.Ok)
+        self.no_guider_dialog_box.exec()
+
     def no_root_dialog(self):
         self.no_root_dialog_box = QMessageBox()
         self.no_root_dialog_box.setText('No root defined' + ' ' * 50)
@@ -1161,7 +1160,7 @@ class MasterGui(QMainWindow):
 # MAIN FUNCTION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_det=None,
+def run_MasterGui(root=None, norm_value=12.0, norm_units="FGS Magnitude", nircam_det=None,
                   nircam=True, global_alignment=False, steps=None, in_file=None,
                   bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
@@ -1171,7 +1170,7 @@ def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_
     if app is None:
         app = QApplication(sys.argv)
 
-    ex = MasterGui(root, norm_value, norm_unit, nircam_det, nircam, global_alignment, steps,
+    ex = MasterGui(root, norm_value, norm_units, nircam_det, nircam, global_alignment, steps,
                    in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
                    file_writer, segment_guiding, app=app, itm=itm)
     # #return ex.settings

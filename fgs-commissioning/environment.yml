@@ -17,3 +17,5 @@ dependencies:
 - pytest
 - photutils
 - scipy
+- pip:
+      - pytest-qt
