@@ -11,6 +11,20 @@ II. Setting Up MAGIC
 
        $ cd /Users/<username>/tools
        $ git pull origin master
+       
+4. From your astroconda environment, start an IPython session and launch the main GUI:
+
+       $ ipython
+    
+       In [1]: import jwst_magic
+       In [2]: jwst_magic.run_tool_GUI()
+
+   <p align="center">
+       <img src ="./figs/figure1_main_gui.png" alt="MAGIC GUI" width="600"/>
+   </p>
+   <p align="center">
+       Figure 1: Main GUI for the JWST MAGIC Tool
+    </p>
 
 ---------------------------------------
 
