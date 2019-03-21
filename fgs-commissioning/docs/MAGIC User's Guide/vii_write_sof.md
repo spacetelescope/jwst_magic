@@ -17,7 +17,7 @@
 VII. Writing the Segment Override File (SOF)
 =========================================================
 
-Another very important part of MAGIC is creating the override file that can be used to override the way guide and reference stars are selelcted by the GSSS. This file only has to be created when using MAGIc for commissioning activities and their rehearsals where the segments of JWST’s primary mirror are unstacked. In that case we use the PSFs created by each segment as our guide and reference stars. 
+Another very important part of MAGIC is creating the override file that can be used to override the way guide and reference stars are selelcted by the GSSS. This file only has to be created when using MAGIC for commissioning activities and their rehearsals where the segments of JWST’s primary mirror are unstacked. In that case we use the PSFs created by each segment as our guide and reference stars. 
 1. In the main GUI, select the **Segment Guiding** box. All other options in the interface will be disabled.
    <p align="center">
        <img src ="./figs/figure13_segment_guiding.png" alt="Segment Guiding" width="600"/>
@@ -35,7 +35,7 @@ Another very important part of MAGIC is creating the override file that can be u
    
    c. If creating an override file for a visit where the mirrors are in an array and you wish to use *different* guide and reference stars from [Section III](iii_determining_and_loading_the_input_image.md) that are specified in a different file (most likely a regfile.txt or a .incat file), select the **Read 1 command from file** radio button (*C*) a and specify the path to this file. Providing this file will create the segment override file so that it only uses the guide and reference stars selected by the user in [Section III](iii_determining_and_loading_the_input_image.md) and will bypass the override file creation using the Segment Guiding GUI. Once this file is selected, skip to step 6 below. 
    
-   d. Otherwise, select the **Click-to-Select 1 or more commands (GUI)** radio button (*D*) to launch the GUI that will allow you to click-to-select multiple orientations of guide and reference stars.
+   d. Otherwise, select the **Click-to-Select 1 or more commands (GUI)** radio button (*D*) to launch the GUI (Figure 16 below) that will allow you to click-to-select multiple orientations of guide and reference stars.
 4.	
    Before running the tool, obtain the following parameters with the following methods:
    
@@ -88,7 +88,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
 7. Click **OK** to continue.
 
-   When the Segment Guiding GUI appears:
+   If the **Click-to-Select 1 or more commands (GUI)** radio buttonwas selected, the Segment Guiding GUI will appear:
    <p align="center">
       <img src ="./figs/figure16_segment_guiding_gui.png" alt="Segment Guiding GUI Window"/>
    </p>
@@ -96,7 +96,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
       Figure 16: Segment Guiding GUI Window
    </p>
 
-8. Repeat the steps outlined in [Section III](iii_determining_and_loading_the_input_image.md) to select the guide and reference stars – the ones that you verified were successful with DHAS – for one segment guiding override command.
+8. If the Segment Guiding GUI is being used, repeat the steps outlined in [Section III](iii_determining_and_loading_the_input_image.md) to select the guide and reference stars – the ones that you verified were successful with DHAS – for one segment guiding override command.
 9. When you are happy with your selections, click the **Save Command** button (*A*). You will see the IDs of the stars you selected appear in the **Override Commands** table (*C*).
 10. To add another command, again repeat the steps outlined in [Section III](iii_determining_and_loading_the_input_image.md) to select guide and reference stars, and again click the **Save Command** button (*A*). 
 11. To change the order of the commands, use the up and down arrow buttons (*D*). To view a saved command on the plot, click the **Load** button (*E*).  To remove a command from the list, click the **Delete** button (*A*). 
