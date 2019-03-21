@@ -334,6 +334,9 @@ class MasterGui(QMainWindow):
         if not self.buttonGroup_guider.checkedButton():
             self.no_guider_dialog()
             return
+        if self.lineEdit_root.text() == "":
+            self.no_root_dialog()
+            return
 
         # General input
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -763,6 +766,12 @@ class MasterGui(QMainWindow):
         no_guider_dialog.setInformativeText('The tool will not be able to continue. Please select Guider 1 or 2.')
         no_guider_dialog.setStandardButtons(QMessageBox.Ok)
         no_guider_dialog.exec()
+    def no_root_dialog(self):
+        self.no_root_dialog_box = QMessageBox()
+        self.no_root_dialog_box.setText('No root defined' + ' ' * 50)
+        self.no_root_dialog_box.setInformativeText('The tool will not be able to continue. Please define a root.')
+        self.no_root_dialog_box.setStandardButtons(QMessageBox.Ok)
+        self.no_root_dialog_box.exec()
 
     def open_filename_dialog(self, title, file_type="All Files (*)"):
         """ Dialog box for opening a NIRCam of FGS image"""
