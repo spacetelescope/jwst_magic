@@ -11,13 +11,6 @@ III.	Determining and Loading the Input Image
 
 MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR filter (the NIRCam weak lens (WL) filter will cause MAGIC to crash). If you want MAGIC to convert this image into a raw dectector FGS image, you can indicate this by checking the **Convert Image** check box. In most cases MAGIC can determine from the header information which instrument and detector the image is from, however if it can’t figure this out from header information, you will have to help it out by telling it which instrument and detector your input image comes from. You can also renormalize and/or add background images to your seed image.
 
-1. From your astroconda environment, start an IPython session and launch the main GUI:
-
-       $ ipython
-    
-       In [1]: import jwst_magic
-       In [2]: jwst_magic.run_tool_GUI()
-
    <p align="center">
        <img src ="./figs/figure1_main_gui.png" alt="MAGIC GUI" width="600"/>
    </p>
@@ -25,8 +18,7 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
        Figure 1: Main GUI for the JWST MAGIC Tool
     </p>
 
-
-2. Set general input parameters:
+1. Set general input parameters:
 
    <p align="center">
        <img src ="./figs/figure2_main_general_input.png" alt="General Input" width="600"/>
@@ -38,7 +30,7 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    1. Load the **Input Image** (*A*) and a preview of the image and the full path to the image will appear in the **Image Preview** box at right.
    2. Specify the **Guider** (*B*) that the final image should simulate. If this is not known, check the APT file (see [Appendix B](appedix_b_opening_dhas.md) for more information about using APT).
  
-3. If you are running MAGIC on the SOGS network to generate files for commissioning:
+2. If you are running MAGIC on the SOGS network to generate files for commissioning:
     
    <p align="center">
        <img src ="./figs/figure3_main_commissioning_naming.png" alt="Commissioning Naming" width="600"/>
@@ -56,7 +48,7 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    Considering these parameters all together, the output files will be saved in the ``***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
 
 
-4. If you are running MAGIC off of SOGS, or to generate test data:
+3. If you are running MAGIC off of SOGS, or to generate test data:
 
    <p align="center">
        <img src ="./figs/figure4_main_manual_naming.png" alt="Manual Naming" width="600"/>
@@ -67,12 +59,12 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    
    1. Check the **Manual** radio button (*G*) to set the naming method.
    2. Specify a **Root** name (*H*) If different than the default name that was created when the input image was uploaded. The root will be used to to create the output directory where all created files will reside, out/{root}.
-   3. Change the **Out** directory (*I*) Choose the location to where the files were copied in [Section II](ii_setting_up.md). An ``out/`` directory will be created in this location, and this is where all the files will be saved.
+   3. Change the **Out** directory (*I*) Choose the location to where the files will be saved. An ``out/`` directory will be created in this location, and this is where all the files will be saved.
 
    
    Considering these parameters all together, the output files will be saved in the ``{out}/out/{root}/`` directory, with names of the format ``{root}_G{guider}``
    
-5. Set image conversion parameters: (Note: The steps labelled “optional” below will create higher-fidelity simulations, but are not necessary when using MAGIC to generate FSW input or segment override files.)
+4. Set image conversion parameters: (Note: The steps labelled “optional” below will create higher-fidelity simulations, but are not necessary when using MAGIC to generate FSW input or segment override files.)
 
    <p align="center">
        <img src ="./figs/figure5_main_image_convert.png" alt="Image Converter" width="600"/>
