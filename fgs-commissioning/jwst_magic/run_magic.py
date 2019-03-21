@@ -51,7 +51,7 @@ import numpy as np
 from . import utils, background_stars
 from .convert_image import convert_image_to_raw_fgs
 from .star_selector import select_psfs
-from .fsw_file_writer import buildfgssteps
+from .fsw_file_writer import buildfgssteps, write_files
 
 # Define paths
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -192,9 +192,10 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         if steps is None:
             steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
         for step in steps:
-            buildfgssteps.BuildFGSSteps(fgs_im, guider, root, step,
-                                        out_dir=out_dir, logger_passed=True,
-                                        guiding_selections_file=guiding_selections_file,
-                                        shift_id_attitude=shift_id_attitude,
-                                        crowded_field=crowded_field)
+            fgs_files_obj= buildfgssteps.BuildFGSSteps(
+                fgs_im, guider, root, step, out_dir=out_dir,
+                logger_passed=True, guiding_selections_file=guiding_selections_file,
+                shift_id_attitude=shift_id_attitude, crowded_field=crowded_field
+            )
+            write_files.write_all(fgs_files_obj)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")

@@ -1,4 +1,16 @@
-""" Common utilities for the JWST MaGIC package"""
+""" Common utilities for the JWST MaGIC package.
+
+Authors
+-------
+    - Keira Brooks
+    - Lauren Chambers
+
+Use
+---
+    ::
+        from jwst_magic import utils
+        utils.ensure_dir_exists(dir)
+"""
 # STDLIB
 import csv
 import itertools
@@ -324,15 +336,15 @@ def correct_image(image, upper_threshold=65000, upper_limit=65000):
 def countrate_3x3(x, y, data):
     """
     Using the coordinates of each PSF, place a 3x3 box around center pixel and sum
-    the counts of the pixels in this box.
+    the countrate of the pixels in this box.
     """
     data = correct_image(data)
     data = np.uint16(data)
     x = int(x)
     y = int(y)
 
-    counts = np.sum(data[y - 1:y + 2, x - 1:x + 2])
-    return counts
+    countrate = np.sum(data[y - 1:y + 2, x - 1:x + 2])
+    return countrate
 
 
 def get_guider(header, guider=None, log=None):

@@ -35,7 +35,6 @@ import string
 # Third Party Imports
 from astropy.io import ascii as asc
 from astropy.io import fits
-from astropy.stats import sigma_clipped_stats
 import matplotlib
 jenkins = 'jenkins' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
@@ -58,9 +57,10 @@ rcParams['font.weight'] = 'light'
 rcParams['mathtext.bf'] = 'serif:normal'
 
 # Paths
-SS_PATH = os.path.dirname(os.path.realpath(__file__))
-PACKAGE_PATH = os.path.split(SS_PATH)[0]
+SELECT_PSFS_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.split(SELECT_PSFS_PATH)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
+DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
@@ -234,7 +234,7 @@ def plot_centroids(data, coords, root, guider, out_dir):
     plt.close()
 
 
-def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
+def count_rate_total(data, objects, num_objects, x, y, countrate_3x3=True):
     """Get the count rates within each object from a segmentation image.
 
     Parameters
@@ -249,38 +249,38 @@ def count_rate_total(data, objects, num_objects, x, y, counts_3x3=True):
         List of x-coordinates of identified PSFs
     y : list
         List of y-coordinates of identified PSFs
-    counts_3x3 : bool, optional
+    countrate_3x3 : bool, optional
         Calculate the value of the 3x3 square (True), or of the entire
         object (False)
 
     Returns
     -------
-    counts : list
+    countrate : list
         List of count rates of each segmentation object
     val : list
         List of number of pixels within each segmentation object
     """
 
-    counts = []
+    countrate = []
     val = []
     for i in range(1, num_objects + 1):
         im = np.copy(objects)
         im[objects != i] = False
         im[objects == i] = True
 
-        if counts_3x3:
-            counts.append(utils.countrate_3x3(x[i - 1], y[i - 1], np.array(data)))
+        if countrate_3x3:
+            countrate.append(utils.countrate_3x3(x[i - 1], y[i - 1], np.array(data)))
         else:
-            counts.append(np.sum(im * data))
+            countrate.append(np.sum(im * data))
         val.append(np.sum(im * 1.))  # Number of pixels in object
 
-    return counts, val
+    return countrate, val
 
 
-def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
+def create_cols_for_coords_counts(x, y, countrate, val, labels=None, inds=None):
     """Format position and count rate data to be written to file.
 
-    Create an array of columns of y, x, and counts of each PSF to be
+    Create an array of columns of y, x, and countrate of each PSF to be
     written out. Use the inds returned from pick_stars based on user
     input. If no inds are given, put the PSF with the most compact PSF
     first in the list to make it the guide star.
@@ -292,7 +292,7 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
         List of x-coordinates of identified PSFs
     y : list
         List of y-coordinates of identified PSFs
-    counts : list
+    countrate : list
         List of count rates of identified PSFs
     val : list
         List of the number of pixels in each PSF's segmentation object
@@ -312,10 +312,10 @@ def create_cols_for_coords_counts(x, y, counts, val, labels=None, inds=None):
         # NOTE: these coordinates are y, x
         cols = [[ll, '{:.4f}'.format(yy),
                  '{:.4f}'.format(xx),
-                 '{:.4f}'.format(co)] for ll, yy, xx, co in zip(labels, y, x, counts)]
+                 '{:.4f}'.format(co)] for ll, yy, xx, co in zip(labels, y, x, countrate)]
     else:
         # NOTE: these coordinates are y, x
-        cols = [[yy, xx, co] for yy, xx, co in zip(y, x, counts)]
+        cols = [[yy, xx, co] for yy, xx, co in zip(y, x, countrate)]
 
     if inds is None:
         min_ind = np.where(val == np.min(val))[0][0]  # Find most compact PSF
@@ -468,9 +468,9 @@ def parse_in_file(in_file):
     # Make sure all the necessary columns are present
     x_check = 'x' in colnames or 'xreal' in colnames
     y_check = 'y' in colnames or 'yreal' in colnames
-    counts_check = 'countrate' in colnames or 'ctot' in colnames
+    countrate_check = 'countrate' in colnames or 'ctot' in colnames
 
-    if not (x_check and y_check and counts_check):
+    if not (x_check and y_check and countrate_check):
         err_message = 'Unknown in_file format: {}. Expecting columns named \
                        "x"/"xreal", "y"/"yreal", and \
                        "count rate"/"countrate"/"ctot". Found columns \
@@ -631,7 +631,7 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
         dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
 
     # Calculate count rate
-    counts, val = count_rate_total(data, objects, num_psfs, x, y, counts_3x3=True)
+    countrate, val = count_rate_total(data, objects, num_psfs, x, y, countrate_3x3=True)
 
     # Call the GUI to pick PSF indices
     if not testing:
@@ -654,10 +654,10 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
         LOGGER.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
 
     segment_labels = match_psfs_to_segments(x, y, global_alignment)
-    all_cols = create_cols_for_coords_counts(x, y, counts, val,
+    all_cols = create_cols_for_coords_counts(x, y, countrate, val,
                                              labels=segment_labels,
                                              inds=range(len(x)))
-    cols = create_cols_for_coords_counts(x, y, counts, val, inds=inds)
+    cols = create_cols_for_coords_counts(x, y, countrate, val, inds=inds)
 
     return cols, coords, nref, all_cols
 
@@ -726,9 +726,6 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         # Read in image (check if it is a filename)
         if isinstance(data, str):
             data = fits.getdata(data)
-
-        # Any value above 65535 or below 0 will wrap when converted to uint16
-        data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
 
         if guiding_selections_file:
             # Determine the kind of in_file and parse out the PSF locations and

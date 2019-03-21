@@ -188,7 +188,7 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         profile_min = max(np.min(self.data) / 5, 1e-1)
         self.axes.set_ylim(profile_min, 5 * np.max(self.data))
         self.axes.set_yscale('log')
-        self.axes.set_ylabel('Counts')
+        self.axes.set_ylabel('Counts / Second')
         self.axes.set_xlabel('X Pixels')
 
         self.countrate_label = self.axes.text(0.02, 0.9, '3 x 3 countrate:',
