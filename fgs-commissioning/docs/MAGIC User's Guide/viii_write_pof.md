@@ -65,14 +65,14 @@ Alternatively, in the case of having to create multiple photometery override fil
 •	**out_dir** – path to the out directory where all files will be saved
 
     In [1]: from jwst_magic.segment_guiding import segment_guiding
-    In [2]: root = ‘root’ #Root used for this dataset
+    In [2]: root = ['root1', 'root2', 'root3', 'root4', 'root5'] #Root used for this dataset
     In [3]: program_id = 12345 #Program ID - int
     In [4]: observation_num = [1, 3, 4, 5, 7] #List of Observation numbers
     In [5]: visit_num = [1, 1, 1, 2, 1, 1] #List of Visit numbers
     In [6]: countrate_factor = 0.6 #Float between 0.0 and 1.0
     In [7]: out_dir = ‘/path/to/out/directory’
-    In [8]: for i, (o, v) in enumerate(zip(observation_num, visit_num)):
-	              segment_guiding.run_tool(root=root, program_id=program_id, 
+    In [8]: for i, (r, o, v) in enumerate(zip(root, observation_num, visit_num)):
+	              segment_guiding.run_tool(root=r, program_id=program_id, 
                                          observation_num=o, visit_num=v, 
                                          countrate_factor= countrate_factor, 
                                          out_dir=out_dir)   
