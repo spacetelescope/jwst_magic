@@ -1,8 +1,8 @@
 """Setup to write all simulated files for CAL, ID, ACQ, and/or TRK steps
 
 This module parses the ``config.ini`` file to create an FGS simulation
-object for CAL, ID, ACQ, and/or TRK steps. This object will ultimately
-pass to ``write_files.py`` to create the necessary flight software files
+object for CAL, ID, ACQ, and/or TRK steps. This object should ultimately
+be passed to ``write_files.py`` to create the necessary flight software files
 for use with the DHAS, the FGSES/CertLab, or just for user inspection.
 
 Authors
@@ -49,8 +49,8 @@ from scipy.ndimage import shift
 
 # Local imports
 from .. import utils
-from ..star_selector import select_psfs
 from ..fsw_file_writer import config, detector_effects, write_files
+from ..star_selector import select_psfs
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -134,10 +134,6 @@ class BuildFGSSteps(object):
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
 
-        # *** SHOULD THIS BE HAPPENING HERE?? ***
-        # Correct for negative, saturated pixels and other nonsense
-        self.input_im = utils.correct_image(self.input_im)
-
         self.get_coords_and_counts(guiding_selections_file)
 
         section = '{}_dict'.format(self.step.lower())
@@ -146,7 +142,6 @@ class BuildFGSSteps(object):
 
         # Write the files
         LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
-        write_files.write_all(self)
 
     def get_coords_and_counts(self, guiding_selections_file):
         """Get coordinate information and countrates of guide star and
@@ -177,6 +172,9 @@ class BuildFGSSteps(object):
             self.xarr = np.asarray([self.xarr])
             self.yarr = np.asarray([self.yarr])
             self.countrate = np.asarray([self.countrate])
+
+        # TODO: Add case that extracts countrates from input_im and the x/y
+        # coords/inds so this module is no longer dependent on ALLpsfs
 
     def build_step(self, section, configfile=None):
         """Read out the parameters in the config.ini, and alter class
@@ -216,12 +214,12 @@ class BuildFGSSteps(object):
 
         return config_ini
 
-    def create_img_arrays(self, section, config_ini):
+    def create_img_arrays(self, step, config_ini):
         """Create the needed image arrays for the given step.
 
         Possible arrays (created as class attributes):
             - time_normed_im : the "sky" image, or the time-normalized
-                image (in counts per one second, AKA counts)
+                image (in counts)
             - bias : the FGS bias used to simulate the image; includes
                 0th read bias structure and KTC "shot" noise. An array
                 of size (nramps x nreads) x n_rows x n_columns
@@ -234,7 +232,7 @@ class BuildFGSSteps(object):
 
         Parameters
         ----------
-        section : str
+        step : str
             Name of step within the config file ('{step}_dict')
         config_ini : : obj
             Object containing all parameters from the given config file
@@ -248,16 +246,15 @@ class BuildFGSSteps(object):
 
         # Create the time-normalized image (will be in counts, where the
         # input_im is in counts per second)
-        # ** THIS MIGHT NOT BE CORRECT IF IT OCCURS AFTER THE IMAGE HAS BEEN NORMALIZED TO COUNTS ALREADY **
-        self.time_normed_im = self.input_im * config_ini.getfloat(section, 'tframe')
+        self.time_normed_im = self.input_im * config_ini.getfloat(step, 'tframe')
 
         # Add the bias, and build the array of reads with noisy data
-        if config_ini.getboolean(section, 'bias'):
+        if config_ini.getboolean(step, 'bias'):
             # Get the bias ramp
-            nramps = config_ini.getint(section, 'nramps')
+            nramps = config_ini.getint(step, 'nramps')
             det_eff = detector_effects.FGSDetectorEffects(
                 self.guider, self.xarr, self.yarr, self.nreads, nramps,
-                config_ini.getint(section, 'imgsize')
+                config_ini.getint(step, 'imgsize')
             )
             self.bias = det_eff.add_detector_effects()
 
@@ -265,23 +262,25 @@ class BuildFGSSteps(object):
             # (specifically Poisson noise), adding signal over each read
             image = np.copy(self.bias)
             signal_cube = [self.time_normed_im] * nramps
+            positive_signal_cube = np.copy(signal_cube)
+            positive_signal_cube[positive_signal_cube < 0] = 0
 
             # First read
             # Calculate how much signal should be in the first read
             i_read = 0
-            n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
+            n_drops_before_first_read = int(config_ini.getfloat(step, 'ndrops1'))
             n_frametimes_in_first_read = n_drops_before_first_read + 1
             # Add signal to every first read
-            noisy_signal_cube = np.random.poisson(signal_cube)
+            noisy_signal_cube = np.random.poisson(positive_signal_cube)
             image[i_read::self.nreads] += n_frametimes_in_first_read * noisy_signal_cube
 
             # Second read
             # Calculate how much signal should be in the second read
             i_read = 1
-            n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
+            n_drops_before_second_read = int(config_ini.getfloat(step, 'ndrops2'))
             n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
             # Add signal to every second read
-            noisy_signal_cube = np.random.poisson(signal_cube)
+            noisy_signal_cube = np.random.poisson(positive_signal_cube)
             image[i_read::self.nreads] += n_frametimes_in_second_read * noisy_signal_cube
 
         else:
@@ -291,25 +290,25 @@ class BuildFGSSteps(object):
             image = self.time_normed_im
 
         # Cut any pixels over saturation or under zero
-        # image = utils.correct_image(image)
+        image = utils.correct_image(image, upper_threshold=65535, upper_limit=65535)
 
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
-        if config_ini.getboolean(section, 'cdsimg'):
-            self.cds = create_cds(image, section, config_ini)
+        if config_ini.getboolean(step, 'cdsimg'):
+            self.cds = create_cds(image, step, config_ini)
         else:
             self.cds = None
 
         # If in ID, split the full-frame image into strips
-        if config_ini.getboolean(section, 'stripsimg'):
+        if config_ini.getboolean(step, 'stripsimg'):
             self.strips = create_strips(image,
-                                        config_ini.getint(section, 'imgsize'),
-                                        config_ini.getint(section, 'nstrips'),
-                                        config_ini.getint(section, 'nramps'),
+                                        config_ini.getint(step, 'imgsize'),
+                                        config_ini.getint(step, 'nstrips'),
+                                        config_ini.getint(step, 'nramps'),
                                         self.nreads,
-                                        config_ini.getint(section, 'height'),
+                                        config_ini.getint(step, 'height'),
                                         self.yoffset,
-                                        config_ini.getint(section, 'overlap'))
+                                        config_ini.getint(step, 'overlap'))
 
         # Modify further for LOSTRK images (that will be run in FGSES)
         if self.step == 'LOSTRK':
@@ -500,22 +499,23 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
             strips[nn] = image[iz, ylow:yhigh, :]
             nn += 1
 
-    # Make sure the data is between 0 and 65,000 counts and are finite numbers
-    # strips = utils.correct_image(strips)
-
     return strips
 
 
-def create_cds(arr, section, config_ini, fix_saturated_pix=True):
+def create_cds(arr, step, config_ini, fix_saturated_pix=True):
     """Create CDS image: Subtract the first read from the second read.
     Option to handle saturated pixels in CDS.
 
     Parameters
     ----------
     arr : 3-D numpy array
-        Image data in
-    fix_saturated_pix : boolean
-        Apply a fix to saturated pixels in the CDS array?
+        Image data
+    step : str
+        Name of step within the config file ('{step}_dict')
+    config_ini : obj
+        Object containing all parameters from the given configfile
+    fix_saturated_pix : boolean, optional
+        Apply a fix to saturated pixels in the CDS array? Default is True.
 
     Returns
     -------
@@ -535,14 +535,14 @@ def create_cds(arr, section, config_ini, fix_saturated_pix=True):
         # For pixels that are saturated in the second read, calculate their
         # expected CDS value using the count rate from the first read and
         # assuming linearity.
-        n_drops_before_first_read = int(config_ini.getfloat(section, 'ndrops1'))
+        n_drops_before_first_read = int(config_ini.getfloat(step, 'ndrops1'))
         n_frametimes_in_first_read = n_drops_before_first_read + 1
-        time_first_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_first_read  # seconds
+        time_first_read = config_ini.getfloat(step, 'tframe') * n_frametimes_in_first_read  # seconds
         first_read_countrates = first_reads / time_first_read  # counts / second
 
-        n_drops_before_second_read = int(config_ini.getfloat(section, 'ndrops2'))
+        n_drops_before_second_read = int(config_ini.getfloat(step, 'ndrops2'))
         n_frametimes_in_cds_read = n_drops_before_second_read + 1
-        time_cds_read = config_ini.getfloat(section, 'tframe') * n_frametimes_in_cds_read  # seconds
+        time_cds_read = config_ini.getfloat(step, 'tframe') * n_frametimes_in_cds_read  # seconds
 
         # If the calculated CDS value is less than saturation, set that
         # as the pixel value. Otherwise, set the pixel value to 65000.

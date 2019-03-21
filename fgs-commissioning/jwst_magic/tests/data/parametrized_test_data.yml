@@ -2,6 +2,79 @@
 # for the MAGIC package.
 
 test_buildfgssteps:
+    test_correct_count_rate:
+        # Data produced in notebooks/writing_test_data.ipynb
+        guider1:
+            CAL:
+                countrates: [65596., 91475., 91549., 95731., 95747.]
+                bias: [4120.0, 104050.0]
+                time_normed_im: [0.0, 166565.97]
+                cds: [-20.0, 65000.0]
+                CAL: [4120.0, 65540.0]
+            ID:
+                countrates: [65596., 91475., 91549., 95731., 95747.]
+                bias: [4120.0, 104050.0]
+                time_normed_im: [-1.7679394e-20, 5283.9473]
+                cds: [-20.0, 65000.0]
+                strips: [4120.0, 65540.0]
+                ID: [4120.0, 65540.0]
+            ACQ1:
+                countrates: [65596.]
+                bias: [11920.0, 87850.0]
+                time_normed_im: [0.0039671236, 1977.3064]
+                cds: [-30.0, 65000.0]
+                ACQ1: [11920.0, 65540.0]
+            ACQ2:
+                countrates: [65596.]
+                bias: [13940.0, 81660.0]
+                time_normed_im: [0.02249858, 137.2947]
+                cds: [-20.0, 65000.0]
+                ACQ2: [13940.0, 65540.0]
+            TRK:
+                countrates: [65596.]
+                bias: [13940.0, 81670.0]
+                time_normed_im: [0.02249858, 137.2947]
+                TRK: [13940.0, 65540.0]
+            LOSTRK:
+                countrates: [65596.]
+                time_normed_im: [0.0060026245, 137.2947]
+                LOSTRK: [6.730232e-05, 1.5393685]
+        guider2:
+            CAL:
+                countrates: [65596., 91475., 91549., 95731., 95747.]
+                bias: [5030.0, 86030.0]
+                time_normed_im: [0.0, 166565.97]
+                cds: [-20.0, 65000.0]
+                CAL: [5030.0, 65540.0]
+            ID:
+                countrates: [65596., 91475., 91549., 95731., 95747.]
+                bias: [5020.0, 86030.0]
+                time_normed_im: [-1.7679394e-20, 5283.9473]
+                cds: [-20.0, 65000.0]
+                strips: [5020.0, 65540.0]
+                ID: [5020.0, 65540.0]
+            ACQ1:
+                countrates: [65596.]
+                bias: [9000.0, 71200.0]
+                time_normed_im: [0.0039671236, 1977.3064]
+                cds: [-20.0, 65000.0]
+                ACQ1: [9000.0, 65540.0]
+            ACQ2:
+                countrates: [65596.]
+                bias: [10950.0, 66790.0]
+                time_normed_im: [0.02249858, 137.2947]
+                cds: [-20.0, 65000.0]
+                ACQ2: [10950.0, 65540.0]
+            TRK:
+                countrates: [65596.]
+                bias: [10940.0, 66800.0]
+                time_normed_im: [0.02249858, 137.2947]
+                TRK: [10940.0, 65540.0]
+            LOSTRK:
+                countrates: [65596.]
+                time_normed_im: [0.0060026245, 137.2947]
+                LOSTRK: [6.730232e-05, 1.5393685]
+
     test_shift_to_id_attitude:
         guiding_selections_coords:
             [

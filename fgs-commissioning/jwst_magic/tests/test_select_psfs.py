@@ -15,11 +15,9 @@ import shutil
 import yaml
 
 from astropy.io import ascii as asc
-from astropy.io import fits
-import numpy as np
-from photutils import find_peaks
 import pytest
 
+from utils import parametrized_data
 from jwst_magic.star_selector.select_psfs import select_psfs
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -32,6 +30,9 @@ SELECTED_SEGS = os.path.join(__location__, 'data', 'guiding_selections_{}.txt'.f
 VISIT_NUM = 1
 
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
+
+PARAMETRIZED_DATA = parametrized_data()['test_select_psfs']
+
 
 
 @pytest.fixture(scope="module")
@@ -55,20 +56,6 @@ def test_directory(test_dir=TEST_DIRECTORY):
     if os.path.isdir(test_dir):
         shutil.rmtree(test_dir)
 
-def parametrized_data():
-    """Load parametrized data from file.
-
-    Returns
-    -------
-    test_data : dict
-        Dictionary containing parametrized test data
-    """
-    parametrized_data_file = os.path.join(__location__, 'data', 'parametrized_test_data.yml')
-    with open(parametrized_data_file) as f:
-        test_data = yaml.load(f.read())
-
-    return test_data['test_select_psfs']
-
 
 def test_select_psfs_with_file(test_directory):
     guiding_selections_path, all_found_psfs_path = select_psfs(
@@ -81,7 +68,7 @@ def test_select_psfs_with_file(test_directory):
     assert os.path.exists(all_found_psfs_path), 'all_found_psfs_test_select_psfs_G2.txt not generated.'
 
 
-test_data = parametrized_data()['test_select_psfs_without_file']
+test_data = PARAMETRIZED_DATA['test_select_psfs_without_file']
 select_psfs_without_file_parameters = [(False, 21, test_data['non-ga']),
                                        (True, 18, test_data['ga'])]
 @pytest.mark.parametrize('ga, n_psfs, correct_all_found_psfs_txt', select_psfs_without_file_parameters)

@@ -315,8 +315,8 @@ class SegmentGuidingCalculator:
                 # If countrates were included in the input file, use them!
                 # The OSS factor is multiplied by OSS to account for the 3x3 countrates
                 # So we need to divide it out here and for every segment override file
-                rate = self.counts_array / self.oss_factor
-                uncertainty = self.counts_array * self.threshold_factor / self.oss_factor
+                rate = self.countrate_array / self.oss_factor
+                uncertainty = self.countrate_array * self.threshold_factor / self.oss_factor
 
                 # Write the commands for each orientation
                 for i_o, orientation in enumerate(orientations):
@@ -515,7 +515,7 @@ class SegmentGuidingCalculator:
 
             # If the countrates are included in the input file, read them!
             if any(['countrate' == c for c in column_names]):
-                self.counts_array = read_table['countrate']
+                self.countrate_array = read_table['countrate']
 
         else:
             raise TypeError('Incompatible file type: ', segment_infile)
@@ -813,8 +813,8 @@ def generate_segment_override_file(segment_infile, guider,
         rather than manually providing arguments.
         Required if guide_star_params_dict=None
     oss_factor : float, optional
-        The factor that OSS applies to the 3x3 box counts in order to represent
-        the full number of counts that we care about.
+        The factor that OSS applies to the 3x3 box countrate in order to represent
+        the full number of countrate that we care about.
     master_gui_app : qApplication, optional
         qApplication instance of parent GUI
     """

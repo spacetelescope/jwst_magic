@@ -157,7 +157,7 @@ def write_all(obj):
 def write_sky(obj):
     """Write the time-normed image, or "sky" image
 
-    Units:  counts per one second
+    Units:  counts
     Size:   n_cols x n_rows
 
     Parameters
@@ -168,7 +168,6 @@ def write_sky(obj):
     """
     filename_sky = os.path.join(obj.out_dir, 'stsci',
                                 obj.filename_root + 'sky.fits')
-    obj.time_normed_im = utils.correct_image(obj.time_normed_im)
     utils.write_fits(filename_sky, np.uint16(obj.time_normed_im))
 
 
@@ -188,7 +187,6 @@ def write_bias(obj):
         filename_bias = os.path.join(obj.out_dir,
                                      'stsci',
                                      obj.filename_root + 'bias.fits')
-        obj.bias = utils.correct_image(obj.bias)
         utils.write_fits(filename_bias, np.uint16(obj.bias))
 
 
@@ -209,7 +207,6 @@ def write_cds(obj):
         filename_cds = os.path.join(obj.out_dir,
                                     'stsci',
                                     obj.filename_root + 'cds.fits')
-        obj.cds = utils.correct_image(obj.cds)
         utils.write_fits(filename_cds, np.uint16(obj.cds))
 
 
@@ -242,7 +239,6 @@ def write_image(obj):
     # Create image fits file
     filename = os.path.join(obj.out_dir, location,
                             obj.filename_root + filetype)
-    obj.image = utils.correct_image(obj.image)
 
     if obj.step == 'LOSTRK':
         utils.write_fits(filename, obj.image) # Don't make it np.uint16
@@ -270,7 +266,6 @@ def write_strips(obj):
     filename_hdr = os.path.join(DATA_PATH,
                                 'newG{}magicHdrImg.fits'.format(obj.guider))
     hdr0 = fits.getheader(filename_hdr, ext=0)
-    obj.strips = utils.correct_image(obj.strips)
     utils.write_fits(filename_id_strips, np.uint16(obj.strips), header=hdr0)
 
 
@@ -332,7 +327,6 @@ def write_dat(obj):
         data = data_to_write
         filename = '{}_G{}_{}.dat'.format(obj.root, obj.guider, obsmode)
     filename = os.path.join(out_dir, filename)
-    data = utils.correct_image(data)
 
     flat = data.flatten()
 
