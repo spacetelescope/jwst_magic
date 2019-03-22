@@ -43,6 +43,10 @@ ehthumbs.db
 Thumbs.db
 *~$*.docx
 
+# PyCharm IDE Data #
+####################
+**/.idea/*
+
 # Notebooks #
 #############
 **/.ipynb_checkpoints*
