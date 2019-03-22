@@ -64,10 +64,12 @@ class NormalizeToCountrate(object):
         float
             Converted value in FGS countrate
         """
-        if self.unit == 'FGS Countrate':
+        if self.unit.lower() == 'fgs countrate':
             return self.value
-        elif self.unit == 'FGS Magnitude':
+        elif self.unit.lower() == 'fgs magnitude':
             return fgs_mag_to_countrate(self.value, self.guider)
+        else:
+            raise ValueError("Unknown unit:" + self.unit)
 
     def to_fgs_mag(self):
         """Convert self.value to FGS magnitude
@@ -77,10 +79,12 @@ class NormalizeToCountrate(object):
         float
             Converted value in FGS magnitude
         """
-        if self.unit == 'FGS Magnitude':
+        if self.unit.lower() == 'fgs magnitude':
             return self.value
-        elif self.unit == 'FGS Countrate':
+        elif self.unit.lower() == 'fgs countrate':
             return countrate_to_fgs_mag(self.value, self.guider)
+        else:
+            raise ValueError("Unknown unit:" + self.unit)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # CONVERSION FUNCTIONS
