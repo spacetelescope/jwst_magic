@@ -334,7 +334,7 @@ class MasterGui(QMainWindow):
         if not self.buttonGroup_guider.checkedButton():
             self.no_guider_dialog()
             return
-        if self.lineEdit_root.text() == "":
+        if self.lineEdit_root.text() == "" and not self.radioButton_name_commissioning.isChecked():
             self.no_root_dialog()
             return
 
