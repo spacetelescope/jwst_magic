@@ -39,10 +39,11 @@ Use
 
 # Standard Library Imports
 import getpass
+import glob
 import logging
 import os
+import re
 import time
-
 
 # Third Party Imports
 from astropy import units as u
@@ -57,7 +58,7 @@ import matplotlib.path as mpltPath
 import matplotlib.pyplot as plt
 import numpy as np
 from PyQt5 import uic
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QMessageBox, QWidget
 import pysiaf
 from pysiaf.utils import rotations
 
@@ -842,6 +843,29 @@ def generate_segment_override_file(segment_infile, guider,
                 'of guide star parameters to the `guide_star_params_dict` '
                 'argument in `segment_guiding.generate_segment_override_file()`.'
             )
+
+        # Check if there is an existing file with the same prog/obs/visit
+        existing_files = glob.glob(os.path.join(out_dir, 'gs-override*.txt'))
+        for file_path in existing_files:
+            file_name = os.path.basename(file_path)
+            _, _, prog, obs, visit, *_ = re.split('-|\.|_', file_name)
+
+            # If there is, ask the user whether to overwrite
+            if (int(prog) == int(program_id) and
+                    int(obs) == int(observation_num) and
+                    int(visit) == int(visit_num)):
+
+                buttonReply = QMessageBox.question(
+                    QWidget(), 'Existing Override File',
+                    "A file already exists at {}. Do you want to overwrite it?".format(file_path),
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                )
+                if buttonReply == QMessageBox.Yes:
+                    LOGGER.info('Segment Guiding: Overwriting file at {}.'.format(file_path))
+                    break
+                else:
+                    LOGGER.info('Segment Guiding: User chose not to overwrite existing file at {}.'.format(file_path))
+                    return
 
         # Determine which segments are the guide and reference segments
         if click_to_select_gui:
