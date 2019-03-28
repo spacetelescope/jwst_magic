@@ -42,13 +42,13 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    1. Check the **Commissioning** radio button (*C*) to set the naming method.
    2. Select the **Practice Name** (*D*) corresponding to the current activity.
    3. Select the **CAR/Step** name (*E*) of the activity you are generating an override file for.
-   4. Select the **Observation** number (*F*) of the activity you are generating an override file for.
+   4. Select the **Observation** number (*F*) of the activity you are generating an override file for. _(The observations in the dropdown box that are preceded by `+` are extras, in the case that an unplanned observation gets generated on-the-fly.)_
    
    
    Considering these parameters all together, the output files will be saved in the ``***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
 
 
-3. If you are running MAGIC off of SOGS, or to generate test data:
+3. If you are running MAGIC outside of SOGS, or to generate test data:
 
    <p align="center">
        <img src ="./figs/figure4_main_manual_naming.png" alt="Manual Naming" width="600"/>
