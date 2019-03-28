@@ -346,7 +346,7 @@ class MasterGui(QMainWindow):
             root = self.lineEdit_root.text()
             out_dir = self.textEdit_out.toPlainText().rstrip()
         elif self.radioButton_name_commissioning.isChecked():
-            root = 'for_obs{}'.format(self.comboBox_obs.currentText())
+            root = 'for_obs{:02d}'.format(int(self.comboBox_obs.currentText()))
             out_dir = os.path.join(SOGS_PATH,
                                    self.comboBox_practice.currentText(),
                                    self.comboBox_car.currentText().lower().replace('-', ''),
@@ -711,22 +711,25 @@ class MasterGui(QMainWindow):
         # Check which values have been selected already
         valid_practice = self.comboBox_practice.currentText() != '- Select Practice -'
         valid_car = self.comboBox_car.currentText() != '- Select CAR -'
-        valid_obs = self.comboBox_obs.currentText() != '- Select Obs -'
 
         # When the CAR step is changed...
         if valid_car and self.sender() == self.comboBox_car:
             # Update the observation dropdown box to include the possible observation numbers
-            obs_list = self.commissioning_dict[self.comboBox_car.currentText().lower()]['observations']
+            n_obs = int(self.commissioning_dict[self.comboBox_car.currentText().lower()]['observations'])
             self.comboBox_obs.clear()
             self.comboBox_obs.addItem('- Select Obs -')
-            for i_obs in range(int(obs_list)):
+            for i_obs in range(n_obs):
                 self.comboBox_obs.addItem('{:02d}'.format(i_obs + 1))
-            valid_obs = False
+            for i_obs in np.arange(n_obs, n_obs + 3):
+                self.comboBox_obs.addItem('+{:02d}'.format(i_obs + 1))
 
             # Add the current APT program number
             self.label_apt.setText('APT: {}'.format(
                 self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt'])
             )
+
+        valid_obs = '- Select Obs -' not in self.comboBox_obs.currentText() and \
+                    self.comboBox_obs.currentText() != ""
 
         # Update which boxes are enabled and disabled accordingly
         self.comboBox_car.setEnabled(valid_practice)
@@ -738,7 +741,7 @@ class MasterGui(QMainWindow):
                                 self.comboBox_practice.currentText(),
                                 self.comboBox_car.currentText().lower().replace('-', ''),
                                 'out',
-                                'for_obs{}'.format(self.comboBox_obs.currentText())
+                                'for_obs{:02d}'.format(int(self.comboBox_obs.currentText()))
                                 )
             self.textEdit_name_preview.setText(path)
         else:
@@ -917,7 +920,7 @@ class MasterGui(QMainWindow):
             else:
                 return True
         elif self.radioButton_name_commissioning.isChecked():
-            if self.textEdit_name_preview.toPlainText() == "":
+            if self.textEdit_name_preview.toPlainText() == "" or not self.buttonGroup_guider.checkedButton():
                 return False
             else:
                 return True
@@ -1095,7 +1098,7 @@ class MasterGui(QMainWindow):
                 root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out',
                                         self.lineEdit_root.text())
             else:
-                root = 'for_obs{}'.format(self.comboBox_obs.currentText())
+                root = 'for_obs{:02d}'.format(int(self.comboBox_obs.currentText()))
                 root_dir = self.textEdit_name_preview.toPlainText()
 
             # Note: maintaining if statements and "old" file names for backwards compatibility.
