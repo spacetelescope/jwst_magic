@@ -82,6 +82,7 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
       4. Verify that the indicator shows that the correct number of background stars have been added.
 
 ---------------------------------
+
 #### Next
 
 ###### Section IV: [Selecting Guide & Reference Stars for an Input Image and Writing Out Files](iv_select_stars_and_write_files.md)
