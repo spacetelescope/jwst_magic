@@ -48,6 +48,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 5. When the Star Selection GUI appears: 
    
    ![Star Selection GUI](./figs/figure9_star_selection2.png)
+   
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *Figure 9: Star Selection GUI window*
 
     
