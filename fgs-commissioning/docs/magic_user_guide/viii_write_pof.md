@@ -84,6 +84,7 @@ Alternatively, in the case of having to create multiple photometery override fil
 
 
 ---------------------------------
+
 #### Next
 
 ###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
