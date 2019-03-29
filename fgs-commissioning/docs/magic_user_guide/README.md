@@ -1,13 +1,15 @@
+![MAGIC Logo](../../../magic_logo.png)
+
+
 # JWST MAGIC: User's Guide
 
 How to use the Multi-Application Guiding Interface for Commissioning (MAGIC) for simulated and real JWST data. 
-
-[MAGIC Logo](../../../magic_logo.png)
 
 #### Authors:
 * Lauren Chambers (lchambers@stsci.edu) 
 * Keira Brooks (kbrooks@stsci.edu)
 * Sherie Holfeltz
+
 --------
 
 
