@@ -19,14 +19,11 @@ VII. Writing the Segment Override File (SOF)
 
 Another very important part of MAGIC is creating the override file that can be used to override the way guide and reference stars are selelcted by the GSSS. This file only has to be created when using MAGIC for commissioning activities and their rehearsals where the segments of JWST’s primary mirror are unstacked. In that case we use the PSFs created by each segment as our guide and reference stars. 
 1. In the main GUI, select the **Segment Guiding** box. All other options in the interface will be disabled.
-   <p align="center">
-       <img src ="./figs/figure13_segment_guiding.png" alt="Segment Guiding" width="600"/>
-   </p>
-   <p align="center">
-       Figure 13: Segment Guiding Section of the Main GUI
-    </p>
+
+   ![Figure 13: Segment Guiding Section of the Main GUI](./figs/figure13_segment_guiding.png)
 
 2. If the image has been shifted so the guide star is at the ID attitude, use the radio buttons (*A*) to designate whether to generate the override file using the original (unshifted) image (**Use original image**) or using the shifted image (**Use image shifted to ID attitude**).
+
 3. Determine whether to generate an override file from an existing file or using the click-to-select GUI:
    
    a. If creating a photometry override file using the **Create photometry override file** radio button (*B*), see [Section VIII](viii_write_pof.md).
@@ -35,7 +32,7 @@ Another very important part of MAGIC is creating the override file that can be u
    
    c. If creating an override file for a visit where the mirrors are in an array and you wish to use *different* guide and reference stars from [Section III](iii_determining_and_loading_the_input_image.md) that are specified in a different file (most likely a regfile.txt or a .incat file), select the **Read 1 command from file** radio button (*C*) a and specify the path to this file. Providing this file will create the segment override file so that it only uses the guide and reference stars selected by the user in [Section III](iii_determining_and_loading_the_input_image.md) and will bypass the override file creation using the Segment Guiding GUI. Once this file is selected, skip to step 6 below. 
    
-   d. Otherwise, select the **Click-to-Select 1 or more commands (GUI)** radio button (*D*) to launch the GUI (Figure 16 below) that will allow you to click-to-select multiple orientations of guide and reference stars.
+   d. Otherwise, select the **Click-to-Select 1 or more commands (GUI)** radio button (*D*) to launch the GUI (see figure below) that will allow you to click-to-select multiple orientations of guide and reference stars.
 4.	
    Before running the tool, obtain the following parameters with the following methods:
    
@@ -46,27 +43,18 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
    
    c. **Position Angle**: Ask the S&OC for the visit position angle at the guide star (V3PA@GS).
       See the Figure 14 to clarify the difference between V1, the target, and the guide star.
-      <p align="center">
-         <img src ="./figs/figure14_locations_of_v1.png" alt="Relative Locations of Objects"/>
-      </p>
-      <p align="center">
-         Figure 14: Locations of V1, the guide star, and the target
-      </p>
+      
+   ![Locations of V1, the guide star, and the target](./figs/figure14_locations_of_v1.png)
    
    d. Get the current **V2 & V3 boresight offset** from the Wavefront Ops. 
    
 5. Run the tool:
-   <p align="center">
-       <img src ="./figs/figure_a_run.png" alt="Run MAGIC"/>
-   </p>
+
+   ![Run MAGIC](./figs/figure_a_run.png)
 
 6. When the Segment Guiding Dialog Box appears (shown in Figure 15), define the segment guiding parameters, including:
-   <p align="center">
-      <img src ="./figs/figure15_segment_guiding_dialog.png" alt="Segment Guiding Dialog Box"/>
-   </p>
-   <p align="center">
-      Figure 15: Segment Guiding Dialog Box
-   </p>
+  
+   ![Segment Guiding Dialog Box](./figs/figure15_segment_guiding_dialog.png)
 
    a. **Program Number** – of the current APT program; three to five digits
    
@@ -89,17 +77,17 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 7. Click **OK** to continue.
 
    If the **Click-to-Select 1 or more commands (GUI)** radio buttonwas selected, the Segment Guiding GUI will appear:
-   <p align="center">
-      <img src ="./figs/figure16_segment_guiding_gui.png" alt="Segment Guiding GUI Window"/>
-   </p>
-   <p align="center">
-      Figure 16: Segment Guiding GUI Window
-   </p>
+   
+   ![Segment Guiding GUI Window](./figs/figure16_segment_guiding_gui.png)
 
 8. If the Segment Guiding GUI is being used, repeat the steps outlined in [Section III](iii_determining_and_loading_the_input_image.md) to select the guide and reference stars – the ones that you verified were successful with DHAS – for one segment guiding override command.
+
 9. When you are happy with your selections, click the **Save Command** button (*A*). You will see the IDs of the stars you selected appear in the **Override Commands** table (*C*).
+
 10. To add another command, again repeat the steps outlined in [Section III](iii_determining_and_loading_the_input_image.md) to select guide and reference stars, and again click the **Save Command** button (*A*). 
+
 11. To change the order of the commands, use the up and down arrow buttons (*D*). To view a saved command on the plot, click the **Load** button (*E*).  To remove a command from the list, click the **Delete** button (*A*). 
+
 12. Choose the center of override pointing (*B*). This sets the origin of the ideal frame (i.e. the location of the guide star if the segments were stacked). It can either be set as the center of the segment array, using the **Use Center of Segment Array** checkbox, or the location of a specific segment using the dropdown box.
 
 
