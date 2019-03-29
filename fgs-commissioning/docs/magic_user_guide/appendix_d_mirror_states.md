@@ -27,7 +27,5 @@
 Appendix D. Mirror State Procedures
 =====================================
 
-<p align="center">
-    <img src ="./figs/appendix_d_mirror_state.png" alt="Mirror States"/>
-</p>
+![Guide and reference star selection for different mirror configurations](./figs/appendix_d_mirror_state.png)
 
