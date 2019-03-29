@@ -13,7 +13,7 @@ II. Setting Up MAGIC
        
        $ git pull origin master
 
-4. From your astroconda environment, start an IPython session and launch the main GUI:
+4. From your astroconda environment, start an IPython session and launch the main GUI (see figure below):
 
        $ ipython
     
@@ -23,7 +23,6 @@ II. Setting Up MAGIC
        
 
     ![MAGIC GUI](./figs/figure1_main_gui.png)
-     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *Figure 1: Main GUI for the JWST MAGIC Tool*
 
 ---------------------------------------
 
