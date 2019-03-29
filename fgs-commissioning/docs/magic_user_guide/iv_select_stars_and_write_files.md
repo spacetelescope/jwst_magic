@@ -6,6 +6,8 @@
 
 ###### Section III: [Determining and Loading the Input Image](iii_determining_and_loading_the_input_image.md)
 
+--------------------------
+
 IV.	Selecting Guide & Reference Stars for an Input Image and Writing Out Files
 ==============================================================================
 One of the main features of MAGIC is that it allows the user to determine the guide and reference stars for a specific scene. While during normal opterations this is determined by the Guide Star Selection System (GSSS), during commissioning the MAGIC user will determine which PSFs will be used for guiding and as reference stars. You can turn on this feature by selecting the **Star Selector** check box. 
@@ -50,6 +52,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
    The output files will be located in the specified out directory.
 
 ---------------------------------
+
 #### Next
 
 ###### Section V: [Testing Selections in DHAS](v_testing_in_dhas.md)
