@@ -2,6 +2,8 @@
 
 ###### Section I: [Introduction](i_introduction.md)
 
+---------------------
+
 II. Setting Up MAGIC
 ====================
 
