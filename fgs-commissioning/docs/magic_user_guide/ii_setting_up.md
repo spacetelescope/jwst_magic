@@ -22,7 +22,7 @@ II. Setting Up MAGIC
        In [2]: jwst_magic.run_tool_GUI()
        
 
-    ![MAGIC GUI](./figs/figure1_main_gui.png)
+    ![Main GUI for the JWST MAGIC Tool](./figs/figure1_main_gui.png)
 
 ---------------------------------------
 
