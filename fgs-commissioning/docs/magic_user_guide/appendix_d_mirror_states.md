@@ -31,5 +31,3 @@ Appendix D. Mirror State Procedures
     <img src ="./figs/appendix_d_mirror_state.png" alt="Mirror States"/>
 </p>
 
----------------------------------
-The End
