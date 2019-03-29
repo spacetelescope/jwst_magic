@@ -8,22 +8,20 @@ II. Setting Up MAGIC
 1. If you have not yet installed the tools, go to [Appendix A](appendix_a_installing_magic.md).
 2. Check that you are in your astroconda environment. 
 3. Make sure that you have the most up-to-date version of the tools (``pull`` the most recent version of the tools from the repo):
-       
+
        $ cd /Users/<username>/tools
        $ git pull origin master
 
-
 4. From your astroconda environment, start an IPython session and launch the main GUI:
-
 
        $ ipython
     
        In [1]: import jwst_magic
        In [2]: jwst_magic.run_tool_GUI()
-
+       
 
     ![MAGIC GUI](./figs/figure1_main_gui.png)
-     Figure 1: Main GUI for the JWST MAGIC Tool
+     *Figure 1: Main GUI for the JWST MAGIC Tool*
 
 ---------------------------------------
 
