@@ -12,10 +12,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
 1. Set star selection parameters:
 
-   ![Star Selection](./figs/figure7_main_star_selection.png)
-
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *Figure 7: Star Selection section of the Main GUI*
-
+   ![Star Selection section of the Main GUI](./figs/figure7_main_star_selection.png)
 
    1. Ensure the **Star Selector** box is checked.
    2. Inspect the input image and if the segment PSFs are arranged in an image array check the **Non-Standard PSFs** box. (*A*) This flag alters the PSF-finding algorithm in the star selector tool to widen the smoothing filter for diffuse images in early commissioning stages when the telescope is unphased. If you are unsure if the PSFs are phased, consult the “Guiding Method” row in the [Guider Commissioning Summary Table](https://innerspace.stsci.edu/display/INSTEL/Guider+Commissioning+Summary+Table) on Innerspace.
@@ -23,10 +20,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
 2. Set file writer parameters:
   
-  ![FSW File Writer](./figs/figure8_main_fsw_write.png)
-
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *Figure 8: Flight Software file writer section for the Main GUI*
-
+  ![Flight Software file writer section for the Main GUI](./figs/figure8_main_fsw_write.png)
 
    1. Ensure the **Flight Software (FSW) File Writer** box is checked.
    2. Check that all of the *necessary FGS steps* are selected. 
@@ -38,7 +32,6 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
    ![Run MAGIC](./figs/figure_a_run.png)
 
-
 4. Monitor the terminal window from which you launched the GUI to notice any possible errors that are raised. 
 
   Note:	The output that appears in the command line is also written to:
@@ -47,10 +40,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
 5. When the Star Selection GUI appears: 
    
-   ![Star Selection GUI](./figs/figure9_star_selection2.png)
-   
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *Figure 9: Star Selection GUI window*
-
+   ![Star Selection GUI window](./figs/figure9_star_selection2.png)
     
     1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light.
     2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix D](appendix_d_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
