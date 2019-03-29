@@ -23,7 +23,7 @@ II. Setting Up MAGIC
        
 
     ![MAGIC GUI](./figs/figure1_main_gui.png)
-     *Figure 1: Main GUI for the JWST MAGIC Tool*
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *Figure 1: Main GUI for the JWST MAGIC Tool*
 
 ---------------------------------------
 
