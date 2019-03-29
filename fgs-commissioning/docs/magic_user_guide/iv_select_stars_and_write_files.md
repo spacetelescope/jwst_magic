@@ -44,10 +44,10 @@ One of the main features of MAGIC is that it allows the user to determine the gu
    
    ![Star Selection GUI window](./figs/figure9_star_selection2.png)
     
-    1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light.
-    2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix D](appendix_d_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
-    3. If you want to change your selections while in the tool, use the **Make Guide Star** (*A*) button to change the guide star, use the **Delete** button (*B*) to remove individual selections, and use the **Clear Selections** button (*C*) to start over.
-    4. When you are happy with your selections, click **Done**  
+   1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light.
+   2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix D](appendix_d_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
+   3. If you want to change your selections while in the tool, use the **Make Guide Star** (*A*) button to change the guide star, use the **Delete** button (*B*) to remove individual selections, and use the **Clear Selections** button (*C*) to start over.
+   4. When you are happy with your selections, click **Done**  
    
    The output files will be located in the specified out directory.
 
