@@ -62,6 +62,7 @@ Appendix C. Using APT to Get Guide Star RA & Dec
    4. Use the RA and Dec of this star for [Section VII](vii_write_sof.md)
 
 ---------------------------------
+
 #### Next
 
 ###### Appendix D: [Mirror State Procedures](appendix_d_mirror_states.md)
