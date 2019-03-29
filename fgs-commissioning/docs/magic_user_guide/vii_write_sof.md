@@ -94,6 +94,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 See [Appendix D](appendix_d_mirror_states.md) for more about selecting the center of override pointing based on the mirror state.
 
 ---------------------------------
+
 #### Next
 
 ###### Section VIII: [Writing the Photometry Override File (POF)](viii_write_pof.md)
