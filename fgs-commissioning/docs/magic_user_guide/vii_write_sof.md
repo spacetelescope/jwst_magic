@@ -26,27 +26,27 @@ Another very important part of MAGIC is creating the override file that can be u
 
 3. Determine whether to generate an override file from an existing file or using the click-to-select GUI:
    
-   a. If creating a photometry override file using the **Create photometry override file** radio button (*B*), see [Section VIII](viii_write_pof.md).
+   1. If creating a photometry override file using the **Create photometry override file** radio button (*B*), see [Section VIII](viii_write_pof.md).
    
-   b. If creating an override file for a visit where the mirrors are in an array and you wish to use the *same* guide and reference stars from [Section III](iii_determining_and_loading_the_input_image.md), select the **Read 1 command from file** radio button (*C*) and don’t change the auto-populated segment guiding filepath. This creates the segment override file so that it only uses the guide and reference stars selected by the user in [Section III](iii_determining_and_loading_the_input_image.md) and will bypass the override file creation using the Segment Guiding GUI. If making this selection, skip to step 6 below. 
+   2. If creating an override file for a visit where the mirrors are in an array and you wish to use the *same* guide and reference stars from [Section III](iii_determining_and_loading_the_input_image.md), select the **Read 1 command from file** radio button (*C*) and don’t change the auto-populated segment guiding filepath. This creates the segment override file so that it only uses the guide and reference stars selected by the user in [Section III](iii_determining_and_loading_the_input_image.md) and will bypass the override file creation using the Segment Guiding GUI. If making this selection, skip to step 6 below. 
    
-   c. If creating an override file for a visit where the mirrors are in an array and you wish to use *different* guide and reference stars from [Section III](iii_determining_and_loading_the_input_image.md) that are specified in a different file (most likely a regfile.txt or a .incat file), select the **Read 1 command from file** radio button (*C*) a and specify the path to this file. Providing this file will create the segment override file so that it only uses the guide and reference stars selected by the user in [Section III](iii_determining_and_loading_the_input_image.md) and will bypass the override file creation using the Segment Guiding GUI. Once this file is selected, skip to step 6 below. 
+   3. If creating an override file for a visit where the mirrors are in an array and you wish to use *different* guide and reference stars from [Section III](iii_determining_and_loading_the_input_image.md) that are specified in a different file (most likely a regfile.txt or a .incat file), select the **Read 1 command from file** radio button (*C*) a and specify the path to this file. Providing this file will create the segment override file so that it only uses the guide and reference stars selected by the user in [Section III](iii_determining_and_loading_the_input_image.md) and will bypass the override file creation using the Segment Guiding GUI. Once this file is selected, skip to step 6 below. 
    
-   d. Otherwise, select the **Click-to-Select 1 or more commands (GUI)** radio button (*D*) to launch the GUI (see figure below) that will allow you to click-to-select multiple orientations of guide and reference stars.
+   4. Otherwise, select the **Click-to-Select 1 or more commands (GUI)** radio button (*D*) to launch the GUI (see figure below) that will allow you to click-to-select multiple orientations of guide and reference stars.
 4.	
    Before running the tool, obtain the following parameters with the following methods:
    
-   a. APT parameters: If you do not know, ask the Wavefront Ops for the **Program Number**, **Observation Number**, and the **Visit Number**.
+   1. APT parameters: If you do not know, ask the Wavefront Ops for the **Program Number**, **Observation Number**, and the **Visit Number**.
    
-   b. Guide star **RA** & **Dec**: Retrieve the guide star ID from the APT file (see [Appendix C](appendix_c_apt.md) for a step-by-step guide for doing this). Go to the Guide Star Catalog webform (http://gsss.stsci.edu/webservices/GSC2/
+   2. Guide star **RA** & **Dec**: Retrieve the guide star ID from the APT file (see [Appendix C](appendix_c_apt.md) for a step-by-step guide for doing this). Go to the Guide Star Catalog webform (http://gsss.stsci.edu/webservices/GSC2/
 WebForm.aspx), and query with the guide star ID in the “HST ID” field to determine the RA and Dec.
    
-   c. **Position Angle**: Ask the S&OC for the visit position angle at the guide star (V3PA@GS).
+   3. **Position Angle**: Ask the S&OC for the visit position angle at the guide star (V3PA@GS).
       See the Figure 14 to clarify the difference between V1, the target, and the guide star.
       
    ![Locations of V1, the guide star, and the target](./figs/figure14_locations_of_v1.png)
    
-   d. Get the current **V2 & V3 boresight offset** from the Wavefront Ops. 
+   4. Get the current **V2 & V3 boresight offset** from the Wavefront Ops. 
    
 5. Run the tool:
 
@@ -56,23 +56,23 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
   
    ![Segment Guiding Dialog Box](./figs/figure15_segment_guiding_dialog.png)
 
-   a. **Program Number** – of the current APT program; three to five digits
+   1. **Program Number** – of the current APT program; three to five digits
    
-   b. **Observation Number** of the observation that will be executed
+   2. **Observation Number** of the observation that will be executed
    
-   c. **Visit Number** – of the visit that will be executed (this is usually 1, but will be different when mosaics, etc. are taken)
+   3. **Visit Number** – of the visit that will be executed (this is usually 1, but will be different when mosaics, etc. are taken)
    
-   d. **Right Ascension** (optional) – of the guide star
+   4. **Right Ascension** (optional) – of the guide star
    
-   e. **Declination** (optional) – of the guide star 
+   5. **Declination** (optional) – of the guide star 
    
-   f. **Position Angle** – of the observatory at the guide star at the time of the visit
+   6. **Position Angle** – of the observatory at the guide star at the time of the visit
    
-   g. **V2 Boresight offset** (optional) – that will be applied before the observation this file is for
+   7. **V2 Boresight offset** (optional) – that will be applied before the observation this file is for
    
-   h. **V3 boresight offset** (optional) – that will be applied before the observation this file is for
+   8. **V3 boresight offset** (optional) – that will be applied before the observation this file is for
    
-   i. **Uncertainty factor** (optional) – the degree of uncertainty in the countrate of each segment. e.g., an uncertainty factor of 0.9 for a star with a countrate of 1,000 writes an uncertainty of 900.
+   9. **Uncertainty factor** (optional) – the degree of uncertainty in the countrate of each segment. e.g., an uncertainty factor of 0.9 for a star with a countrate of 1,000 writes an uncertainty of 900.
 
 7. Click **OK** to continue.
 

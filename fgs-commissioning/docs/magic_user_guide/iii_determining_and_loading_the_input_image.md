@@ -12,11 +12,10 @@ III.	Determining and Loading the Input Image
 MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR filter (the NIRCam weak lens (WL) filter will cause MAGIC to crash). If you want MAGIC to convert this image into a raw dectector FGS image, you can indicate this by checking the **Convert Image** check box. In most cases MAGIC can determine from the header information which instrument and detector the image is from, however if it can’t figure this out from header information, you will have to help it out by telling it which instrument and detector your input image comes from. You can also renormalize and/or add background images to your seed image. 
 
 1. Set general input parameters:
-
-
+   
+   
    ![General Input section of the Main GUI](./figs/figure2_main_general_input.png)
-
-
+   
    1. Load the **Input Image** (*A*) and a preview of the image and the full path to the image will appear in the **Image Preview** box at right.
    2. Specify the **Guider** (*B*) that the final image should simulate. If this is not known, check the APT file (see [Appendix B](appedix_b_opening_dhas.md) for more information about using APT).
  
