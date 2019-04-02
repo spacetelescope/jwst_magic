@@ -758,13 +758,13 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             # Write catalog of all identified PSFs
             utils.write_cols_to_file(all_found_psfs_path,
                                      labels=['label', 'y', 'x', 'countrate'],
-                                     cols=all_cols)
+                                     cols=all_cols, log=LOGGER)
 
         # Write catalog of selected PSFs
         guiding_selections_path = os.path.join(out_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider))
         utils.write_cols_to_file(guiding_selections_path,
                                  labels=['y', 'x', 'countrate'],
-                                 cols=cols)
+                                 cols=cols, log=LOGGER)
     except Exception as e:
         LOGGER.exception(e)
         raise

@@ -36,6 +36,7 @@ Notes
 
 # Standard Library Imports
 import os
+import logging
 import shutil
 
 # Local Imports
@@ -46,6 +47,8 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 PACKAGE_PATH = os.path.split(__location__)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ directory
 
+# Start logger
+LOGGER = logging.getLogger(__name__)
 
 class Mkproc(object):
     """Makes CECIL proc files for FGS guider 1 and 2
@@ -210,13 +213,13 @@ class Mkproc(object):
             self.write_from_template(self.template_f, file_out)
 
         file_out.close()
-        print("Successfully wrote: {}".format(dhas_filename))
+        LOGGER.info("Successfully wrote: {}".format(dhas_filename))
         shutil.copy2(dhas_filename,
                      os.path.join(self.out_dir, 'ground_system'))
-        print("Successfully wrote: {}".format(os.path.join(self.out_dir,
-                                                           'ground_system',
-                                                           '{0}_G{1}_ID.prc'.
-                                                           format(root, guider))))
+        LOGGER.info("Successfully wrote: {}".format(os.path.join(self.out_dir,
+                                                                 'ground_system',
+                                                                 '{0}_G{1}_ID.prc'.
+                                                                 format(root, guider))))
 
     def create_acq_proc_file(self, guider, root, xarr, yarr, counts,
                              acq1_imgsize, acq2_imgsize):
@@ -293,10 +296,10 @@ class Mkproc(object):
 
             self.write_from_template(self.template_d, file_out)
         file_out.close()
-        print("Successfully wrote: {}".format(dhas_filename))
+        LOGGER.info("Successfully wrote: {}".format(dhas_filename))
         shutil.copy2(dhas_filename,
                      os.path.join(self.out_dir, 'ground_system'))
-        print("Successfully wrote: {}".format(os.path.join(
+        LOGGER.info("Successfully wrote: {}".format(os.path.join(
             self.out_dir, 'ground_system', '{0}_G{1}_ACQ.prc'.format(root,
                                                                      guider)
         )
