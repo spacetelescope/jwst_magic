@@ -535,7 +535,7 @@ def remove_pedestal(data):
 
         # Subtract median from each pedestal strip
         noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
-        # print('Removing pedestal {} value: {}'.format(i + 1, pedestal))
+
     LOGGER.info("Image Conversion: " +
                 "Removed pedestal values from NIRCam image: {} ".
                 format(', '.join(['{:.2f}'.format(p) for p in pedestals])))
@@ -747,6 +747,6 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     hdr = fits.getheader(header_file, ext=0)
 
     # Write FITS file
-    utils.write_fits(fgsout_file, np.uint16(data), header=hdr)
+    utils.write_fits(fgsout_file, np.uint16(data), header=hdr, log=LOGGER)
 
     return fgsout_path

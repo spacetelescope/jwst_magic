@@ -141,7 +141,7 @@ def on_sogs_network():
     return "sogs" in socket.gethostname()
 
 
-def write_fits(outfile, data, header=None):
+def write_fits(outfile, data, header=None, log=None):
     """
     Write data to a simple fits. Assumes one extension and no header.
     """
@@ -154,7 +154,10 @@ def write_fits(outfile, data, header=None):
         hdul.header = header
 
     hdul.writeto(outfile, overwrite=True)
-    print("Successfully wrote: {}".format(outfile))
+    try:
+        log.info("Successfully wrote: {}".format(outfile))
+    except AttributeError:
+        print("Successfully wrote: {}".format(outfile))
 
 
 def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
@@ -200,12 +203,15 @@ def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
                 f.write(' '.join(row) + '\n')
 
 
-def write_cols_to_file(file_path, labels, cols):
+def write_cols_to_file(file_path, labels, cols, log=None):
     """
     Write columns of data to a file
     """
     write_to_file(file_path, cols, labels=labels)
-    print("Successfully wrote: {}".format(file_path))
+    try:
+        log.info("Successfully wrote: {}".format(file_path))
+    except AttributeError:
+        print("Successfully wrote: {}".format(file_path))
 
 
 def swap_if_little_endian(data):
@@ -373,7 +379,7 @@ def get_guider(header, guider=None, log=None):
             try:
                 log.warning("Image Conversion: The header indicates that this is a " +
                             "guider {0} image. Processing as a guider {0} image.".format(hdr_guider))
-            except:
+            except AttributeError:
                 print("Image Conversion: The header indicates that this is a " +
                       "guider {0} image. Processing as a guider {0} image.".format(hdr_guider))
         # Otherwise, if it is a NIRCam image, just take what the user commands
