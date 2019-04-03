@@ -25,22 +25,20 @@ In the case of MIMF where we only need to change the photometry of the guide sta
 Creating a photometry override file through MAGIC:
 --------------------------------------------------
 1. Load the file for this observation, select the guider, the set the out directory and root.
+
 2. As in section VII, in the main GUI, select the **Segment Guiding** check box. All other options in the interface will be disabled. Note: You do not need to run the other parts of MAGIC when creating a photometry override file.
-3. Select the **Create photometry override file** radio button (*B* in Figure 13, reproduced below) 
-   <p align="center">
-       <img src ="./figs/figure13_segment_guiding.png" alt="Segment Guiding" width="600"/>
-   </p>
-   <p align="center">
-       Figure 13: Segment Guiding Section of the Main GUI
-    </p>
+
+3. Select the **Create photometry override file** radio button (*B* in figure below) 
+   
+   ![Segment Guiding Section of the Main GUI](./figs/figure13_segment_guiding.png)
+   
 4. Run the tool.
-5. When the Segment Guiding Dialog box opens (Figure 17), fill in the Program ID, Observation Number, and Visit Number just as you would for creating a segment override file. Additionally, you can add the countrate factor:
-   <p align="center">
-      <img src ="./figs/figure17_photometry_override_dialog.png" alt="Photometry Override"/>
-   </p>
-   <p align="center">
-      Figure 17: Photometry Override Dialog Box
-   </p>
+   
+   ![Run MAGIC](./figs/figure_a_run.png)
+   
+5. When the Segment Guiding Dialog box opens, fill in the Program ID, Observation Number, and Visit Number just as you would for creating a segment override file. Additionally, you can add the countrate factor:
+   
+   ![Photometry Override Dialog Box](./figs/figure17_photometry_override_dialog.png)
    
    **Countrate factor**: A factor between 0 and 1 that all countrates and thresholds are to be multiplied by. This factor is used for cases such as MIMF and CP when the segments are stacked but unphased, and so the brightness of the guide star is dimmed.  
    
@@ -64,21 +62,28 @@ Alternatively, in the case of having to create multiple photometery override fil
 
 •	**out_dir** – path to the out directory where all files will be saved
 
-    In [1]: from jwst_magic.segment_guiding import segment_guiding
-    In [2]: root = ['root1', 'root2', 'root3', 'root4', 'root5'] #Root used for this dataset
-    In [3]: program_id = 12345 #Program ID - int
-    In [4]: observation_num = [1, 3, 4, 5, 7] #List of Observation numbers
-    In [5]: visit_num = [1, 1, 1, 2, 1, 1] #List of Visit numbers
-    In [6]: countrate_factor = 0.6 #Float between 0.0 and 1.0
-    In [7]: out_dir = ‘/path/to/out/directory’
-    In [8]: for i, (r, o, v) in enumerate(zip(root, observation_num, visit_num)):
-	              segment_guiding.run_tool(root=r, program_id=program_id, 
-                                         observation_num=o, visit_num=v, 
-                                         countrate_factor= countrate_factor, 
-                                         out_dir=out_dir)   
-
+     In [1]: from jwst_magic.segment_guiding import segment_guiding
+    
+     In [2]: root = ['root1', 'root2', 'root3', 'root4', 'root5'] #Root used for this dataset
+    
+     In [3]: program_id = 12345 #Program ID - int
+    
+     In [4]: observation_num = [1, 3, 4, 5, 7] #List of Observation numbers
+    
+     In [5]: visit_num = [1, 1, 1, 2, 1, 1] #List of Visit numbers
+    
+     In [6]: countrate_factor = 0.6 #Float between 0.0 and 1.0
+     
+     In [7]: out_dir = ‘/path/to/out/directory’
+    
+     In [8]: for i, (r, o, v) in enumerate(zip(root, observation_num, visit_num)):
+                 segment_guiding.run_tool(root=r, program_id=program_id, 
+                                          observation_num=o, visit_num=v, 
+                                          countrate_factor=countrate_factor, 
+                                          out_dir=out_dir)
 
 ---------------------------------
+
 #### Next
 
 ###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
