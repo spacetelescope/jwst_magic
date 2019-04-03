@@ -6,29 +6,23 @@
 
 ###### Section III: [Determining and Loading the Input Image](iii_determining_and_loading_the_input_image.md)
 
+--------------------------
+
 IV.	Selecting Guide & Reference Stars for an Input Image and Writing Out Files
 ==============================================================================
 One of the main features of MAGIC is that it allows the user to determine the guide and reference stars for a specific scene. While during normal opterations this is determined by the Guide Star Selection System (GSSS), during commissioning the MAGIC user will determine which PSFs will be used for guiding and as reference stars. You can turn on this feature by selecting the **Star Selector** check box. 
 
 1. Set star selection parameters:
-   <p align="center">
-       <img src ="./figs/figure7_main_star_selection.png" alt="Star Selection" width="600"/>
-   </p>
-   <p align="center">
-       Figure 7: Star Selection section of the Main GUI
-    </p>
+
+   ![Star Selection section of the Main GUI](./figs/figure7_main_star_selection.png)
 
    1. Ensure the **Star Selector** box is checked.
    2. Inspect the input image and if the segment PSFs are arranged in an image array check the **Non-Standard PSFs** box. (*A*) This flag alters the PSF-finding algorithm in the star selector tool to widen the smoothing filter for diffuse images in early commissioning stages when the telescope is unphased. If you are unsure if the PSFs are phased, consult the “Guiding Method” row in the [Guider Commissioning Summary Table](https://innerspace.stsci.edu/display/INSTEL/Guider+Commissioning+Summary+Table) on Innerspace.
    3. If desired, load pre-selected guide and reference stars from a file by selecting the **Load from File** (*B*) option and selecting the desired input file. This file must include X/Y pixel coordinates and count rates in the form of a filepath to a regfile.txt or .incat file. Providing this will bypass using the Star Selection GUI to **Click-to-Select** the guide and reference stars. 
 
 2. Set file writer parameters:
-   <p align="center">
-       <img src ="./figs/figure8_main_fsw_write.png" alt="FSW File Writer" width="600"/>
-   </p>
-   <p align="center">
-       Figure 8: Flight Software file writer section for the Main GUI
-    </p>
+  
+  ![Flight Software file writer section for the Main GUI](./figs/figure8_main_fsw_write.png)
 
    1. Ensure the **Flight Software (FSW) File Writer** box is checked.
    2. Check that all of the *necessary FGS steps* are selected. 
@@ -38,9 +32,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
 3. Run the tool
 
-  <p align="center">
-       <img src ="./figs/figure_a_run.png" alt="Run MAGIC"/>
-   </p>
+   ![Run MAGIC](./figs/figure_a_run.png)
 
 4. Monitor the terminal window from which you launched the GUI to notice any possible errors that are raised. 
 
@@ -49,21 +41,18 @@ One of the main features of MAGIC is that it allows the user to determine the gu
      /data/jwst/wss/guiding/MAGIC_logs/
 
 5. When the Star Selection GUI appears: 
-   <p align="center">
-       <img src ="./figs/figure9_star_selection2.png" alt="Star Selection GUI" width="600"/>
-   </p>
-   <p align="center">
-       Figure 9: Star Selection GUI window
-    </p>
+   
+   ![Star Selection GUI window](./figs/figure9_star_selection2.png)
     
-    1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light.
-    2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix D](appendix_d_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
-    3. If you want to change your selections while in the tool, use the **Make Guide Star** (*A*) button to change the guide star, use the **Delete** button (*B*) to remove individual selections, and use the **Clear Selections** button (*C*) to start over.
-    4. When you are happy with your selections, click **Done**  
+   1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light.
+   2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix D](appendix_d_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
+   3. If you want to change your selections while in the tool, use the **Make Guide Star** (*A*) button to change the guide star, use the **Delete** button (*B*) to remove individual selections, and use the **Clear Selections** button (*C*) to start over.
+   4. When you are happy with your selections, click **Done**  
    
    The output files will be located in the specified out directory.
 
 ---------------------------------
+
 #### Next
 
 ###### Section V: [Testing Selections in DHAS](v_testing_in_dhas.md)
