@@ -11,7 +11,7 @@ II. Setting Up MAGIC
 2. Check that you are in your astroconda environment. 
 3. Make sure that you have the most up-to-date version of the tools (``pull`` the most recent version of the tools from the repo):
 
-       $ cd /Users/<username>/tools
+       $ cd /Users/<username>/jwst-magic
        
        $ git pull origin master
 
