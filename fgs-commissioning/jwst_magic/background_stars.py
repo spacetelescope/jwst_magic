@@ -489,7 +489,7 @@ class BackgroundStarsWindow(QDialog):
         # (Assume that is the star closest to the center, if there is a star
         # within 1" of the pointing)
         distances = [np.sqrt((ra - RA) ** 2 + (dec - Dec) ** 2) for (ra, dec) in zip(RAs, Decs)]
-        i_mindist = np.where(min(distances))[0][0]  # Probably 0
+        i_mindist = np.where(min(distances) == distances)[0][0]  # Probably 0
         if distances[i_mindist] < 1 / 60 / 60:
             LOGGER.info(
                 'Background Stars: Removing assumed guide star at {}, {}'.
