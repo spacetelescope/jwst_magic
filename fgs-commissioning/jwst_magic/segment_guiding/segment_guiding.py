@@ -832,8 +832,12 @@ def generate_segment_override_file(segment_infile, guider,
             accepted = SOF_parameter_dialog.exec()
             params = SOF_parameter_dialog.get_dialog_parameters() if accepted else None
 
-            guide_star_params_dict, program_id, observation_num, visit_num, \
-                threshold_factor, _ = params
+            if params is not None:
+                guide_star_params_dict, program_id, observation_num, visit_num, \
+                    threshold_factor, _ = params
+            else:
+                LOGGER.warning('Segment Guiding: SOF creation cancelled.')
+                return
 
         elif guide_star_params_dict is None:
             raise ValueError(
