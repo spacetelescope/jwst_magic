@@ -36,7 +36,7 @@ Use
             units of that value (either FGS Magnitude or FGS countrate).
         ``out_dir`` - where output files will be saved. If not provided,
             the image(s) will be saved within the repository at
-            tools/fgs-commissioning/
+            jwst_magic/
         ``coarse_pointing`` - denotes if the image will have a Gaussian
             filter applied to simulate the effects of jitter when the
             observatory is in coarse pointing rather than fine guide.
@@ -717,7 +717,7 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     out_dir : str, optional
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
-        tools/fgs-commissioning/
+        jwst_magic/
     root : str
         Name used to create the output directory, {out_dir}/out/{root}
     guider : int

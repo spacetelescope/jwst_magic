@@ -74,7 +74,7 @@ The following supplemental packages are required, and will be **automatically in
 3. Install the `jwst_magic` package:
 
     ```
-    cd jwst_magic/fgs-commissioning
+    cd jwst_magic/
 
     pip install -e .
     ```
@@ -94,7 +94,7 @@ launch the GUI with the following steps:
 
 Tutorial & Documentation
 -----------------
-For the full documentation, including step-by-step directions for using the package, see the [MAGIC User's Guide](./fgs-commissioning/docs/magic_user_guide).
+For the full documentation, including step-by-step directions for using the package, see the [MAGIC User's Guide](./docs/magic_user_guide).
 
 Contributing
 -----------------
