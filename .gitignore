@@ -55,3 +55,23 @@ Thumbs.db
 ###########
 **/htmlcov/*
 **/.coverage
+
+# Testing #
+###########
+jwst_magic/tests/out/*
+.cache/*
+
+# Notebooks #
+#############
+notebooks/playground_*
+notebooks/WFR Testing/*
+
+# JWST MAGIC Files #
+####################
+out/*
+logs/*
+jwst_magic.egg-info/*
+
+# PyCharm #
+###########
+.idea/*
