@@ -11,7 +11,7 @@ Use
     ::
         python launch_MAGIC.py
 
-    while inside the root directory (fgs-commissioning)
+    while inside the root directory (jwst_magic)
 '''
 
 import jwst_magic

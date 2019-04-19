@@ -12,7 +12,7 @@ Use
     ::
         pip install -e .
 
-    while inside the root directory (fgs-commissioning)
+    while inside the root directory (jwst_magic)
 """
 
 from __future__ import (absolute_import, division,
@@ -56,7 +56,7 @@ setup(name='jwst_magic',
         'Topic :: Scientific/Engineering :: Astronomy'
       ],
       keywords='jwst fgs',
-      url='https://grit.stsci.edu/wfsc/tools/fgs-commissioning/',
+      url='https://github.com/spacetelescope/jwst_magic',
       author='Keira Brooks, Lauren Chambers, Kathryn St. Laurent',
       # author_email='flyingcircus@example.com',
       # license='MIT',

@@ -11,8 +11,8 @@ if (utils.scm_checkout()) return
 bc0 = new BuildConfig()
 bc0.nodetype = "linux-stable"
 bc0.name = "debug"
-bc0.build_cmds = ["conda env update --file=fgs-commissioning/environment.yml",
-                  "with_env -n magic pip install fgs-commissioning/"]
+bc0.build_cmds = ["conda env update --file=environment.yml",
+                  "with_env -n magic pip install ."]
 bc0.test_cmds = ["with_env -n magic pytest -s --junitxml=result.xml"]
 bc0.failedUnstableThresh = 1
 bc0.failedFailureThresh = 1

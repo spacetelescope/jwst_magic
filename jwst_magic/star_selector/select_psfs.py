@@ -700,7 +700,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
     out_dir : str, optional
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
-        tools/fgs-commissioning/
+        jwst_magic/
     masterGUIapp : qApplication, optional
         qApplication instance of parent GUI
     logger_passed : bool, optional
