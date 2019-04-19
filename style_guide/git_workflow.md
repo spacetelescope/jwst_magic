@@ -1,12 +1,10 @@
-git & GitLab Workflow for Contributing
+git & GitHub Workflow for Contributing
 ========================================
-Note on language: In GitHub, "pull request" is used to indicate a request for code to be merged. In GitLab "merge request" is used. Since this repo exists in GitLab we will use the appropriate language however it is important to note this slight difference if you use both GitHub and GitLab.
-
-The best method for contributing software to the `jwst_magic` project is a workflow that involves making a branch off of the `jwst_magic` repository, developing changes on those branches, and opening merge requests through GitLab.
+The best method for contributing software to the `jwst_magic` project is a workflow that involves making a branch off of the `jwst_magic` repository, developing changes on those branches, and opening pull requests through GitHub.
 
 The first question you will have to figure out is whether you should open a JIRA issue. (Aside: At this time all contributors to `jwst_magic` are local to STScI, we ask that issues be made through STScI's JIRA in order to maintain the project management flow that we have established. If you are unsure of how to create and maintain a JIRA issue, please see the *JIRA Issue Creation* section below.) If you think that this change will be solving a significant problem or add a significant enhancement to the project then it would be advantageous to open an issue ticket here. This will allow both individuals and the team as a whole to keep track of the project and our progress as we go. Any appropriate individuals should be assigned to the issue, and a label(s) should be tagged in JIRA.
 
-Following that, any changes that you want to eventually make to the master branch should be done through the workflow where you create a branch and work on your own branch before submitting those changes to be reviewed through a merge request. Instructions on how to do those things can be found below:
+Following that, any changes that you want to eventually make to the master branch should be done through the workflow where you create a branch and work on your own branch before submitting those changes to be reviewed through a pull request. Instructions on how to do those things can be found below:
 
 1. Make a local copy of the repository by cloning the `jwst_magic` repository by visiting the repository and clone via SSH or HTTPS (e.g. `git clone git@github.com:spacetelescope/jwst_magic.git` or by using a Git GUI such as SourceTree - our developers use SourceTree so we have included the instructions for SourceTree here, as well as the commands necessary to complete these steps in a terminal).  Unless you explicitly delete your clone, this only has to be done once. Note on SSH vs HTTPS: With HTTPS, you will be prompted for your AD credentials any time you push/pull code. SSH, on the other hand,  will require that you set up an SSH key, though this will only need to be done once, and you will never be prompted for your AD credentials when pushing or pulling code.  
 
@@ -35,17 +33,17 @@ In a terminal:
    ii. `git push <branchname>` will also work after the first push of your branch.
 In SourceTree:
    i. Click the Push icon in the top menu
-4. On the `jwst_magic` [GitHub repository](https://github.com/spacetelescope/jwst_magic), create a merge request - there will be a button ("Create Merge Request") for this after you have pushed your changes at the top of the page. Note that if the branch is still under heavy development, you can put WIP: at the beginning of the merge request title to signify that the merge request is still a work in progress (e.g. WIP: Example Merge Request Title). Not until the WIP: tag is explicitly removed will the merge request be deemed 'mergable'.
+4. On the `jwst_magic` [GitHub repository](https://github.com/spacetelescope/jwst_magic), create a pull request - there will be a button ("Create Pull Request") for this after you have pushed your changes at the top of the page. Note that if the branch is still under heavy development, you can put WIP: at the beginning of the pull request title to signify that the pull request is still a work in progress (e.g. WIP: Example Pull Request Title). Not until the WIP: tag is explicitly removed will the pull request be deemed 'mergable'.
 
-Assign the merge request a reviewer, selecting a member of the `jwst_magic` team. They will review your merge request and either accept the request and merge, or ask for additional changes.
+Assign the pull request a reviewer, selecting a member of the `jwst_magic` team. They will review your pull request and either accept the request and pull, or ask for additional changes.
 
-Iterate with your reviewer(s) on additional changes if necessary. This will involve addressing any comments on your merge request which can be found on [this](https://github.com/spacetelescope/jwst_magic/pulls) webpage. You may end up iterating over steps 4.ii, 4.iii and 5.ii several times while working with your reviewer - do not despair.
+Iterate with your reviewer(s) on additional changes if necessary. This will involve addressing any comments on your pull request which can be found on [this](https://github.com/spacetelescope/jwst_magic/pulls) webpage. You may end up iterating over steps 4.ii, 4.iii and 5.ii several times while working with your reviewer - do not despair.
 
-Once the merge request has been accepted and merged, switch to master and delete your local branch with git branch -d <branchname> (from a terminal) or by right clicking on the branch name in the menu on the left and select "Delete <branchname>" (in SourceTree).
+Once the pull request has been accepted and pull, switch to master and delete your local branch with git branch -d <branchname> (from a terminal) or by right clicking on the branch name in the menu on the left and select "Delete <branchname>" (in SourceTree).
 
 Expected Additional Changes to be Made
 ---------------------------
-When you make a code change to `jwst_magic` you are requested to make sure that accompanying documentation is also up-to-date with that change. For example, if your change alters the GUIs or the steps that a user will take, please update the [JWST MAGIC User's Guide](../docs/magic_user_guide/README.md). Your merge request will not be accepted by the reviewer until these updates have been made.
+When you make a code change to `jwst_magic` you are requested to make sure that accompanying documentation is also up-to-date with that change. For example, if your change alters the GUIs or the steps that a user will take, please update the [JWST MAGIC User's Guide](../docs/magic_user_guide/README.md). Your pull request will not be accepted by the reviewer until these updates have been made.
 
 JIRA Issue Creation
 -------------------
@@ -61,7 +59,7 @@ All issues for these tools exists in the [JWSTFGS project](https://jira.stsci.ed
 Additional cells should be filled out if that information is known.
 2. Click the dark blue "Create" button
 
-To start progress on this issue, go to the issue page (click on the issue name from the project home page or from a board), make sure that the issue has been assigned to you (click "Assign to me" under People on the right-hand side), and click the "Start Progress" button under the issue summary.To change where you are in the workflow, you can now click on the "Workflow" button and choose "Send To Backlog" or "Done". Once this issue has been reviewed and merged in GitLab, you are expected to close the issue on JIRA but selecting the "Done" option under "Workflow".
+To start progress on this issue, go to the issue page (click on the issue name from the project home page or from a board), make sure that the issue has been assigned to you (click "Assign to me" under People on the right-hand side), and click the "Start Progress" button under the issue summary.To change where you are in the workflow, you can now click on the "Workflow" button and choose "Send To Backlog" or "Done". Once this issue has been reviewed and merged in GitHub, you are expected to close the issue on JIRA but selecting the "Done" option under "Workflow".
 
 
 Attribution
