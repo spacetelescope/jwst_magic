@@ -12,7 +12,7 @@ notebooks/WFR Testing/*
 ####################
 out/*
 logs/*
-comm_tool_obsolete/*
+jwst_magic.egg-info/*
 
 # PyCharm #
 ###########
