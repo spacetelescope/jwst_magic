@@ -35,7 +35,7 @@ In a terminal:
    ii. `git push <branchname>` will also work after the first push of your branch.
 In SourceTree:
    i. Click the Push icon in the top menu
-4. On the `jwst_magic` [GitLab repository](https://github.com/spacetelescope/jwst_magic), create a merge request - there will be a button ("Create Merge Request") for this after you have pushed your changes at the top of the page. Note that if the branch is still under heavy development, you can put WIP: at the beginning of the merge request title to signify that the merge request is still a work in progress (e.g. WIP: Example Merge Request Title). Not until the WIP: tag is explicitly removed will the merge request be deemed 'mergable'.
+4. On the `jwst_magic` [GitHub repository](https://github.com/spacetelescope/jwst_magic), create a merge request - there will be a button ("Create Merge Request") for this after you have pushed your changes at the top of the page. Note that if the branch is still under heavy development, you can put WIP: at the beginning of the merge request title to signify that the merge request is still a work in progress (e.g. WIP: Example Merge Request Title). Not until the WIP: tag is explicitly removed will the merge request be deemed 'mergable'.
 
 Assign the merge request a reviewer, selecting a member of the `jwst_magic` team. They will review your merge request and either accept the request and merge, or ask for additional changes.
 
