@@ -12,12 +12,11 @@ Use
 """
 import os
 import shutil
-import yaml
 
 from astropy.io import ascii as asc
 import pytest
 
-from .utils import parametrized_data
+from utils import parametrized_data
 from jwst_magic.star_selector.select_psfs import select_psfs
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
