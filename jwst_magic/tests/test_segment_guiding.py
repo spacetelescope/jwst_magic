@@ -59,8 +59,8 @@ from PyQt5.QtWidgets import QDialogButtonBox
 import pytest
 
 # Local Imports
+from .utils import parametrized_data
 from jwst_magic.segment_guiding import segment_guiding
-from jwst_magic.tests.utils import parametrized_data
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_sgt"
