@@ -23,7 +23,7 @@ Use
             {out_dir}/out/{root}
         ``out_dir`` - where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
-            tools/fgs-commissioning/
+            jwst_magic/
 
     Optional arguments:
         ``thresh_factor`` - factor by which to multiply the countrates
@@ -69,7 +69,7 @@ def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
     out_dir : str
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
-        tools/fgs-commissioning/
+        jwst_magic/
     thresh_factor : float, optional
         Factor by which to multiply the countrates to determine
         the threshold count rate

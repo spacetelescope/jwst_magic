@@ -781,7 +781,7 @@ def generate_segment_override_file(segment_infile, guider,
         specified, will be derived from the segment_infile name.
     out_dir : str, optional
         Location of out/ directory. If not specified, will be placed
-        within the repository: .../tools/fgs_commissioning/out/
+        within the repository: .../jwst_magic/out/
     selected_segs : str, optional
         File path to guiding_selections*.txt file with list of locations and
         countrates for the selected segments (guide and reference stars)
@@ -916,7 +916,7 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         Required if parameter_dialog=False
     out_dir : str, optional
         Location of out/ directory. If not specified, will be placed
-        within the repository: .../tools/fgs_commissioning/out/
+        within the repository: .../jwst_magic/out/
     parameter_dialog : bool, optional
         Prompt the user to enter parameters (countrate factors, APT
         numbers) from a dialog box rather than manually providing arguments.

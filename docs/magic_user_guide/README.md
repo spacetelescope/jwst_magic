@@ -1,7 +1,7 @@
 (To create a PDF of this user's guide, go [here](magic_pdf_disclaimer.md))
 
 
-![MAGIC Logo](../../../magic_logo.png)
+![MAGIC Logo](../../magic_logo.png)
 
 
 # JWST MAGIC: User's Guide
