@@ -35,11 +35,11 @@ In SourceTree:
    i. Click the Push icon in the top menu
 4. On the `jwst_magic` [GitHub repository](https://github.com/spacetelescope/jwst_magic), create a pull request - there will be a button ("Create Pull Request") for this after you have pushed your changes at the top of the page. Note that if the branch is still under heavy development, you can put WIP: at the beginning of the pull request title to signify that the pull request is still a work in progress (e.g. WIP: Example Pull Request Title). Not until the WIP: tag is explicitly removed will the pull request be deemed 'mergable'.
 
-Assign the pull request a reviewer, selecting a member of the `jwst_magic` team. They will review your pull request and either accept the request and pull, or ask for additional changes.
+Assign the pull request a reviewer, selecting a member of the `jwst_magic` team. They will review your pull request and either accept the request and merge, or ask for additional changes.
 
 Iterate with your reviewer(s) on additional changes if necessary. This will involve addressing any comments on your pull request which can be found on [this](https://github.com/spacetelescope/jwst_magic/pulls) webpage. You may end up iterating over steps 4.ii, 4.iii and 5.ii several times while working with your reviewer - do not despair.
 
-Once the pull request has been accepted and pull, switch to master and delete your local branch with git branch -d <branchname> (from a terminal) or by right clicking on the branch name in the menu on the left and select "Delete <branchname>" (in SourceTree).
+Once the pull request has been accepted and merged, switch to master and delete your local branch with git branch -d <branchname> (from a terminal) or by right clicking on the branch name in the menu on the left and select "Delete <branchname>" (in SourceTree).
 
 Expected Additional Changes to be Made
 ---------------------------
