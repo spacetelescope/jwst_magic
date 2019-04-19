@@ -25,7 +25,7 @@ Use
             to determine the threshold count rate
         ``out_dir`` - where output files will be saved. If not provided,
             the image(s) will be saved within the repository at
-            tools/fgs-commissioning/
+            jwst_magic/
         ``acq1_imgsize`` - dimension of ACQ1 images
         ``acq2_imgsize`` - dimension of ACQ2 images
 
@@ -75,7 +75,7 @@ class Mkproc(object):
         out_dir : str, optional
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
-            tools/fgs-commissioning/
+            jwst_magic/
         acq1_imgsize : int, optional
             Dimension of ACQ1 images
         acq2_imgsize : int, optional

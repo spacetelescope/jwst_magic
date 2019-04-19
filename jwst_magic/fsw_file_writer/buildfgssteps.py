@@ -30,7 +30,7 @@ Use
             If not defined, defaults to jwst_magic/data/config.ini
         ``out_dir`` - where output files will be saved. If not provided,
             the image(s) will be saved within the repository at
-            tools/fgs-commissioning/
+            jwst_magic/
         ``logger_passed`` - denotes if a logger object has already been
             generated.
 """
@@ -121,7 +121,7 @@ class BuildFGSSteps(object):
         out_dir : str
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
-            tools/fgs-commissioning/
+            jwst_magic/
         guiding_selections_file : str
             File containing X/Y positions and countrates for all stars
             in the provided image

@@ -1,27 +1,31 @@
 Updating ``jwst_magic`` on your machine
 ===================================
 
+** NOTE: This page is outdated and should not be trusted **
+
 1. Activate your Python 3 (preferably Astroconda) environment. For installing Astroconda see: http://stsci-env.readthedocs.io/en/latest/installing_anaconda.html
+
 2. In the directory where you last installed or updated the tools::
 
       $ git remote –v
+
 3. If the result contains “JWST-FGS/Commissioning-tools.git”:
 
    a. You are using the old repo. We will need to clone the tools from the new repo::
    
       $ cd /location/where/you/want/the/repo
-      $ git clone git@grit.stsci.edu:wfsc/tools.git
+      $ git clone git@github.com:spacetelescope/jwst_magic.git
       
    b. And install the ``jwst_magic`` package::
 
-       $ cd tools/fgs-commissioning
+       $ cd jwst_magic/
        $ pip install -e .
       
-4. Otherwise, if the result contains “wfsc/tools.git”:
+4. Otherwise, if the result contains “github”:
 
    a. You are using the tools in the new repo. Download the latest version of the repository::
    
-      $ cd tools/fgs-commissioning
+      $ cd jwst_magic
       $ git checkout master
       $ git pull origin master
       
