@@ -13,7 +13,7 @@ Use
 
 import pytest
 
-from jwst_magic._utils import coordinate_transforms
+from jwst_magic.utils import coordinate_transforms
 
 PIXEL_COORDS = (1743.3, 241.9)
 ANGLE_COORDS = (-55.736935, 8.139518)

@@ -35,12 +35,9 @@ Notes
 import os
 
 # Third Party Imports
+from astropy.io import fits
 import numpy as np
 import yaml
-from astropy.io import fits
-
-# Local
-from .. import utils
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

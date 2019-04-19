@@ -48,17 +48,19 @@ The following are ways to run segment_guiding:
                              visit=visit, guide_star_params_dict=guide_star_params_dict,
                              parameter_dialog=False)
 """
+# Standard Library Imports
 import os
 import shutil
-import yaml
 
+# Third Party Imports
 import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialogButtonBox
 import pytest
 
-from utils import parametrized_data
+# Local Imports
 from jwst_magic.segment_guiding import segment_guiding
+from jwst_magic.tests.utils import parametrized_data
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_sgt"

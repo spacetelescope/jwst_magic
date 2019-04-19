@@ -43,30 +43,32 @@ of QApplication (access it at QtCore.QCoreApplication.instance()) when
 calling the QApplication instance to run a window/dialog/GUI.
 """
 
+# Standard Library Imports
 import glob
 import os
 import re
 import sys
 
+# Third Party Imports
+from astropy.io import ascii as asc
 import matplotlib
-import yaml
+import numpy as np
+jenkins = 'jenkins' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
+    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from PyQt5 import QtCore, uic, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
                              QDialog)
+import yaml
 
-jenkins = 'jenkins' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
-    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
-from astropy.io import ascii as asc
-import numpy as np
-
-from . import run_magic, utils
-from jwst_magic import background_stars
-from .convert_image import renormalize
-from .fsw_file_writer import rewrite_prc
-from .segment_guiding import segment_guiding
-from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
+# Local Imports
+from jwst_magic import run_magic
+from jwst_magic.convert_image import renormalize, background_stars
+from jwst_magic.fsw_file_writer import rewrite_prc
+from jwst_magic.segment_guiding import segment_guiding
+from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
+from jwst_magic.utils import utils
 
 # Define all needed paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

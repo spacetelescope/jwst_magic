@@ -47,8 +47,8 @@ from photutils import find_peaks
 from scipy import ndimage
 
 # Local Imports
-from .. import utils
-from ..star_selector import SelectStarsGUI
+from jwst_magic.star_selector import SelectStarsGUI
+from jwst_magic.utils import utils
 
 # Adjust matplotlib parameters
 rcParams['image.origin'] = 'upper'

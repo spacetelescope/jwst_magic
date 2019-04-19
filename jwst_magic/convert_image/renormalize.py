@@ -29,9 +29,6 @@ import logging
 # Third Party Imports
 import numpy as np
 
-# Local Imports
-from .. import utils
-
 # Constants
 FGS_ZERO_POINT = 29.057
 J_ZERO_POINT = 0.90

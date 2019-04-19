@@ -6,11 +6,10 @@ import os
 from astropy.io import fits
 import numpy as np
 
-from jwst_magic import utils
 from jwst_magic.convert_image import convert_image_to_raw_fgs
 from jwst_magic.fsw_file_writer import buildfgssteps, write_files
 from jwst_magic.star_selector import select_psfs
-from jwst_magic._utils import coordinate_transforms
+from jwst_magic.utils import coordinate_transforms, utils
 
 FGS_DATA = glob.glob('fgs_data*.fits')
 NIRCAM_DATA = glob.glob('nircam_data*.fits')

@@ -1,13 +1,16 @@
 # View a DAT file, either with matplotlib or writing out to FITS
 
+# Standard Library Imports
 import re
 import sys
-import numpy as np
+
+# Third Party Imports
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
+import numpy as np
 
-# From local
-from . import utils
+# Local Imports
+from jwst_magic.utils import utils
 
 
 def dat_to_array(dat_file):

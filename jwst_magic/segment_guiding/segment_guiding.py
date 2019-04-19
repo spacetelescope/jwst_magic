@@ -43,7 +43,6 @@ import logging
 import os
 import time
 
-
 # Third Party Imports
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -62,9 +61,8 @@ import pysiaf
 from pysiaf.utils import rotations
 
 # Local Imports
-from .. import utils
-from jwst_magic._utils import coordinate_transforms
-from ..segment_guiding import SegmentGuidingGUI
+from jwst_magic.segment_guiding import SegmentGuidingGUI
+from jwst_magic.utils import coordinate_transforms, utils
 
 # Establish segment guiding files directory
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

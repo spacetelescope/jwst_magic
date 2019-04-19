@@ -34,12 +34,12 @@ Use
             provided, the image(s) will be saved to ../out/{root}.
 """
 
-# STDLIB
+# Standard Library Imports
+import logging
 import os
 import shutil
-import logging
 
-# THIRD PARTY
+# Third Party Imports
 import matplotlib
 jenkins = 'jenkins' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
@@ -47,11 +47,11 @@ if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
 print('Using backend: ', matplotlib.get_backend())
 import numpy as np
 
-# LOCAL
-from . import utils, background_stars
-from .convert_image import convert_image_to_raw_fgs
-from .star_selector import select_psfs
-from .fsw_file_writer import buildfgssteps, write_files
+# Local Imports
+from jwst_magic.convert_image import background_stars, convert_image_to_raw_fgs
+from jwst_magic.fsw_file_writer import buildfgssteps, write_files
+from jwst_magic.star_selector import select_psfs
+from jwst_magic.utils import utils
 
 # Define paths
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
