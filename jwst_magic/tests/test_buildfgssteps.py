@@ -19,7 +19,7 @@ import numpy as np
 from photutils import find_peaks
 import pytest
 
-from .utils import parametrized_data
+from utils import parametrized_data
 from jwst_magic.fsw_file_writer import write_files
 from jwst_magic.fsw_file_writer.buildfgssteps import BuildFGSSteps
 from jwst_magic.utils import utils

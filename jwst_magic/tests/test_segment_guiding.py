@@ -59,7 +59,7 @@ from PyQt5.QtWidgets import QDialogButtonBox
 import pytest
 
 # Local Imports
-from .utils import parametrized_data
+from utils import parametrized_data
 from jwst_magic.segment_guiding import segment_guiding
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
