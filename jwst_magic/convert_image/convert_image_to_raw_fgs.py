@@ -64,8 +64,8 @@ Notes
 
 # Standard Library Imports
 import itertools
-import os
 import logging
+import os
 
 # Third Party Imports
 from astropy.io import fits
@@ -75,8 +75,8 @@ from scipy import signal
 from scipy.ndimage.filters import gaussian_filter
 
 # Local Imports
-from .. import utils
-from ..convert_image import renormalize
+from jwst_magic.utils import utils
+from jwst_magic.convert_image import renormalize
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

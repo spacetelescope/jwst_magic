@@ -17,7 +17,7 @@ from astropy.io import fits
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication
 
-from jwst_magic import background_stars
+from jwst_magic.convert_image import background_stars
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')

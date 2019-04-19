@@ -61,18 +61,18 @@ import requests
 import sys
 
 # Third Party Imports
-import numpy as np
-import matplotlib as mpl
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
+import matplotlib as mpl
+import numpy as np
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QTableWidgetItem, QMessageBox
 import pysiaf
 
 # Local Imports
-from .convert_image import renormalize
-from .star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
+from jwst_magic.convert_image import renormalize
+from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 

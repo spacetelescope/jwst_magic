@@ -48,9 +48,9 @@ import numpy as np
 from scipy.ndimage import shift
 
 # Local imports
-from .. import utils
-from ..fsw_file_writer import config, detector_effects, write_files
-from ..star_selector import select_psfs
+from jwst_magic.utils import utils
+from jwst_magic.fsw_file_writer import config, detector_effects
+from jwst_magic.star_selector import select_psfs
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

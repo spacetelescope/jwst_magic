@@ -25,7 +25,7 @@ import yaml
 from astropy.io import fits
 import numpy as np
 
-PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
 
 

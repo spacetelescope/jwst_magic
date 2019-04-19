@@ -35,17 +35,17 @@ Use
 """
 
 # Standard Library Imports
-import os
 import logging
+import os
 
 # Third Party Imports
 from astropy.io import ascii as asc
 import numpy as np
 
 # Local Imports
-from .. import utils
-from ..star_selector import select_psfs
-from ..fsw_file_writer.mkproc import Mkproc
+from jwst_magic.fsw_file_writer.mkproc import Mkproc
+from jwst_magic.star_selector import select_psfs
+from jwst_magic.utils import utils
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
