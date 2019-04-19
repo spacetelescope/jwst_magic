@@ -35,7 +35,7 @@ from astropy.io import fits
 import numpy as np
 from photutils import find_peaks
 
-from utils import parametrized_data
+from .utils import parametrized_data
 from jwst_magic.convert_image import convert_image_to_raw_fgs
 
 

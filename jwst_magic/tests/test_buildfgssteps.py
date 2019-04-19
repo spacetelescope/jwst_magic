@@ -19,9 +19,9 @@ import numpy as np
 from photutils import find_peaks
 import pytest
 
+from .utils import parametrized_data
 from jwst_magic.fsw_file_writer import write_files
 from jwst_magic.fsw_file_writer.buildfgssteps import BuildFGSSteps
-from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
