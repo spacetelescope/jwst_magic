@@ -174,7 +174,7 @@ class FGSDetectorEffects:
         """
         # Load all the read noise values from the yaml
         with open(READ_NOISE, encoding="utf-8") as f:
-            read_noise_dict = yaml.load(f.read())
+            read_noise_dict = yaml.safe_load(f.read())
 
         # Get the read noise value for the current step
         array_size = self.imgsize if self.imgsize != 43 else 32
