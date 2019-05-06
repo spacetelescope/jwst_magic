@@ -199,3 +199,5 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             )
             write_files.write_all(fgs_files_obj)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
+
+    LOGGER.info("*** Run COMPLETE ***")

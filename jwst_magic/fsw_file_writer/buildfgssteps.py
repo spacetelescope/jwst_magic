@@ -388,7 +388,7 @@ class BuildFGSSteps(object):
         xstart, ystart = guiding_selections_cat['x', 'y'][0] # Guide star location
         dx = xend - xstart
         dy = yend - ystart
-        
+
         assert dx % 1 == 0, 'Trying to shift by a non-integer in x'
         assert dy % 1 == 0, 'Trying to shift by a non-integer in y'
 
@@ -452,7 +452,7 @@ class BuildFGSSteps(object):
                                        file_root + '.fits')
 
         # Write new FITS files
-        utils.write_fits(shifted_FGS_img, shifted_image, header=hdr)
+        utils.write_fits(shifted_FGS_img, shifted_image, header=hdr, log=LOGGER)
 
         return shifted_image
 
@@ -553,7 +553,7 @@ def create_cds(arr, step, config_ini, fix_saturated_pix=True):
         # n_sat_2 = len([p for p in saturated_read_2[0].flatten() if p])
         n_sat_2 = len(saturated_read_2[0][saturated_read_2[0] == True].flatten())
         if n_sat_2 > 0:
-            print('Adjusting {} pixels that are saturated in read 2.'.format(n_sat_2))
+            LOGGER.info('FSW File Writing: Adjusting {} pixels that are saturated in read 2.'.format(n_sat_2))
 
         # For pixels that are saturated in both reads, set their CDS
         # value to the saturated value (65000).
@@ -563,7 +563,7 @@ def create_cds(arr, step, config_ini, fix_saturated_pix=True):
         # n_sat_both = len([p for p in saturated_both_reads[0].flatten() if p])
         n_sat_both = len(saturated_both_reads[0][saturated_both_reads[0] == True].flatten())
         if n_sat_both > 0:
-            print('Adjusting {} pixels that are saturated in both reads.'.format(n_sat_both))
+            LOGGER.info('FSW File Writing: Adjusting {} pixels that are saturated in both reads.'.format(n_sat_both))
 
     return cds_arr
 

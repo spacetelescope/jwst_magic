@@ -58,6 +58,7 @@ Use
 
 # Standard Library Imports
 import os
+import logging
 
 # Third Party Imports
 from astropy.io import fits
@@ -72,6 +73,9 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 PACKAGE_PATH = os.path.split(__location__)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
+
+# Start logger
+LOGGER = logging.getLogger(__name__)
 
 
 def write_all(obj):
@@ -167,7 +171,7 @@ def write_sky(obj):
     """
     filename_sky = os.path.join(obj.out_dir, 'stsci',
                                 obj.filename_root + 'sky.fits')
-    utils.write_fits(filename_sky, np.uint16(obj.time_normed_im))
+    utils.write_fits(filename_sky, np.uint16(obj.time_normed_im), log=LOGGER)
 
 
 def write_bias(obj):
@@ -186,7 +190,7 @@ def write_bias(obj):
         filename_bias = os.path.join(obj.out_dir,
                                      'stsci',
                                      obj.filename_root + 'bias.fits')
-        utils.write_fits(filename_bias, np.uint16(obj.bias))
+        utils.write_fits(filename_bias, np.uint16(obj.bias), log=LOGGER)
 
 
 def write_cds(obj):
@@ -206,7 +210,7 @@ def write_cds(obj):
         filename_cds = os.path.join(obj.out_dir,
                                     'stsci',
                                     obj.filename_root + 'cds.fits')
-        utils.write_fits(filename_cds, np.uint16(obj.cds))
+        utils.write_fits(filename_cds, np.uint16(obj.cds), log=LOGGER)
 
 
 def write_image(obj):
@@ -240,9 +244,9 @@ def write_image(obj):
                             obj.filename_root + filetype)
 
     if obj.step == 'LOSTRK':
-        utils.write_fits(filename, obj.image) # Don't make it np.uint16
+        utils.write_fits(filename, obj.image, log=LOGGER) # Don't make it np.uint16
     else:
-        utils.write_fits(filename, np.uint16(obj.image))
+        utils.write_fits(filename, np.uint16(obj.image), log=LOGGER)
 
 def write_strips(obj):
     """Write an ID strips image
@@ -265,7 +269,8 @@ def write_strips(obj):
     filename_hdr = os.path.join(DATA_PATH,
                                 'newG{}magicHdrImg.fits'.format(obj.guider))
     hdr0 = fits.getheader(filename_hdr, ext=0)
-    utils.write_fits(filename_id_strips, np.uint16(obj.strips), header=hdr0)
+    utils.write_fits(filename_id_strips, np.uint16(obj.strips), header=hdr0,
+                     log=LOGGER)
 
 
 def write_prc(obj):
@@ -349,7 +354,7 @@ def write_dat(obj):
     else:
         raise ValueError("FSW File Writing: Observation mode {} not recognized.".format(obsmode))
 
-    print("Successfully wrote: {}".format(filename))
+    LOGGER.info("Successfully wrote: {}".format(filename))
     return
 
 
@@ -383,7 +388,7 @@ def write_stc(obj):
     data = np.array([inum, xia, yia, countrate]).T
 
     utils.write_to_file(filename_stc, data, fmt=['%d', '%f', '%f', '%e'])
-    print("Successfully wrote: {}".format(filename_stc))
+    LOGGER.info("Successfully wrote: {}".format(filename_stc))
 
 
 def write_cat(obj):
@@ -409,4 +414,4 @@ def write_cat(obj):
         utils.write_to_file(filename_starcat, coords, fmt=['%d', '%d'])
     except AttributeError:
         utils.write_to_file(filename_starcat, coords)
-    print("Successfully wrote: {}".format(filename_starcat))
+    LOGGER.info("Successfully wrote: {}".format(filename_starcat))

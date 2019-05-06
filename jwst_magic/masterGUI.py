@@ -427,7 +427,6 @@ class MasterGui(QMainWindow):
 
             # Rewrite the id.prc and acq.prc files
             rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
-            print("** Run Complete **\n\n")
 
             # Update converted image preview
             self.update_filepreview()
@@ -486,8 +485,6 @@ class MasterGui(QMainWindow):
                     click_to_select_gui=GUI, data=data, master_gui_app=self.app
                 )
 
-            print("** Run Complete **")
-
             # Update converted image preview
             self.update_filepreview()
             return
@@ -518,7 +515,6 @@ class MasterGui(QMainWindow):
                               shift_id_attitude=shift_id_attitude,
                               crowded_field=crowded_field
                               )
-            print("** Run Complete **")
 
             # Update converted image preview
             self.update_filepreview()
