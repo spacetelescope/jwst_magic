@@ -536,6 +536,7 @@ def remove_pedestal(data):
         # Subtract median from each pedestal strip
         noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
 
+    LOGGER.info('Removing pedestal {} value: {}'.format(i + 1, pedestal))
     LOGGER.info("Image Conversion: " +
                 "Removed pedestal values from NIRCam image: {} ".
                 format(', '.join(['{:.2f}'.format(p) for p in pedestals])))
