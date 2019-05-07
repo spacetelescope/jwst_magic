@@ -273,7 +273,7 @@ class MasterGui(QMainWindow):
         # Load all OTE cars from commissioning activities YAML file
         commissioning_yaml = os.path.join(__location__, 'data', 'commissioning_activities.yaml')
         with open(commissioning_yaml, encoding="utf-8") as f:
-            self.commissioning_dict = yaml.load(f.read())
+            self.commissioning_dict = yaml.safe_load(f.read())
         cars_list = list(self.commissioning_dict.keys())
 
         # Use to populate practice and CAR dropdown boxes

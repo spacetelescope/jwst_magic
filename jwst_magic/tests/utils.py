@@ -27,6 +27,6 @@ def parametrized_data():
     """
     parametrized_data_file = os.path.join(__location__, 'data', 'parametrized_test_data.yml')
     with open(parametrized_data_file) as f:
-        test_data = yaml.load(f.read())
+        test_data = yaml.safe_load(f.read())
 
     return test_data
