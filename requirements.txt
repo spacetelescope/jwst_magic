@@ -1,9 +1,12 @@
-numpy
 astropy
 ipython
+jupyter
 matplotlib
-PyQt5
+notebook
+numpy
+pyqt<6.0
 pysiaf
+python>=3.5
 pyyaml
 requests
 pytest
