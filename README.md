@@ -5,7 +5,7 @@
 # Multi-Application Guiding Interface for Commissioning (MAGIC)
 
 [![PyPI - License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/spacetelescope/jwql/blob/master/LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.6-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.5%20%7C%203.6%20%7C%203.7-blue.svg)](https://www.python.org/)
 [![STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Build Status](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/badge/icon)](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/)
 
@@ -48,7 +48,7 @@ effective RA and Dec of all segments on the sky.
 
 Installation notes
 ------------------
-This package was developed in a python 3.5 environment. Python 2.7 is not supported.
+This package was developed in a Python ≥3.5 environment. Python 2 is not supported.
 
 The following supplemental packages are required, and will be **automatically installed** with the package:
 * `astropy`
@@ -82,7 +82,7 @@ The following supplemental packages are required, and will be **automatically in
 
 Running the Tools
 -----------------
-These tools are best run in the IPython terminal, in an AstroConda environment
+These tools are best run in the `IPython` terminal, in an AstroConda environment
 (see the [AstroConda installation page](https://astroconda.readthedocs.io/en/latest/getting_started.html)
 for installing AstroConda). Simply activate your Python 3 environment, and
 launch the GUI with the following steps:
