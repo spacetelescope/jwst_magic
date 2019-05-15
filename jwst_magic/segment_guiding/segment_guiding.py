@@ -49,19 +49,21 @@ from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from astropy.table import Table
 import matplotlib
-jenkins = 'jenkins' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
+JENKINS = 'jenkins' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
     matplotlib.use("Qt5Agg")
 import matplotlib.path as mpltPath
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5 import uic
-from PyQt5.QtWidgets import QDialog
+if not JENKINS:
+    from PyQt5 import uic
+    from PyQt5.QtWidgets import QDialog
 import pysiaf
 from pysiaf.utils import rotations
 
 # Local Imports
-from jwst_magic.segment_guiding import SegmentGuidingGUI
+if not JENKINS:
+    from jwst_magic.segment_guiding import SegmentGuidingGUI
 from jwst_magic.utils import coordinate_transforms, utils
 
 # Establish segment guiding files directory

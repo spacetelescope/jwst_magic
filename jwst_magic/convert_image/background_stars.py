@@ -66,13 +66,16 @@ from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 import matplotlib as mpl
 import numpy as np
-from PyQt5 import QtCore, uic
-from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QTableWidgetItem, QMessageBox
+JENKINS = 'jenkins' in os.getcwd()
+if not JENKINS:
+    from PyQt5 import QtCore, uic
+    from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QTableWidgetItem, QMessageBox
 import pysiaf
 
 # Local Imports
 from jwst_magic.convert_image import renormalize
-from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
+if not JENKINS:
+    from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 

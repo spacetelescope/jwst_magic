@@ -14,10 +14,15 @@ import os
 import sys
 
 from astropy.io import fits
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QApplication
+JENKINS = 'jenkins' in os.getcwd()
+if not JENKINS:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QApplication
+import pytest
 
-from jwst_magic.convert_image import background_stars
+from jwst_magic.convert_image.background_stars import add_background_stars
+if not JENKINS:
+    from jwst_magic.convert_image.background_stars import BackgroundStarsWindow
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
@@ -31,20 +36,16 @@ def test_add_background_stars():
 
     stars = {'x': [1500], 'y': [200], 'jmag': [10.0]}
 
-    background_stars.add_background_stars(data, stars, 11.0, 'FGS Magnitude', 1)
+    add_background_stars(data, stars, 11.0, 'FGS Magnitude', 1)
 
-
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 def test_init_background_stars():
     """Make sure the background_stars GUI can launch without errors.
     """
-    # Can't currently run this test on the Jenkins server
-    if JENKINS:
-        return
-
     guider = 1
     jmag = 12
     qApp = QApplication(sys.argv)
-    window = background_stars.BackgroundStarsWindow(guider, jmag, qApp=qApp, in_master_GUI=False)
+    window = BackgroundStarsWindow(guider, jmag, qApp=qApp, in_master_GUI=False)
 
     # Schedule press of "Cancel" button
     QtCore.QTimer.singleShot(0, window.pushButton_cancel.clicked)
