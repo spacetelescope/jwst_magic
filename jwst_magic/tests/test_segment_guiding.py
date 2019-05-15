@@ -64,10 +64,9 @@ import pytest
 from utils import parametrized_data
 from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file,
                                                         SegmentGuidingCalculator,
-                                                        _convert_nrca3pixel_offset_to_v2v3_offset,
                                                         generate_photometry_override_file)
 if not JENKINS:
-    from jwst_magic.segment_guiding.segment_guiding import SegmentGuidingDialog
+    from jwst_magic.segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
 
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -80,7 +79,6 @@ VISIT_NUM = 1
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 
 PARAMETRIZED_DATA = parametrized_data()['test_segment_guiding']
-
 
 
 @pytest.fixture()
@@ -276,11 +274,6 @@ def test_generate_photometry_override_file(test_directory):
             ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=2.0,
             out_dir=__location__, parameter_dialog=False)
     assert 'for count_rate_factor. Expecting between 0.0 and 1.0.' in str(excinfo)
-
-
-def test_convert_boresight_to_v2v3():
-    v2v3_offset = _convert_nrca3pixel_offset_to_v2v3_offset(-20.4, -140.53)
-    assert v2v3_offset == (-0.638167896, -4.4203823924000005)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
