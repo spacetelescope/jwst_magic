@@ -22,12 +22,12 @@ import pytest
 
 from jwst_magic.convert_image.background_stars import add_background_stars
 if not JENKINS:
-    from jwst_magic.convert_image.background_stars import BackgroundStarsWindow
+    from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsWindow
+
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
 
-JENKINS = 'jenkins' in os.getcwd()
 
 def test_add_background_stars():
     # Basic test to make sure add_background_stars works
@@ -37,6 +37,7 @@ def test_add_background_stars():
     stars = {'x': [1500], 'y': [200], 'jmag': [10.0]}
 
     add_background_stars(data, stars, 11.0, 'FGS Magnitude', 1)
+
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 def test_init_background_stars():

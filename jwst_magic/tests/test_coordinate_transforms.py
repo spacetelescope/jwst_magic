@@ -65,3 +65,7 @@ Raw2Tel_parameters = [(1, (-52.6118059444085, -50.49287779246356)),
 def test_Raw2Tel(guider, correct_conversion):
     v2, v3 = coordinate_transforms.Raw2Tel(*PIXEL_COORDS, guider)
     assert (v2, v3) == correct_conversion
+
+def test_convert_boresight_to_v2v3():
+    v2v3_offset = coordinate_transforms.nrca3pixel_offset_to_v2v3_offset(-20.4, -140.53)
+    assert v2v3_offset == (-0.638167896, -4.4203823924000005)
