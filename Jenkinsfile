@@ -8,7 +8,6 @@
 if (utils.scm_checkout()) return
 
 CONDA_CHANNEL = "http://ssb.stsci.edu/astroconda"
-// CONDA_CREATE = "conda create -y -q -n magic --file=requirements.txt"
 CONDA_INSTALL = "conda install -y -q --file=requirements.txt"
 
 // Establish variables for the matrix
@@ -23,13 +22,9 @@ for (os in matrix_os) {
         bc.nodetype = "linux-stable"
         bc.name = "debug-linux-py${python_ver}"
         bc.conda_packages = ["python=${python_ver}"]
-        bc.build_cmds = ["conda info --envs",
-                         "conda list",
-                         "conda config --add channels '${CONDA_CHANNEL}' ",
+        bc.build_cmds = ["conda config --add channels '${CONDA_CHANNEL}' ",
                          "${CONDA_INSTALL} python=${python_ver}",
-                         "conda list",
-                         "pip install .",
-                         "conda list"]
+                         "pip install ."]
         bc.test_cmds = ["pytest --junitxml=results.xml",
                         "sed -i 's/file=\"[^\"]*\"//g;s/line=\"[^\"]*\"//g;s/skips=\"[^\"]*\"//g' results.xml"]
 
