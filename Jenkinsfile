@@ -30,7 +30,7 @@ for (os in matrix_os) {
                          "conda list",
                          "pip install .",
                          "conda list"]
-        bc.test_cmds = ["pytest --junitxml=result.xml",
+        bc.test_cmds = ["pytest --junitxml=results.xml",
                         "sed -i 's/file=\"[^\"]*\"//g;s/line=\"[^\"]*\"//g;s/skips=\"[^\"]*\"//g' results.xml"]
 
         matrix += bc
