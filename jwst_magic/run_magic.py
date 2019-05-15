@@ -41,8 +41,8 @@ import shutil
 
 # Third Party Imports
 import matplotlib
-jenkins = 'jenkins' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
+JENKINS = 'jenkins' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 print('Using backend: ', matplotlib.get_backend())
 import numpy as np

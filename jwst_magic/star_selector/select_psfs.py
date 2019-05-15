@@ -36,8 +36,8 @@ import string
 from astropy.io import ascii as asc
 from astropy.io import fits
 import matplotlib
-jenkins = 'jenkins' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
+JENKINS = 'jenkins' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from matplotlib import rcParams
 from matplotlib.colors import LogNorm
@@ -47,7 +47,8 @@ from photutils import find_peaks
 from scipy import ndimage
 
 # Local Imports
-from jwst_magic.star_selector import SelectStarsGUI
+if not JENKINS:
+    from jwst_magic.star_selector import SelectStarsGUI
 from jwst_magic.utils import utils
 
 # Adjust matplotlib parameters
