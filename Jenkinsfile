@@ -21,10 +21,12 @@ for (os in matrix_os) {
         bc = new BuildConfig()
         bc.nodetype = "linux-stable"
         bc.name = "debug-linux-py${python_ver}"
+        bc.conda_packages = ["python=${python_ver}"]
         bc.build_cmds = ["conda config --add channels '${CONDA_CHANNEL}' ",
                          "${CONDA_CREATE} python=${python_ver}",
-                         "with_env -n magic pip install ."]
-        bc.test_cmds = ["with_env -n magic pytest --junitxml=result.xml"]
+                         "pip install ."]
+        bc.test_cmds = ["pytest --junitxml=result.xml",
+                        "sed -i 's/file=\"[^\"]*\"//g;s/line=\"[^\"]*\"//g;s/skips=\"[^\"]*\"//g' results.xml"]
 
         matrix += bc
     }
