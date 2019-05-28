@@ -49,19 +49,18 @@ from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from astropy.table import Table
 import matplotlib
-jenkins = 'jenkins' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not jenkins:
+JENKINS = 'jenkins' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
     matplotlib.use("Qt5Agg")
 import matplotlib.path as mpltPath
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5 import uic
-from PyQt5.QtWidgets import QDialog
 import pysiaf
 from pysiaf.utils import rotations
 
 # Local Imports
-from jwst_magic.segment_guiding import SegmentGuidingGUI
+if not JENKINS:
+    from jwst_magic.segment_guiding import SegmentGuidingGUI
 from jwst_magic.utils import coordinate_transforms, utils
 
 # Establish segment guiding files directory
@@ -824,8 +823,8 @@ def generate_segment_override_file(segment_infile, guider,
     try:
         # Get the guide star parameters
         if parameter_dialog:
-            SOF_parameter_dialog = SegmentGuidingDialog(
-                "SOF", guider, program_id, observation_num, visit_num
+            SOF_parameter_dialog = SegmentGuidingGUI.SegmentGuidingDialog(
+                "SOF", guider, program_id, observation_num, visit_num, log=LOGGER
             )
             accepted = SOF_parameter_dialog.exec()
             params = SOF_parameter_dialog.get_dialog_parameters() if accepted else None
@@ -929,8 +928,8 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
     try:
         # Get the program parameters and countrate factor
         if parameter_dialog:
-            POF_parameter_dialog = SegmentGuidingDialog(
-                "POF", None, program_id, observation_num, visit_num
+            POF_parameter_dialog = SegmentGuidingGUI.SegmentGuidingDialog(
+                "POF", None, program_id, observation_num, visit_num, log=LOGGER
             )
             accepted = POF_parameter_dialog.exec()
             params = POF_parameter_dialog.get_dialog_parameters() if accepted else None
@@ -959,127 +958,6 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
     except Exception as e:
         LOGGER.exception(e)
         raise
-
-class SegmentGuidingDialog(QDialog):
-    """Define a dialog window to prompt user for guide star parameters
-    and other parameters needed to generate the override file.
-
-    Parameters
-    ----------
-    override_type: str
-            What kind of file to generate. Options are "SOF" (segment override
-            file) or "POF" (photometry override file)
-    guider : int
-        Guider number (1 or 2)
-    program_id : int
-        APT program number
-    observation_num : int
-        Observation number
-    visit_num : int
-        Visit number
-
-    Returns
-    -------
-    tup
-        Tuple containing the following arguments: (guide_star_params_dict,
-        program_id, observation_num, visit_num, threshold_factor,
-        countrate_factor)
-    """
-    def __init__(self, override_type, guider, program_id, observation_num, visit_num):
-        # Initialize attributes
-        self.override_type = override_type
-        self.guider = guider
-        self.program_id = program_id
-        self.observation_num = observation_num
-        self.visit_num = visit_num
-
-        # Initialize dialog object
-        QDialog.__init__(self, modal=True)
-
-        # Import .ui file
-        if override_type == "SOF":
-            uic.loadUi(os.path.join(__location__, 'segmentOverrideFileDialog.ui'), self)
-        elif override_type == "POF":
-            uic.loadUi(os.path.join(__location__, 'photometryOverrideFileDialog.ui'), self)
-
-        # Set defaults from parsed header
-        self.lineEdit_programNumber.setText(str(program_id))
-        self.lineEdit_observationNumber.setText(str(observation_num))
-        self.lineEdit_visitNumber.setText(str(visit_num))
-
-    def get_dialog_parameters(self):
-        """Parses the user input into the segment guiding dialog box, differentiating
-        between input for SOFs and POFs.
-
-        Returns
-        -------
-        tup
-            Tuple containing the following arguments: (guide_star_params_dict,
-            program_id, observation_num, visit_num, threshold_factor,
-            countrate_factor)
-        """
-
-        # Get parameters for dictionary from dialog
-        if self.override_type == "SOF":
-            # Parse what the boresight offset is
-            if self.radioButton_boresightNIRCam.isChecked():
-                x_offset = float(self.lineEdit_boresightX.text())
-                y_offset = float(self.lineEdit_boresightY.text())
-                v2_offset, v3_offset = _convert_nrca3pixel_offset_to_v2v3_offset(x_offset,
-                                                                                 y_offset)
-                LOGGER.info(
-                    'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} pixels)'.
-                        format(v2_offset, v3_offset, x_offset, y_offset)
-                )
-            else:
-                v2_offset = float(self.lineEdit_boresightV2.text())
-                v3_offset = float(self.lineEdit_boresightV3.text())
-                LOGGER.info(
-                    'Segment Guiding: Applying boresight offset of {}, {} arcsec'.
-                        format(v2_offset, v3_offset)
-                )
-
-            # Parse the RA, Dec, and PA
-            ra_value = self.lineEdit_RA.text()
-            if self.comboBox_RAUnit.currentText() == 'Degrees':
-                ra_unit = u.deg
-            elif self.comboBox_RAUnit.currentText() == 'Hours':
-                ra_unit = u.hourangle
-            dec_value = self.lineEdit_Dec.text()
-
-            gs_coord = SkyCoord(ra_value, dec_value, unit=(ra_unit, u.deg))
-            ra = gs_coord.ra.degree
-            dec = gs_coord.dec.degree
-
-            pa = float(self.lineEdit_PA.text())
-
-            # Populate the parameter dictionary
-            guide_star_params_dict = {
-                'v2_boff': v2_offset,
-                'v3_boff': v3_offset,
-                'fgs_num': self.guider,
-                'ra': ra,
-                'dec': dec,
-                'pa': pa,
-                'seg_num': 0
-            }
-
-            # Countrate factors
-            threshold_factor = float(self.lineEdit_countrateUncertainty.text())
-            countrate_factor = None
-
-        elif self.override_type == "POF":
-            countrate_factor = float(self.doubleSpinBox_countrateFactor.value())
-            threshold_factor = None
-            guide_star_params_dict = None
-
-        # Get APT information and other necessary parameters
-        program_id = self.lineEdit_programNumber.text()
-        observation_num = self.lineEdit_observationNumber.text()
-        visit_num = self.lineEdit_visitNumber.text()
-
-        return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor
-
 
 def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
                               master_gui_app, selected_segs=None):
@@ -1146,30 +1024,3 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
     selected_segs = np.array(inds)
 
     return guide_star_params_dict, selected_segs
-
-def _convert_nrca3pixel_offset_to_v2v3_offset(x_offset, y_offset):
-    """Convert a boresight offset from NIRCam A3 pixels to V2/V3 arcsec
-
-    Parameters
-    ----------
-    x_offset : float
-        Boresight offset in NIRCam A3 X pixels
-    y_offset : float
-        Boresight offset in NIRCam A3 Y pixels
-
-    Returns
-    -------
-    v2_offset, v3_offset : tup
-        Boresight offset in V2/V3 (arcsec)
-    """
-    # Get pixel scale
-    nrc_siaf = pysiaf.Siaf('NIRCam')
-    nrca3 = nrc_siaf['NRCA3_FULL_OSS']
-    nircam_sw_x_scale = nrca3.XSciScale  # arcsec/pixel
-    nircam_sw_y_scale = nrca3.YSciScale  # arcsec/pixel
-
-    # Convert x/y offsets to V2/V3
-    v2_offset = x_offset * nircam_sw_x_scale  # arcsec
-    v3_offset = y_offset * nircam_sw_y_scale  # arcsec
-
-    return v2_offset, v3_offset
