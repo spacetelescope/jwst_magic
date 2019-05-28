@@ -52,18 +52,22 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 # Standard Library Imports
 from __future__ import unicode_literals
+import logging
 import sys
 import os
 
 # Third Party Imports
-import numpy as np
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
+import numpy as np
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QTableWidgetItem)
 from PyQt5.QtGui import QIcon
 
 # Local Imports
 from ..star_selector.SelectStarsGUI import StarSelectorWindow
+from ..utils.coordinate_transforms import nrca3pixel_offset_to_v2v3_offset
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -412,6 +416,133 @@ class SegmentGuidingWindow(StarSelectorWindow, QDialog):
 
             # Close the star selector dialog window
             self.close()
+
+
+class SegmentGuidingDialog(QDialog):
+    """Define a dialog window to prompt user for guide star parameters
+    and other parameters needed to generate the override file.
+
+    Parameters
+    ----------
+    override_type: str
+            What kind of file to generate. Options are "SOF" (segment override
+            file) or "POF" (photometry override file)
+    guider : int
+        Guider number (1 or 2)
+    program_id : int
+        APT program number
+    observation_num : int
+        Observation number
+    visit_num : int
+        Visit number
+
+    Returns
+    -------
+    tup
+        Tuple containing the following arguments: (guide_star_params_dict,
+        program_id, observation_num, visit_num, threshold_factor,
+        countrate_factor)
+    """
+    def __init__(self, override_type, guider, program_id, observation_num, visit_num, log=None):
+        # Initialize attributes
+        self.override_type = override_type
+        self.guider = guider
+        self.program_id = program_id
+        self.observation_num = observation_num
+        self.visit_num = visit_num
+
+        # Start logger
+        if log is None:
+            self.log = logging.getLogger(__name__)
+        else:
+            self.log = log
+
+        # Initialize dialog object
+        QDialog.__init__(self, modal=True)
+
+        # Import .ui file
+        if override_type == "SOF":
+            uic.loadUi(os.path.join(__location__, 'segmentOverrideFileDialog.ui'), self)
+        elif override_type == "POF":
+            uic.loadUi(os.path.join(__location__, 'photometryOverrideFileDialog.ui'), self)
+
+        # Set defaults from parsed header
+        self.lineEdit_programNumber.setText(str(program_id))
+        self.lineEdit_observationNumber.setText(str(observation_num))
+        self.lineEdit_visitNumber.setText(str(visit_num))
+
+    def get_dialog_parameters(self):
+        """Parses the user input into the segment guiding dialog box, differentiating
+        between input for SOFs and POFs.
+
+        Returns
+        -------
+        tup
+            Tuple containing the following arguments: (guide_star_params_dict,
+            program_id, observation_num, visit_num, threshold_factor,
+            countrate_factor)
+        """
+
+        # Get parameters for dictionary from dialog
+        if self.override_type == "SOF":
+            # Parse what the boresight offset is
+            if self.radioButton_boresightNIRCam.isChecked():
+                x_offset = float(self.lineEdit_boresightX.text())
+                y_offset = float(self.lineEdit_boresightY.text())
+                v2_offset, v3_offset = nrca3pixel_offset_to_v2v3_offset(x_offset,
+                                                                        y_offset)
+                self.log.info(
+                    'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} pixels)'.
+                        format(v2_offset, v3_offset, x_offset, y_offset)
+                )
+            else:
+                v2_offset = float(self.lineEdit_boresightV2.text())
+                v3_offset = float(self.lineEdit_boresightV3.text())
+                self.log.info(
+                    'Segment Guiding: Applying boresight offset of {}, {} arcsec'.
+                        format(v2_offset, v3_offset)
+                )
+
+            # Parse the RA, Dec, and PA
+            ra_value = self.lineEdit_RA.text()
+            if self.comboBox_RAUnit.currentText() == 'Degrees':
+                ra_unit = u.deg
+            elif self.comboBox_RAUnit.currentText() == 'Hours':
+                ra_unit = u.hourangle
+            dec_value = self.lineEdit_Dec.text()
+
+            gs_coord = SkyCoord(ra_value, dec_value, unit=(ra_unit, u.deg))
+            ra = gs_coord.ra.degree
+            dec = gs_coord.dec.degree
+
+            pa = float(self.lineEdit_PA.text())
+
+            # Populate the parameter dictionary
+            guide_star_params_dict = {
+                'v2_boff': v2_offset,
+                'v3_boff': v3_offset,
+                'fgs_num': self.guider,
+                'ra': ra,
+                'dec': dec,
+                'pa': pa,
+                'seg_num': 0
+            }
+
+            # Countrate factors
+            threshold_factor = float(self.lineEdit_countrateUncertainty.text())
+            countrate_factor = None
+
+        elif self.override_type == "POF":
+            countrate_factor = float(self.doubleSpinBox_countrateFactor.value())
+            threshold_factor = None
+            guide_star_params_dict = None
+
+        # Get APT information and other necessary parameters
+        program_id = self.lineEdit_programNumber.text()
+        observation_num = self.lineEdit_observationNumber.text()
+        visit_num = self.lineEdit_visitNumber.text()
+
+        return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN FUNCTION

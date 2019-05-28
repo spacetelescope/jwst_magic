@@ -54,13 +54,20 @@ import shutil
 
 # Third Party Imports
 import numpy as np
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QDialogButtonBox
+JENKINS = 'jenkins' in os.getcwd()
+if not JENKINS:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QDialogButtonBox
 import pytest
 
 # Local Imports
 from utils import parametrized_data
-from jwst_magic.segment_guiding import segment_guiding
+from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file,
+                                                        SegmentGuidingCalculator,
+                                                        generate_photometry_override_file)
+if not JENKINS:
+    from jwst_magic.segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
+
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_sgt"
@@ -71,9 +78,7 @@ OBSERVATION_NUM = 7
 VISIT_NUM = 1
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 
-JENKINS = 'jenkins' in os.getcwd()
 PARAMETRIZED_DATA = parametrized_data()['test_segment_guiding']
-
 
 
 @pytest.fixture()
@@ -120,7 +125,7 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
                               'pa': 157.1234,
                               'seg_num': seg_num}
 
-    segment_guiding.generate_segment_override_file(
+    generate_segment_override_file(
         SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
         out_dir=__location__, selected_segs=selected_segs, click_to_select_gui=False,
         guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
@@ -151,7 +156,7 @@ def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider,
                               'seg_num': seg_num}
 
     with pytest.raises(ValueError) as excinfo:
-        segment_guiding.generate_segment_override_file(
+        generate_segment_override_file(
             SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
             root=ROOT, out_dir=__location__, selected_segs=SELECTED_SEGS,
             click_to_select_gui=False, guide_star_params_dict=guide_star_params_dict,
@@ -172,7 +177,7 @@ def test_generate_override_file_valueerrors(test_directory):
 
     # Test error if parameter_dialog=False and guide_star_params_dict=None
     with pytest.raises(ValueError) as excinfo:
-        segment_guiding.generate_segment_override_file(
+        generate_segment_override_file(
             SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
             root=ROOT, out_dir=__location__, guide_star_params_dict=None,
             parameter_dialog=False
@@ -181,7 +186,7 @@ def test_generate_override_file_valueerrors(test_directory):
 
     # Test error if click_to_select_gui=True and data=None
     with pytest.raises(ValueError) as excinfo:
-        segment_guiding.generate_segment_override_file(
+        generate_segment_override_file(
             SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
             root=ROOT, out_dir=__location__,
             click_to_select_gui=True, guide_star_params_dict=guide_star_params_dict,
@@ -191,7 +196,7 @@ def test_generate_override_file_valueerrors(test_directory):
 
     # Test error if click_to_select_gui=False and selected_segs=None
     with pytest.raises(ValueError) as excinfo:
-        segment_guiding.generate_segment_override_file(
+        generate_segment_override_file(
             SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
             root=ROOT, out_dir=__location__,
             click_to_select_gui=False, guide_star_params_dict=guide_star_params_dict,
@@ -201,7 +206,7 @@ def test_generate_override_file_valueerrors(test_directory):
 
     # Test error if parameter_dialog=False and countrate_factor=None
     with pytest.raises(ValueError) as excinfo:
-        segment_guiding.generate_photometry_override_file(
+        generate_photometry_override_file(
             ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
             out_dir=__location__, parameter_dialog=False
         )
@@ -218,7 +223,7 @@ def test_segment_override_command_out_of_fov(test_directory):
                               'pa': 157.1234,
                               'seg_num': 0}
 
-    sg = segment_guiding.SegmentGuidingCalculator(
+    sg = SegmentGuidingCalculator(
         "SOF", PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, ROOT, __location__,
         segment_infile=SEGMENT_INFILE,
         guide_star_params_dict=guide_star_params_dict,
@@ -249,7 +254,7 @@ def test_segment_override_command_out_of_fov(test_directory):
 
 
 def test_generate_photometry_override_file(test_directory):
-    segment_guiding.generate_photometry_override_file(
+    generate_photometry_override_file(
         ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=0.7,
         out_dir=__location__, parameter_dialog=False
     )
@@ -265,26 +270,18 @@ def test_generate_photometry_override_file(test_directory):
 
     # Try again with an incorrect countrate factor and make sure there's an error
     with pytest.raises(ValueError) as excinfo:
-        segment_guiding.generate_photometry_override_file(
+        generate_photometry_override_file(
             ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=2.0,
             out_dir=__location__, parameter_dialog=False)
     assert 'for count_rate_factor. Expecting between 0.0 and 1.0.' in str(excinfo)
 
 
-def test_convert_boresight_to_v2v3():
-    v2v3_offset = segment_guiding._convert_nrca3pixel_offset_to_v2v3_offset(-20.4, -140.53)
-    assert v2v3_offset == (-0.638167896, -4.4203823924000005)
-
-
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 def test_cancel_file_dialog():
     """Raise a segment override file dialog window and cancel it.
     """
-    # Can't currently run this test on the Jenkins server
-    if JENKINS:
-        return
-
     # Initialize dialog window
-    segment_guiding_dialog = segment_guiding.SegmentGuidingDialog("SOF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
+    segment_guiding_dialog = SegmentGuidingDialog("SOF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
 
     # Schedule press of "Cancel" button
     cancel_button = segment_guiding_dialog.buttonBox.button(QDialogButtonBox.Cancel)
@@ -296,13 +293,10 @@ def test_cancel_file_dialog():
     assert not accepted
 
 
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 def test_SOF_parameters_dialog():
-    # Can't currently run this test on the Jenkins server
-    if JENKINS:
-        return
-
     # Initialize dialog window
-    segment_guiding_dialog = segment_guiding.SegmentGuidingDialog("SOF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
+    segment_guiding_dialog = SegmentGuidingDialog("SOF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
 
     # Set parameters
     segment_guiding_dialog.lineEdit_RA.setText('90.9708')
@@ -326,13 +320,10 @@ def test_SOF_parameters_dialog():
     )
 
 
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 def test_POF_parameters_dialog():
-    # Can't currently run this test on the Jenkins server
-    if JENKINS:
-        return
-
     # Initialize dialog window
-    segment_guiding_dialog = segment_guiding.SegmentGuidingDialog("POF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
+    segment_guiding_dialog = SegmentGuidingDialog("POF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
 
     # Set parameters
     segment_guiding_dialog.lineEdit_programNumber.setText('1142')
@@ -351,6 +342,7 @@ def test_POF_parameters_dialog():
 
     assert params == (None, '1142', '8', '2', None, 0.0)
 
+
 def test_write_override_report(test_directory):
     # Define the input file locations and parameters
     guider = 1
@@ -363,7 +355,7 @@ def test_write_override_report(test_directory):
                               'seg_num': 0}
     selected_segs = np.array([[1, 2, 3], [4, 0, 17, 12, 2]])
 
-    segment_guiding.generate_segment_override_file(
+    generate_segment_override_file(
         SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
         out_dir=__location__, selected_segs=selected_segs, click_to_select_gui=False,
         guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
