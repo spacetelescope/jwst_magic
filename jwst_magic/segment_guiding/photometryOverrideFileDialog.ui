@@ -54,6 +54,9 @@
         <property name="toolTip">
          <string>Three to four digit number describing the APT program</string>
         </property>
+        <property name="placeholderText">
+         <string>1234</string>
+        </property>
        </widget>
       </item>
       <item row="1" column="0">
@@ -71,6 +74,9 @@
         <property name="toolTip">
          <string>Number of the observation within the APT program</string>
         </property>
+        <property name="placeholderText">
+         <string>Optional</string>
+        </property>
        </widget>
       </item>
       <item row="2" column="0">
@@ -87,6 +93,9 @@
        <widget class="QLineEdit" name="lineEdit_visitNumber">
         <property name="toolTip">
          <string>Number of the visit within the observation</string>
+        </property>
+        <property name="placeholderText">
+         <string>Optional</string>
         </property>
        </widget>
       </item>
