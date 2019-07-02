@@ -130,14 +130,8 @@ class SegmentGuidingCalculator:
         # Initialize parameters into attributes
         self.override_type = override_type
         self.program_id = int(program_id)
-        if observation_num:
-            self.observation_num = int(observation_num)
-        else:
-            self.observation_num = observation_num
-        if visit_num:
-            self.visit_num = int(visit_num)
-        else:
-            self.visit_num = visit_num
+        self.observation_num = int(observation_num) if observation_num else observation_num
+        self.visit_num = int(visit_num) if visit_num else visit_num
         self.root = root
         self.out_dir = out_dir
         self.threshold_factor = threshold_factor
@@ -259,12 +253,14 @@ class SegmentGuidingCalculator:
             Log results of calculations and file content
         """
         # Define path and name of output override file
-        pov = [self.observation_num, self.visit_num]
+        # Only add observations and visits to the list if an observation is specified
+        obs_and_visit_list = [self.observation_num, self.visit_num] if self.observation_num else ['', ]
+
         out_file = '{}_gs_override_{}'.format(datetime.now().strftime('%Y%m%d'),
                                               self.program_id)
-        for v in pov:
-            if not isinstance(v, str):
-                out_file += "_{}".format(v)
+        for ov in obs_and_visit_list:
+            if not isinstance(ov, str):
+                out_file += "_{}".format(ov)
         out_file += ('.txt')
 
         out_file = os.path.join(self.out_dir, out_file)
@@ -300,9 +296,9 @@ class SegmentGuidingCalculator:
             countrate_qualifier = ' -count_rate_factor={:.3f}'.\
                 format(self.countrate_factor) if self.countrate_factor else ''
             out_string = 'sts -gs_select {:05d}'.format(self.program_id)
-            for v in pov:
-                if not isinstance(v, str):
-                    out_string += "{:03d}".format(v)
+            for ov in obs_and_visit_list:
+                if not isinstance(ov, str):
+                    out_string += "{:03d}".format(ov)
             out_string += (countrate_qualifier)
 
             if self.override_type == "SOF":

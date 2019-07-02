@@ -398,9 +398,11 @@ ref_only5    | 0            | 90.953775    | -67.360493   | 38.500751    | -23.5
     for l, c in zip(lines[2:], correct_file[2:]):
         assert l.rstrip() == c.rstrip()
 
-test_data = PARAMETRIZED_DATA['test_generate_segment_override_file']
-sof_parameters = [(OBSERVATION_NUM, '', 'gs_override_1141_7.txt', test_data[4]),
-                  ('', '', 'gs_override_1141.txt', test_data[5])]
+
+test_data = PARAMETRIZED_DATA['test_segment_override_file_wo_obs_visit']
+sof_parameters = [(OBSERVATION_NUM, '', 'gs_override_1141_7.txt', test_data[0]),
+                  ('', '', 'gs_override_1141.txt', test_data[1]),
+                  ('', 1, 'gs_override_1141.txt', test_data[1])] #This test will have the same result as the previous
 @pytest.mark.parametrize('obsnum, visitnum, out_file, correct_command', sof_parameters)
 def test_segment_override_file_wo_obs_visit(test_directory, obsnum, visitnum, out_file, correct_command):
 
