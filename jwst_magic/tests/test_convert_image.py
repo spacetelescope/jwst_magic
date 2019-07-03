@@ -54,7 +54,7 @@ norm_parameters = [
     (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', 1992.7434250045358),
     (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', 5563.853153791558),
     (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', 1770.7861951935322),
-    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', 170.69277282101652)
+    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', 170.69277282101652),
 ]
 @pytest.mark.parametrize('image, guider, nircam, value, unit, data_max', norm_parameters)
 def test_convert_im_normalization(image, guider, nircam, value, unit, data_max):
@@ -71,9 +71,15 @@ def test_convert_im_normalization(image, guider, nircam, value, unit, data_max):
 
     assert np.isclose(data.max(), data_max)
 
-def test_convert_im_normalization_error(value=12.5, unit='FGS Magnitude'):
-    error_text = 'Unacceptable FGS Magnitude value'
-    with pytest.raises(ValueError) as excinfo:
+
+norm_parameters = [
+    (12.5, 'FGS Magnitude', ValueError, 'Unacceptable FGS Magnitude value'),
+    ('N13I000018', 'FGS Magnitude', TypeError, 'Mismatched normalization value'),
+    ('N13I000018', 'FGS countrate', TypeError, 'Mismatched normalization value')
+]
+@pytest.mark.parametrize('value, unit, error, error_text', norm_parameters)
+def test_convert_im_normalization_error(value, unit, error, error_text):
+    with pytest.raises(error) as excinfo:
         data = convert_image_to_raw_fgs.convert_im(NIRCAM_IM, 1, ROOT, nircam=True,
                                                    nircam_det=None, normalize=True,
                                                    norm_value=value, norm_unit=unit,
