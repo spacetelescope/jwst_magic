@@ -36,11 +36,17 @@ Creating a photometry override file through MAGIC:
 
    ![Run MAGIC](./figs/figure_a_run.png)
 
-5. When the Segment Guiding Dialog box opens, fill in the Program ID, Observation Number, and Visit Number just as you would for creating a segment override file. Additionally, you can add the count rate factor:
+5. When the Segment Guiding Dialog Box appears (shown in Figure 17), define the segment guiding parameters, including:
 
    ![Photometry Override Dialog Box](./figs/figure17_photometry_override_dialog.png)
+   
+   1. **Program Number** – of the current APT program; three to five digits. Input *only* the Program Number if *all* observations and visits in the program will use the same file.
 
-   **Countrate factor**: A factor between 0 and 1 that all count rates and thresholds are to be multiplied by. This factor is used for cases such as MIMF and CP when the segments are stacked but unphased, and so the brightness of the guide star is dimmed.  
+   2. **Observation Number(s)** (optional) - of the observation(s) that will be executed. To write a file for only one observation, simply write one number (e.g. "13"). To write a file for multiple observations, write a comma-separated list of numbers, and use hyphens to denote ranges (e.g. "1, 3, 5" or "3-7" or "1, 3, 5-7, 9"). Input *only* the Program Number and Observation Number if *all* visits in a given observation will use the same file.
+
+   3. **Visit Number** (optional) – of the visit that will be executed (this is usually 1, but will be different when mosaics, etc. are taken)
+
+   4. **Countrate factor** - A factor between 0 and 1 that all count rates and thresholds are to be multiplied by. This factor is used for cases such as MIMF and CP when the segments are stacked but unphased, and so the brightness of the guide star is dimmed.  
 
    *See [Appendix D](appendix_d_mirror_states.md) for information about the countrate factor based on the mirror state.*
 
