@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>314</width>
-    <height>281</height>
+    <height>304</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,26 +36,26 @@
       <string notr="true">QGroupBox { font-size: 14px; font-weight: bold; margin-top: 16px } QGroupBox::title { top: -16px }</string>
      </property>
      <property name="title">
-      <string>APT Parameters (required)</string>
+      <string>APT Parameters</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
-        <property name="toolTip">
-         <string>Three to four digit number describing the APT program</string>
-        </property>
-        <property name="text">
-         <string>Program Number</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="1">
        <widget class="QLineEdit" name="lineEdit_programNumber">
         <property name="toolTip">
-         <string>Three to four digit number describing the APT program</string>
+         <string>&lt;=5 digit number describing the APT program</string>
         </property>
         <property name="placeholderText">
-         <string>1234</string>
+         <string>e.g. 1140</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="toolTip">
+         <string>&lt;=5 digit number describing the APT program</string>
+        </property>
+        <property name="text">
+         <string>Program Number</string>
         </property>
        </widget>
       </item>
@@ -65,7 +65,7 @@
          <string>Number of the observation within the APT program</string>
         </property>
         <property name="text">
-         <string>Observation Number</string>
+         <string>Observation Number(s)*</string>
         </property>
        </widget>
       </item>
@@ -75,7 +75,7 @@
          <string>Number of the observation within the APT program</string>
         </property>
         <property name="placeholderText">
-         <string>Optional</string>
+         <string>e.g. 1-4, 7, 9</string>
         </property>
        </widget>
       </item>
@@ -85,7 +85,7 @@
          <string>Number of the visit within the observation</string>
         </property>
         <property name="text">
-         <string>Visit Number</string>
+         <string>Visit Number*</string>
         </property>
        </widget>
       </item>
@@ -95,7 +95,14 @@
          <string>Number of the visit within the observation</string>
         </property>
         <property name="placeholderText">
-         <string>Optional</string>
+         <string>e.g. 1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>&lt;b&gt;* - optional&lt;/b&gt;</string>
         </property>
        </widget>
       </item>
@@ -230,7 +237,4 @@
    </hints>
   </connection>
  </connections>
- <buttongroups>
-  <buttongroup name="buttonGroup_boresight"/>
- </buttongroups>
 </ui>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>314</width>
-    <height>790</height>
+    <height>807</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,46 +36,16 @@
       <string notr="true">QGroupBox { font-size: 14px; font-weight: bold; margin-top: 16px } QGroupBox::title { top: -16px }</string>
      </property>
      <property name="title">
-      <string>APT Parameters (required)</string>
+      <string>APT Parameters</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="lineEdit_visitNumber">
         <property name="toolTip">
-         <string>Three to four digit number describing the APT program</string>
-        </property>
-        <property name="text">
-         <string>Program Number</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="lineEdit_programNumber">
-        <property name="toolTip">
-         <string>Three to four digit number describing the APT program</string>
+         <string>Number of the visit within the observation</string>
         </property>
         <property name="placeholderText">
-         <string>1234</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="toolTip">
-         <string>Number of the observation within the APT program</string>
-        </property>
-        <property name="text">
-         <string>Observation Number</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLineEdit" name="lineEdit_observationNumber">
-        <property name="toolTip">
-         <string>Number of the observation within the APT program</string>
-        </property>
-        <property name="placeholderText">
-         <string>Optional</string>
+         <string>e.g. 1</string>
         </property>
        </widget>
       </item>
@@ -85,17 +55,54 @@
          <string>Number of the visit within the observation</string>
         </property>
         <property name="text">
-         <string>Visit Number</string>
+         <string>Visit Number*</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="lineEdit_visitNumber">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
         <property name="toolTip">
-         <string>Number of the visit within the observation</string>
+         <string>&lt;=5 digit number describing the APT program</string>
+        </property>
+        <property name="text">
+         <string>Program Number</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="toolTip">
+         <string>Number of the observation within the APT program</string>
+        </property>
+        <property name="text">
+         <string>Observation Number(s)*</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="lineEdit_programNumber">
+        <property name="toolTip">
+         <string>&lt;=5 digit number describing the APT program</string>
         </property>
         <property name="placeholderText">
-         <string>Optional</string>
+         <string>e.g. 1140</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_observationNumber">
+        <property name="toolTip">
+         <string>Number of the observation within the APT program</string>
+        </property>
+        <property name="placeholderText">
+         <string>e.g. 1-4, 7, 9</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;* - optional&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
       </item>
