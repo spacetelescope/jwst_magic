@@ -5,9 +5,13 @@
 # Multi-Application Guiding Interface for Commissioning (MAGIC)
 
 [![PyPI - License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/spacetelescope/jwql/blob/master/LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.6-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.5%20%7C%203.6%20%7C%203.7-blue.svg)](https://www.python.org/)
 [![STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Build Status](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/badge/icon)](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/)
+
+#### For use internal to STScI, please see our mirror repository on grit: https://grit.stsci.edu/JWST-FGS/jwst-magic/
+
+----------
 
 The Multi-Application Guiding Interface for Commissioning (MAGIC) package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
 
@@ -44,7 +48,7 @@ effective RA and Dec of all segments on the sky.
 
 Installation notes
 ------------------
-This package was developed in a python 3.5 environment. Python 2.7 is not yet supported.
+This package was developed in a Python ≥3.5 environment. Python 2 is not supported.
 
 The following supplemental packages are required, and will be **automatically installed** with the package:
 * `astropy`
@@ -64,13 +68,13 @@ The following supplemental packages are required, and will be **automatically in
 2. Clone the gitlab repository to your local machine
 
     ```
-    git clone git@grit.stsci.edu:wfsc/tools.git
+    git clone git@github.com:spacetelescope/jwst_magic.git
     ```
-    
+
 3. Install the `jwst_magic` package:
 
     ```
-    cd tools/fgs-commissioning
+    cd jwst_magic/
 
     pip install -e .
     ```
@@ -78,7 +82,7 @@ The following supplemental packages are required, and will be **automatically in
 
 Running the Tools
 -----------------
-These tools are best run in the IPython terminal, in an AstroConda environment
+These tools are best run in the `IPython` terminal, in an AstroConda environment
 (see the [AstroConda installation page](https://astroconda.readthedocs.io/en/latest/getting_started.html)
 for installing AstroConda). Simply activate your Python 3 environment, and
 launch the GUI with the following steps:
@@ -88,25 +92,24 @@ launch the GUI with the following steps:
     In[2]: jwst_magic.run_tool_GUI()
 
 
-Tutorial
+Tutorial & Documentation
 -----------------
-See the [`FGS Commissioning Tool Tutorial.ipynb`](./notebooks/FGS%20Commissioning%20Tool%20Tutorial.ipynb)
-notebook for examples on how to run the tools on a modular level from within a Jupyter notebook.
+For the full documentation, including step-by-step directions for using the package, see the [MAGIC User's Guide](./docs/magic_user_guide).
 
 Contributing
 -----------------
-There are two pages to review before you begin contributing to `fgs-commissioning` development.
+There are two pages to review before you begin contributing to the `jwst_magic` package.
 The first is our [style guide](./style_guide/style_guide.md) and the second is our suggested [git workflow page](./style_guide/git_workflow.md),
 which contains an in-depth explanation of the workflow.
 
 The following is an example of a best work flow for contributing to the project
 (adapted from the [`spacetelescope` `jwql` contribution guidelines](https://github.com/spacetelescope/jwql)):
 
-1. Create a branch off of the `tools` repository using the JIRA issue name plus a
+1. Create a branch off of the `jwst_magic` repository using the [JIRA](https://jira.stsci.edu/projects/JWSTFGS/summary) issue name plus a
    short description of the issue (e.g. `JWSTFGS-375-fix-fgs-image-conversion`)
 2. Make your software changes.
 3. Push that branch to your personal GitHub repository (i.e. origin).
-4. On the `tools` repository, create a pull request that merges the branch into `tools:master`.
+4. On the `jwst_magic` repository, create a pull request that merges the branch into `jwst_magic:master`.
 5. Assign a reviewer from the team for the pull request.
 6. Iterate with the reviewer over any needed changes until the reviewer accepts and merges your branch.
 7. Delete your local copy of your branch.
@@ -114,16 +117,16 @@ The following is an example of a best work flow for contributing to the project
 
 Code of Conduct
 -----------------
-Users and contributors to `fgs-commissioning` should adhere to the [Code of Conduct](./CODE_OF_CONDUCT.md).
+Users and contributors to `jwst_magic` should adhere to the [Code of Conduct](./CODE_OF_CONDUCT.md).
 Any issues or violations pertaining to the Code of Conduct should be brought to
-the attention of a `MAGIC` team member listed below.
+the attention of a MAGIC team member listed below.
 
 Questions
 -----------------
-Any questions regarding the `fgs-commissioning` project or its software should be directed to
+Any questions regarding the `jwst_magic` project or its software should be directed to
 `kbrooks@stsci.edu` and `lchambers@stsci.edu`.
 
 Current Development Team
 -----------------
-* Lauren Chambers (@lchambers)
-* Keira Brooks (@kbrooks)
+* Lauren Chambers (GitHub: @laurenmarietta; Grit: @lchambers)
+* Keira Brooks (GitHub: @kjbrooks; Grit: @kbrooks)
