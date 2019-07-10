@@ -400,15 +400,14 @@ ref_only5    | 0            | 90.953775    | -67.360493   | 38.500751    | -23.5
 
 
 test_data = PARAMETRIZED_DATA['test_segment_override_file_wo_obs_visit']
-sof_parameters = [(OBSERVATION_NUM, '', 'gs_override_1141_7.txt', test_data[0]),
-                  ('', '', 'gs_override_1141.txt', test_data[1]),
-                  ('', 1, 'gs_override_1141.txt', test_data[1])] #This test will have the same result as the previous
-@pytest.mark.parametrize('obsnum, visitnum, out_file, correct_command', sof_parameters)
+sof_wo_obs_visit_parameters = [(OBSERVATION_NUM, '', 'gs_override_1141_7.txt', test_data[0]),
+                               ('', '', 'gs_override_1141.txt', test_data[1]),
+                               ('', 1, 'gs_override_1141.txt', test_data[1]), #This test will have the same result as the previous
+                               ('1-2', 3, 'gs_override_1141_1-2_1.txt', test_data[2])]
+@pytest.mark.parametrize('obsnum, visitnum, out_file, correct_command', sof_wo_obs_visit_parameters)
 def test_segment_override_file_wo_obs_visit(test_directory, obsnum, visitnum, out_file, correct_command):
 
     guider = 1
-
-
     guide_star_params_dict = {'v2_boff': 0.1,
                               'v3_boff': 0.2,
                               'fgs_num': guider,
@@ -431,3 +430,102 @@ def test_segment_override_file_wo_obs_visit(test_directory, obsnum, visitnum, ou
     with open(segment_override_file) as f:
         segment_override_command = f.read()
     assert segment_override_command == correct_command
+
+test_data = PARAMETRIZED_DATA['test_split_obs_num']
+split_obs_num_parameters = [('2', *test_data[0]),
+                            ('2, 4, 6', *test_data[1]),
+                            ('13-15', *test_data[2]),
+                            ('5, 7, 10-12', *test_data[3]),
+                            ('5, 3, 1', *test_data[4]),
+                            ('10-12, 5, 7', *test_data[5])]
+@pytest.mark.parametrize('obs_num, correct_list, correct_string', split_obs_num_parameters)
+def test_split_obs_num(obs_num, correct_list, correct_string):
+    # Define the input file locations and parameters
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': 1,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'seg_num': 0}
+
+    sg = SegmentGuidingCalculator(
+        "SOF", PROGRAM_ID, obs_num, VISIT_NUM, ROOT, __location__,
+        segment_infile=SEGMENT_INFILE,
+        guide_star_params_dict=guide_star_params_dict,
+        selected_segs=SELECTED_SEGS
+    )
+
+    final_num_list, obs_list_string = sg._split_obs_num(obs_num)
+
+    assert final_num_list == correct_list, 'Incorrect observation number list'
+    assert obs_list_string == correct_string, 'Incorrect observation number string'
+
+test_data = PARAMETRIZED_DATA['test_segment_override_file_multiple_obs']
+sof_multiple_obs_parameters = [('2', 'gs_override_1141_2_1.txt', test_data[0]),
+                               ('2, 4, 6', 'gs_override_1141_2,4,6_1.txt', test_data[1]),
+                               ('13-15', 'gs_override_1141_13-15_1.txt', test_data[2]),
+                               ('5, 7, 10-12', 'gs_override_1141_5,7,10-12_1.txt', test_data[3]),
+                               ('5, 3, 1', 'gs_override_1141_1,3,5_1.txt', test_data[4]),
+                               ('10-12, 5, 7', 'gs_override_1141_5,7,10-12_1.txt', test_data[5])]
+@pytest.mark.parametrize('obs_num, correct_file_name, correct_command', sof_multiple_obs_parameters)
+def test_segment_override_file_multiple_obs(test_directory, obs_num, correct_file_name, correct_command):
+    guider = 1
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': guider,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'seg_num': 0}
+
+    generate_segment_override_file(
+        SEGMENT_INFILE, guider, PROGRAM_ID, obs_num, 1, root=ROOT,
+        out_dir=__location__, selected_segs=SELECTED_SEGS, click_to_select_gui=False,
+        guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
+    )
+
+    # Check to make sure the override file was created, and in the right place
+    segment_override_file = os.path.join(
+        test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'), correct_file_name)
+    )
+    assert os.path.isfile(segment_override_file)
+
+    # Also check for the report
+    segment_override_report = os.path.join(
+        test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'),
+                                       correct_file_name.split('.txt')[0] + '_REPORT.txt')
+    )
+    assert os.path.isfile(segment_override_report)
+
+    # # Check to make sure the command was written correctly
+    with open(segment_override_file) as f:
+        segment_override_command = f.read()
+    assert segment_override_command == correct_command
+
+
+test_data = PARAMETRIZED_DATA['test_photometry_override_file_multiple_obs']
+pof_multiple_obs_parameters = [('2', 'gs_override_1141_2_1.txt', test_data[0]),
+                               ('2, 4, 6', 'gs_override_1141_2,4,6_1.txt', test_data[1]),
+                               ('13-15', 'gs_override_1141_13-15_1.txt', test_data[2]),
+                               ('5, 7, 10-12', 'gs_override_1141_5,7,10-12_1.txt', test_data[3]),
+                               ('5, 3, 1', 'gs_override_1141_1,3,5_1.txt', test_data[4]),
+                               ('10-12, 5, 7', 'gs_override_1141_5,7,10-12_1.txt', test_data[5])]
+@pytest.mark.parametrize('obs_num, correct_file_name, correct_command', pof_multiple_obs_parameters)
+def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_file_name, correct_command):
+
+    generate_photometry_override_file(
+        ROOT, PROGRAM_ID, obs_num, VISIT_NUM, countrate_factor=0.7,
+        out_dir=__location__, parameter_dialog=False
+    )
+
+    # Check to make sure the override file was created, and in the right place
+    photometry_override_file = os.path.join(
+        test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'), correct_file_name)
+    )
+    assert os.path.isfile(photometry_override_file)
+
+    # # Check to make sure the command was written correctly
+    with open(photometry_override_file) as f:
+        photometry_override_command = f.read()
+    assert photometry_override_command == correct_command
