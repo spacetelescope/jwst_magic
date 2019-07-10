@@ -163,7 +163,7 @@ def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider,
             click_to_select_gui=False, guide_star_params_dict=guide_star_params_dict,
             parameter_dialog=False
         )
-    assert error_text in str(excinfo)
+    assert error_text in str(excinfo.value)
 
 def test_generate_override_file_valueerrors(test_directory):
     # Define the input file locations and parameters
@@ -183,7 +183,7 @@ def test_generate_override_file_valueerrors(test_directory):
             root=ROOT, out_dir=__location__, guide_star_params_dict=None,
             parameter_dialog=False
         )
-    assert '`parameter_dialog=False`' in str(excinfo)
+    assert '`parameter_dialog=False`' in str(excinfo.value)
 
     # Test error if click_to_select_gui=True and data=None
     with pytest.raises(ValueError) as excinfo:
@@ -193,7 +193,7 @@ def test_generate_override_file_valueerrors(test_directory):
             click_to_select_gui=True, guide_star_params_dict=guide_star_params_dict,
             parameter_dialog=False
         )
-    assert '`click_to_select_GUI=True`' in str(excinfo)
+    assert '`click_to_select_GUI=True`' in str(excinfo.value)
 
     # Test error if click_to_select_gui=False and selected_segs=None
     with pytest.raises(ValueError) as excinfo:
@@ -203,7 +203,7 @@ def test_generate_override_file_valueerrors(test_directory):
             click_to_select_gui=False, guide_star_params_dict=guide_star_params_dict,
             parameter_dialog=False
         )
-    assert '`click_to_select_GUI=False`' in str(excinfo)
+    assert '`click_to_select_GUI=False`' in str(excinfo.value)
 
     # Test error if parameter_dialog=False and countrate_factor=None
     with pytest.raises(ValueError) as excinfo:
@@ -211,7 +211,7 @@ def test_generate_override_file_valueerrors(test_directory):
             ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
             out_dir=__location__, parameter_dialog=False
         )
-    assert '`parameter_dialog=False`' in str(excinfo)
+    assert '`parameter_dialog=False`' in str(excinfo.value)
 
 
 def test_segment_override_command_out_of_fov(test_directory):
@@ -243,7 +243,7 @@ def test_segment_override_command_out_of_fov(test_directory):
     # Check with phony attitude matrix
     with pytest.raises(ValueError) as excinfo:
         sg.check_segments_inside_fov(attitude)
-    assert 'Incorrect segment guiding calculations' in str(excinfo)
+    assert 'Incorrect segment guiding calculations' in str(excinfo.value)
 
     # # Check with phony X/Y locations between -5000 and 5000
     # sg.x_det_segs = np.random.rand(18) * 10000 - 5000
@@ -275,7 +275,7 @@ def test_generate_photometry_override_file(test_directory):
         generate_photometry_override_file(
             ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=2.0,
             out_dir=__location__, parameter_dialog=False)
-    assert 'for count_rate_factor. Expecting between 0.0 and 1.0.' in str(excinfo)
+    assert 'for count_rate_factor. Expecting between 0.0 and 1.0.' in str(excinfo.value)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
