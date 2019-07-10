@@ -844,6 +844,14 @@ def generate_segment_override_file(segment_infile, guider,
                 'argument in `segment_guiding.generate_segment_override_file()`.'
             )
 
+        # Check if there is an existing file with the same prog/obs/visit
+        if not JENKINS:
+            overwrite_existing_file = SegmentGuidingGUI.check_override_overwrite(
+                out_dir, program_id, observation_num, visit_num, logger=LOGGER
+            )
+            if overwrite_existing_file:
+                return
+
         # Determine which segments are the guide and reference segments
         if click_to_select_gui:
             if data is None:
