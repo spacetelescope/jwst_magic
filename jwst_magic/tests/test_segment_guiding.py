@@ -49,6 +49,7 @@ The following are ways to run segment_guiding:
                              parameter_dialog=False)
 """
 # Standard Library Imports
+from datetime import datetime
 import os
 import shutil
 
@@ -132,7 +133,7 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
     )
 
     # Check to make sure the override file was created, and in the right place
-    segment_override_file = os.path.join(test_directory, 'gs-override-1141_7_1.txt')
+    segment_override_file = os.path.join(test_directory, '{}_gs_override_1141_7_1.txt'.format(datetime.now().strftime('%Y%m%d')))
     assert os.path.isfile(segment_override_file)
 
     # # Check to make sure the command was written correctly
@@ -260,13 +261,14 @@ def test_generate_photometry_override_file(test_directory):
     )
 
     # Check to make sure the override file was created, and in the right place
-    segment_override_file = os.path.join(__location__, 'out', ROOT, 'gs-override-1141_7_1.txt')
+    segment_override_file = os.path.join(__location__, 'out', ROOT,
+                                         '{}_gs_override_1141_7_1.txt'.format(datetime.now().strftime('%Y%m%d')))
     assert os.path.isfile(segment_override_file)
 
     # Check to make sure the command was written correctly
     with open(segment_override_file) as f:
         segment_override_command = f.read()
-    assert segment_override_command == 'sts -gs_select 1141:7:1 -count_rate_factor=0.700'
+    assert segment_override_command == 'sts -gs_select 01141007001 -count_rate_factor=0.700'
 
     # Try again with an incorrect countrate factor and make sure there's an error
     with pytest.raises(ValueError) as excinfo:
@@ -361,7 +363,10 @@ def test_write_override_report(test_directory):
         guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
     )
 
-    report_file = 'gs-override-{}_{}_{}_REPORT.txt'.format(PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
+    report_file = '{}_gs_override_{}_{}_{}_REPORT.txt'.format(datetime.now().strftime('%Y%m%d'),
+                                                              PROGRAM_ID,
+                                                              OBSERVATION_NUM,
+                                                              VISIT_NUM)
     report_file = os.path.join(test_directory, report_file)
     assert os.path.isfile(report_file)
 
@@ -376,131 +381,53 @@ Guide Star RA : 90.970800
 Guide Star Dec: -67.357800
 V3 PA @ GS    : 157.123400
 
-  Star Name  |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |  Detector X  |  Detector Y  
+  Star Name  |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |  Detector X  |  Detector Y
 -----------------------------------------------------------------------------------------------------------------------------------------------------
-star1        | 1            | 90.987850    | -67.355022   | -12.648238   | -22.174651   | 12.648238    | -22.174651   | 840.000187   | 1344.998823  
-star2        | 4            | 90.986120    | -67.362103   | -0.034250    | 0.106095     | 0.034250     | 0.106095     | 1024.000008  | 1023.000013  
-ref_only1    | 2            | 90.986990    | -67.358569   | -6.338517    | -11.010128   | 6.338517     | -11.010128   | 932.000192   | 1183.999172  
-ref_only2    | 3            | 90.980194    | -67.352832   | -6.188804    | -33.708446   | 6.188804     | -33.708446   | 933.999283   | 1504.998775  
-ref_only3    | 12           | 90.963123    | -67.355541   | 19.393433    | -34.482825   | -19.393433   | -34.482825   | 1304.997893  | 1503.997675  
-ref_only4    | 17           | 90.954592    | -67.356915   | 32.206292    | -34.798421   | -32.206292   | -34.798421   | 1489.998298  | 1501.997517  
-ref_only5    | 0            | 90.953775    | -67.360493   | 38.500751    | -23.505004   | -38.500751   | -23.505004   | 1581.997741  | 1339.996887  
+star1        | 1            | 90.987850    | -67.355022   | -12.648238   | -22.174651   | 12.648238    | -22.174651   | 840.000187   | 1344.998823
+star2        | 4            | 90.986120    | -67.362103   | -0.034250    | 0.106095     | 0.034250     | 0.106095     | 1024.000008  | 1023.000013
+ref_only1    | 2            | 90.986990    | -67.358569   | -6.338517    | -11.010128   | 6.338517     | -11.010128   | 932.000192   | 1183.999172
+ref_only2    | 3            | 90.980194    | -67.352832   | -6.188804    | -33.708446   | 6.188804     | -33.708446   | 933.999283   | 1504.998775
+ref_only3    | 12           | 90.963123    | -67.355541   | 19.393433    | -34.482825   | -19.393433   | -34.482825   | 1304.997893  | 1503.997675
+ref_only4    | 17           | 90.954592    | -67.356915   | 32.206292    | -34.798421   | -32.206292   | -34.798421   | 1489.998298  | 1501.997517
+ref_only5    | 0            | 90.953775    | -67.360493   | 38.500751    | -23.505004   | -38.500751   | -23.505004   | 1581.997741  | 1339.996887
 '''.split('\n')
 
     with open(report_file) as f:
         lines = f.read().split('\n')
 
-    assert lines[2:] == correct_file[2:]
-
-    
-# def test_dialog_window():
-    
+    for l, c in zip(lines[2:], correct_file[2:]):
+        assert l.rstrip() == c.rstrip()
 
 
+test_data = PARAMETRIZED_DATA['test_segment_override_file_wo_obs_visit']
+sof_parameters = [(OBSERVATION_NUM, '', 'gs_override_1141_7.txt', test_data[0]),
+                  ('', '', 'gs_override_1141.txt', test_data[1]),
+                  ('', 1, 'gs_override_1141.txt', test_data[1])] #This test will have the same result as the previous
+@pytest.mark.parametrize('obsnum, visitnum, out_file, correct_command', sof_parameters)
+def test_segment_override_file_wo_obs_visit(test_directory, obsnum, visitnum, out_file, correct_command):
 
-# ROOT = "data_beforelos2"
-# GUIDER = 1
-# SEGMENT_INFILE = "data_beforelos2_G1_ALLpsfs.txt"
-# SELECTED_SEGS = "data_beforelos2_G1_regfile.txt"
-# GUIDE_STAR_PARAMS_DICT = {'v2_boff': 0.0,
-#                           'v3_boff': 0.0,
-#                           'fgs_num': 1,
-#                           'ra': 55,
-#                           'dec': 7,
-#                           'pa': 158.,
-#                           'seg_num': 0}
-#
-# PROGRAM_ID = "1326"
-# OBSERVATION_NUM = "1"
-# VISIT_NUM = "1"
-#
-#
-# def test_guide_star_params_no_ra_dec():
-#     segment_guiding.run_tool(SEGMENT_INFILE, GUIDER, program_id=PROGRAM_ID,
-#                              observation_num=OBSERVATION_NUM,
-#                              visit_num=VISIT_NUM,
-#                              click_to_select_GUI=False,
-#                              selected_segs=SELECTED_SEGS,
-#                              refonly=True,
-#                              guide_star_params_dict=GUIDE_STAR_PARAMS_DICT)
-#
-# def test2():
-#     # Parameter dialog off
-#     # Params dict with sra, dec, and/or pa set to None
-#     guide_star_params_dict = {'v2_boff': 0.0,
-#                               'v3_boff': 0.0,
-#                               'fgs_num': 1,
-#                               'ra': None,
-#                               'dec': None,
-#                               'pa': None,
-#                               'seg_num': 0}
-#     segment_guiding.run_tool(SEGMENT_INFILE, GUIDER,
-#                              program_id=PROGRAM_ID,
-#                              observation_num=OBSERVATION_NUM,
-#                              visit_num=VISIT_NUM,
-#                              click_to_select_GUI=False,
-#                              selected_segs=SELECTED_SEGS,
-#                              refonly=True,
-#                              guide_star_params_dict=guide_star_params_dict,
-#                              parameter_dialog=False)
-#
-# def test3():
-#     # Parameter dialog off
-#     # Params dict with sra, dec, and/or pa set to floats
-#     guide_star_params_dict = {'v2_boff': 0.0,
-#                               'v3_boff': 0.0,
-#                               'fgs_num': 1,
-#                               'ra': 55.0,
-#                               'dec': 7.0,
-#                               'pa': 155.0,
-#                               'seg_num': 0}
-#     segment_guiding.run_tool(SEGMENT_INFILE, GUIDER,
-#                              program_id=PROGRAM_ID,
-#                              observation_num=OBSERVATION_NUM,
-#                              visit_num=VISIT_NUM,
-#                              click_to_select_GUI=False,
-#                              selected_segs=SELECTED_SEGS,
-#                              refonly=True,
-#                              guide_star_params_dict=guide_star_params_dict,
-#                              parameter_dialog=False)
-#
-#
-# def test4():
-#     # Parameter dialog off
-#     # Params dict with some ints
-#     guide_star_params_dict = {'v2_boff': 0.0,
-#                               'v3_boff': 0.0,
-#                               'fgs_num': 1,
-#                               'ra': 55,
-#                               'dec': 7,
-#                               'pa': 158.,
-#                               'seg_num': 0}
-#     segment_guiding.run_tool(SEGMENT_INFILE, GUIDER,
-#                              program_id=PROGRAM_ID,
-#                              observation_num=OBSERVATION_NUM,
-#                              visit_num=VISIT_NUM,
-#                              click_to_select_GUI=False,
-#                              selected_segs=SELECTED_SEGS,
-#                              refonly=True,
-#                              guide_star_params_dict=guide_star_params_dict,
-#                              parameter_dialog=False)
-#
-# def test5():
-#     # Parameter dialog off
-#     # Params dict with sra, dec, and/or pa out of range
-#     guide_star_params_dict = {'v2_boff': 0.0,
-#                               'v3_boff': 0.0,
-#                               'fgs_num': 1,
-#                               'ra': 55,
-#                               'dec': -91,
-#                               'pa': 158.,
-#                               'seg_num': 0}
-#     segment_guiding.run_tool(SEGMENT_INFILE, GUIDER,
-#                              program_id=PROGRAM_ID,
-#                              observation_num=OBSERVATION_NUM,
-#                              visit_num=VISIT_NUM,
-#                              click_to_select_GUI=False,
-#                              selected_segs=SELECTED_SEGS,
-#                              refonly=True,
-#                              guide_star_params_dict=guide_star_params_dict,
-#                              parameter_dialog=False)
+    guider = 1
+
+
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': guider,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'seg_num': 0}
+
+    generate_segment_override_file(
+        SEGMENT_INFILE, guider, PROGRAM_ID, obsnum, visitnum, root=ROOT,
+        out_dir=__location__, selected_segs=SELECTED_SEGS, click_to_select_gui=False,
+        guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
+    )
+
+    # Check to make sure the override file was created, and in the right place
+    segment_override_file = os.path.join(test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'), out_file))
+    assert os.path.isfile(segment_override_file)
+
+    # # Check to make sure the command was written correctly
+    with open(segment_override_file) as f:
+        segment_override_command = f.read()
+    assert segment_override_command == correct_command

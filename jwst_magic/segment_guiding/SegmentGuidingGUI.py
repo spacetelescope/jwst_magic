@@ -433,9 +433,9 @@ class SegmentGuidingDialog(QDialog):
         Guider number (1 or 2)
     program_id : int
         APT program number
-    observation_num : int
+    observation_num : optional, int
         Observation number
-    visit_num : int
+    visit_num : optional, int
         Visit number
 
     Returns
