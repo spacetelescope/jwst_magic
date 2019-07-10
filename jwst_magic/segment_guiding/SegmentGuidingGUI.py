@@ -572,7 +572,7 @@ def check_override_overwrite(out_dir, program_id, observation_num, visit_num,
     overwrite_existing_file : boolean
         User's response whether or not to overwrite the existing file.
     """
-    plural_obs_num = ',' in observation_num or '-' in observation_num
+    plural_obs_num = ',' in str(observation_num) or '-' in str(observation_num)
 
     # Handle null values
     if observation_num == '':

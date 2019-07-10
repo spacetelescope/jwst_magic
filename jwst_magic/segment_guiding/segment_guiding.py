@@ -816,7 +816,7 @@ class SegmentGuidingCalculator:
             return None, None
 
         # First, divide things up by commas
-        comma_split_obs_num_list = obs_num.split(',')
+        comma_split_obs_num_list = str(obs_num).split(',')
 
         # Then, deal with ranges
         final_num_list = []
@@ -840,6 +840,8 @@ class SegmentGuidingCalculator:
 
             if i == 0:
                 obs_list_string = str(obs_int)
+            elif incremental and not in_range and last_number:
+                obs_list_string += '-{}'.format(obs_int)
             elif incremental and not in_range:
                 obs_list_string += '-'
             elif incremental and not last_number:
