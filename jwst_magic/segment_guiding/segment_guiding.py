@@ -387,7 +387,7 @@ class SegmentGuidingCalculator:
                     out_string += star_string
 
                 # Write out the override report
-                self.write_override_report(orientations, n_guide_segments)
+                self.write_override_report(out_file, orientations, n_guide_segments, obs_list_name)
 
             f.write(out_string)
 
@@ -400,11 +400,10 @@ class SegmentGuidingCalculator:
 
 
 
-    def write_override_report(self, orientations, n_guide_segments):
+    def write_override_report(self, filename, orientations, n_guide_segments, obs_list_name):
         # Define path and name of output override report
-        out_file = '{}_gs_override_{}_{}_{}_REPORT.txt'.format(datetime.now().strftime('%Y%m%d'),
-                                                               self.program_id, self.observation_num,
-                                                               self.visit_num)
+        file_root = filename.split('.txt')[0]
+        out_file = '{}_REPORT.txt'.format(file_root)
         out_file = os.path.join(self.out_dir, out_file)
 
         username = getpass.getuser()
@@ -414,7 +413,7 @@ class SegmentGuidingCalculator:
             f.write('Generated on {} at {} by {}\n'.format(time.strftime("%Y/%m/%d"), time.strftime("%H:%M:%S"), username))
             f.write('\n')
             f.write('{:14s}: {:s}'.format('Program ID', str(self.program_id)) + '\n')
-            f.write('{:14s}: {:s}'.format('Observation #', str(self.observation_num)) + '\n')
+            f.write('{:14s}: {:s}'.format('Observation #', str(obs_list_name)) + '\n')
             f.write('{:14s}: {:s}'.format('Visit #', str(self.visit_num)) + '\n')
             f.write('{:14s}: {:d}'.format('FGS Detector', self.fgs_num) + '\n')
             f.write('{:14s}: {:f}'.format('Guide Star RA', self.ra) + '\n')
