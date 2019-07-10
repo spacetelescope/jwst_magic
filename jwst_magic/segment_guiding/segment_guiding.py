@@ -130,8 +130,8 @@ class SegmentGuidingCalculator:
         # Initialize parameters into attributes
         self.override_type = override_type
         self.program_id = int(program_id)
-        self.observation_num = int(observation_num) if observation_num else observation_num
-        self.visit_num = int(visit_num) if visit_num else visit_num
+        self.observation_num = observation_num if observation_num != '' else None
+        self.visit_num = visit_num  if visit_num != '' else None
         self.root = root
         self.out_dir = out_dir
         self.threshold_factor = threshold_factor
@@ -252,15 +252,27 @@ class SegmentGuidingCalculator:
         verbose : bool, optional
             Log results of calculations and file content
         """
+        # Split multiple specified observations up
+        obs_num_list, obs_list_name = self._split_obs_num(self.observation_num)
+
         # Define path and name of output override file
         # Only add observations and visits to the list if an observation is specified
-        obs_and_visit_list = [self.observation_num, self.visit_num] if self.observation_num else ['', ]
-
         out_file = '{}_gs_override_{}'.format(datetime.now().strftime('%Y%m%d'),
                                               self.program_id)
-        for ov in obs_and_visit_list:
-            if not isinstance(ov, str):
-                out_file += "_{}".format(ov)
+        if obs_list_name is not None:
+            out_file += "_{}".format(obs_list_name)
+
+            if len(obs_num_list) > 1:
+                out_file += "_1"
+                if self.visit_num is not None:
+                    if int(self.visit_num) != 1:
+                        LOGGER.warning('Visit number set to 001. You cannot specify '
+                                       'visit numbers if specifying multiple observations.')
+                self.visit_num = 1
+
+            elif self.visit_num is not None:
+                out_file += "_{}".format(self.visit_num)
+
         out_file += ('.txt')
 
         out_file = os.path.join(self.out_dir, out_file)
@@ -290,15 +302,35 @@ class SegmentGuidingCalculator:
                                     self.seg_dec[p], self.x_det_segs[p], self.y_det_segs[p]))
             LOGGER.info('Segment Guiding: ' + all_segments)
 
+        # Determine what the commands should be:
+        if obs_num_list is None:
+            obs_list = [None]
+            visit_list = [None]
+        elif len(obs_num_list) == 1:
+            obs_list = [self.observation_num]
+            visit_list = [self.visit_num]
+        else:
+            obs_list = obs_num_list
+            visit_list = [1] * len(obs_num_list)
+
         # Write out override file with RA/Decs of selected segments
         with open(out_file, 'w') as f:
             # Determine whether to include a multiplicative countrate factor
             countrate_qualifier = ' -count_rate_factor={:.3f}'.\
                 format(self.countrate_factor) if self.countrate_factor else ''
-            out_string = 'sts -gs_select {:05d}'.format(self.program_id)
-            for ov in obs_and_visit_list:
-                if not isinstance(ov, str):
-                    out_string += "{:03d}".format(ov)
+            out_string = 'sts -gs_select '
+
+            for o, v in zip(obs_list, visit_list):
+                if out_string[-2:] == 't ':
+                    out_string += "{:05d}".format(self.program_id)
+                else:
+                    out_string += ", {:05d}".format(self.program_id)
+
+                if o is not None:
+                    out_string +="{:03d}".format(int(o))
+                    if v is not None:
+                        out_string +="{:03d}".format(int(v))
+
             out_string += (countrate_qualifier)
 
             if self.override_type == "SOF":
@@ -762,6 +794,66 @@ class SegmentGuidingCalculator:
         except ValueError:
             errcode = 1
         return errcode
+
+    @staticmethod
+    def _split_obs_num(obs_num):
+        """Parse strings listing one or more observation numbers, with single numbers
+        separated by commas and ranges separated by hyphens.
+
+        Parameters
+        ----------
+        obs_num : str
+            String of one or more observation numbers and/or ranges
+
+        Returns
+        -------
+        final_num_list : list
+            List of all observation numbers denoted in obs_num
+        obs_list_string : str
+            String containing ordered list of all observations and ranges
+        """
+        # If there is not observation number specific, don't bother
+        if obs_num is None:
+            return None, None
+
+        # First, divide things up by commas
+        comma_split_obs_num_list = obs_num.split(',')
+
+        # Then, deal with ranges
+        final_num_list = []
+        for obs_str in comma_split_obs_num_list:
+            if '-' in obs_str:
+                bounds = obs_str.split('-')
+                obs_range = list(np.arange(int(bounds[0]), int(bounds[1]) + 1))
+                final_num_list.extend(obs_range)
+            else:
+                # And be sure to make everything an int!
+                final_num_list.append(int(obs_str))
+
+        final_num_list = sorted(final_num_list)
+
+        # Finally, create a properly-formatted string including all observations
+        obs_list_string = ' '
+        for i, obs_int in enumerate(final_num_list):
+            incremental = obs_int == final_num_list[i - 1] + 1
+            last_number = obs_int == final_num_list[-1]
+            in_range = obs_list_string[-1] == '-'
+
+            if i == 0:
+                obs_list_string = str(obs_int)
+            elif incremental and not in_range:
+                obs_list_string += '-'
+            elif incremental and not last_number:
+                continue
+            elif incremental and last_number:
+                obs_list_string += str(obs_int)
+            elif in_range:
+                obs_list_string += str(final_num_list[i - 1])
+                obs_list_string += ',{}'.format(obs_int)
+            else:
+                obs_list_string += ',{}'.format(obs_int)
+
+        return final_num_list, obs_list_string
 
 
 def generate_segment_override_file(segment_infile, guider,
