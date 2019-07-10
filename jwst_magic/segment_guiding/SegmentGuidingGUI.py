@@ -572,19 +572,61 @@ def check_override_overwrite(out_dir, program_id, observation_num, visit_num,
     overwrite_existing_file : boolean
         User's response whether or not to overwrite the existing file.
     """
-    existing_files = glob.glob(os.path.join(out_dir, 'gs-override*.txt'))
+    # Handle null values
+    if observation_num == '':
+        observation_num = 0
+    if visit_num == '':
+        visit_num = 0
+
+    # If there is more than one observation, set the visit to 1
+    plural_obs_num = ',' in observation_num or '-' in observation_num
+    if plural_obs_num:
+        visit_num = 1
+
+    # Go through every override file in the output directory and check if it matches
+    existing_files = glob.glob(os.path.join(out_dir, '*gs_override*.txt'))
     for file_path in existing_files:
+
         file_name = os.path.basename(file_path)
-        _, _, prog, obs, visit, *_ = re.split('-|\.|_', file_name)
+        # Don't check reports
+        if 'REPORT' in file_name:
+            continue
 
-        # If there is, ask the user whether to overwrite
-        if (int(prog) == int(program_id) and
-                int(obs) == int(observation_num) and
-                int(visit) == int(visit_num)):
+        # Handle the fact that there may or may not be obs/visit numbers
+        file_root = file_name.split('.')[0]
+        date, _, _, *ids = file_root.split('_')
+        if len(ids) >= 3:
+            prog, obs, visit, *_ = ids
+        elif len(ids) >= 2:
+            prog, obs, *_ = ids
+            visit = 0
+        elif len(ids) >= 1:
+            prog, *_ = ids
+            obs = 0
+            visit = 0
 
+        if isinstance(obs, str):
+            plural_obs_num_match = ',' in obs or '-' in obs
+
+        # Determine if the current file matches the new one
+        # Compare integers if only 1 (or no) obs
+        if not plural_obs_num and not plural_obs_num_match:
+            match = (int(prog) == int(program_id) and
+                    int(obs) == int(observation_num) and
+                    int(visit) == int(visit_num))
+        # Compare the observation string if more than one obs specified
+        else:
+            match = (int(prog) == int(program_id) and
+                     obs == observation_num and
+                     int(visit) == int(visit_num))
+
+        # If there is a match, ask the user whether to overwrite
+        if match:
             buttonReply = QMessageBox.question(
                 QWidget(), 'Existing Override File',
-                "A file already exists at {}. Do you want to overwrite it?".format(file_path),
+                "A file already exists from {} with the same program, ".format(date) + \
+                "observation, and visit numbers: \n{} \n".format(file_path) + \
+                "Do you want to write another?",
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No
             )
             if buttonReply == QMessageBox.Yes:
