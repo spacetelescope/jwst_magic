@@ -65,7 +65,8 @@ for (os in matrix_os) {
             "git clone git@github.com:spacetelescope/jwst-fgs-countrate.git",
             "pip install jwst-fgs-countrate/",
             // Install jwst_magic
-            "pip install ."]
+            "pip install ."
+            ]
 
         // Execute a series of test commands
         bc.test_cmds = [
