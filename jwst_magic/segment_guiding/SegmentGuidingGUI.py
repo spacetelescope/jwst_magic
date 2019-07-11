@@ -52,7 +52,9 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 # Standard Library Imports
 from __future__ import unicode_literals
+import glob
 import logging
+import re
 import sys
 import os
 
@@ -62,7 +64,7 @@ from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 import numpy as np
 from PyQt5 import QtCore, uic
-from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QTableWidgetItem)
+from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QTableWidgetItem, QWidget)
 from PyQt5.QtGui import QIcon
 
 # Local Imports
@@ -431,9 +433,9 @@ class SegmentGuidingDialog(QDialog):
         Guider number (1 or 2)
     program_id : int
         APT program number
-    observation_num : int
+    observation_num : optional, int
         Observation number
-    visit_num : int
+    visit_num : optional, int
         Visit number
 
     Returns
@@ -543,6 +545,57 @@ class SegmentGuidingDialog(QDialog):
         visit_num = self.lineEdit_visitNumber.text()
 
         return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor
+
+
+def check_override_overwrite(out_dir, program_id, observation_num, visit_num,
+                             logger=None):
+    """Check if there is an existing override file with the same program ID,
+    observation number, and visit number. If yes, raise a dialog box to prompt
+    the user whether or not to overwrite the existing file.
+
+    Parameters
+    ----------
+    out_dir : str
+        Location of out/ directory. If not specified, will be placed
+        within the repository: .../jwst_magic/out/
+    program_id : int
+        APT program number
+    observation_num : int
+        Observation number
+    visit_num : int
+        Visit number
+    logger : logging object, optional
+        The desired logger to write out messages to
+
+    Returns
+    -------
+    overwrite_existing_file : boolean
+        User's response whether or not to overwrite the existing file.
+    """
+    existing_files = glob.glob(os.path.join(out_dir, 'gs-override*.txt'))
+    for file_path in existing_files:
+        file_name = os.path.basename(file_path)
+        _, _, prog, obs, visit, *_ = re.split('-|\.|_', file_name)
+
+        # If there is, ask the user whether to overwrite
+        if (int(prog) == int(program_id) and
+                int(obs) == int(observation_num) and
+                int(visit) == int(visit_num)):
+
+            buttonReply = QMessageBox.question(
+                QWidget(), 'Existing Override File',
+                "A file already exists at {}. Do you want to overwrite it?".format(file_path),
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            )
+            if buttonReply == QMessageBox.Yes:
+                logger.info('Segment Guiding: Overwriting file at {}.'.format(file_path))
+                return False
+            else:
+                logger.info(
+                    'Segment Guiding: User chose not to overwrite existing file at {}.'.format(
+                        file_path))
+                return True
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN FUNCTION
