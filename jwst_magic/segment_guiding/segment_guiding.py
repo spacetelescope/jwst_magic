@@ -7,7 +7,7 @@ using them to calculates the effective RA and Dec where each segment
 appears in the sky. The user then specifies which segments to select as
 the "guide star" and as the "reference stars". Finally, the tool generates
 either a segment override file (SOF) or a photometry override file (POF),
-in the form of gs-override*.txt file that the Visit Scheduling System
+in the form of gs_override*.txt file that the Visit Scheduling System
 (VSS) will use to generate a visit.
 
 Authors
@@ -38,6 +38,7 @@ Use
 """
 
 # Standard Library Imports
+from datetime import datetime
 import getpass
 import logging
 import os
@@ -129,8 +130,8 @@ class SegmentGuidingCalculator:
         # Initialize parameters into attributes
         self.override_type = override_type
         self.program_id = int(program_id)
-        self.observation_num = int(observation_num)
-        self.visit_num = int(visit_num)
+        self.observation_num = int(observation_num) if observation_num else observation_num
+        self.visit_num = int(visit_num) if visit_num else visit_num
         self.root = root
         self.out_dir = out_dir
         self.threshold_factor = threshold_factor
@@ -244,7 +245,7 @@ class SegmentGuidingCalculator:
 
     def write_override_file(self, verbose=True):
         """Write the segment guiding override file: {out_dir}/out/{root}/
-        gs-override_{program_id}_{observation_num}_{visit_num}.txt
+        gs_override_{program_id}_{observation_num}_{visit_num}.txt
 
         Parameters
         ----------
@@ -252,8 +253,16 @@ class SegmentGuidingCalculator:
             Log results of calculations and file content
         """
         # Define path and name of output override file
-        out_file = 'gs-override-{}_{}_{}.txt'.format(self.program_id, self.observation_num,
-                                                     self.visit_num)
+        # Only add observations and visits to the list if an observation is specified
+        obs_and_visit_list = [self.observation_num, self.visit_num] if self.observation_num else ['', ]
+
+        out_file = '{}_gs_override_{}'.format(datetime.now().strftime('%Y%m%d'),
+                                              self.program_id)
+        for ov in obs_and_visit_list:
+            if not isinstance(ov, str):
+                out_file += "_{}".format(ov)
+        out_file += ('.txt')
+
         out_file = os.path.join(self.out_dir, out_file)
 
         # Print summary of input data (guide star RA, Dec, and PA, etc...)
@@ -278,7 +287,7 @@ class SegmentGuidingCalculator:
                                  % (self.seg_id_array[p], self.v2_seg_array[p],
                                     self.v3_seg_array[p], self.x_idl_segs[p],
                                     self.y_idl_segs[p], self.seg_ra[p],
-                                    self.seg_dec[p], self.x_det_segs[p], self.x_det_segs[p]))
+                                    self.seg_dec[p], self.x_det_segs[p], self.y_det_segs[p]))
             LOGGER.info('Segment Guiding: ' + all_segments)
 
         # Write out override file with RA/Decs of selected segments
@@ -286,9 +295,12 @@ class SegmentGuidingCalculator:
             # Determine whether to include a multiplicative countrate factor
             countrate_qualifier = ' -count_rate_factor={:.3f}'.\
                 format(self.countrate_factor) if self.countrate_factor else ''
-            out_string = 'sts -gs_select {:4d}:{}:{}{}'.\
-                format(self.program_id, self.observation_num,
-                       self.visit_num, countrate_qualifier)
+            out_string = 'sts -gs_select {:05d}'.format(self.program_id)
+            for ov in obs_and_visit_list:
+                if not isinstance(ov, str):
+                    out_string += "{:03d}".format(ov)
+            out_string += (countrate_qualifier)
+
             if self.override_type == "SOF":
                 # Determine which segments have been selected
                 orientations = list(self.selected_segment_ids)
@@ -358,8 +370,9 @@ class SegmentGuidingCalculator:
 
     def write_override_report(self, orientations, n_guide_segments):
         # Define path and name of output override report
-        out_file = 'gs-override-{}_{}_{}_REPORT.txt'.format(self.program_id, self.observation_num,
-                                                     self.visit_num)
+        out_file = '{}_gs_override_{}_{}_{}_REPORT.txt'.format(datetime.now().strftime('%Y%m%d'),
+                                                               self.program_id, self.observation_num,
+                                                               self.visit_num)
         out_file = os.path.join(self.out_dir, out_file)
 
         username = getpass.getuser()
@@ -843,6 +856,14 @@ def generate_segment_override_file(segment_infile, guider,
                 'of guide star parameters to the `guide_star_params_dict` '
                 'argument in `segment_guiding.generate_segment_override_file()`.'
             )
+
+        # Check if there is an existing file with the same prog/obs/visit
+        if not JENKINS:
+            overwrite_existing_file = SegmentGuidingGUI.check_override_overwrite(
+                out_dir, program_id, observation_num, visit_num, logger=LOGGER
+            )
+            if overwrite_existing_file:
+                return
 
         # Determine which segments are the guide and reference segments
         if click_to_select_gui:

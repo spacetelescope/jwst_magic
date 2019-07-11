@@ -446,9 +446,9 @@ class MasterGui(QMainWindow):
                 observation_num = int(self.comboBox_obs.currentText())
                 visit_num = 1  # Will we ever have a visit that's not 1?
             else:
-                program_id = None
-                observation_num = None
-                visit_num = None
+                program_id = ""
+                observation_num = ""
+                visit_num = ""
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():

@@ -44,8 +44,8 @@ def test_NormalizeToCountrate_unit_error():
 
     with pytest.raises(ValueError) as excinfo:
         ntc.to_countrate()
-    assert 'Unknown unit' in str(excinfo)
+    assert 'Unknown unit' in str(excinfo.value)
 
     with pytest.raises(ValueError) as excinfo:
         ntc.to_fgs_mag()
-    assert 'Unknown unit' in str(excinfo)
+    assert 'Unknown unit' in str(excinfo.value)
