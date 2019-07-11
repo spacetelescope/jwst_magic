@@ -43,7 +43,7 @@ for (os in matrix_os) {
         bc = new BuildConfig()
 
         // Define the OS (only "linux-stable" used here)
-        bc.nodetype = matrix_os
+        bc.nodetype = os
 
         // Give the build configuration a name. This string becomes the
         // stage header on Jenkins' UI. Keep it short!
