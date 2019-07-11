@@ -24,6 +24,7 @@ INSTALL_REQUIRES = [
     'numpy',
     'astropy',
     'ipython',
+    'fgscountrate',
     'matplotlib',
     'notebook',
     'pysiaf',
