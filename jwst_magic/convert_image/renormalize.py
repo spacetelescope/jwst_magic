@@ -1,4 +1,8 @@
-"""For given FGS countrate, J mag or Jab mag, calculate the others.
+""" THIS MODULE IS NOW DEPRECATED AS OF 03 JULY, 2019.
+    IT HAS BEEN REPLACED BY:
+        https://github.com/spacetelescope/jwst-fgs-countrate
+
+For given FGS countrate, J mag or Jab mag, calculate the others.
 
 Convert between FGS countrate, J magnitude, and J_ab magnitude. This
 module is very basic and is only for a single bandpass; look at

@@ -360,8 +360,11 @@ class MasterGui(QMainWindow):
         nircam = self.radioButton_NIRCam.isChecked()
         nircam_det = str(self.comboBox_detector.currentText())
         normalize = self.checkBox_normalize.isChecked()
-        norm_value = float(self.lineEdit_normalize.text())
         norm_unit = self.comboBox_normalize.currentText()
+        try:
+            norm_value = float(self.lineEdit_normalize.text())
+        except ValueError:
+            norm_value = self.lineEdit_normalize.text()
         coarse_point = self.checkBox_coarsePointing.isChecked()
         jitter_rate_arcsec = float(self.lineEdit_coarsePointing.text())
         bkgd_stars = self.bkgd_stars
@@ -639,6 +642,7 @@ class MasterGui(QMainWindow):
         if self.checkBox_normalize.isChecked():
             norm_value = float(self.lineEdit_normalize.text())
             norm_unit = self.comboBox_normalize.currentText()
+            #TODO - this will have to be changed
             norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
             fgs_countrate = norm_obj.to_countrate()
             jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider)
@@ -647,8 +651,9 @@ class MasterGui(QMainWindow):
             input_image = self.lineEdit_inputImage.text()
             data, _ = utils.get_data_and_header(input_image)
             fgs_countrate = np.sum(data[data > np.median(data)])
-            jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider)
+            jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider) #We still need this??
 
+        # Eventually, we will want to this to be done with FGS mag
         self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
 
         method_adverb = {'random': 'randomly',
@@ -677,8 +682,11 @@ class MasterGui(QMainWindow):
             self.canvas_shifted.draw()
 
     def toggle_convert_im(self):
-        if self.itm:
-            self.checkBox_normalize.setEnabled(False)
+        # TODO: it's unclear why I (KJB) set this to false. but we want to be able
+        # to normalize ITM images so I have commented this out until I better understand it
+        # if self.itm:
+        #     self.checkBox_normalize.setEnabled(False)
+        pass
 
     def update_segment_guiding_shift(self):
         if self.sender() == self.groupBox_segmentGuiding:
@@ -894,7 +902,7 @@ class MasterGui(QMainWindow):
             origin = header['ORIGIN'].strip()
             if origin == 'ITM':
                 self.itm = True
-                self.checkBox_normalize.setEnabled(False)
+                # self.checkBox_normalize.setEnabled(False) # Why is this set to FALSE? What did past self know that present self doesn't?
             else:
                 self.itm = False
         except KeyError:
