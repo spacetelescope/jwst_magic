@@ -36,7 +36,7 @@ Another very important part of MAGIC is creating the override file that can be u
 4.
    Before running the tool, obtain the following parameters with the following methods:
 
-   1. APT parameters: If you do not know, ask the Wavefront Ops for the **Program Number**, **Observation Number**, and the **Visit Number**.
+   1. APT parameters: If you do not know, ask the Wavefront Ops for the **Program Number**, **Observation Number(s)**, and the **Visit Number**.
 
    2. Guide star **RA** & **Dec**: Retrieve the guide star ID from the APT file (see [Appendix C](appendix_c_apt.md) for a step-by-step guide for doing this). Go to the Guide Star Catalog webform (http://gsss.stsci.edu/webservices/GSC2/
 WebForm.aspx), and query with the guide star ID in the “HST ID” field to determine the RA and Dec.
@@ -56,23 +56,23 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
    ![Segment Guiding Dialog Box](./figs/figure15_segment_guiding_dialog.png)
 
-   1. **Program Number** – of the current APT program; three to five digits (input *only* the Program Number if *all* observations and visits in the program will use the same file)
+   1. **Program Number** – of the current APT program; three to five digits. Input *only* the Program Number if *all* observations and visits in the program will use the same file.
 
-   2. **Observation Number** (optional) - of the observation that will be executed
+   2. **Observation Number(s)** (optional) - of the observation(s) that will be executed. To write a file for only one observation, simply write one number (e.g. "13"). To write a file for multiple observations, write a comma-separated list of numbers, and use hyphens to denote ranges (e.g. "1, 3, 5" or "3-7" or "1, 3, 5-7, 9"). Input *only* the Program Number and Observation Number if *all* visits in a given observation will use the same file.
 
    3. **Visit Number** (optional) – of the visit that will be executed (this is usually 1, but will be different when mosaics, etc. are taken)
 
-   4. **Right Ascension** (optional) – of the guide star
+   4. **Right Ascension** – of the guide star
 
-   5. **Declination** (optional) – of the guide star
+   5. **Declination** – of the guide star
 
    6. **Position Angle** – of the observatory at the guide star at the time of the visit
 
-   7. **V2 Boresight offset** (optional) – that will be applied before the observation this file is for
+   7. **V2 Boresight offset** – that will be applied before the observation this file is for
 
-   8. **V3 boresight offset** (optional) – that will be applied before the observation this file is for
+   8. **V3 boresight offset** – that will be applied before the observation this file is for
 
-   9. **Uncertainty factor** (optional) – the degree of uncertainty in the count rate of each segment. e.g., an uncertainty factor of 0.9 for a star with a count rate of 1,000 writes an uncertainty of 900.
+   9. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. e.g., an uncertainty factor of 0.9 for a star with a count rate of 1,000 writes an uncertainty of 900.
 
 7. Click **OK** to continue.
 
