@@ -1,4 +1,4 @@
-""" THE MODULE THIS TEST SUITE TESTS HAS BEEN DREPRECATED AS OF 03 JULY, 2019
+""" THE MODULE THIS TEST SUITE TESTS HAS BEEN DEPRECATED AS OF 03 JULY, 2019
 
 Collection of unit tests to verify the correct function of the
 convert_image.renormalize module.

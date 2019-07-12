@@ -391,7 +391,7 @@ Image:</string>
              </item>
              <item>
               <property name="text">
-               <string>FGS Magnitude</string>
+               <string>FGS Mag (10, 11, 12, 13, or 14)</string>
               </property>
              </item>
             </widget>
@@ -400,9 +400,6 @@ Image:</string>
             <widget class="QLineEdit" name="lineEdit_normalize">
              <property name="enabled">
               <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>FGS Magnitude can only be 10, 11, 12, 13, or, 14</string>
              </property>
              <property name="styleSheet">
               <string notr="true">.QLineEdit:disabled {color: grey}</string>
@@ -2208,12 +2205,12 @@ p, li { white-space: pre-wrap; }
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_idAttitude"/>
-  <buttongroup name="buttonGroup_guider"/>
-  <buttongroup name="buttonGroup_starSelector"/>
-  <buttongroup name="buttonGroup_segmentGuiding"/>
   <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
   <buttongroup name="buttonGroup_name"/>
+  <buttongroup name="buttonGroup_starSelector"/>
+  <buttongroup name="buttonGroup_guider"/>
+  <buttongroup name="buttonGroup_segmentGuiding"/>
+  <buttongroup name="buttonGroup_instrument"/>
+  <buttongroup name="buttonGroup_idAttitude"/>
  </buttongroups>
 </ui>

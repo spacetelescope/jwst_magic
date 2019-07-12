@@ -573,8 +573,8 @@ def convert_im(input_im, guider, root, nircam=True,
     normalize : bool, optional
         Denotes if the image will be normalized. If True, norm_value
         and norm_unit will be used to determine the normalization value
-    norm_value : str, float, optional
-        Specifies the Guide Star ID or the value to which to normalize.
+    norm_value : str or float, optional
+        Specifies the Guide Star ID or the count rate/magnitude to which to normalize.
     norm_unit : str, optional
         Specifies the unit of norm_value ("FGS Magnitude", "FGS countrate", or "Guide Star ID")
     coarse_pointing : bool, optional
@@ -688,8 +688,12 @@ def convert_im(input_im, guider, root, nircam=True,
             LOGGER.info("Image Conversion: This is an ITM image.")
             data -= data.min() #set minimum at 0.
             data /= data.sum()  # set total countrate to 1.
+            if not norm_value:
+                norm_value = 12
+                norm_unit = 'FGS Magnitude'
+                LOGGER.warning("Image Conversion: No normalization was specified but is required for an ITM image. Using FGS Magnitude of 12.")
 
-        if normalize:
+        if normalize or itm:
             # Convert magnitude/countrate to FGS countrate using new count rate module
             # Take norm_value and norm_unit to pass to count rate module
             if norm_unit == 'FGS countrate' and isinstance(norm_value, (float, int)): # If already a count rate, do nothing
@@ -701,7 +705,11 @@ def convert_im(input_im, guider, root, nircam=True,
                 LOGGER.error("Image Conversion: Value type does not match expectation for unit type.")
                 raise TypeError("Mismatched normalization value and type")
             else: # If a GSID or magnitude, pass back gsid
+                # Sneaky string replacement for FGS Magnitude
+                norm_unit = 'FGS Magnitude' if norm_unit == 'FGS Mag (10, 11, 12, 13, or 14)' else norm_unit
+                print(norm_unit)
                 gsid = check_norm_value_unit(norm_value, norm_unit)
+                LOGGER.info("Image Conversion: Using GSID {} to normalize image.".format(gsid))
                 fgs = fgscountrate.FGSCountrate(guide_star_id=gsid, guider=guider)
                 fgs_countrate, _, fgs_mag, _ = fgs.query_fgs_countrate_magnitude()
 
@@ -723,6 +731,10 @@ def check_norm_value_unit(norm_value, norm_unit):
 
     Parameters
     ----------
+    norm_value : str or float, optional
+        Specifies the Guide Star ID or the count rate/magnitude to which to normalize.
+    norm_unit : str, optional
+        Specifies the unit of norm_value ("FGS Magnitude", "FGS countrate", or "Guide Star ID")
 
     Returns
     -------
@@ -753,12 +765,12 @@ def query_jmag_mini_library(fgsmag):
     14: N13A002729 (FGS Mag (G1) = 13.95341, J Mag = 13.98499)
 
     Parameters
-    ==========
+    ----------
     fgsmag: int
         Can only be int between (inclusive)10 and 14.
 
     Raises
-    ======
+    ------
     ValueError
         The input is not an integer between (inclusive) 10 and 14.
 

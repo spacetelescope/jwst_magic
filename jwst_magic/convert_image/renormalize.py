@@ -1,4 +1,4 @@
-""" THIS MODULE IS NOW DEPRECIATED AS OF 03 JULY, 2019.
+""" THIS MODULE IS NOW DEPRECATED AS OF 03 JULY, 2019.
     IT HAS BEEN REPLACED BY:
         https://github.com/spacetelescope/jwst-fgs-countrate
 

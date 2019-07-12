@@ -55,16 +55,18 @@ norm_parameters = [
     (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', 5563.853153791558),
     (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', 1770.7861951935322),
     (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', 170.69277282101652),
+    (NIRCAM_IM, 2, True, '', 'Guide Star ID', 5563.853153791558)
 ]
-@pytest.mark.parametrize('image, guider, nircam, value, unit, data_max', norm_parameters)
-def test_convert_im_normalization(image, guider, nircam, value, unit, data_max):
+@pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, data_max', norm_parameters)
+def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, data_max):
     """
     Test how the normalization is done with  in terms of the interface with the
     fgscountrate module
     """
     data = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=nircam,
                                                nircam_det=None, normalize=True,
-                                               norm_value=value, norm_unit=unit,
+                                               norm_value=norm_value,
+                                               norm_unit=norm_unit,
                                                coarse_pointing=False,
                                                jitter_rate_arcsec=None,
                                                logger_passed=False, itm=True)
@@ -145,16 +147,16 @@ def test_transform_nircam_raw_to_fgs_raw():
         'Incorrect transformation from raw NRCB1 (thus also A2, A4, B3, B5) frame to raw FGS2 frame'
 
 
-# norm_parameters = [
-#     (12.5, 'FGS Magnitude', 1, ValueError),
-#     (2000000, 'FGS countrate', 1, 2000000, 13.94600462171104),
-#     (12, 'FGS Magnitude', 2, 5584113.924529825, 12.114523274562597),
-#     ('N13I000018', 'GSID', 1, 1777234.5129574337, 13.310964314752303)
-# ]
-# @pytest.mark.parametrize('value, unit, guider, correct_countrate, correct_mag', norm_parameters)
-# def test_check_norm_value_unit(value, unit, guider):
-#     """
-#     Test how the normalization is done with  in terms of the interface with the
-#     fgscountrate module
-#     """
-#     gsid = convert_image_to_raw_fgs.check_norm_value_unit(value, unit)
+gsid_parameters = [
+    (12, 'FGS Magnitude', 'N13A000158'),
+    ('N13I000018', 'Guide Star ID', 'N13I000018')
+]
+@pytest.mark.parametrize('norm_value, norm_unit, correct_gsid', gsid_parameters)
+def test_check_gsid(norm_value, norm_unit, correct_gsid):
+    """
+    Test how the normalization is done with  in terms of the interface with the
+    fgscountrate module
+    """
+    gsid = convert_image_to_raw_fgs.check_norm_value_unit(norm_value, norm_unit)
+
+    assert gsid == correct_gsid
