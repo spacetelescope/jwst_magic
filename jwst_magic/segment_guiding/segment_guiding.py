@@ -829,7 +829,7 @@ class SegmentGuidingCalculator:
                 # And be sure to make everything an int!
                 final_num_list.append(int(obs_str))
 
-        final_num_list = sorted(final_num_list)
+        final_num_list = sorted(np.unique(final_num_list))
 
         # Finally, create a properly-formatted string including all observations
         obs_list_string = ' '
