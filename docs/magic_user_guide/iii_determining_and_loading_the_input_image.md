@@ -56,7 +56,7 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
 
    1. (Optional) Simulate the effects of **Coarse Pointing** (*A*)  by specifying the jitter rate of the observatory. A jitter rate of 0.7 arcsec/sec creates images that are similar to ITM simulations in coarse point. Otherwise, ensure the **Add jitter rate** box is unchecked.
    2. Check that the **Input Image Instrument** (*B*) and **NIRCam detector** (*C*) used to take the input image are set to the correct values; change them if not. (If the NIRCam detector is not defined, the tool will attempt to parse it from the input FITS header.) The FGS-formatted image will be saved to ``out/{root}/FGS_imgs/{input_image}_G{guider}.fits``
-   3. (Optional) Specify the magnitude or counts for the **Image Normalization** (*D*) of the final image. Otherwise, ensure the **Normalize to** box is unchecked.
+   3. (Optional) Specify Guide Star ID of the guide star you are trying to simulate, or specify the FGS magnitude (MAGIC will only take 10, 12, 12, 13, or 14, at this time) or FGS count rate for the **Image Normalization** (*D*) of the final image. If you do not want your image to renormalized, ensure the **Normalize to** box is unchecked.
    4. (Optional) Add **Background Stars** to the final image.
 
       1. Click **Add Background Stars** (*E*). The background stars dialog box will appear:

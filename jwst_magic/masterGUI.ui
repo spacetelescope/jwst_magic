@@ -34,8 +34,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1400</width>
-         <height>1020</height>
+         <width>1424</width>
+         <height>1036</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -60,7 +60,16 @@
            <property name="spacing">
             <number>-1</number>
            </property>
-           <property name="margin">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
             <number>0</number>
            </property>
            <item>
@@ -372,12 +381,17 @@ Image:</string>
              </property>
              <item>
               <property name="text">
-               <string>FGS Magnitude</string>
+               <string>Guide Star ID</string>
               </property>
              </item>
              <item>
               <property name="text">
                <string>FGS countrate</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>FGS Mag (10, 11, 12, 13, or 14)</string>
               </property>
              </item>
             </widget>
@@ -387,14 +401,11 @@ Image:</string>
              <property name="enabled">
               <bool>true</bool>
              </property>
-             <property name="toolTip">
-              <string>Value to normalize to, in units at right</string>
-             </property>
              <property name="styleSheet">
               <string notr="true">.QLineEdit:disabled {color: grey}</string>
              </property>
              <property name="text">
-              <string>12.0</string>
+              <string/>
              </property>
             </widget>
            </item>
@@ -1247,7 +1258,16 @@ p, li { white-space: pre-wrap; }
               <enum>QFrame::Raised</enum>
              </property>
              <layout class="QGridLayout" name="gridLayout_13">
-              <property name="margin">
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
                <number>5</number>
               </property>
               <item row="0" column="0">
@@ -2186,11 +2206,11 @@ p, li { white-space: pre-wrap; }
  </connections>
  <buttongroups>
   <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
-  <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_idAttitude"/>
   <buttongroup name="buttonGroup_name"/>
+  <buttongroup name="buttonGroup_starSelector"/>
   <buttongroup name="buttonGroup_guider"/>
   <buttongroup name="buttonGroup_segmentGuiding"/>
-  <buttongroup name="buttonGroup_starSelector"/>
+  <buttongroup name="buttonGroup_instrument"/>
+  <buttongroup name="buttonGroup_idAttitude"/>
  </buttongroups>
 </ui>
