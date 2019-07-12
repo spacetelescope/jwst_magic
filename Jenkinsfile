@@ -62,7 +62,7 @@ for (os in matrix_os) {
             // Install package requirements for given python version
             "${CONDA_INSTALL} python=${python_ver}",
             // Install fgscountrate package
-            "git clone git://github.com/spacetelescope/jwst-fgs-countrate.git",
+            "git clone https://github.com/spacetelescope/jwst-fgs-countrate.git",
             "pip install jwst-fgs-countrate/",
             // Install jwst_magic
             "pip install ."
