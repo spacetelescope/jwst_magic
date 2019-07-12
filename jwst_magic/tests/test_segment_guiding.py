@@ -467,6 +467,7 @@ sof_multiple_obs_parameters = [('2', 'gs_override_1141_2_1.txt', test_data[0]),
                                ('13-15', 'gs_override_1141_13-15_1.txt', test_data[2]),
                                ('5, 7, 10-12', 'gs_override_1141_5,7,10-12_1.txt', test_data[3]),
                                ('5, 3, 1', 'gs_override_1141_1,3,5_1.txt', test_data[4]),
+                               ('5, 3, 1, 5', 'gs_override_1141_1,3,5_1.txt', test_data[4]),
                                ('10-12, 5, 7', 'gs_override_1141_5,7,10-12_1.txt', test_data[5])]
 @pytest.mark.parametrize('obs_num, correct_file_name, correct_command', sof_multiple_obs_parameters)
 def test_segment_override_file_multiple_obs(test_directory, obs_num, correct_file_name, correct_command):
@@ -510,6 +511,7 @@ pof_multiple_obs_parameters = [('2', 'gs_override_1141_2_1.txt', test_data[0]),
                                ('13-15', 'gs_override_1141_13-15_1.txt', test_data[2]),
                                ('5, 7, 10-12', 'gs_override_1141_5,7,10-12_1.txt', test_data[3]),
                                ('5, 3, 1', 'gs_override_1141_1,3,5_1.txt', test_data[4]),
+                               ('5, 3, 1, 5', 'gs_override_1141_1,3,5_1.txt', test_data[4]),
                                ('10-12, 5, 7', 'gs_override_1141_5,7,10-12_1.txt', test_data[5])]
 @pytest.mark.parametrize('obs_num, correct_file_name, correct_command', pof_multiple_obs_parameters)
 def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_file_name, correct_command):
