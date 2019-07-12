@@ -71,7 +71,7 @@ The following supplemental packages are required, and will be **automatically in
     git clone git@github.com:spacetelescope/jwst_magic.git
     ```
 
-3. Install the `jwst_magic` package:
+3. Install the `jwst_magic` package by navigating to the directory where the `setup.py` file lives and installing it using `pip`:
 
     ```
     cd jwst_magic/
