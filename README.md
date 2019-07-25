@@ -124,7 +124,7 @@ the attention of a MAGIC team member listed below.
 Questions
 -----------------
 Any questions regarding the `jwst_magic` project or its software should be directed to
-`kbrooks@stsci.edu` and `lchambers@stsci.edu`.
+`kbrooks@stsci.edu`.
 
 Current Development Team
 -----------------
