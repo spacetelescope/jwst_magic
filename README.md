@@ -128,5 +128,10 @@ Any questions regarding the `jwst_magic` project or its software should be direc
 
 Current Development Team
 -----------------
-* Lauren Chambers (GitHub: @laurenmarietta; Grit: @lchambers)
 * Keira Brooks (GitHub: @kjbrooks; Grit: @kbrooks)
+
+Past Members of the Development Team
+-----------------
+* Lauren Chambers (GitHub: @laurenmarietta)
+* Kathryn St. Laurent
+* Sherie Holfeltz
