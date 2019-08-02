@@ -9,25 +9,41 @@ Following that, any changes that you want to eventually make to the master branc
 1. Make a local copy of the repository by cloning the `jwst_magic` repository by visiting the repository and clone via SSH or HTTPS (e.g. `git clone git@github.com:spacetelescope/jwst_magic.git` or by using a Git GUI such as SourceTree - our developers use SourceTree so we have included the instructions for SourceTree here, as well as the commands necessary to complete these steps in a terminal).  Unless you explicitly delete your clone, this only has to be done once. Note on SSH vs HTTPS: With HTTPS, you will be prompted for your AD credentials any time you push/pull code. SSH, on the other hand,  will require that you set up an SSH key, though this will only need to be done once, and you will never be prompted for your AD credentials when pushing or pulling code.  
 
 2. Create a branch on the cloned repository to develop software changes on. Branch names should start with the name of the JIRA issue, so that they are linked, with a short description of issue; e.g. `JWSTFGS-375-fix-fgs-image-conversion`. Consistent use of hyphens is encouraged. 
-In a terminal:
-   i. `git branch <branchname>` - you only need to do this when you first create your branch.
-   ii. `git checkout <branchname>` - you can use this command to switch back and forth between existing branches.
-   iii. Perform local software changes using the nominal git add/git commit -m cycle.
-        a. `git status` - allows you to see which files have changed.
-        b. `git add <new or changed files you want to commit>`
-        c. `git commit -m 'Explanation of changes you've done with these files'`
 
-In SourceTree:
+    *In a terminal:*
+
+   i. `git branch <branchname>` - you only need to do this when you first create your branch.
+
+   ii. `git checkout <branchname>` - you can use this command to switch back and forth between existing branches.
+
+   iii. Perform local software changes using the nominal git add/git commit -m cycle.
+
+       a. `git status` - allows you to see which files have changed.
+
+       b. `git add <new or changed files you want to commit>`
+
+       c. `git commit -m 'Explanation of changes you've done with these files'`
+
+    *In SourceTree:*
+
    i. Click on the Branch icon in the top bar
+
    ii. Give your branch a name and choose if you want to commit to the working copy parent (standard) or if there is specific commit you would like to commit to. If you want to immediately start working in this branch, make sure that the "Checkout new branch" box is checked. Click "Create Branch". Note: The branch that you are working in will be bolded under "Branches" in the menu on the left. Double click on different branches to switch branches (make sure you have committed your work before doing so).
+
    iii. Perform local software changes using the nominal commit cycle
-        a. Click on "File Status" at the top of the menu on the left (there there should be number next to this that indicates how many files have been changed) *or* by clicking on "Uncommitted changes" in the Description column showing the workflow in the repository.
-        b. Select the files or changes to be committed by selecting the check boxes next to each changed or added file in the box at the bottom of the GUI.
-        c. Once selected, click Commit icon in the top menu.
-        d. In the dialog that opens, include your commit message (as you would with `git commit -m` in the terminal)
-        e. Click "Commit"
+
+       a. Click on "File Status" at the top of the menu on the left (there there should be number next to this that indicates how many files have been changed) *or* by clicking on "Uncommitted changes" in the Description column showing the workflow in the repository.
+
+       b. Select the files or changes to be committed by selecting the check boxes next to each changed or added file in the box at the bottom of the GUI.
+      
+       c. Once selected, click Commit icon in the top menu.
+       
+       d. In the dialog that opens, include your commit message (as you would with `git commit -m` in the terminal)
+       
+       e. Click "Commit"
 
 3. Once the changes to your branch have been made, be sure to run tests locally using the command line command `pytest jwst_magic` before pushing your code and creating a pull request. This will allow GUI tests to be run, which cannot be run with Jenkins.
+
 
 4. Push the branch to the GitHub repository - this will deliver all committed changes to the branch version on the web which makes it accessible to other team members. The following are the commands to do this:
 In a terminal:
