@@ -65,7 +65,7 @@ The following supplemental packages are required, and will be **automatically in
 
 1. Activate your Python 3 (preferably Astroconda) environment.
 
-2. Clone the gitlab repository to your local machine
+2. Clone the gitlab repository to your local machine (we recommend you have SSH keys set up)
 
     ```
     git clone git@github.com:spacetelescope/jwst_magic.git
@@ -79,6 +79,20 @@ The following supplemental packages are required, and will be **automatically in
     pip install -e .
     ```
 
+4. You will also need the `jwst-fgs-countrate` module in order to run MAGIC. Clone the repository to your local machine as you have done with MAGIC. 
+
+    ```
+    git clone git@github.com:spacetelescope/jwst-fgs-countrate.git
+    ```
+
+5. Install the `jwst-fg-countrate` package by navigating to the directory where the `setup.py` file lives and installing it using `pip`:
+   
+    ```
+    cd jwst-fgs-countrate/
+
+    pip install -e .
+    ```
+    
 
 Running the Tools
 -----------------
@@ -91,8 +105,11 @@ launch the GUI with the following steps:
 
     In[2]: jwst_magic.run_tool_GUI()
 
+Known Issues
+-----------------
+As with all software packages, there are several known issues for MAGIC. We are doing our best to document these known issues so check back soon for a list.
 
-Tutorial & Documentation
+Documentation
 -----------------
 For the full documentation, including step-by-step directions for using the package, see the [MAGIC User's Guide](./docs/magic_user_guide).
 
