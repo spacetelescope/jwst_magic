@@ -71,7 +71,21 @@ The following supplemental packages are required, and will be **automatically in
     git clone git@github.com:spacetelescope/jwst_magic.git
     ```
 
-3. Install the `jwst_magic` package by navigating to the directory where the `setup.py` file lives and installing it using `pip`:
+3. You will need the `jwst-fgs-countrate` module in order to run MAGIC. Clone the repository to your local machine. 
+
+    ```
+    git clone git@github.com:spacetelescope/jwst-fgs-countrate.git
+    ```
+
+4. Install the `jwst-fg-countrate` package by navigating to the directory where the `setup.py` file lives and installing it using `pip`:
+   
+    ```
+    cd jwst-fgs-countrate/
+
+    pip install -e .
+    ```
+
+5. Install the `jwst_magic` package by navigating to the directory where the `setup.py` file lives and installing it using `pip`:
 
     ```
     cd jwst_magic/
@@ -79,19 +93,7 @@ The following supplemental packages are required, and will be **automatically in
     pip install -e .
     ```
 
-4. You will also need the `jwst-fgs-countrate` module in order to run MAGIC. Clone the repository to your local machine as you have done with MAGIC. 
 
-    ```
-    git clone git@github.com:spacetelescope/jwst-fgs-countrate.git
-    ```
-
-5. Install the `jwst-fg-countrate` package by navigating to the directory where the `setup.py` file lives and installing it using `pip`:
-   
-    ```
-    cd jwst-fgs-countrate/
-
-    pip install -e .
-    ```
     
 
 Running the Tools
