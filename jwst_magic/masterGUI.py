@@ -158,7 +158,7 @@ class MasterGui(QMainWindow):
         EmittingStream(self.textEdit_log)
 
         # Create and load GUI session
-        self.setWindowTitle('JWST MaGIC')
+        self.setWindowTitle('JWST MAGIC')
         self.adjust_screen_size_mainGUI()
         self.init_matplotlib()
         self.define_MainGUI_connections()
