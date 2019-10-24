@@ -80,7 +80,7 @@ class SegmentGuidingCalculator:
     def __init__(self, override_type, program_id, observation_num, visit_num,
                  root, out_dir, segment_infile=None, guide_star_params_dict=None,
                  selected_segs=None, threshold_factor=0.9, countrate_factor=None,
-                 oss_factor=0.6):
+                 countrate_uncertainty_factor=None, oss_factor=0.6):
         """Initialize the segment guiding calculator class.
 
         Parameters
@@ -98,7 +98,6 @@ class SegmentGuidingCalculator:
             Name used to generate output folder and output filenames.
         out_dir : str
             Location of out/ directory.
-
         segment_infile : str, optional
             Filepath to all_found_psfs*.txt file with list of all segment locations
             and countrates
@@ -125,6 +124,13 @@ class SegmentGuidingCalculator:
             The factor by which countrates are multiplied by to simulate
             diffuse PSFs (e.g. in MIMF)
             Used for POF Generation
+        countrate_uncertainty_factor : float, optional
+            The factor by which countrate uncertainties are multiplied by to simulate
+            diffuse PSFs (e.g. in MIMF)
+            Used for POF Generation
+        oss_factor : float, optional
+            The factor that OSS applies to the 3x3 box countrate in order to represent
+            the full number of countrate that we care about.
         """
 
         # Initialize parameters into attributes
@@ -136,6 +142,8 @@ class SegmentGuidingCalculator:
         self.out_dir = out_dir
         self.threshold_factor = threshold_factor
         self.countrate_factor = countrate_factor
+        self.countrate_uncertainty_factor = countrate_uncertainty_factor
+        print(self.countrate_uncertainty_factor)
         self.oss_factor = oss_factor
 
         # Initialize other attributes
@@ -316,8 +324,10 @@ class SegmentGuidingCalculator:
         # Write out override file with RA/Decs of selected segments
         with open(out_file, 'w') as f:
             # Determine whether to include a multiplicative countrate factor
-            countrate_qualifier = ' -count_rate_factor={:.3f}'.\
+            countrate_qualifier = ' -count_rate_factor={:.4f}'.\
                 format(self.countrate_factor) if self.countrate_factor else ''
+            countrate_uncertainty_qualifier = ' -count_rate_uncertainty_factor={:.4f}'.\
+                format(self.countrate_uncertainty_factor) if self.countrate_uncertainty_factor else ''
             out_string = 'sts -gs_select '
 
             for o, v in zip(obs_list, visit_list):
@@ -332,6 +342,7 @@ class SegmentGuidingCalculator:
                         out_string +="{:03d}".format(int(v))
 
             out_string += (countrate_qualifier)
+            out_string += (countrate_uncertainty_qualifier)
 
             if self.override_type == "SOF":
                 # Determine which segments have been selected
@@ -776,20 +787,42 @@ class SegmentGuidingCalculator:
                 if errcode != 0:
                     error = "{} for count_rate_factor. Expecting between 0.0 and 1.0.".format(msg[errcode])
                     raise ValueError(error)
+            if self.countrate_uncertainty_factor:
+                errcode = self.checkout(self.countrate_uncertainty_factor, 0.01, 1.0, low_inclusive=True)
+                if errcode != 0:
+                    error = "{} for count_rate_uncertainty_factor. Expecting between 0.01 (inclusive) and 1.0.".format(msg[errcode])
+                    raise ValueError(error)
 
     @staticmethod
-    def checkout(value, low, high):
+    def checkout(value, low, high, low_inclusive=False):
         """Test conversion from string to float. If float conversion
-        works, test range return errcode 0 for OK, 1 for conversion
-        error, 2 for range error
+        works and is within test range, return errcode 0 for OK, 1 for conversion
+        error, 2 for range error. The 'high' bounds are exclusive.
+
+        Parameters
+        ----------
+        value: float
+            The value to be checked
+        low: float
+            Lower bounds
+        high: float
+            Upper bounds
+        low_inclusive: boolean, False
+            Whether or not to include the lower boundary condition
         """
 
         try:
             x = float(value)
-            if low <= x <= high:
-                errcode = 0
+            if low_inclusive:
+                if low <= x < high:
+                    errcode = 0
+                else:
+                    errcode = 2
             else:
-                errcode = 2
+                if low < x < high:
+                    errcode = 0
+                else:
+                    errcode = 2
         except ValueError:
             errcode = 1
         return errcode
@@ -937,7 +970,7 @@ def generate_segment_override_file(segment_infile, guider,
 
             if params is not None:
                 guide_star_params_dict, program_id, observation_num, visit_num, \
-                    threshold_factor, _ = params
+                    threshold_factor, _, _ = params
             else:
                 LOGGER.warning('Segment Guiding: SOF creation cancelled.')
                 return
@@ -1006,7 +1039,9 @@ def generate_segment_override_file(segment_infile, guider,
 
 
 def generate_photometry_override_file(root, program_id, observation_num, visit_num,
-                                      countrate_factor=None, out_dir=None,
+                                      countrate_factor=None,
+                                      countrate_uncertainty_factor=None,
+                                      out_dir=None,
                                       parameter_dialog=True):
     """Generate a photometry override file (used for commissioning activities
     where the PSFs are stacked but unphased, like during MIMF).
@@ -1048,20 +1083,27 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
             accepted = POF_parameter_dialog.exec()
             params = POF_parameter_dialog.get_dialog_parameters() if accepted else None
 
-            _, program_id, observation_num, visit_num, _, countrate_factor = params
+            _, program_id, observation_num, visit_num, _, countrate_factor, countrate_uncertainty_factor = params
 
         elif countrate_factor is None:
             raise ValueError(
                 'In order to run the segment guiding tool with '
                 '`parameter_dialog=False`, you must provide a countrate factor '
-                'between 0 and 1 to the `countrate_factor` argument in '
+                'between 0.0 and 1.0 to the `countrate_factor` argument in '
+                '`segment_guiding.generate_photometry_override_file()`.'
+            )
+        elif countrate_uncertainty_factor is None:
+            raise ValueError(
+                'In order to run the segment guiding tool with '
+                '`parameter_dialog=False`, you must provide a countrate factor '
+                'between 0.01 (inclusive) and 1.0 to the `countrate_uncertainty_factor` argument in '
                 '`segment_guiding.generate_photometry_override_file()`.'
             )
 
         # Set up guiding calculator object
         sg = SegmentGuidingCalculator(
             "POF", program_id, observation_num, visit_num, root, out_dir,
-            countrate_factor=countrate_factor
+            countrate_factor=countrate_factor, countrate_uncertainty_factor=countrate_uncertainty_factor
         )
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params("POF")

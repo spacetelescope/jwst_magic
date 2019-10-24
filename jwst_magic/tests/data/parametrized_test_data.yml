@@ -288,12 +288,12 @@ test_segment_guiding:
 
     test_photometry_override_file_multiple_obs:
       [
-          'sts -gs_select 01141002001 -count_rate_factor=0.700',
-          'sts -gs_select 01141002001, 01141004001, 01141006001 -count_rate_factor=0.700',
-          'sts -gs_select 01141013001, 01141014001, 01141015001 -count_rate_factor=0.700',
-          'sts -gs_select 01141005001, 01141007001, 01141010001, 01141011001, 01141012001 -count_rate_factor=0.700',
-          'sts -gs_select 01141001001, 01141003001, 01141005001 -count_rate_factor=0.700',
-          'sts -gs_select 01141005001, 01141007001, 01141010001, 01141011001, 01141012001 -count_rate_factor=0.700'
+          'sts -gs_select 01141002001 -count_rate_factor=0.7000 -count_rate_uncertainty_factor=0.5000',
+          'sts -gs_select 01141002001, 01141004001, 01141006001 -count_rate_factor=0.7000 -count_rate_uncertainty_factor=0.5000',
+          'sts -gs_select 01141013001, 01141014001, 01141015001 -count_rate_factor=0.7000 -count_rate_uncertainty_factor=0.5000',
+          'sts -gs_select 01141005001, 01141007001, 01141010001, 01141011001, 01141012001 -count_rate_factor=0.7000 -count_rate_uncertainty_factor=0.5000',
+          'sts -gs_select 01141001001, 01141003001, 01141005001 -count_rate_factor=0.7000 -count_rate_uncertainty_factor=0.5000',
+          'sts -gs_select 01141005001, 01141007001, 01141010001, 01141011001, 01141012001 -count_rate_factor=0.7000 -count_rate_uncertainty_factor=0.5000'
       ]
 
 test_select_psfs:

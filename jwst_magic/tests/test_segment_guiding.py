@@ -205,7 +205,7 @@ def test_generate_override_file_valueerrors(test_directory):
         )
     assert '`click_to_select_GUI=False`' in str(excinfo.value)
 
-    # Test error if parameter_dialog=False and countrate_factor=None
+    # Test error if parameter_dialog=False and countrate_factor=None and countrate_uncertainty_factor=None
     with pytest.raises(ValueError) as excinfo:
         generate_photometry_override_file(
             ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
@@ -257,7 +257,7 @@ def test_segment_override_command_out_of_fov(test_directory):
 def test_generate_photometry_override_file(test_directory):
     generate_photometry_override_file(
         ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=0.7,
-        out_dir=__location__, parameter_dialog=False
+        countrate_uncertainty_factor=0.5, out_dir=__location__, parameter_dialog=False
     )
 
     # Check to make sure the override file was created, and in the right place
@@ -268,14 +268,20 @@ def test_generate_photometry_override_file(test_directory):
     # Check to make sure the command was written correctly
     with open(segment_override_file) as f:
         segment_override_command = f.read()
-    assert segment_override_command == 'sts -gs_select 01141007001 -count_rate_factor=0.700'
+    assert segment_override_command == 'sts -gs_select 01141007001 -count_rate_factor=0.7000 -count_rate_uncertainty_factor=0.5000'
 
-    # Try again with an incorrect countrate factor and make sure there's an error
+
+pof_valueerror_parameters = [(2.0, 0.5, 'for count_rate_factor. Expecting between 0.0 and 1.0.'),
+                             (0.7, 1.5, 'for count_rate_uncertainty_factor. Expecting between 0.01 (inclusive) and 1.0.'),
+                             (0.7, 0.001, 'for count_rate_uncertainty_factor. Expecting between 0.01 (inclusive) and 1.0.')]
+@pytest.mark.parametrize('countrate_factor, countrate_uncertainty_factor, error', pof_valueerror_parameters)
+def test_fail_photometry_override_file(test_directory, countrate_factor, countrate_uncertainty_factor, error):
+    # Try with an incorrect countrate factor and make sure there's an error
     with pytest.raises(ValueError) as excinfo:
         generate_photometry_override_file(
-            ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=2.0,
-            out_dir=__location__, parameter_dialog=False)
-    assert 'for count_rate_factor. Expecting between 0.0 and 1.0.' in str(excinfo.value)
+            ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=countrate_factor,
+            countrate_uncertainty_factor=countrate_uncertainty_factor, out_dir=__location__, parameter_dialog=False)
+    assert error in str(excinfo.value)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -318,19 +324,26 @@ def test_SOF_parameters_dialog():
 
     assert params == (
         {'v3_boff': 0.0, 'seg_num': 0, 'v2_boff': 0.0, 'ra': 90.9708, 'fgs_num': 1, 'dec': -67.3578, 'pa': 157.1234},
-        '1141', '7', '1', 0.6, None
+        '1141', '7', '1', 0.6, None, None
     )
 
-
+pof_dialog_parameters = [('1142', '8', '2', None, None, (None, '1142', '8', '2', None, 0.0, 0.01)),
+                         ('1142', '8', '2', 0.01, 0.50, (None, '1142', '8', '2', None, 0.01, 0.50))]
+@pytest.mark.parametrize('program_id, obs_num, visit_num, countrate_factor, countrate_uncertainty_factor, out_params', pof_dialog_parameters)
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-def test_POF_parameters_dialog():
+def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
+                               countrate_uncertainty_factor, out_params):
     # Initialize dialog window
     segment_guiding_dialog = SegmentGuidingDialog("POF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
 
     # Set parameters
-    segment_guiding_dialog.lineEdit_programNumber.setText('1142')
-    segment_guiding_dialog.lineEdit_observationNumber.setText('8')
-    segment_guiding_dialog.lineEdit_visitNumber.setText('2')
+    segment_guiding_dialog.lineEdit_programNumber.setText(program_id)
+    segment_guiding_dialog.lineEdit_observationNumber.setText(obs_num)
+    segment_guiding_dialog.lineEdit_visitNumber.setText(visit_num)
+    if countrate_factor is not None:
+        segment_guiding_dialog.doubleSpinBox_countrateFactor.setValue(countrate_factor)
+    if countrate_uncertainty_factor is not None:
+        segment_guiding_dialog.doubleSpinBox_countrateUncertaintyFactor.setValue(countrate_uncertainty_factor)
 
     # Schedule press of "Ok" button
     ok_button = segment_guiding_dialog.buttonBox.button(QDialogButtonBox.Ok)
@@ -342,7 +355,9 @@ def test_POF_parameters_dialog():
     # Get parameters
     params = segment_guiding_dialog.get_dialog_parameters()
 
-    assert params == (None, '1142', '8', '2', None, 0.0)
+    # params = (guide_star_params_dict, program_id, observation_num, visit_num,
+    #           threshold_factor, countrate_factor)
+    assert params == out_params
 
 
 def test_write_override_report(test_directory):
@@ -518,7 +533,7 @@ def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_
 
     generate_photometry_override_file(
         ROOT, PROGRAM_ID, obs_num, VISIT_NUM, countrate_factor=0.7,
-        out_dir=__location__, parameter_dialog=False
+        countrate_uncertainty_factor=0.5, out_dir=__location__, parameter_dialog=False
     )
 
     # Check to make sure the override file was created, and in the right place
