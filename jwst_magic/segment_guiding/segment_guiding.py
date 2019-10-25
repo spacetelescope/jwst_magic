@@ -782,12 +782,12 @@ class SegmentGuidingCalculator:
             # Count rate factor has to be between 0 and 1 (required by VSS)
             msg = ["OK", "Countrate factor conversion error",
                    "Countrate factor out of range"]
-            if self.countrate_factor:
+            if self.countrate_factor is not None:
                 errcode = self.checkout(self.countrate_factor, 0.0, 1.0)
                 if errcode != 0:
                     error = "{} for count_rate_factor. Expecting between 0.0 and 1.0.".format(msg[errcode])
                     raise ValueError(error)
-            if self.countrate_uncertainty_factor:
+            if self.countrate_uncertainty_factor is not None:
                 errcode = self.checkout(self.countrate_uncertainty_factor, 0.01, 1.0, low_inclusive=True)
                 if errcode != 0:
                     error = "{} for count_rate_uncertainty_factor. Expecting between 0.01 (inclusive) and 1.0.".format(msg[errcode])
