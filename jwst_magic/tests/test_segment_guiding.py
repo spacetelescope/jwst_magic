@@ -273,7 +273,7 @@ def test_generate_photometry_override_file(test_directory):
 
 pof_valueerror_parameters = [(2.0, 0.5, 'for count_rate_factor. Expecting between 0.0 and 1.0.'),
                              (0.7, 1.5, 'for count_rate_uncertainty_factor. Expecting between 0.01 (inclusive) and 1.0.'),
-                             (0.7, 0.001, 'for count_rate_uncertainty_factor. Expecting between 0.01 (inclusive) and 1.0.')]
+                             (0.7, 0.0, 'for count_rate_uncertainty_factor. Expecting between 0.01 (inclusive) and 1.0.')]
 @pytest.mark.parametrize('countrate_factor, countrate_uncertainty_factor, error', pof_valueerror_parameters)
 def test_fail_photometry_override_file(test_directory, countrate_factor, countrate_uncertainty_factor, error):
     # Try with an incorrect countrate factor and make sure there's an error
