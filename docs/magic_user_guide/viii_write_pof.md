@@ -29,7 +29,7 @@ Creating a photometry override file through MAGIC:
 
 3. Select the **Create photometry override file** radio button (*B* in figure below)
 
-   ![Segment Guiding Section of the Main GUI](./figs/figure13b_segment_guiding_pof.png)
+   ![Segment Guiding Section of the Main GUI](./figs/figure13_segment_guiding.png)
 
 4. Run the tool.
 
