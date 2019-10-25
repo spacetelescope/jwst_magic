@@ -21,7 +21,6 @@ VIII.	Writing the Photometry Override File (POF)
 In the case of MIMF where we only need to change the photometry of the guide star (the RA and Dec and expected count rates are taken from the APT file), we need to make an override for Planning & Scheduling but this is for the photometry and will have no information about the segments (because the PSFs from the individual segments are stacked).
 
 
-
 Creating a photometry override file through MAGIC:
 --------------------------------------------------
 1. Load the file for this observation, select the guider, the set the out directory and root.
@@ -30,7 +29,7 @@ Creating a photometry override file through MAGIC:
 
 3. Select the **Create photometry override file** radio button (*B* in figure below)
 
-   ![Segment Guiding Section of the Main GUI](./figs/figure13_segment_guiding.png)
+   ![Segment Guiding Section of the Main GUI](./figs/figure13b_segment_guiding_pof.png)
 
 4. Run the tool.
 
@@ -46,47 +45,13 @@ Creating a photometry override file through MAGIC:
 
    3. **Visit Number** (optional) – of the visit that will be executed (this is usually 1, but will be different when mosaics, etc. are taken)
 
-   4. **Countrate factor** - A factor between 0 and 1 that all count rates and thresholds are to be multiplied by. This factor is used for cases such as MIMF and CP when the segments are stacked but unphased, and so the brightness of the guide star is dimmed.  
+   4. **Count rate factor** - A multiplication factor to be applied to the computed count rate of each guide star and reference object of the visit. This factor is used for cases such as MIMF and CP when the segments are stacked but unphased, and so the brightness of the guide star is dimmed. This factor should be greater than 0.0 and less than 1.0.
+   
+   5. **Count rate uncertainty factor** - A multiplication factor to be applied to the computed count rate of each guide star and reference object of the visit that will be set at the count rate uncertainties. This factor should be greater than or equal to 0.01 and less than 1.0. 
 
    *See [Appendix D](appendix_d_mirror_states.md) for information about the countrate factor based on the mirror state.*
 
 6. Click **OK**
-
-Creating a photometry override file in IPython:
---------------------------------------------------
-Alternatively, in the case of having to create multiple photometry override files, this can be done in IPython with a for loop.
-
-•	**root** – the root name that will be used for the observation. This has to do with where files are saved so consistency is important
-
-•	**program_id** – ID of the current APT program; three to five digits
-
-•	**observation_num** (optional) – the observation number for this observation
-
-•	**visit_num** (optional) – the visit number for this visit
-
-•	**countrate_factor** – factor by which to multiply all count rates and thresholds
-
-•	**out_dir** – path to the out directory where all files will be saved
-
-     In [1]: from jwst_magic.segment_guiding import segment_guiding
-
-     In [2]: root = ['root1', 'root2', 'root3', 'root4', 'root5'] #Root used for this dataset
-
-     In [3]: program_id = 12345 #Program ID - int
-
-     In [4]: observation_num = [1, 3, 4, 5, 7] #List of Observation numbers
-
-     In [5]: visit_num = [1, 1, 1, 2, 1, 1] #List of Visit numbers
-
-     In [6]: countrate_factor = 0.6 #Float between 0.0 and 1.0
-
-     In [7]: out_dir = ‘/path/to/out/directory’
-
-     In [8]: for i, (r, o, v) in enumerate(zip(root, observation_num, visit_num)):
-                 segment_guiding.run_tool(root=r, program_id=program_id,
-                                          observation_num=o, visit_num=v,
-                                          countrate_factor=countrate_factor,
-                                          out_dir=out_dir)
 
 ---------------------------------
 
