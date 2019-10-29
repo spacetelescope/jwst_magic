@@ -143,7 +143,6 @@ class SegmentGuidingCalculator:
         self.threshold_factor = threshold_factor
         self.countrate_factor = countrate_factor
         self.countrate_uncertainty_factor = countrate_uncertainty_factor
-        print(self.countrate_uncertainty_factor)
         self.oss_factor = oss_factor
 
         # Initialize other attributes
