@@ -169,6 +169,9 @@
         <property name="singleStep">
          <double>0.100000000000000</double>
         </property>
+        <property name="Decimals">
+         <double>5</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="0">
