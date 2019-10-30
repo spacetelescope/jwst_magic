@@ -47,6 +47,9 @@ The following are ways to run segment_guiding:
     segment_guiding.run_tool(program_id=program_id, observation=observation,
                              visit=visit, guide_star_params_dict=guide_star_params_dict,
                              parameter_dialog=False)
+
+As of 10/23/2019 there are 39 tests for this module. 4 tests cannot be run with
+Jenkins because they test the GUI.
 """
 # Standard Library Imports
 from datetime import datetime
@@ -328,7 +331,7 @@ def test_SOF_parameters_dialog():
     )
 
 pof_dialog_parameters = [('1142', '8', '2', None, None, (None, '1142', '8', '2', None, 0.0, 0.01)),
-                         ('1142', '8', '2', 0.01, 0.50, (None, '1142', '8', '2', None, 0.01, 0.50))]
+                         ('1142', '8', '2', 0.0123, 0.50, (None, '1142', '8', '2', None, 0.0123, 0.50))]
 @pytest.mark.parametrize('program_id, obs_num, visit_num, countrate_factor, countrate_uncertainty_factor, out_params', pof_dialog_parameters)
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
@@ -345,6 +348,7 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     if countrate_uncertainty_factor is not None:
         segment_guiding_dialog.doubleSpinBox_countrateUncertaintyFactor.setValue(countrate_uncertainty_factor)
 
+
     # Schedule press of "Ok" button
     ok_button = segment_guiding_dialog.buttonBox.button(QDialogButtonBox.Ok)
     QtCore.QTimer.singleShot(0, ok_button.clicked)
@@ -358,7 +362,6 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     # params = (guide_star_params_dict, program_id, observation_num, visit_num,
     #           threshold_factor, countrate_factor)
     assert params == out_params
-
 
 def test_write_override_report(test_directory):
     # Define the input file locations and parameters
