@@ -482,7 +482,7 @@ class SegmentGuidingDialog(QDialog):
         tup
             Tuple containing the following arguments: (guide_star_params_dict,
             program_id, observation_num, visit_num, threshold_factor,
-            countrate_factor)
+            countrate_factor, countrate_uncertainty_factor)
         """
 
         # Get parameters for dictionary from dialog
@@ -533,9 +533,11 @@ class SegmentGuidingDialog(QDialog):
             # Countrate factors
             threshold_factor = float(self.lineEdit_countrateUncertainty.text())
             countrate_factor = None
+            countrate_uncertainty_factor = None
 
         elif self.override_type == "POF":
             countrate_factor = float(self.doubleSpinBox_countrateFactor.value())
+            countrate_uncertainty_factor = float(self.doubleSpinBox_countrateUncertaintyFactor.value())
             threshold_factor = None
             guide_star_params_dict = None
 
@@ -544,7 +546,7 @@ class SegmentGuidingDialog(QDialog):
         observation_num = self.lineEdit_observationNumber.text()
         visit_num = self.lineEdit_visitNumber.text()
 
-        return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor
+        return guide_star_params_dict, program_id, observation_num, visit_num, threshold_factor, countrate_factor, countrate_uncertainty_factor
 
 
 def check_override_overwrite(out_dir, program_id, observation_num, visit_num,
