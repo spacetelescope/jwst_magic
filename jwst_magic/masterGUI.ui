@@ -1050,7 +1050,7 @@ p, li { white-space: pre-wrap; }
            <item row="2" column="0">
             <widget class="QRadioButton" name="radioButton_photometryOverride">
              <property name="toolTip">
-              <string>Have a stacked PSFs so only need to override the photometry</string>
+              <string>Have stacked PSFs so only need to override the photometry</string>
              </property>
              <property name="text">
               <string>Create photometry override file</string>
