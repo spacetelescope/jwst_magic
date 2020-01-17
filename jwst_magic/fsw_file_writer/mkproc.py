@@ -64,9 +64,9 @@ class Mkproc(object):
             Guider number (1 or 2)
         root : str
             Name used to create the output directory, {out_dir}/out/{root}
-        xarr : list
+        xarr : array
             X coordinates of guide and reference stars (pixels)
-        yarr : list
+        yarr : array
             Y coordinates of guide and reference stars (pixels)
         counts : list
             Count rates of guide and reference stars
@@ -141,9 +141,9 @@ class Mkproc(object):
             Guider number (1 or 2)
         root : str
             Name used to create the output directory, {out_dir}/out/{root}
-        xarr : list
+        xarr : array
             X coordinates of guide and reference stars (pixels)
-        yarr : list
+        yarr : array
             Y coordinates of guide and reference stars (pixels)
         counts : list
             Count rates of guide and reference stars
@@ -232,9 +232,9 @@ class Mkproc(object):
             Guider number (1 or 2)
         root : str
             Name used to create the output directory, {out_dir}/out/{root}
-        xarr : list
+        xarr : array
             X coordinates of guide and reference stars (pixels)
-        yarr : list
+        yarr : array
             Y coordinates of guide and reference stars (pixels)
         counts : list
             Count rates of guide and reference stars
@@ -245,7 +245,6 @@ class Mkproc(object):
         """
         eol = '\n'
 
-        ### THIS IS BAD -- CHANGE THIS --- KJB 1/25/2018
         # Corner coordinates & guide star counts
         xarr1, yarr1 = coordinate_transforms.Raw2DHAS(xarr - acq1_imgsize // 2,
                                                       yarr - acq1_imgsize // 2,
