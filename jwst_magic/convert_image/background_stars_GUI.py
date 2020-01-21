@@ -128,8 +128,9 @@ class BackgroundStarsWindow(QDialog):
 
         # Plot guide star
         self.vmin, self.vmax = (self.jmag + 8, self.jmag - 1)
+        cmap = mpl.colors.Colormap('viridis_r')
         self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*',
-                                                   s=500, cmap='viridis_r',
+                                                   s=500, cmap=cmap,
                                                    vmin=self.vmax,
                                                    vmax=self.vmin)
 
@@ -137,7 +138,7 @@ class BackgroundStarsWindow(QDialog):
         self.canvas.cbar_ax = self.canvas.fig.add_axes([0.05, 0.1, 0.9, 0.03])
         norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
         self.canvas.cbar = mpl.colorbar.ColorbarBase(self.canvas.cbar_ax,
-                                                     norm=norm, cmap='viridis_r',
+                                                     norm=norm, cmap=cmap,
                                                      orientation='horizontal')
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.cbar.set_label('J Magnitude')
