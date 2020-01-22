@@ -622,12 +622,12 @@ def convert_im(input_im, guider, root, nircam=True,
             origin = header['ORIGIN'].strip()
             if origin == 'ITM':
                 try:
-                    assert itm == True
+                    assert itm is True
                 except AssertionError:
                     itm = True
                     LOGGER.warning("Deprecation Warning: This is an ITM image, setting itm flag to 'True'")
         except KeyError:
-            pass
+            origin = None
 
 
         # Create raw FGS image...
@@ -666,12 +666,14 @@ def convert_im(input_im, guider, root, nircam=True,
         # -------------- From FGS --------------
         else:
             LOGGER.info("Image Conversion: This is an FGS image")
-            #from_guider = utils.get_guider(header)
-            #if guider != from_guider:
-            # uncal_guider correct and gs-id incorrect, do not have same rotation
-            #if itm:
-            LOGGER.info("Image Conversion: Expect that data provided is in science/DMS frame; rotating to raw FGS frame.")
-            data = transform_sci_to_fgs_raw(data, guider)
+            # Check if header keyword is equal to fgs raw to determine if rotation to raw is needed
+            if origin.upper() == 'FGSRAW':  # this is a magic-team keyword that should only be in test files
+                LOGGER.info("Image Conversion: Data is already provided in raw frame; no rotation done")
+                LOGGER.warning("Assume input guider is same as output guider; no rotation done")
+            else:
+                LOGGER.info(
+                    "Image Conversion: Expect that data provided is in science/DMS frame; rotating to raw FGS frame.")
+                data = transform_sci_to_fgs_raw(data, guider)
 
         # Apply Gaussian filter to simulate coarse pointing
         if coarse_pointing:
