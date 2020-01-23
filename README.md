@@ -109,7 +109,7 @@ launch the GUI with the following steps:
 
 Known Issues
 -----------------
-As with all software packages, there are several known issues for MAGIC. We are doing our best to document these known issues so check back soon for a list.
+As with all software packages, there are several known issues for MAGIC. A [current list of known issues is available](https://jwstitarwiki.stsci.edu/display/WFSCOWG/MAGIC+Known+Issues), but please note that there is restricted access to this page.
 
 Documentation
 -----------------
@@ -142,15 +142,15 @@ the attention of a MAGIC team member listed below.
 
 Questions
 -----------------
-Any questions regarding the `jwst_magic` project or its software should be directed to
-`kbrooks@stsci.edu`.
+Any questions regarding the `jwst_magic` project or its software should be directed to `sosborne@stsci.edu` and `kbrooks@stsci.edu`.
 
 Current Development Team
 -----------------
+* Shannon Osborne (GitHub: @shanosborne; Grit: @sosborne)
 * Keira Brooks (GitHub: @kjbrooks; Grit: @kbrooks)
+* Sherie Holfeltz
 
 Past Members of the Development Team
 -----------------
 * Lauren Chambers (GitHub: @laurenmarietta)
 * Kathryn St. Laurent
-* Sherie Holfeltz
