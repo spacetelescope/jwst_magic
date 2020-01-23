@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division,
 
 from setuptools import setup, find_packages
 
+VERSION = '1.0.0'
+
 INSTALL_REQUIRES = [
     'numpy',
     'astropy',
@@ -42,7 +44,7 @@ except ImportError:
     INSTALL_REQUIRES.append('PyQt5')
 
 setup(name='jwst_magic',
-      version='0.0',
+      version=VERSION,
       description='Multi-Application Guiding Interface for Commissioning (MAGIC)',
       long_description='Interactive tools to simulate fine guidance sensor data '
                        'and facilitate guiding operations during wavefront '

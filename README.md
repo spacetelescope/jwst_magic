@@ -142,6 +142,8 @@ This repository follows the principles of ["Semantic Versioning"](https://semver
 > 2. MINOR version when you add functionality in a backwards compatible manner, and
 > 3. PATCH version when you make backwards compatible bug fixes.
 
+When releasing a new version, developers should change the version number in `setup.py`, merge this change in a PR, and then release the package via the GitHub interface.
+
 Code of Conduct
 -----------------
 Users and contributors to `jwst_magic` should adhere to the [Code of Conduct](./CODE_OF_CONDUCT.md).
