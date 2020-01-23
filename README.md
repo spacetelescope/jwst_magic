@@ -133,6 +133,14 @@ The following is an example of a best work flow for contributing to the project
 6. Iterate with the reviewer over any needed changes until the reviewer accepts and merges your branch.
 7. Delete your local copy of your branch.
 
+Versioning
+-----------------
+This repository follows the principles of ["Semantic Versioning"](https://semver.org/), such that
+
+> Given a version number MAJOR.MINOR.PATCH, increment the:
+> 1. MAJOR version when you make incompatible API changes,
+> 2. MINOR version when you add functionality in a backwards compatible manner, and
+> 3. PATCH version when you make backwards compatible bug fixes.
 
 Code of Conduct
 -----------------
