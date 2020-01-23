@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division,
 
 from setuptools import setup, find_packages
 
+VERSION = '1.0.0'
+
 INSTALL_REQUIRES = [
     'numpy',
     'astropy',
@@ -42,7 +44,7 @@ except ImportError:
     INSTALL_REQUIRES.append('PyQt5')
 
 setup(name='jwst_magic',
-      version='0.0',
+      version=VERSION,
       description='Multi-Application Guiding Interface for Commissioning (MAGIC)',
       long_description='Interactive tools to simulate fine guidance sensor data '
                        'and facilitate guiding operations during wavefront '
@@ -57,7 +59,7 @@ setup(name='jwst_magic',
       ],
       keywords='jwst fgs',
       url='https://github.com/spacetelescope/jwst_magic',
-      author='Keira Brooks, Lauren Chambers, Kathryn St. Laurent',
+      author='Keira Brooks, Lauren Chambers, Shannon Osborne, Sherie Holfeltz, Kathryn St. Laurent',
       license='BSD',
       packages=find_packages(),  # How will this work with subpackages?
       install_requires=INSTALL_REQUIRES,
