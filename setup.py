@@ -57,7 +57,7 @@ setup(name='jwst_magic',
       ],
       keywords='jwst fgs',
       url='https://github.com/spacetelescope/jwst_magic',
-      author='Keira Brooks, Lauren Chambers, Kathryn St. Laurent',
+      author='Keira Brooks, Lauren Chambers, Shannon Osborne, Sherie Holfeltz, Kathryn St. Laurent',
       license='BSD',
       packages=find_packages(),  # How will this work with subpackages?
       install_requires=INSTALL_REQUIRES,

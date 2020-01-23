@@ -10,6 +10,7 @@
 How to use the Multi-Application Guiding Interface for Commissioning (MAGIC) for simulated and real JWST data. 
 
 #### Authors:
+* Shannon Osborne (sosborne@stsci.edu)
 * Keira Brooks (kbrooks@stsci.edu)
 * Lauren Chambers
 * Sherie Holfeltz
