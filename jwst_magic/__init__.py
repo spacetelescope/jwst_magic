@@ -1,5 +1,8 @@
+import importlib
 import os
 import pkg_resources
+import socket
+import subprocess
 
 JENKINS = 'jenkins' in os.getcwd()
 if not JENKINS:
@@ -9,6 +12,7 @@ if not JENKINS:
 module_path = pkg_resources.resource_filename('jwst_magic', '')
 setup_path = os.path.normpath(os.path.join(module_path, '../setup.py'))
 
+# Set version number from setup.py
 try:
     with open(setup_path) as f:
         data = f.readlines()
@@ -20,3 +24,36 @@ try:
 except FileNotFoundError:
     print('Could not determine jwst_magic version')
     __version__ = '0.0.0'
+
+# Check is MAGIC version and the FGS Countrate version matches online versions
+if "sogs" not in socket.gethostname():
+    magic_path = module_path.split('/jwst_magic')[0] + '/jwst_magic'
+    cr_path = importlib.util.find_spec('fgscountrate').origin.split('fgscountrate/')[0]
+    cr_version = pkg_resources.get_distribution("fgscountrate").version
+    ssh_magic = 'git@github.com:spacetelescope/jwst_magic.git'
+    ssh_cr = 'git@github.com:spacetelescope/jwst-fgs-countrate.git'
+
+    for name, path, ssh, version in [('MAGIC', magic_path, ssh_magic, __version__),
+                                     ('FGS COUNTRATE', cr_path, ssh_cr, cr_version)]:
+        cmd = 'git --git-dir={}.git ls-remote --tags {}'.format(path, ssh)
+        p = subprocess.Popen(cmd, shell=True, executable='/bin/bash',
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = p.communicate()
+
+        if p[0].decode('utf-8') != '':
+            tag_list = p[0].decode('utf-8').strip()
+            latest_remote_version = tag_list.split('\n')[-1].split('tags/')[-1]
+            if version == latest_remote_version:
+                print("Your {} package is up to date".format(name))
+            else:
+                print("**WARNING**: LOCAL {} VERSION {} IS BEHIND THE CURRENT ONLINE VERSION {}\nPlease "
+                      "update {}, e.g. run `git pull` and `pip install .`".format(name, version,
+                                                                                  latest_remote_version, name))
+        else:  # no network access
+            print('{} version status cannot be checked due to the following issue: {}'.format(name, p[1].decode(
+                                                                                              'utf-8').strip().split(
+                                                                                              '\n')[0]))
+else:
+    # The SOGS case cannot be checked due to network access on SOGS machines
+    print("Your MAGIC package is up to date")
+    print("Your FGS Countrate package is up to date")
