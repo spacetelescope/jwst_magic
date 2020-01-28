@@ -329,7 +329,7 @@ class MasterGui(QMainWindow):
         """
         # Required
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        if self.lineEdit_inputImage.text() == "":
+        if self.lineEdit_inputImage.text() == "" and not self.radioButton_photometryOverride.isChecked():
             self.no_inputImage_dialog()
             return
         if not self.buttonGroup_guider.checkedButton():
@@ -437,8 +437,6 @@ class MasterGui(QMainWindow):
         # Segment guiding
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.groupBox_segmentGuiding.isChecked():
-            # Get APT program information from parsed header
-            self.parse_header(input_image)
 
             # If commissioning name, load the program and observation number
             if self.radioButton_name_commissioning.isChecked():
@@ -457,6 +455,9 @@ class MasterGui(QMainWindow):
                     root, program_id, observation_num, visit_num, out_dir=out_dir
                 )
             else:
+                # Get APT program information from parsed header
+                self.parse_header(input_image)
+
                 # Define location of all_found_psfs catalog file
                 if self.radioButton_shifted.isChecked():
                     segment_infile = self.shifted_all_found_psfs_file
