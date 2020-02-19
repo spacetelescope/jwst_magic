@@ -891,6 +891,7 @@ class SegmentGuidingCalculator:
 
 def generate_segment_override_file(segment_infile, guider,
                                    program_id, observation_num, visit_num,
+                                   ra=None, dec=None,
                                    root=None, out_dir=None, selected_segs=None,
                                    click_to_select_gui=True,
                                    data=None, guide_star_params_dict=None,
@@ -912,6 +913,10 @@ def generate_segment_override_file(segment_infile, guider,
         Observation number
     visit_num : int
         Visit number
+    ra :  float, optional
+        RA of guide star
+    dec :  float, optional
+        DEC of guide star
 
     root : str, optional
         Name used to generate output folder and output filenames. If not
@@ -962,7 +967,7 @@ def generate_segment_override_file(segment_infile, guider,
         # Get the guide star parameters
         if parameter_dialog:
             SOF_parameter_dialog = SegmentGuidingGUI.SegmentGuidingDialog(
-                "SOF", guider, program_id, observation_num, visit_num, log=LOGGER
+                "SOF", guider, program_id, observation_num, visit_num, ra, dec, log=LOGGER
             )
             accepted = SOF_parameter_dialog.exec()
             params = SOF_parameter_dialog.get_dialog_parameters() if accepted else None
