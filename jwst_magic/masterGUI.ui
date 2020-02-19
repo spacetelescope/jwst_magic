@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1424</width>
-    <height>1044</height>
+    <width>1484</width>
+    <height>1065</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,8 +34,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1424</width>
-         <height>1036</height>
+         <width>1598</width>
+         <height>1045</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -358,14 +358,44 @@ Image:</string>
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="1" column="1" colspan="2">
-            <widget class="QCheckBox" name="checkBox_coarsePointing">
+           <item row="5" column="1" colspan="4">
+            <widget class="QTextEdit" name="textEdit_backgroundStars">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>40</height>
+              </size>
+             </property>
              <property name="toolTip">
-              <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
+              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
+             </property>
+             <property name="html">
+              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QRadioButton" name="radioButton_FGS">
+             <property name="toolTip">
+              <string>Which instrument was used to take the input image</string>
              </property>
              <property name="text">
-              <string>Add jitter rate (arcsec/sec):</string>
+              <string>FGS</string>
              </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_instrument</string>
+             </attribute>
             </widget>
            </item>
            <item row="4" column="5">
@@ -409,17 +439,187 @@ Image:</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QRadioButton" name="radioButton_FGS">
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_instrument">
              <property name="toolTip">
               <string>Which instrument was used to take the input image</string>
              </property>
              <property name="text">
-              <string>FGS</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1" colspan="2">
+            <widget class="QCheckBox" name="checkBox_coarsePointing">
+             <property name="toolTip">
+              <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
+             </property>
+             <property name="text">
+              <string>Add jitter rate (arcsec/sec):</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="5">
+            <widget class="QCheckBox" name="checkBox_useConvertedImage">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Bypass all image convertor functions, and run other tool functions with the converted image instead of the input image</string>
+             </property>
+             <property name="text">
+              <string>Use existing converted image (shown at right) rather than input image</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2" colspan="2">
+            <widget class="QRadioButton" name="radioButton_NIRCam">
+             <property name="toolTip">
+              <string>Which instrument was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>NIRCam</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_instrument</string>
              </attribute>
+            </widget>
+           </item>
+           <item row="4" column="1" colspan="2">
+            <widget class="QCheckBox" name="checkBox_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
+             </property>
+             <property name="text">
+              <string>Normalize to:</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Normalize the final image to a specified value</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_detector">
+             <property name="toolTip">
+              <string>Which NIRCam detector was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_instrument_2">
+             <property name="toolTip">
+              <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coarse Pointing&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_backgroundStars">
+             <property name="toolTip">
+              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1" colspan="4">
+            <widget class="QComboBox" name="comboBox_detector">
+             <property name="toolTip">
+              <string>Which NIRCam detector was used to take the input image</string>
+             </property>
+             <item>
+              <property name="text">
+               <string>- Parse from header -</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A1</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A2</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A3</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A4</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A5 - long wave</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B1</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B2</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B3</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B4</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B5 - long wave</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="5" column="5">
+            <widget class="QPushButton" name="pushButton_backgroundStars">
+             <property name="toolTip">
+              <string>Launch a dialog window to specify how to incorporate background stars in the image</string>
+             </property>
+             <property name="text">
+              <string>Add Background Stars</string>
+             </property>
             </widget>
            </item>
            <item row="1" column="3" colspan="3">
@@ -523,206 +723,6 @@ Image:</string>
                </widget>
               </item>
              </layout>
-            </widget>
-           </item>
-           <item row="5" column="5">
-            <widget class="QPushButton" name="pushButton_backgroundStars">
-             <property name="toolTip">
-              <string>Launch a dialog window to specify how to incorporate background stars in the image</string>
-             </property>
-             <property name="text">
-              <string>Add Background Stars</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_instrument_2">
-             <property name="toolTip">
-              <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coarse Pointing&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_detector">
-             <property name="toolTip">
-              <string>Which NIRCam detector was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1" colspan="4">
-            <widget class="QComboBox" name="comboBox_detector">
-             <property name="toolTip">
-              <string>Which NIRCam detector was used to take the input image</string>
-             </property>
-             <item>
-              <property name="text">
-               <string>- Parse from header -</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A1</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A2</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A3</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A4</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A5 - long wave</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B1</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B2</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B3</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B4</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B5 - long wave</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_backgroundStars">
-             <property name="toolTip">
-              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_instrument">
-             <property name="toolTip">
-              <string>Which instrument was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1" colspan="2">
-            <widget class="QCheckBox" name="checkBox_normalize">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
-             </property>
-             <property name="text">
-              <string>Normalize to:</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_normalize">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Normalize the final image to a specified value</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2" colspan="2">
-            <widget class="QRadioButton" name="radioButton_NIRCam">
-             <property name="toolTip">
-              <string>Which instrument was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>NIRCam</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_instrument</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="0" column="0" colspan="5">
-            <widget class="QCheckBox" name="checkBox_useConvertedImage">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>Bypass all image convertor functions, and run other tool functions with the converted image instead of the input image</string>
-             </property>
-             <property name="text">
-              <string>Use existing converted image (shown at right) rather than input image</string>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1" colspan="4">
-            <widget class="QTextEdit" name="textEdit_backgroundStars">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QTextEdit { background-color : #ECECEC }
-\</string>
-             </property>
-             <property name="html">
-              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
             </widget>
            </item>
           </layout>
@@ -1316,44 +1316,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <widget class="QWidget" name="page_commissioning">
                  <layout class="QGridLayout" name="gridLayout_11">
-                  <item row="1" column="3">
-                   <widget class="QLabel" name="label_observation">
-                    <property name="text">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Observation:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="4">
-                   <widget class="QComboBox" name="comboBox_obs">
-                    <property name="enabled">
-                     <bool>false</bool>
-                    </property>
-                    <item>
-                     <property name="text">
-                      <string>- Select Obs -</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item row="0" column="1" colspan="4">
-                   <widget class="QComboBox" name="comboBox_practice">
-                    <item>
-                     <property name="text">
-                      <string>- Select Practice -</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item row="1" column="0">
-                   <widget class="QLabel" name="label_car">
-                    <property name="text">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CAR/Step:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                    </property>
-                   </widget>
-                  </item>
                   <item row="0" column="0">
                    <widget class="QLabel" name="label_practice">
                     <property name="text">
@@ -1361,36 +1323,7 @@ p, li { white-space: pre-wrap; }
                     </property>
                    </widget>
                   </item>
-                  <item row="1" column="1">
-                   <widget class="QComboBox" name="comboBox_car">
-                    <property name="enabled">
-                     <bool>false</bool>
-                    </property>
-                    <item>
-                     <property name="text">
-                      <string>- Select CAR -</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item row="3" column="0">
-                   <widget class="QLabel" name="label_commissioning_name_preview">
-                    <property name="text">
-                     <string>&lt;b&gt;Out Directory:&lt;/b&gt;</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="2">
-                   <widget class="QLabel" name="label_apt">
-                    <property name="enabled">
-                     <bool>true</bool>
-                    </property>
-                    <property name="text">
-                     <string>APT: N/A</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="3" column="1" colspan="4">
+                  <item row="5" column="1" colspan="8">
                    <widget class="QTextEdit" name="textEdit_name_preview">
                     <property name="minimumSize">
                      <size>
@@ -1413,106 +1346,260 @@ p, li { white-space: pre-wrap; }
                     </property>
                    </widget>
                   </item>
-                 </layout>
-                </widget>
-                <widget class="QWidget" name="page_manual">
-                 <layout class="QGridLayout" name="gridLayout_12">
-                  <item row="1" column="2" rowspan="2" colspan="2">
-                   <widget class="QPushButton" name="pushButton_out">
-                    <property name="toolTip">
-                     <string>Open Finder window to select output directory</string>
+                  <item row="3" column="3" alignment="Qt::AlignLeft">
+                   <widget class="QLineEdit" name="lineEdit_commid">
+                    <property name="enabled">
+                     <bool>false</bool>
                     </property>
                     <property name="text">
-                     <string>Open</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="2" colspan="2">
-                   <widget class="QPushButton" name="pushButton_root">
-                    <property name="toolTip">
-                     <string>Use the prefix of the input image name as the root</string>
-                    </property>
-                    <property name="text">
-                     <string>Use Default</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="1">
-                   <widget class="QLineEdit" name="lineEdit_root">
-                    <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Label for directory where output data will be stored and file names&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="0">
-                   <widget class="QLabel" name="label_root">
-                    <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Label for directory where output data will be stored and file names&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                    </property>
-                    <property name="text">
-                     <string>&lt;b&gt;Root&lt;/b&gt;</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="0" rowspan="2">
-                   <widget class="QLabel" name="label_out">
-                    <property name="toolTip">
-                     <string>Directory name where the root directory exists or will be created</string>
-                    </property>
-                    <property name="text">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Out Directory&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="1">
-                   <widget class="QTextEdit" name="textEdit_out">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>35</height>
-                     </size>
+                     <string>N/A</string>
                     </property>
                     <property name="maximumSize">
                      <size>
-                      <width>16777215</width>
-                      <height>35</height>
+                      <width>60</width>
+                      <height>20</height>
                      </size>
-                    </property>
-                    <property name="toolTip">
-                     <string>Directory name where the root directory exists or will be created</string>
-                    </property>
-                    <property name="acceptRichText">
-                     <bool>false</bool>
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="2">
-                   <spacer name="verticalSpacer">
+                  <item row="0" column="1" colspan="8">
+                   <widget class="QComboBox" name="comboBox_practice">
+                    <item>
+                     <property name="text">
+                      <string>- Select Practice -</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item row="3" column="5" colspan="2">
+                   <spacer name="horizontalSpacer_2">
                     <property name="orientation">
-                     <enum>Qt::Vertical</enum>
+                     <enum>Qt::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
-                      <width>20</width>
-                      <height>40</height>
+                      <width>60</width>
+                      <height>20</height>
                      </size>
                     </property>
                    </spacer>
                   </item>
+                  <item row="3" column="1">
+                   <widget class="QComboBox" name="comboBox_car">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>- Select CAR -</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item row="3" column="2">
+                   <widget class="QLabel" name="label_apt">
+                    <property name="text">
+                     <string>APT:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_car">
+                    <property name="text">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CAR/Step:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="8">
+                   <widget class="QComboBox" name="comboBox_obs">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>- Select Obs -</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_commissioning_name_preview">
+                    <property name="text">
+                     <string>&lt;b&gt;Out Directory:&lt;/b&gt;</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="7">
+                   <widget class="QLabel" name="label_observation">
+                    <property name="text">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Observation:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="4">
+                   <widget class="QPushButton" name="pushButton_commid">
+                    <property name="text">
+                     <string>Update APT</string>
+                    </property>
+                    <property name="toolTip">
+                     <string>Update APT number</string>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
+                </widget>
+                <widget class="QWidget" name="page_manual">
+                 <widget class="QPushButton" name="pushButton_out">
+                  <property name="geometry">
+                   <rect>
+                    <x>592</x>
+                    <y>55</y>
+                    <width>75</width>
+                    <height>32</height>
+                   </rect>
+                  </property>
+                  <property name="toolTip">
+                   <string>Open Finder window to select output directory</string>
+                  </property>
+                  <property name="text">
+                   <string>Open</string>
+                  </property>
+                 </widget>
+                 <widget class="QPushButton" name="pushButton_root">
+                  <property name="geometry">
+                   <rect>
+                    <x>592</x>
+                    <y>8</y>
+                    <width>113</width>
+                    <height>32</height>
+                   </rect>
+                  </property>
+                  <property name="toolTip">
+                   <string>Use the prefix of the input image name as the root</string>
+                  </property>
+                  <property name="text">
+                   <string>Use Default</string>
+                  </property>
+                 </widget>
+                 <widget class="QLineEdit" name="lineEdit_root">
+                  <property name="geometry">
+                   <rect>
+                    <x>110</x>
+                    <y>12</y>
+                    <width>125</width>
+                    <height>21</height>
+                   </rect>
+                  </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Label for directory where output data will be stored and file names&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                 </widget>
+                 <widget class="QLabel" name="label_root">
+                  <property name="geometry">
+                   <rect>
+                    <x>12</x>
+                    <y>12</y>
+                    <width>31</width>
+                    <height>16</height>
+                   </rect>
+                  </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Label for directory where output data will be stored and file names&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>&lt;b&gt;Root&lt;/b&gt;</string>
+                  </property>
+                 </widget>
+                 <widget class="QLabel" name="label_out">
+                  <property name="geometry">
+                   <rect>
+                    <x>12</x>
+                    <y>47</y>
+                    <width>88</width>
+                    <height>16</height>
+                   </rect>
+                  </property>
+                  <property name="toolTip">
+                   <string>Directory name where the root directory exists or will be created</string>
+                  </property>
+                  <property name="text">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Out Directory&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                 </widget>
+                 <widget class="QTextEdit" name="textEdit_out">
+                  <property name="geometry">
+                   <rect>
+                    <x>110</x>
+                    <y>47</y>
+                    <width>474</width>
+                    <height>35</height>
+                   </rect>
+                  </property>
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>35</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Directory name where the root directory exists or will be created</string>
+                  </property>
+                  <property name="acceptRichText">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                 <widget class="QCheckBox" name="checkBox_manualid">
+                  <property name="geometry">
+                   <rect>
+                    <x>10</x>
+                    <y>90</y>
+                    <width>91</width>
+                    <height>20</height>
+                   </rect>
+                  </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter APT program ID&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Program ID</string>
+                  </property>
+                 </widget>
+                 <widget class="QLineEdit" name="lineEdit_manualid">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="geometry">
+                   <rect>
+                    <x>110</x>
+                    <y>90</y>
+                    <width>121</width>
+                    <height>21</height>
+                   </rect>
+                  </property>
+                 </widget>
                  <zorder>label_root</zorder>
                  <zorder>lineEdit_root</zorder>
                  <zorder>pushButton_root</zorder>
                  <zorder>label_out</zorder>
                  <zorder>pushButton_out</zorder>
                  <zorder>textEdit_out</zorder>
-                 <zorder>verticalSpacer</zorder>
+                 <zorder>checkBox_manualid</zorder>
+                 <zorder>lineEdit_manualid</zorder>
                 </widget>
                </widget>
               </item>
@@ -1542,8 +1629,8 @@ p, li { white-space: pre-wrap; }
      <y>946</y>
     </hint>
     <hint type="destinationlabel">
-     <x>282</x>
-     <y>833</y>
+     <x>293</x>
+     <y>823</y>
     </hint>
    </hints>
   </connection>
@@ -1574,8 +1661,8 @@ p, li { white-space: pre-wrap; }
      <y>946</y>
     </hint>
     <hint type="destinationlabel">
-     <x>321</x>
-     <y>798</y>
+     <x>332</x>
+     <y>703</y>
     </hint>
    </hints>
   </connection>
@@ -1586,8 +1673,8 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>399</x>
-     <y>903</y>
+     <x>421</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
      <x>282</x>
@@ -1602,12 +1689,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>399</x>
-     <y>903</y>
+     <x>421</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
-     <x>321</x>
-     <y>798</y>
+     <x>332</x>
+     <y>703</y>
     </hint>
    </hints>
   </connection>
@@ -1618,8 +1705,8 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>399</x>
-     <y>903</y>
+     <x>421</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
      <x>290</x>
@@ -1634,12 +1721,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>399</x>
-     <y>903</y>
+     <x>421</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
-     <x>356</x>
-     <y>862</y>
+     <x>427</x>
+     <y>774</y>
     </hint>
    </hints>
   </connection>
@@ -1650,12 +1737,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>399</x>
-     <y>903</y>
+     <x>421</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
-     <x>469</x>
-     <y>862</y>
+     <x>558</x>
+     <y>774</y>
     </hint>
    </hints>
   </connection>
@@ -1666,12 +1753,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>399</x>
-     <y>903</y>
+     <x>421</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
-     <x>141</x>
-     <y>862</y>
+     <x>163</x>
+     <y>774</y>
     </hint>
    </hints>
   </connection>
@@ -1682,12 +1769,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>399</x>
-     <y>903</y>
+     <x>421</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
-     <x>248</x>
-     <y>862</y>
+     <x>296</x>
+     <y>774</y>
     </hint>
    </hints>
   </connection>
@@ -1698,12 +1785,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>399</x>
-     <y>903</y>
+     <x>421</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
-     <x>576</x>
-     <y>862</y>
+     <x>664</x>
+     <y>774</y>
     </hint>
    </hints>
   </connection>
@@ -1714,12 +1801,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>267</x>
-     <y>543</y>
+     <x>281</x>
+     <y>449</y>
     </hint>
     <hint type="destinationlabel">
-     <x>180</x>
-     <y>570</y>
+     <x>188</x>
+     <y>476</y>
     </hint>
    </hints>
   </connection>
@@ -1730,12 +1817,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>267</x>
-     <y>543</y>
+     <x>281</x>
+     <y>449</y>
     </hint>
     <hint type="destinationlabel">
-     <x>504</x>
-     <y>574</y>
+     <x>521</x>
+     <y>480</y>
     </hint>
    </hints>
   </connection>
@@ -1746,12 +1833,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>348</x>
-     <y>754</y>
+     <x>370</x>
+     <y>664</y>
     </hint>
     <hint type="destinationlabel">
-     <x>603</x>
-     <y>785</y>
+     <x>688</x>
+     <y>695</y>
     </hint>
    </hints>
   </connection>
@@ -1762,12 +1849,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>348</x>
-     <y>754</y>
+     <x>370</x>
+     <y>664</y>
     </hint>
     <hint type="destinationlabel">
-     <x>681</x>
-     <y>792</y>
+     <x>767</x>
+     <y>702</y>
     </hint>
    </hints>
   </connection>
@@ -1778,12 +1865,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>358</x>
-     <y>1078</y>
+     <x>380</x>
+     <y>1006</y>
     </hint>
     <hint type="destinationlabel">
-     <x>603</x>
-     <y>1046</y>
+     <x>688</x>
+     <y>969</y>
     </hint>
    </hints>
   </connection>
@@ -1794,12 +1881,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>358</x>
-     <y>1078</y>
+     <x>380</x>
+     <y>1006</y>
     </hint>
     <hint type="destinationlabel">
-     <x>681</x>
-     <y>1054</y>
+     <x>767</x>
+     <y>977</y>
     </hint>
    </hints>
   </connection>
@@ -1810,12 +1897,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>433</x>
-     <y>469</y>
+     <x>455</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>180</x>
-     <y>540</y>
+     <x>188</x>
+     <y>446</y>
     </hint>
    </hints>
   </connection>
@@ -1826,12 +1913,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>433</x>
-     <y>469</y>
+     <x>455</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>267</x>
-     <y>543</y>
+     <x>281</x>
+     <y>449</y>
     </hint>
    </hints>
   </connection>
@@ -1842,12 +1929,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>490</x>
-     <y>469</y>
+     <x>512</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>433</x>
-     <y>543</y>
+     <x>451</x>
+     <y>449</y>
     </hint>
    </hints>
   </connection>
@@ -1858,12 +1945,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>472</x>
-     <y>469</y>
+     <x>494</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>180</x>
-     <y>570</y>
+     <x>188</x>
+     <y>476</y>
     </hint>
    </hints>
   </connection>
@@ -1874,12 +1961,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>280</x>
-     <y>469</y>
+     <x>302</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>504</x>
-     <y>574</y>
+     <x>521</x>
+     <y>480</y>
     </hint>
    </hints>
   </connection>
@@ -1890,12 +1977,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>245</x>
-     <y>469</y>
+     <x>267</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>180</x>
-     <y>655</y>
+     <x>188</x>
+     <y>561</y>
     </hint>
    </hints>
   </connection>
@@ -1906,12 +1993,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>333</x>
-     <y>469</y>
+     <x>355</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>501</x>
-     <y>655</y>
+     <x>518</x>
+     <y>561</y>
     </hint>
    </hints>
   </connection>
@@ -1922,12 +2009,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>510</x>
-     <y>469</y>
+     <x>527</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>681</x>
-     <y>653</y>
+     <x>767</x>
+     <y>559</y>
     </hint>
    </hints>
   </connection>
@@ -1938,12 +2025,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>367</x>
-     <y>600</y>
+     <x>386</x>
+     <y>507</y>
     </hint>
     <hint type="destinationlabel">
-     <x>501</x>
-     <y>601</y>
+     <x>518</x>
+     <y>507</y>
     </hint>
    </hints>
   </connection>
@@ -1954,12 +2041,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>367</x>
-     <y>600</y>
+     <x>386</x>
+     <y>507</y>
     </hint>
     <hint type="destinationlabel">
-     <x>678</x>
-     <y>604</y>
+     <x>764</x>
+     <y>510</y>
     </hint>
    </hints>
   </connection>
@@ -1970,12 +2057,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>170</x>
-     <y>469</y>
+     <x>192</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>152</x>
-     <y>570</y>
+     <x>176</x>
+     <y>476</y>
     </hint>
    </hints>
   </connection>
@@ -1986,12 +2073,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>469</y>
+     <x>133</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>126</x>
-     <y>601</y>
+     <x>150</x>
+     <y>507</y>
     </hint>
    </hints>
   </connection>
@@ -2002,12 +2089,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>151</x>
-     <y>469</y>
+     <x>173</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>367</x>
-     <y>600</y>
+     <x>386</x>
+     <y>507</y>
     </hint>
    </hints>
   </connection>
@@ -2018,12 +2105,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>170</x>
-     <y>469</y>
+     <x>192</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>501</x>
-     <y>601</y>
+     <x>518</x>
+     <y>507</y>
     </hint>
    </hints>
   </connection>
@@ -2034,12 +2121,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>227</x>
-     <y>469</y>
+     <x>249</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>678</x>
-     <y>604</y>
+     <x>764</x>
+     <y>510</y>
     </hint>
    </hints>
   </connection>
@@ -2050,12 +2137,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>367</x>
-     <y>505</y>
+     <x>386</x>
+     <y>409</y>
     </hint>
     <hint type="destinationlabel">
-     <x>675</x>
-     <y>511</y>
+     <x>761</x>
+     <y>414</y>
     </hint>
    </hints>
   </connection>
@@ -2066,12 +2153,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>367</x>
-     <y>505</y>
+     <x>386</x>
+     <y>409</y>
     </hint>
     <hint type="destinationlabel">
-     <x>669</x>
-     <y>508</y>
+     <x>755</x>
+     <y>411</y>
     </hint>
    </hints>
   </connection>
@@ -2082,12 +2169,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>123</x>
-     <y>469</y>
+     <x>145</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>152</x>
-     <y>511</y>
+     <x>176</x>
+     <y>414</y>
     </hint>
    </hints>
   </connection>
@@ -2098,12 +2185,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>127</x>
-     <y>469</y>
+     <x>149</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>367</x>
-     <y>505</y>
+     <x>386</x>
+     <y>409</y>
     </hint>
    </hints>
   </connection>
@@ -2114,12 +2201,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>232</x>
-     <y>469</y>
+     <x>254</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>675</x>
-     <y>511</y>
+     <x>761</x>
+     <y>414</y>
     </hint>
    </hints>
   </connection>
@@ -2130,12 +2217,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>427</x>
-     <y>469</y>
+     <x>449</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>669</x>
-     <y>508</y>
+     <x>755</x>
+     <y>411</y>
     </hint>
    </hints>
   </connection>
@@ -2146,12 +2233,12 @@ p, li { white-space: pre-wrap; }
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>224</x>
-     <y>903</y>
+     <x>246</x>
+     <y>819</y>
     </hint>
     <hint type="destinationlabel">
-     <x>684</x>
-     <y>862</y>
+     <x>770</x>
+     <y>774</y>
     </hint>
    </hints>
   </connection>
@@ -2162,12 +2249,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>157</x>
-     <y>838</y>
+     <x>168</x>
+     <y>823</y>
     </hint>
     <hint type="destinationlabel">
-     <x>460</x>
-     <y>882</y>
+     <x>549</x>
+     <y>796</y>
     </hint>
    </hints>
   </connection>
@@ -2178,12 +2265,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>108</x>
-     <y>881</y>
+     <x>130</x>
+     <y>795</y>
     </hint>
     <hint type="destinationlabel">
-     <x>675</x>
-     <y>882</y>
+     <x>761</x>
+     <y>796</y>
     </hint>
    </hints>
   </connection>
@@ -2194,23 +2281,39 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>219</x>
-     <y>881</y>
+     <x>241</x>
+     <y>795</y>
     </hint>
     <hint type="destinationlabel">
-     <x>460</x>
-     <y>882</y>
+     <x>549</x>
+     <y>796</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_manualid</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEdit_manualid</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>143</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>273</x>
+     <y>279</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="buttonGroup_instrument"/>
+  <buttongroup name="buttonGroup_segmentGuiding"/>
+  <buttongroup name="buttonGroup_guider"/>
+  <buttongroup name="buttonGroup_idAttitude"/>
+  <buttongroup name="buttonGroup_starSelector"/>
   <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
   <buttongroup name="buttonGroup_name"/>
-  <buttongroup name="buttonGroup_starSelector"/>
-  <buttongroup name="buttonGroup_guider"/>
-  <buttongroup name="buttonGroup_segmentGuiding"/>
-  <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_idAttitude"/>
  </buttongroups>
 </ui>
