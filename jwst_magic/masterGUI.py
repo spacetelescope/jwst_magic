@@ -156,6 +156,7 @@ class MasterGui(QMainWindow):
         self.observation_num = ''
         self.visit_num = ''
         self.gs_id = ''
+        self.apt_guider = ''
         self.gs_ra = ''
         self.gs_dec = ''
 
@@ -228,6 +229,7 @@ class MasterGui(QMainWindow):
         # Standard output and error
         self.textEdit_log.setFont(QtGui.QFont("Courier New"))
         self.buttonGroup_name.buttonClicked.connect(self.update_naming_method)
+        self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
         # Main window widgets
         self.pushButton_run.clicked.connect(self.run_tool)
@@ -237,6 +239,7 @@ class MasterGui(QMainWindow):
         self.pushButton_inputImage.clicked.connect(self.update_input)
         self.lineEdit_inputImage.editingFinished.connect(self.update_input)
         self.buttonGroup_guider.buttonClicked.connect(self.update_filepreview)
+        self.buttonGroup_guider.buttonClicked.connect(self.check_guider_against_apt)
         self.lineEdit_root.editingFinished.connect(self.update_filepreview)
         self.pushButton_root.clicked.connect(self.on_click_root)
         self.pushButton_out.clicked.connect(self.on_click_out)
@@ -721,13 +724,35 @@ class MasterGui(QMainWindow):
 
         self.update_filepreview()
 
+    def check_guider_against_apt(self):
+        if self.apt_guider != '' and self.buttonGroup_guider.checkedButton() is not None:
+            # Check the guider in the APT file matches what's chosen in the GUI
+            if int(self.apt_guider) != int(self.buttonGroup_guider.checkedButton().text()):
+                self.mismatched_apt_guider_dialog()
+
     def update_apt_gs_values(self):
         # Query APT + call FGSCountrate tool for Guide Star Information
-        self.program_id = int(self.lineEdit_commid.text().lower())
-        self.observation_num = int(self.comboBox_obs.currentText())
-        self.visit_num = 1  # Will we ever have a visit that's not 1?
+        if self.radioButton_name_manual.isChecked():
+            if self.lineEdit_manualid.text() == '' and self.lineEdit_manualobs.text() == '':
+                self.program_id, self.observation_num, self.visit_num = '', '', ''
+                self.gs_id, self.gs_ra, self.gs_dec = '', '', ''
+            elif self.lineEdit_manualid.text() != '' and self.lineEdit_manualobs.text() != '':
+                self.program_id = int(self.lineEdit_manualid.text().lower())
+                self.observation_num = int(self.lineEdit_manualobs.text().lower())
+                self.visit_num = 1  # Will we ever have a visit that's not 1?
+                self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
+            else:
+                raise ValueError('Must set both program ID and observation number to use APT')
+        elif self.radioButton_name_commissioning.isChecked():
+            self.program_id = int(self.lineEdit_commid.text().lower())
+            self.observation_num = int(self.comboBox_obs.currentText())
+            self.visit_num = 1  # Will we ever have a visit that's not 1?
+            self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
 
-        self.gs_id, _, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
+        # Check the guider in the APT file matches what's chosen in the GUI
+        self.check_guider_against_apt()
+
+        # Update GSID in image normalization
         self.lineEdit_normalize.setText(str(self.gs_id))
 
     def update_commissioning_name(self):
@@ -796,6 +821,18 @@ class MasterGui(QMainWindow):
         no_guider_dialog.setInformativeText('The tool will not be able to continue. Please select Guider 1 or 2.')
         no_guider_dialog.setStandardButtons(QMessageBox.Ok)
         no_guider_dialog.exec()
+
+    def mismatched_apt_guider_dialog(self):
+        mismatched_apt_guider_dialog = QMessageBox()
+        mismatched_apt_guider_dialog.setText('Current guider does not match APT file' + ' ' * 30)
+        mismatched_apt_guider_dialog.setInformativeText('The GUI is currently set to use GUIDER{}, but the APT file '
+                                                        'you have selected has the guider set as GUIDER{}. '
+                                                        'Please change your guider selection to match the '
+                                                        'APT file.'.format(
+                                                         int(self.buttonGroup_guider.checkedButton().text()),
+                                                         self.apt_guider))
+        mismatched_apt_guider_dialog.setStandardButtons(QMessageBox.Ok)
+        mismatched_apt_guider_dialog.exec()
 
     def no_root_dialog(self):
         self.no_root_dialog_box = QMessageBox()
@@ -1273,6 +1310,10 @@ class MasterGui(QMainWindow):
         # Pull out the guide star ID and the guider number
         gs_id = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStar"][0].text
         guider = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "Guider"][0].text
+
+        # Account for if the guider is written as "guider 1" or "guider1"
+        if not isinstance(guider, int):
+            guider = guider.lower().replace(' ', '').split('guider')[1]
 
         # Tear down temporary directory
         shutil.rmtree('temp_apt')
