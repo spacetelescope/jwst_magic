@@ -610,6 +610,8 @@ def check_override_overwrite(out_dir, program_id, observation_num, visit_num,
 
         if isinstance(obs, str):
             plural_obs_num_match = ',' in obs or '-' in obs
+        else:
+            plural_obs_num_match = None
 
         # Determine if the current file matches the new one
         # Compare integers if only 1 (or no) obs
