@@ -21,6 +21,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -55,13 +56,15 @@ Jenkins because they test the GUI.
 from datetime import datetime
 import os
 import shutil
+import sys
 
 # Third Party Imports
 import numpy as np
 JENKINS = 'jenkins' in os.getcwd()
 if not JENKINS:
     from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QDialogButtonBox
+    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
+    from pytestqt import qtbot
 import pytest
 
 # Local Imports
@@ -101,7 +104,7 @@ def test_directory(test_dir=TEST_DIRECTORY):
     test_dir : str
         Path to directory used for testing
     """
-    os.makedirs(test_dir)  # creates directory with default mode=511
+    utils.ensure_dir_exists(test_dir)  # creates directory with default mode=511
 
     yield test_dir
     print("teardown test directory")
@@ -146,6 +149,9 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
         segment_override_command = f.read()
     assert segment_override_command == correct_command
 
+    # Delete file
+    os.remove(segment_override_file)
+
 
 sof_valueerror_parameters = [(20, 1, 'out of range'),
                              ('zero', 2, 'invalid literal for int()'),
@@ -169,6 +175,7 @@ def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider,
             parameter_dialog=False
         )
     assert error_text in str(excinfo.value)
+
 
 def test_generate_override_file_valueerrors(test_directory):
     # Define the input file locations and parameters
@@ -332,6 +339,7 @@ def test_SOF_parameters_dialog():
         '1141', '7', '1', 0.6, None, None
     )
 
+
 pof_dialog_parameters = [('1142', '8', '2', None, None, (None, '1142', '8', '2', None, 0.0, 0.01)),
                          ('1142', '8', '2', 0.0123, 0.50, (None, '1142', '8', '2', None, 0.0123, 0.50))]
 @pytest.mark.parametrize('program_id, obs_num, visit_num, countrate_factor, countrate_uncertainty_factor, out_params', pof_dialog_parameters)
@@ -364,6 +372,51 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     # params = (guide_star_params_dict, program_id, observation_num, visit_num,
     #           threshold_factor, countrate_factor)
     assert params == out_params
+
+#from ..masterGUI import run_MasterGui
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+def test_no_image_needed_for_pof(qtbot):
+    """Test that POF dialog box will pop up without an image"""
+    # Initialize main window
+    global app
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+
+    master_gui = MasterGui(root=ROOT, in_file=None, out_dir=__location__,
+                           segment_guiding=True, app=app, itm=False)
+
+    qtbot.addWidget(master_gui)
+
+    # Set main GUI parameters
+    qtbot.mouseClick(master_gui.buttonGroup_name.buttons()[1], QtCore.Qt.LeftButton)   # set manual naming method
+    qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
+    qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
+    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)  # set to guider 1
+    assert master_gui.buttonGroup_guider.checkedButton().text() == '1'
+
+    master_gui.groupBox_imageConverter.setChecked(False)
+    master_gui.groupBox_starSelector.setChecked(False)
+    master_gui.groupBox_fileWriter.setChecked(False)
+    master_gui.groupBox_segmentGuiding.setChecked(True)
+
+    qtbot.mouseClick(master_gui.radioButton_photometryOverride, QtCore.Qt.LeftButton)
+
+    # Click run button and then the OK button of the pop up
+    def handle_dialog():
+        qtbot.mouseClick(master_gui._test_sg_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+
+    with qtbot.capture_exceptions() as exceptions:
+        QtCore.QTimer.singleShot(500, handle_dialog)
+        qtbot.mouseClick(master_gui.pushButton_run, QtCore.Qt.LeftButton)
+
+    # Check the default state leads to a specific error
+    expected_err = "invalid literal for int() with base 10: ''"
+    assert expected_err in str(exceptions[0][1]), "Wrong error captured. Caught: {}'', Expected: {}".format(
+        str(exceptions[0][1]), expected_err)
+
+    app.exit()
+
 
 def test_write_override_report(test_directory):
     # Define the input file locations and parameters

@@ -12,3 +12,4 @@ requests
 pytest
 photutils
 scipy
+pytest-qt

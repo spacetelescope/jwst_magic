@@ -32,7 +32,8 @@ INSTALL_REQUIRES = [
     'requests',
     'pytest',
     'photutils',
-    'scipy'
+    'scipy',
+    'pytest-qt'
 ]
 
 # Determine if PyQt5 needs to be included in the install_requires
