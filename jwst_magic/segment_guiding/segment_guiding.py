@@ -15,6 +15,7 @@ Authors
     - Colin Cox (original creator, May 2017)
     - Lauren Chambers (modifications in 2018)
     - Keira Brooks (modifications in 2018)
+    - Shannon Osborne (modifications in 2020)
 
 Use
 ---
@@ -892,9 +893,9 @@ class SegmentGuidingCalculator:
 def generate_segment_override_file(segment_infile, guider,
                                    program_id, observation_num, visit_num,
                                    root=None, out_dir=None, selected_segs=None,
-                                   click_to_select_gui=True,
-                                   data=None, guide_star_params_dict=None,
-                                   threshold_factor=0.9, parameter_dialog=True,
+                                   click_to_select_gui=True, data=None,
+                                   guide_star_params_dict=None, threshold_factor=0.9,
+                                   parameter_dialog=True, dialog_obj=None,
                                    oss_factor=0.6, master_gui_app=None):
     """Run the segment guiding tool to select guide and reference stars and
     generate a segment guiding override file.
@@ -942,11 +943,14 @@ def generate_segment_override_file(segment_infile, guider,
     threshold_factor : float, optional
         The factor by which countrates are multiplied to determine
         the countrate uncertainty
-    parameter_dialog : bool, optional
+    parameter_dialog : SegmentGuidingDialog object, optional
         Prompt the user to enter parameters (countrate factors, APT
         numbers, RA, Dec, PA, and boresight offset) from a dialog box
         rather than manually providing arguments.
         Required if guide_star_params_dict=None
+    dialog_obj : SegmentGuidingDialog object, optional
+        If parameter_dialog is True, can pass a pre-set dialog object or
+        re-create it if dialog_obj=None
     oss_factor : float, optional
         The factor that OSS applies to the 3x3 box countrate in order to represent
         the full number of countrate that we care about.
@@ -961,11 +965,12 @@ def generate_segment_override_file(segment_infile, guider,
     try:
         # Get the guide star parameters
         if parameter_dialog:
-            SOF_parameter_dialog = SegmentGuidingGUI.SegmentGuidingDialog(
-                "SOF", guider, program_id, observation_num, visit_num, log=LOGGER
-            )
-            accepted = SOF_parameter_dialog.exec()
-            params = SOF_parameter_dialog.get_dialog_parameters() if accepted else None
+            if dialog_obj is None:
+                dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
+                    "SOF", guider, program_id, observation_num, visit_num, log=None
+                )
+            accepted = dialog_obj.exec()
+            params = dialog_obj.get_dialog_parameters() if accepted else None
 
             if params is not None:
                 guide_star_params_dict, program_id, observation_num, visit_num, \
@@ -1041,7 +1046,7 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
                                       countrate_factor=None,
                                       countrate_uncertainty_factor=None,
                                       out_dir=None,
-                                      parameter_dialog=True):
+                                      parameter_dialog=True, dialog_obj=None):
     """Generate a photometry override file (used for commissioning activities
     where the PSFs are stacked but unphased, like during MIMF).
 
@@ -1068,6 +1073,9 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         Prompt the user to enter parameters (countrate factors, APT
         numbers) from a dialog box rather than manually providing arguments.
         Required if countrate_factor=None
+    dialog_obj : SegmentGuidingDialog object, optional
+        If parameter_dialog is True, can pass a pre-set dialog object or
+        re-create it if dialog_obj=None
     """
 
     utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
@@ -1076,11 +1084,12 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
     try:
         # Get the program parameters and countrate factor
         if parameter_dialog:
-            POF_parameter_dialog = SegmentGuidingGUI.SegmentGuidingDialog(
-                "POF", None, program_id, observation_num, visit_num, log=LOGGER
-            )
-            accepted = POF_parameter_dialog.exec()
-            params = POF_parameter_dialog.get_dialog_parameters() if accepted else None
+            if dialog_obj is None:
+                dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
+                    "POF", None, program_id, observation_num, visit_num, log=LOGGER
+                )
+            accepted = dialog_obj.exec()
+            params = dialog_obj.get_dialog_parameters() if accepted else None
 
             _, program_id, observation_num, visit_num, _, countrate_factor, countrate_uncertainty_factor = params
 
