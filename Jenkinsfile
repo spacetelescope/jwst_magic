@@ -25,6 +25,7 @@ if (utils.scm_checkout()) return
 
 // Define helpful variables
 CONDA_CHANNEL = "http://ssb.stsci.edu/astroconda"
+CONDA_CHANNEL = "conda-forge"
 CONDA_INSTALL = "conda install -y -q --file=requirements.txt"
 
 // Establish variables for the matrix

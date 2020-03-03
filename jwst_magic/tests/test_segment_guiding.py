@@ -373,7 +373,6 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     #           threshold_factor, countrate_factor)
     assert params == out_params
 
-#from ..masterGUI import run_MasterGui
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 def test_no_image_needed_for_pof(qtbot):
     """Test that POF dialog box will pop up without an image"""
