@@ -24,8 +24,8 @@
 if (utils.scm_checkout()) return
 
 // Define helpful variables
-CONDA_CHANNEL = "http://ssb.stsci.edu/astroconda"
-CONDA_CHANNEL = "conda-forge"
+ASTROCONDA_CHANNEL = "http://ssb.stsci.edu/astroconda"
+CONDAFORGE_CHANNEL = "conda-forge"
 CONDA_INSTALL = "conda install -y -q --file=requirements.txt"
 
 // Establish variables for the matrix
@@ -59,7 +59,8 @@ for (os in matrix_os) {
         // any packages that have to be installed with pip
         bc.build_cmds = [
             // Add astroconda as conda channel
-            "conda config --add channels '${CONDA_CHANNEL}' ",
+            "conda config --add channels '${ASTROCONDA_CHANNEL}' ",
+            "conda config --add channels '${CONDAFORGE_CHANNEL}' ",
             // Install package requirements for given python version
             "${CONDA_INSTALL} python=${python_ver}",
             // Install fgscountrate package
