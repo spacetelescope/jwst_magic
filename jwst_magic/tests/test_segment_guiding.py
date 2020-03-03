@@ -65,12 +65,14 @@ if not JENKINS:
 import pytest
 
 # Local Imports
-from utils import parametrized_data
-from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file,
+from .utils import parametrized_data
+from ..utils import utils
+from ..segment_guiding.segment_guiding import (generate_segment_override_file,
                                                         SegmentGuidingCalculator,
                                                         generate_photometry_override_file)
 if not JENKINS:
-    from jwst_magic.segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
+    from ..segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
+    from ..masterGUI import MasterGui
 
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
