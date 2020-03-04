@@ -24,12 +24,13 @@
 if (utils.scm_checkout()) return
 
 // Define helpful variables
-CONDA_CHANNEL = "http://ssb.stsci.edu/astroconda"
+ASTROCONDA_CHANNEL = "http://ssb.stsci.edu/astroconda"
+CONDAFORGE_CHANNEL = "conda-forge"
 CONDA_INSTALL = "conda install -y -q --file=requirements.txt"
 
 // Establish variables for the matrix
 matrix_os = ["linux-stable"] // (Note that Jenkins can only be run with Linux, not MacOSX/Windows)
-matrix_python = ["3.5", "3.6", "3.7"]
+matrix_python = ["3.6", "3.7"]
 
 // Set up the matrix of builds
 matrix = []
@@ -58,7 +59,8 @@ for (os in matrix_os) {
         // any packages that have to be installed with pip
         bc.build_cmds = [
             // Add astroconda as conda channel
-            "conda config --add channels '${CONDA_CHANNEL}' ",
+            "conda config --add channels '${ASTROCONDA_CHANNEL}' ",
+            "conda config --add channels '${CONDAFORGE_CHANNEL}' ",
             // Install package requirements for given python version
             "${CONDA_INSTALL} python=${python_ver}",
             // Install fgscountrate package
@@ -72,8 +74,6 @@ for (os in matrix_os) {
         bc.test_cmds = [
             // Run pytest
             "pytest --junitxml=results.xml",
-            // Add a truly magical command that makes Jenkins work for Python 3.5
-            "sed -i 's/file=\"[^\"]*\"//g;s/line=\"[^\"]*\"//g;s/skips=\"[^\"]*\"//g' results.xml"
         ]
 
         // Add the build to the matrix

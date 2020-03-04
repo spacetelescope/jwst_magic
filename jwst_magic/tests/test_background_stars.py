@@ -20,9 +20,9 @@ if not JENKINS:
     from PyQt5.QtWidgets import QApplication
 import pytest
 
-from jwst_magic.convert_image.background_stars import add_background_stars
+from ..convert_image.background_stars import add_background_stars
 if not JENKINS:
-    from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsWindow
+    from ..convert_image.background_stars_GUI import BackgroundStarsWindow
 
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

@@ -16,8 +16,9 @@ import shutil
 from astropy.io import ascii as asc
 import pytest
 
-from utils import parametrized_data
-from jwst_magic.star_selector.select_psfs import select_psfs
+from .utils import parametrized_data
+from ..star_selector.select_psfs import select_psfs
+from ..utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
@@ -31,7 +32,6 @@ VISIT_NUM = 1
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 
 PARAMETRIZED_DATA = parametrized_data()['test_select_psfs']
-
 
 
 @pytest.fixture(scope="module")
@@ -48,7 +48,7 @@ def test_directory(test_dir=TEST_DIRECTORY):
     test_dir : str
         Path to directory used for testing
     """
-    os.mkdir(test_dir)  # creates directory with default mode=511
+    utils.ensure_dir_exists(test_dir)  # creates directory with default mode=511
 
     yield test_dir
     print("teardown test directory")

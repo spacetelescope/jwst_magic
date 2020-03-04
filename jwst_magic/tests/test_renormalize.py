@@ -16,7 +16,7 @@ Use
 import numpy as np
 import pytest
 
-from jwst_magic.convert_image.renormalize import NormalizeToCountrate
+from ..convert_image.renormalize import NormalizeToCountrate
 
 norm_parameters = [
     (12.5, 'FGS Magnitude', 1, 7575858.324193505, 12.5),
