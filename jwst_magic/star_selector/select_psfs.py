@@ -751,7 +751,8 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             all_found_psfs_path = None
 
         # Save PNG of image and all PSF locations in out_dir
-        plot_centroids(data, coords, root, guider, out_dir)
+        if not JENKINS:
+            plot_centroids(data, coords, root, guider, out_dir)
 
 
         if all_cols:

@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 
 from setuptools import setup, find_packages
+import socket
 
 VERSION = '1.0.0'
 
@@ -29,7 +30,7 @@ INSTALL_REQUIRES = [
     'fgscountrate',
     'matplotlib',
     'notebook',
-    'pysiaf',
+    'pysiaf>=0.7.1',
     'pyyaml',
     'requests',
     'pytest',
@@ -43,6 +44,10 @@ try:
 except ImportError:
     INSTALL_REQUIRES.append('PyQt5')
 
+# Only install pytest-qt if not on SOGS (not available for install)
+if "sogs" not in socket.gethostname():
+    INSTALL_REQUIRES.append('pytest-qt')
+
 setup(name='jwst_magic',
       version=VERSION,
       description='Multi-Application Guiding Interface for Commissioning (MAGIC)',
@@ -53,7 +58,7 @@ setup(name='jwst_magic',
         'License :: OSI Approved :: BSD License',
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Scientific/Engineering :: Astronomy'
       ],
