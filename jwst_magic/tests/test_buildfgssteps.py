@@ -19,10 +19,10 @@ import numpy as np
 from photutils import find_peaks
 import pytest
 
-from utils import parametrized_data
-from jwst_magic.fsw_file_writer import write_files
-from jwst_magic.fsw_file_writer.buildfgssteps import BuildFGSSteps
-from jwst_magic.utils import utils
+from .utils import parametrized_data
+from ..fsw_file_writer import write_files
+from ..fsw_file_writer.buildfgssteps import BuildFGSSteps
+from ..utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')

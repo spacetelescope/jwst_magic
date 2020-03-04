@@ -5,10 +5,11 @@ matplotlib
 notebook
 numpy
 pyqt<6.0
-pysiaf
-python>=3.5
+pysiaf>=0.7.1
+python>=3.6
 pyyaml
 requests
 pytest
 photutils
 scipy
+pytest-qt
