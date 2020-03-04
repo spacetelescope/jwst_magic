@@ -1035,7 +1035,9 @@ def generate_segment_override_file(segment_infile, guider,
         # Write a SOF
         sg.calculate_effective_ra_dec()
         sg.write_override_file()  # Print and save final output
-        sg.plot_segments()  # Save .pngs of plots
+
+        if not JENKINS:
+            sg.plot_segments()  # Save .pngs of plots
 
     except Exception as e:
         LOGGER.exception(e)
