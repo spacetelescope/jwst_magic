@@ -64,7 +64,6 @@ JENKINS = 'jenkins' in os.getcwd()
 if not JENKINS:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import QDialogButtonBox, QApplication
-    from pytestqt import qtbot
 import pytest
 
 # Local Imports
@@ -77,6 +76,9 @@ if not JENKINS:
     from ..segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
     from ..masterGUI import MasterGui
 
+SOGS = utils.on_sogs_network()
+if not SOGS:
+    from pytestqt import qtbot
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_sgt"
@@ -374,6 +376,7 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     assert params == out_params
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
 def test_no_image_needed_for_pof(qtbot):
     """Test that POF dialog box will pop up without an image"""
     # Initialize main window

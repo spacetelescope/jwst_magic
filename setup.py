@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 
 from setuptools import setup, find_packages
+import socket
 
 INSTALL_REQUIRES = [
     'numpy',
@@ -32,8 +33,7 @@ INSTALL_REQUIRES = [
     'requests',
     'pytest',
     'photutils',
-    'scipy',
-    'pytest-qt'
+    'scipy'
 ]
 
 # Determine if PyQt5 needs to be included in the install_requires
@@ -41,6 +41,10 @@ try:
     import PyQt5
 except ImportError:
     INSTALL_REQUIRES.append('PyQt5')
+
+# Only install pytest-qt if not on SOGS (not available for install)
+if "sogs" not in socket.gethostname():
+    INSTALL_REQUIRES.append('pytest-qt')
 
 setup(name='jwst_magic',
       version='0.0',
