@@ -75,7 +75,6 @@ for (os in matrix_os) {
             // Run pytest
             "pytest --junitxml=results.xml",
         ]
-        ]
 
         // Add the build to the matrix
         matrix += bc
