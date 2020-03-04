@@ -943,7 +943,7 @@ def generate_segment_override_file(segment_infile, guider,
     threshold_factor : float, optional
         The factor by which countrates are multiplied to determine
         the countrate uncertainty
-    parameter_dialog : SegmentGuidingDialog object, optional
+    parameter_dialog : bool, optional
         Prompt the user to enter parameters (countrate factors, APT
         numbers, RA, Dec, PA, and boresight offset) from a dialog box
         rather than manually providing arguments.
