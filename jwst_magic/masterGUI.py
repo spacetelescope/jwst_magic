@@ -7,6 +7,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -159,6 +160,7 @@ class MasterGui(QMainWindow):
         self.apt_guider = ''
         self.gs_ra = ''
         self.gs_dec = ''
+        self._test_sg_dialog = None
 
         # Initialize main window object
         QMainWindow.__init__(self)
@@ -249,7 +251,6 @@ class MasterGui(QMainWindow):
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
         self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
         self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
-        self.checkBox_useConvertedImage.toggled.connect(self.toggle_convert_im)
 
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
@@ -257,7 +258,6 @@ class MasterGui(QMainWindow):
         # Segment guiding widgets
         self.pushButton_regfileSegmentGuiding.clicked.connect(self.on_click_infile)
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
-        self.groupBox_segmentGuiding.toggled.connect(self.update_segment_guiding_shift)
 
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
@@ -342,7 +342,7 @@ class MasterGui(QMainWindow):
         """
         # Required
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        if self.lineEdit_inputImage.text() == "":
+        if self.lineEdit_inputImage.text() == "" and not self.radioButton_photometryOverride.isChecked():
             self.no_inputImage_dialog()
             return
         if not self.buttonGroup_guider.checkedButton():
@@ -461,11 +461,20 @@ class MasterGui(QMainWindow):
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():
+                # Initialize the dialog
+                self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
+                                       "POF", None, self.program_id, self.observation_num, self.visit_num, log=None
+                )
                 # Generate the file
                 segment_guiding.generate_photometry_override_file(
-                    root, self.program_id, self.observation_num, self.visit_num, out_dir=out_dir
+                    root, self.program_id, self.observation_num, self.visit_num, out_dir=out_dir,
+                    parameter_dialog=True, dialog_obj=self._test_sg_dialog
                 )
+
             else:
+                # Get APT program information from parsed header
+                self.parse_header(input_image)
+
                 # Define location of all_found_psfs catalog file
                 if self.radioButton_shifted.isChecked():
                     segment_infile = self.shifted_all_found_psfs_file
@@ -490,11 +499,18 @@ class MasterGui(QMainWindow):
                 selected_segs = self.lineEdit_regfileStarSelector.text()
 
                 # Run the tool and generate the file
+                # Initialize the dialog
+                self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
+                    "SOF", guider, program_id, observation_num, visit_num, log=None
+                )
+
+                # Generate the file
                 segment_guiding.generate_segment_override_file(
                     segment_infile, guider, self.program_id, self.observation_num,
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
                     root=root, out_dir=out_dir, selected_segs=selected_segs,
-                    click_to_select_gui=GUI, data=data, master_gui_app=self.app
+                    click_to_select_gui=GUI, data=data, master_gui_app=self.app,
+                    parameter_dialog=True, dialog_obj=self._test_sg_dialog
                 )
 
             # Update converted image preview
