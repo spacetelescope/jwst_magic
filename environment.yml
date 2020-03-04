@@ -9,7 +9,7 @@ dependencies:
 - notebook
 - numpy
 - pyqt<6.0
-- pysiaf
+- pysiaf>=0.7.1
 - python>=3.5
 - pyyaml
 - requests
