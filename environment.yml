@@ -10,7 +10,7 @@ dependencies:
 - numpy
 - pyqt<6.0
 - pysiaf>=0.7.1
-- python>=3.5
+- python>=3.6
 - pyyaml
 - requests
 - pytest

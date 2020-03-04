@@ -30,7 +30,7 @@ CONDA_INSTALL = "conda install -y -q --file=requirements.txt"
 
 // Establish variables for the matrix
 matrix_os = ["linux-stable"] // (Note that Jenkins can only be run with Linux, not MacOSX/Windows)
-matrix_python = ["3.5", "3.6", "3.7"]
+matrix_python = ["3.6", "3.7"]
 
 // Set up the matrix of builds
 matrix = []
@@ -74,8 +74,7 @@ for (os in matrix_os) {
         bc.test_cmds = [
             // Run pytest
             "pytest --junitxml=results.xml",
-            // Add a truly magical command that makes Jenkins work for Python 3.5
-            "sed -i 's/file=\"[^\"]*\"//g;s/line=\"[^\"]*\"//g;s/skips=\"[^\"]*\"//g' results.xml"
+        ]
         ]
 
         // Add the build to the matrix
