@@ -56,7 +56,7 @@ setup(name='jwst_magic',
         'License :: OSI Approved :: BSD License',
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Scientific/Engineering :: Astronomy'
       ],
