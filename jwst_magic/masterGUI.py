@@ -80,6 +80,8 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 SOGS_PATH = '***REMOVED***/guiding/'
+SOGS_PATH = '/Users/sosborne/Desktop/MAGIC/nonsogs_practices/'
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OUTPUT HANDLER
@@ -265,7 +267,7 @@ class MasterGui(QMainWindow):
 
     def setup_commissioning_naming(self):
         # If not on SOGS:
-        if not utils.on_sogs_network():
+        if utils.on_sogs_network():
             # Shut down selection boxes
             self.comboBox_practice.removeItem(0)
             self.comboBox_practice.setDisabled(True)
@@ -450,9 +452,6 @@ class MasterGui(QMainWindow):
         # Segment guiding
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.groupBox_segmentGuiding.isChecked():
-            # Pull info from header
-            self.parse_header(input_image)
-
             # If Id/Obs/Visit and/or GS info hasn't already been set by parse_header() or commissioning section
             if not all(hasattr(self, attr) for attr in ["program_id", "observation_num", "visit_num"]):
                 self.program_id, self.observation_num, self.visit_num = '', '', ''
@@ -501,7 +500,7 @@ class MasterGui(QMainWindow):
                 # Run the tool and generate the file
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
-                    "SOF", guider, program_id, observation_num, visit_num, log=None
+                    "SOF", guider, self.program_id, self.observation_num, self.visit_num, log=None
                 )
 
                 # Generate the file
@@ -1245,8 +1244,7 @@ class MasterGui(QMainWindow):
             self.update_converted_image_preview()
             self.update_shifted_image_preview()
 
-    @staticmethod
-    def query_apt_for_gs(program_id, obs_number):
+    def query_apt_for_gs(self, program_id, obs_number):
         """
         Function to take in the desired APT Program ID and observation number and
         output the ID, RA, and DEC of the guide star set under the Special Requirements
@@ -1260,9 +1258,9 @@ class MasterGui(QMainWindow):
 
         Parameters
         ----------
-        program_id : int
+        program_id : int or str
             The APT program ID of interest
-        obs_number : int
+        obs_number : int or str
             The observation number of interest
 
         Returns
@@ -1277,6 +1275,11 @@ class MasterGui(QMainWindow):
             DEC of the guide star from the program ID/Obs
 
         """
+        # Check program_id and obs_number are ints
+        if not isinstance(program_id, int):
+            program_id = int(program_id)
+        if not isinstance(obs_number, int):
+            obs_number = int(obs_number)
 
         # Build temporary directory
         if os.path.exists('temp_apt'):
@@ -1298,6 +1301,7 @@ class MasterGui(QMainWindow):
                 apt_list = glob.glob('/Applications/*APT*')
                 apt_path = apt_list[0]
             except IndexError:
+                self.lineEdit_normalize.setText('')
                 raise FileNotFoundError("APT not found in /Applications or ~/Applications")
         apt_path = apt_path.replace(' ', '\ ')  # fix issue with space in APT name to make path work
 
@@ -1319,6 +1323,7 @@ class MasterGui(QMainWindow):
         try:
             gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
         except IndexError:
+            self.lineEdit_normalize.setText('')
             raise ValueError("This observation doesn't have a Guide Star Special Requirement")
 
         # Pull out the guide star ID and the guider number
@@ -1339,6 +1344,7 @@ class MasterGui(QMainWindow):
         if len(data_frame) == 1:
             gsc_series = data_frame.iloc[0]
         else:
+            self.lineEdit_normalize.setText('')
             raise ValueError("This Guide Star ID points to multiple lines in catalog")
 
         # Pull RA and DEC

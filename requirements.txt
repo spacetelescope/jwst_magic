@@ -13,3 +13,4 @@ pytest
 photutils
 scipy
 pytest-qt
+bs4
