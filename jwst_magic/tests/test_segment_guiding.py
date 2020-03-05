@@ -77,10 +77,13 @@ if not JENKINS:
     from ..masterGUI import MasterGui
 
 SOGS = utils.on_sogs_network()
+SOGS = True
 if not SOGS:
     from pytestqt import qtbot
 
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+import pathlib
+__location__ = str(pathlib.Path(__file__).parent.absolute())
+#__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_sgt"
 SEGMENT_INFILE = os.path.join(__location__, 'data', '{}_ALLpsfs.txt'.format(ROOT))
 SELECTED_SEGS = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
@@ -112,6 +115,19 @@ def test_directory(test_dir=TEST_DIRECTORY):
     print("teardown test directory")
     if os.path.isdir(test_dir):
         shutil.rmtree(test_dir)
+
+@pytest.fixture()
+def master_gui():
+    """Set up QApplication object for the Master GUI"""
+    #global app
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+
+    master_gui = MasterGui(root=ROOT, in_file=None, out_dir=__location__,
+                           segment_guiding=True, app=app, itm=False)
+
+    return master_gui
 
 
 test_data = PARAMETRIZED_DATA['test_generate_segment_override_file']
@@ -377,17 +393,9 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
-def test_no_image_needed_for_pof(qtbot):
+def test_no_image_needed_for_pof(qtbot, master_gui):
     """Test that POF dialog box will pop up without an image"""
     # Initialize main window
-    global app
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-
-    master_gui = MasterGui(root=ROOT, in_file=None, out_dir=__location__,
-                           segment_guiding=True, app=app, itm=False)
-
     qtbot.addWidget(master_gui)
 
     # Set main GUI parameters
@@ -395,6 +403,9 @@ def test_no_image_needed_for_pof(qtbot):
     qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
     qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
     qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)  # set to guider 1
+    assert master_gui.buttonGroup_name.buttons()[1].isChecked()
+    assert master_gui.lineEdit_root.text() == ROOT
+    assert master_gui.textEdit_out.toPlainText() == __location__
     assert master_gui.buttonGroup_guider.checkedButton().text() == '1'
 
     master_gui.groupBox_imageConverter.setChecked(False)
@@ -410,14 +421,12 @@ def test_no_image_needed_for_pof(qtbot):
 
     with qtbot.capture_exceptions() as exceptions:
         QtCore.QTimer.singleShot(500, handle_dialog)
-        qtbot.mouseClick(master_gui.pushButton_run, QtCore.Qt.LeftButton)
+        qtbot.mouseClick(master_gui.pushButton_run, QtCore.Qt.LeftButton, delay=1)
 
     # Check the default state leads to a specific error
     expected_err = "invalid literal for int() with base 10: ''"
-    assert expected_err in str(exceptions[0][1]), "Wrong error captured. Caught: {}'', Expected: {}".format(
+    assert expected_err in str(exceptions[0][1]), "Wrong error captured. Caught: '{}', Expected: '{}'".format(
         str(exceptions[0][1]), expected_err)
-
-    app.exit()
 
 
 def test_write_override_report(test_directory):

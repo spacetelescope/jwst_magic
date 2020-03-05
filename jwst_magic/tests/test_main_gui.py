@@ -30,17 +30,22 @@ if not JENKINS:
 import pytest
 
 # Local Imports
-import jwst_magic
+from ..utils import utils
 
 if not JENKINS:
     from jwst_magic.masterGUI import MasterGui
+
+SOGS = utils.on_sogs_network()
+SOGS = True
+if not SOGS:
+    from pytestqt import qtbot
 
 ROOT = "test_main"
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 
 # Set this to True only if computer is on SOGS
-COMMISSIONING = True
+COM_PRACTICE_DIR = 'test_practice'
 
 @pytest.fixture()
 def test_directory(test_dir=TEST_DIRECTORY):
@@ -64,18 +69,27 @@ def test_directory(test_dir=TEST_DIRECTORY):
         shutil.rmtree(test_dir)
 
 
+@pytest.fixture()
+def master_gui():
+    """Set up QApplication object for the Master GUI"""
+    #global app
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+
+    master_gui = MasterGui(root=ROOT, in_file=None, out_dir=__location__,
+                           segment_guiding=True, app=app, itm=False)
+
+    return master_gui
+
+
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-@pytest.mark.skipif(not COMMISSIONING, reason="Can't import PyQt5 on Jenkins server.")
-def test_update_practice_commissioning(test_directory):
+@pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
+def test_change_practice_commissioning(master_gui):
     """
     Check that re-setting the practice name in the naming method section
     doesn't re-run the fgscountrate call
     """
-    # Initialize main window
-    app = QApplication(sys.argv)
-    master_gui = MasterGui(root='test', in_file=None, out_dir=test_directory,
-                           segment_guiding=True, app=app, itm=False)
-
     # Set main GUI parameters
     master_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
 
@@ -89,12 +103,12 @@ def test_update_practice_commissioning(test_directory):
     with patch.object(master_gui, 'update_apt_gs_values') as mock:
         master_gui.comboBox_practice.setCurrentIndex(1)
 
-    assert not mock.called, 'method should not have been called'
+    assert not mock.called, 'method should not have been called'''
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-@pytest.mark.skipif(not COMMISSIONING, reason="Can't import PyQt5 on Jenkins server.")
-def test_update_car_and_obs_commissioning(test_directory):
+@pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
+def test_change_car_and_obs_commissioning(master_gui):
     """
     Check that updating the car and obs in the naming method section
     re-runs the fgscountrate call and updates values
@@ -103,17 +117,12 @@ def test_update_car_and_obs_commissioning(test_directory):
     updated. If this test fails due to a mis-match of APT information, check the APT
     file by hand
     """
-    # Initialize main window
-    app = QApplication(sys.argv)
-    master_gui = MasterGui(root='test', in_file=None, out_dir=test_directory,
-                           segment_guiding=True, app=app, itm=False)
-
     # Set main GUI parameters
     master_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
 
     # Set naming method
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
-    master_gui.comboBox_practice.setCurrentText('test_practice')
+    master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
     master_gui.comboBox_car.setCurrentText('OTE-07')
     master_gui.comboBox_obs.setCurrentText('01')
 
@@ -143,8 +152,8 @@ def test_update_car_and_obs_commissioning(test_directory):
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-@pytest.mark.skipif(not COMMISSIONING, reason="Can't import PyQt5 on Jenkins server.")
-def test_update_apt_commissioning(test_directory):
+@pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
+def test_update_apt_button_commissioning(master_gui):
     """
     Check that if the "update apt" button is pressed in the naming method section
     re-runs the fgscountrate call and updates values
@@ -153,17 +162,12 @@ def test_update_apt_commissioning(test_directory):
     updated. If this test fails due to a mis-match of APT information, check the APT
     file by hand
     """
-    # Initialize main window
-    app = QApplication(sys.argv)
-    master_gui = MasterGui(root='test', in_file=None, out_dir=test_directory,
-                           segment_guiding=True, app=app, itm=False)
-
     # Set main GUI parameters
     master_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
 
     # Set naming method
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
-    master_gui.comboBox_practice.setCurrentText('test_practice')
+    master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
     master_gui.comboBox_car.setCurrentText('OTE-07')
     master_gui.comboBox_obs.setCurrentText('01')
 
@@ -194,22 +198,17 @@ def test_update_apt_commissioning(test_directory):
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-def test_use_apt_manual(test_directory):
+def test_use_apt_button_manual(master_gui):
     """
     Test that re-setting apt to blank re-sets program id/obs/visit attributes
     """
-    # Initialize main window
-    app = QApplication(sys.argv)
-    master_gui = MasterGui(root='test', in_file=None, out_dir=test_directory,
-                           segment_guiding=True, app=app, itm=False)
-
     # Set main GUI parameters
     master_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
 
     # Set basic info
     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
-    master_gui.lineEdit_root.setText('test')  # set root
-    master_gui.textEdit_out.setText(test_directory)  # set out directory
+    master_gui.lineEdit_root.setText(ROOT)  # set root
+    master_gui.textEdit_out.setText(__location__)  # set out directory
     master_gui.lineEdit_manualid.setText('1141')
     master_gui.lineEdit_manualobs.setText('01')
     master_gui.pushButton_manualid.click()
@@ -286,49 +285,59 @@ def test_apt_guider_disagree_commissioning(mock_dialog, test_directory):
         # Check setting to the matching guider is fine
         master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
         assert mock_dialog.call_count == 0  # Check dialog box doesn't pops up
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
+@patch('jwst_magic.masterGUI.MasterGui.mismatched_apt_guider_dialog', autospec=True)
+def test_apt_guider_disagree_commissioning(mock_dialog, master_gui):
+    """
+    Check that if the APT program expects a guider that doesn't match
+    the guider chosen in MAGIC, a pop up appears
+    """
+    # For commissioning method
+    # Guider set after choosing CAR/Obs
+    master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
+    master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
+    master_gui.comboBox_car.setCurrentText('OTE-07')
+    master_gui.comboBox_obs.setCurrentText('01')
 
-        # Check setting the wrong guider fails
-        master_gui.buttonGroup_guider.buttons()[0].click()  # set to guider 2
-        assert mock_dialog.called  # Check dialog box doesn't pops up
+    # Check setting to the matching guider is fine
+    master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
+    assert mock_dialog.call_count == 0  # Check dialog box doesn't pop up
 
-        # Check it works setting the guider before choosing CAR/Obs
-        master_gui.comboBox_obs.setCurrentText('02')
-        assert mock_dialog.called  # Check dialog box doesn't pops up
+    # Check setting the wrong guider fails
+    master_gui.buttonGroup_guider.buttons()[0].click()  # set to guider 2
+    assert mock_dialog.called  # Check dialog box pops up
 
+    # Check it works setting the guider before choosing CAR/Obs
+    master_gui.comboBox_obs.setCurrentText('02')
+    assert mock_dialog.called  # Check dialog box pops up
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @patch("jwst_magic.masterGUI.MasterGui.mismatched_apt_guider_dialog", autospec=True)
-def test_apt_guider_disagree_manual(mock_dialog, test_directory):
+def test_apt_guider_disagree_manual(mock_dialog, master_gui):
     """
     Check that if the APT program expects a guider that doesn't match
     the guider chosen in MAGIC, a pop up appears
-
-    Both manual naming method
     """
-    # Initialize main window
-    app = QApplication(sys.argv)
-    master_gui = MasterGui(root='test', in_file=None, out_dir=test_directory,
-                           segment_guiding=True, app=app, itm=False)
-
     # For manual method
     # Guider set after choosing CAR/Obs
     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
-    master_gui.lineEdit_root.setText('test')  # set root
-    master_gui.textEdit_out.setText(test_directory)  # set out directory
+    master_gui.lineEdit_root.setText(ROOT)  # set root
+    master_gui.textEdit_out.setText(__location__)  # set out directory
     master_gui.lineEdit_manualid.setText('1141')
     master_gui.lineEdit_manualobs.setText('01')
     master_gui.pushButton_manualid.click()
 
     # Check setting to the matching guider is fine
     master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
-    assert mock_dialog.call_count == 0  # Check dialog box doesn't pops up
+    assert mock_dialog.call_count == 0  # Check dialog box doesn't pop up
 
     # Check setting the wrong guider fails
     master_gui.buttonGroup_guider.buttons()[0].click()  # set to guider 2
-    assert mock_dialog.called  # Check dialog box doesn't pops up
+    assert mock_dialog.called  # Check dialog box pops up
 
     # Check it works setting the guider before choosing CAR/Obs
     master_gui.lineEdit_manualobs.setText('02')
     master_gui.pushButton_manualid.click()
-    assert mock_dialog.called  # Check dialog box doesn't pops up
+    assert mock_dialog.called  # Check dialog box pops up
