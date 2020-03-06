@@ -499,7 +499,8 @@ class MasterGui(QMainWindow):
                 # Run the tool and generate the file
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
-                    "SOF", guider, self.program_id, self.observation_num, self.visit_num, log=None
+                    "SOF", guider, self.program_id, self.observation_num, self.visit_num,
+                    ra=self.gs_ra, dec=self.gs_dec,log=None
                 )
 
                 # Generate the file
