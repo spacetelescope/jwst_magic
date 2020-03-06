@@ -481,8 +481,8 @@ class SegmentGuidingDialog(QDialog):
 
         # Setting only for SOF, not POF
         try:
-            self.lineEdit_RA.setText(str(ra))
-            self.lineEdit_Dec.setText(str(dec))
+            self.lineEdit_RA.setText(str(ra if ra is not None else ''))
+            self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
         except AttributeError:
             pass
 

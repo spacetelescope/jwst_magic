@@ -33,19 +33,21 @@ import pytest
 from ..utils import utils
 
 if not JENKINS:
-    from jwst_magic.masterGUI import MasterGui
+    from ..masterGUI import MasterGui
 
 SOGS = utils.on_sogs_network()
-SOGS = True
 if not SOGS:
     from pytestqt import qtbot
 
 ROOT = "test_main"
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+test_directory = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
+DATA_DIRECTORY = os.path.join(__location__, 'data', ROOT)
+INPUT_IMAGE = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
+COMMAND_FILE = os.path.join(__location__, 'data', 'guiding_selections_for_obs01_G1.txt')
 
-# Set this to True only if computer is on SOGS
-COM_PRACTICE_DIR = 'test_practice'
+# Only needed if computer is on SOGS (directory in SOGS_PATH = '***REMOVED***/guiding/')
+COM_PRACTICE_DIR = 'magic_testing_practice'
 
 @pytest.fixture()
 def test_directory(test_dir=TEST_DIRECTORY):
@@ -198,7 +200,7 @@ def test_update_apt_button_commissioning(master_gui):
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-def test_use_apt_button_manual(master_gui):
+def test_use_apt_button_manual(master_gui, test_directory):
     """
     Test that re-setting apt to blank re-sets program id/obs/visit attributes
     """
@@ -208,7 +210,7 @@ def test_use_apt_button_manual(master_gui):
     # Set basic info
     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
     master_gui.lineEdit_root.setText(ROOT)  # set root
-    master_gui.textEdit_out.setText(__location__)  # set out directory
+    master_gui.textEdit_out.setText(test_directory)  # set out directory
     master_gui.lineEdit_manualid.setText('1141')
     master_gui.lineEdit_manualobs.setText('01')
     master_gui.pushButton_manualid.click()
@@ -239,52 +241,89 @@ def test_use_apt_button_manual(master_gui):
     assert master_gui.gs_dec == ''
 
 
-# @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-# def test_apt_gs_populated(test_directory):
-#     """
-#     Test APT info + GS Info are populated into segment guiding SOF GUI correctly
-#     both for manual and commissioning naeing methods
-#     """
-#     #TODO: this test will be similar to my POF one - so wait for robel to respond
-#     #TODO: with insight on getting from 1 gui to another
-#     # Initialize main window
-#     app = QApplication(sys.argv)
-#     master_gui = MasterGui(root='test', in_file=None, out_dir=test_directory,
-#                            segment_guiding=True, app=app, itm=False)
-#
-#     # Set input image info
-#
-#     # Set basic info
-#     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set commissioning naming method
-#     master_gui.lineEdit_root.setText('test')  # set root
-#     master_gui.textEdit_out.setText(test_directory)  # set out directory
-
-
+apt_parameters = [pytest.param("commissioning", 0, marks=pytest.mark.skipif(not SOGS, reason="SOGS naming not available")),
+                  (pytest.param("manual", 1, marks=pytest.mark.skipif(SOGS, reason="SOGS naming not available")))]
+@pytest.mark.parametrize('type, button_name', apt_parameters)
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-@pytest.mark.skipif(not COMMISSIONING, reason="Can't import PyQt5 on Jenkins server.")
-@patch('jwst_magic.masterGUI.MasterGui.mismatched_apt_guider_dialog', autospec=True)
-def test_apt_guider_disagree_commissioning(mock_dialog, test_directory):
-        """
-        Check that if the APT program expects a guider that doesn't match
-        the guider chosen in MAGIC, a pop up appears
+def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name):
+    """
+    Test APT info + GS Info are populated into segment guiding SOF GUI correctly
+    for both manual and commissioning naming methods
+    """
+    # Initialize main window
+    qtbot.addWidget(master_gui)
 
-        Both commissioning naming method
-        """
-        # Initialize main window
-        app = QApplication(sys.argv)
-        master_gui = MasterGui(root='test', in_file=None, out_dir=test_directory,
-                               segment_guiding=True, app=app, itm=False)
+    # Set general input
+    qtbot.keyClicks(master_gui.lineEdit_inputImage, INPUT_IMAGE)
+    qtbot.mouseClick(master_gui.buttonGroup_name.buttons()[button_name], QtCore.Qt.LeftButton)  # set naming method
+    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)  # set to guider 1
 
-        # For commissioning method
-        # Guider set after choosing CAR/Obs
-        master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
-        master_gui.comboBox_practice.setCurrentText('test_practice')
-        master_gui.comboBox_car.setCurrentText('OTE-07')
+    # Set practice information
+    if type == 'commissioning':
+        master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
+        master_gui.comboBox_car.setCurrentText('OTE-13')
         master_gui.comboBox_obs.setCurrentText('01')
 
-        # Check setting to the matching guider is fine
-        master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
-        assert mock_dialog.call_count == 0  # Check dialog box doesn't pops up
+        assert master_gui.buttonGroup_name.buttons()[0].isChecked()
+        assert master_gui.comboBox_obs.currentText() == '01'
+        assert master_gui.lineEdit_commid.text() == '1148'
+
+    elif type == 'manual':
+        qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
+        qtbot.keyClicks(master_gui.textEdit_out, test_directory)  # set out directory
+        qtbot.keyClicks(master_gui.lineEdit_manualid, '1148')
+        qtbot.keyClicks(master_gui.lineEdit_manualobs, '01')
+        qtbot.mouseClick(master_gui.pushButton_manualid, QtCore.Qt.LeftButton)
+
+        assert master_gui.buttonGroup_name.buttons()[1].isChecked()
+        assert master_gui.lineEdit_manualid.text() == '1148'
+        assert master_gui.lineEdit_manualobs.text() == '01'
+        assert master_gui.lineEdit_root.text() == ROOT
+        assert master_gui.textEdit_out.toPlainText() == test_directory
+
+    assert master_gui.buttonGroup_guider.checkedButton().text() == '1'
+    assert master_gui.program_id == 1148
+    assert master_gui.observation_num == 1
+    assert master_gui.visit_num == 1
+
+    # Go to segment guiding
+    #qtbot.mouseClick(master_gui.checkBox_useConvertedImage, QtCore.Qt.LeftButton)
+    master_gui.groupBox_imageConverter.setChecked(False)
+    master_gui.groupBox_starSelector.setChecked(False)
+    master_gui.groupBox_fileWriter.setChecked(False)
+    master_gui.groupBox_segmentGuiding.setChecked(True)
+
+    # Set up SOF
+    qtbot.mouseClick(master_gui.radioButton_regfileSegmentGuiding, QtCore.Qt.LeftButton)
+    master_gui.lineEdit_regfileSegmentGuiding.clear()
+    qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, COMMAND_FILE)  # Click run button and then the OK button of the pop up
+
+    assert master_gui.radioButton_regfileSegmentGuiding.isChecked()
+    assert master_gui.lineEdit_regfileSegmentGuiding.text() == COMMAND_FILE
+    assert os.path.isfile(COMMAND_FILE)
+
+    def handle_dialog():
+        try:
+            assert master_gui._test_sg_dialog.lineEdit_programNumber.text() == '1148'
+            assert master_gui._test_sg_dialog.lineEdit_observationNumber.text() == '1'
+            assert master_gui._test_sg_dialog.lineEdit_visitNumber.text() == '1'
+            assert master_gui._test_sg_dialog.lineEdit_RA.text() != ''
+            assert master_gui._test_sg_dialog.lineEdit_Dec.text() != ''
+            qtbot.mouseClick(master_gui._test_sg_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+        except AssertionError:
+            # If something raising an error above, need to close the pop up gui anyway
+            qtbot.mouseClick(master_gui._test_sg_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+
+    with qtbot.capture_exceptions() as exceptions:
+        QtCore.QTimer.singleShot(500, handle_dialog)
+        qtbot.mouseClick(master_gui.pushButton_run, QtCore.Qt.LeftButton, delay=1)
+
+    # check the lack of PA entry causes an error
+    expected_err =  'could not convert string to float:'
+    assert expected_err in str(exceptions[0][1]), "Wrong error captured. Caught: '{}', Expected: '{}'".format(
+        str(exceptions[0][1]), expected_err)
+
+
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
 @patch('jwst_magic.masterGUI.MasterGui.mismatched_apt_guider_dialog', autospec=True)
@@ -315,7 +354,7 @@ def test_apt_guider_disagree_commissioning(mock_dialog, master_gui):
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @patch("jwst_magic.masterGUI.MasterGui.mismatched_apt_guider_dialog", autospec=True)
-def test_apt_guider_disagree_manual(mock_dialog, master_gui):
+def test_apt_guider_disagree_manual(mock_dialog, master_gui, test_directory):
     """
     Check that if the APT program expects a guider that doesn't match
     the guider chosen in MAGIC, a pop up appears
@@ -324,7 +363,7 @@ def test_apt_guider_disagree_manual(mock_dialog, master_gui):
     # Guider set after choosing CAR/Obs
     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
     master_gui.lineEdit_root.setText(ROOT)  # set root
-    master_gui.textEdit_out.setText(__location__)  # set out directory
+    master_gui.textEdit_out.setText(test_directory)  # set out directory
     master_gui.lineEdit_manualid.setText('1141')
     master_gui.lineEdit_manualobs.setText('01')
     master_gui.pushButton_manualid.click()
