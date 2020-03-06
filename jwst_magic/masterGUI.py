@@ -80,7 +80,6 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 SOGS_PATH = '***REMOVED***/guiding/'
-SOGS_PATH = '/Users/sosborne/Desktop/MAGIC/nonsogs_practices/'
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -267,7 +266,7 @@ class MasterGui(QMainWindow):
 
     def setup_commissioning_naming(self):
         # If not on SOGS:
-        if utils.on_sogs_network():
+        if not utils.on_sogs_network():
             # Shut down selection boxes
             self.comboBox_practice.removeItem(0)
             self.comboBox_practice.setDisabled(True)
@@ -750,14 +749,14 @@ class MasterGui(QMainWindow):
                 self.program_id, self.observation_num, self.visit_num = '', '', ''
                 self.gs_id, self.gs_ra, self.gs_dec = '', '', ''
             elif self.lineEdit_manualid.text() != '' and self.lineEdit_manualobs.text() != '':
-                self.program_id = int(self.lineEdit_manualid.text().lower())
-                self.observation_num = int(self.lineEdit_manualobs.text().lower())
+                self.program_id = int(self.lineEdit_manualid.text())
+                self.observation_num = int(self.lineEdit_manualobs.text())
                 self.visit_num = 1  # Will we ever have a visit that's not 1?
                 self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
             else:
                 raise ValueError('Must set both program ID and observation number to use APT')
         elif self.radioButton_name_commissioning.isChecked():
-            self.program_id = int(self.lineEdit_commid.text().lower())
+            self.program_id = int(self.lineEdit_commid.text())
             self.observation_num = int(self.comboBox_obs.currentText())
             self.visit_num = 1  # Will we ever have a visit that's not 1?
             self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
@@ -1249,7 +1248,7 @@ class MasterGui(QMainWindow):
         Function to take in the desired APT Program ID and observation number and
         output the ID, RA, and DEC of the guide star set under the Special Requirements
         tab of that APT file for that ID/Obs. The RA and Dec is found by querying the GSC
-        Catalog using the jwst-fgs-countrrate module.
+        Catalog using the jwst-fgs-countrate module.
 
         Code adapted from:
             https://github.com/spacetelescope/jwst_magic/blob/master/fgs-commissioning/
