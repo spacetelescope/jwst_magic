@@ -449,7 +449,7 @@ class SegmentGuidingDialog(QDialog):
         program_id, observation_num, visit_num, threshold_factor,
         countrate_factor)
     """
-    def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra='', dec='', log=None):
+    def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None, log=None):
         # Initialize attributes
         self.override_type = override_type
         self.guider = guider
