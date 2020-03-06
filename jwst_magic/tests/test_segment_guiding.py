@@ -77,13 +77,11 @@ if not JENKINS:
     from ..masterGUI import MasterGui
 
 SOGS = utils.on_sogs_network()
-SOGS = True
 if not SOGS:
     from pytestqt import qtbot
 
 import pathlib
 __location__ = str(pathlib.Path(__file__).parent.absolute())
-#__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_sgt"
 SEGMENT_INFILE = os.path.join(__location__, 'data', '{}_ALLpsfs.txt'.format(ROOT))
 SELECTED_SEGS = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
