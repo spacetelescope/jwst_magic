@@ -232,7 +232,6 @@ class MasterGui(QMainWindow):
         # Standard output and error
         self.textEdit_log.setFont(QtGui.QFont("Courier New"))
         self.buttonGroup_name.buttonClicked.connect(self.update_naming_method)
-        self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
         # Main window widgets
         self.pushButton_run.clicked.connect(self.run_tool)
@@ -247,6 +246,7 @@ class MasterGui(QMainWindow):
         self.pushButton_root.clicked.connect(self.on_click_root)
         self.pushButton_out.clicked.connect(self.on_click_out)
         self.textEdit_out.installEventFilter(self)
+        self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
         # Image convertor widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
@@ -494,7 +494,7 @@ class MasterGui(QMainWindow):
 
                 # Determine whether to load guiding_selections*.txt or run GUI
                 GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
-                selected_segs = self.lineEdit_regfileStarSelector.text()
+                selected_segs = self.lineEdit_regfileSegmentGuiding.text()
 
                 # Run the tool and generate the file
                 # Initialize the dialog
