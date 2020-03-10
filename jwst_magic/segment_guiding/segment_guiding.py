@@ -908,11 +908,11 @@ def generate_segment_override_file(segment_infile, guider,
         and countrates
     guider : int
         Which guider is being used: 1 or 2
-    program_id : int
+    program_id : int or str
         APT program number
-    observation_num : int
+    observation_num : int or str
         Observation number
-    visit_num : int
+    visit_num : int or str
         Visit number
     ra :  float, optional
         RA of guide star

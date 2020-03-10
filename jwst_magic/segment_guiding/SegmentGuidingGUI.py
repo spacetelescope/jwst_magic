@@ -431,11 +431,11 @@ class SegmentGuidingDialog(QDialog):
             file) or "POF" (photometry override file)
     guider : int
         Guider number (1 or 2)
-    program_id : int
+    program_id : int or str
         APT program number
-    observation_num : optional, int
+    observation_num : optional, int or str
         Observation number
-    visit_num : optional, int
+    visit_num : optional, int or str
         Visit number
     ra :  optional, float
         RA of guide star
