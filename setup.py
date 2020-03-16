@@ -36,7 +36,7 @@ INSTALL_REQUIRES = [
     'pytest',
     'photutils',
     'scipy',
-    'pytestqt',
+    'pytest-qt',
     'bs4'
 ]
 
