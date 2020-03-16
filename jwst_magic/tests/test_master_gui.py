@@ -8,7 +8,7 @@ Authors
 Use
 ---
     ::
-        pytest test_main_gui.py
+        pytest test_master_gui.py
 
 Notes
 -----
