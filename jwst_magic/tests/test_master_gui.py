@@ -39,8 +39,8 @@ SOGS = utils.on_sogs_network()
 if not SOGS:
     from pytestqt import qtbot
 
-ROOT = "test_main"
-test_directory = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+ROOT = "test_master"
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 DATA_DIRECTORY = os.path.join(__location__, 'data', ROOT)
 INPUT_IMAGE = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
@@ -210,7 +210,7 @@ def test_use_apt_button_manual(master_gui, test_directory):
     # Set basic info
     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
     master_gui.lineEdit_root.setText(ROOT)  # set root
-    master_gui.textEdit_out.setText(test_directory)  # set out directory
+    master_gui.textEdit_out.setText(__location__)  # set out directory
     master_gui.lineEdit_manualid.setText('1141')
     master_gui.lineEdit_manualobs.setText('01')
     master_gui.pushButton_manualid.click()
@@ -270,7 +270,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name):
 
     elif type == 'manual':
         qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
-        qtbot.keyClicks(master_gui.textEdit_out, test_directory)  # set out directory
+        qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
         qtbot.keyClicks(master_gui.lineEdit_manualid, '1148')
         qtbot.keyClicks(master_gui.lineEdit_manualobs, '01')
         qtbot.mouseClick(master_gui.pushButton_manualid, QtCore.Qt.LeftButton)
@@ -279,7 +279,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name):
         assert master_gui.lineEdit_manualid.text() == '1148'
         assert master_gui.lineEdit_manualobs.text() == '01'
         assert master_gui.lineEdit_root.text() == ROOT
-        assert master_gui.textEdit_out.toPlainText() == test_directory
+        assert master_gui.textEdit_out.toPlainText() == __location__
 
     assert master_gui.buttonGroup_guider.checkedButton().text() == '1'
     assert master_gui.program_id == 1148
@@ -296,7 +296,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name):
     # Set up SOF
     qtbot.mouseClick(master_gui.radioButton_regfileSegmentGuiding, QtCore.Qt.LeftButton)
     master_gui.lineEdit_regfileSegmentGuiding.clear()
-    qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, COMMAND_FILE)  # Click run button and then the OK button of the pop up
+    qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, COMMAND_FILE)
 
     assert master_gui.radioButton_regfileSegmentGuiding.isChecked()
     assert master_gui.lineEdit_regfileSegmentGuiding.text() == COMMAND_FILE
@@ -363,7 +363,7 @@ def test_apt_guider_disagree_manual(mock_dialog, master_gui, test_directory):
     # Guider set after choosing CAR/Obs
     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
     master_gui.lineEdit_root.setText(ROOT)  # set root
-    master_gui.textEdit_out.setText(test_directory)  # set out directory
+    master_gui.textEdit_out.setText(__location__)  # set out directory
     master_gui.lineEdit_manualid.setText('1141')
     master_gui.lineEdit_manualobs.setText('01')
     master_gui.pushButton_manualid.click()
