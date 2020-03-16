@@ -474,19 +474,23 @@ class MasterGui(QMainWindow):
                 self.parse_header(input_image)
 
                 # Define location of all_found_psfs catalog file
-                if self.radioButton_shifted.isChecked():
-                    segment_infile = self.shifted_all_found_psfs_file
+                if self.lineEdit_regfileSegmentGuiding.text() is '':
+                    if self.radioButton_shifted.isChecked():
+                        segment_infile = self.shifted_all_found_psfs_file
+                    else:
+                        segment_infile = self.all_found_psfs_file
                 else:
-                    segment_infile = self.all_found_psfs_file
+                    segment_infile = self.lineEdit_regfileSegmentGuiding.text()
 
                 # Verify that the all_found_psfs*.txt file exists
                 if not os.path.exists(segment_infile):
                     raise OSError('Provided segment infile {} not found.'.format(segment_infile))
 
-                # Determine which image to use and load it
+                # Determine which image to use for the click-to-select GUI in generate_segment_override_file and load it
                 if self.radioButton_shifted.isChecked():
                     fgs_filename = self.shifted_im_file
-                elif self.radioButton_unshifted.isChecked() and os.path.exists(self.converted_im_file):
+                elif self.radioButton_unshifted.isChecked() and hasattr(self, 'converted_im_file') and \
+                        os.path.exists(self.converted_im_file):
                     fgs_filename = self.converted_im_file
                 elif self.radioButton_unshifted.isChecked():
                     fgs_filename = input_image
