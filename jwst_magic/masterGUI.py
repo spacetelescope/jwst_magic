@@ -798,6 +798,7 @@ class MasterGui(QMainWindow):
         self.comboBox_car.setEnabled(valid_practice)
         self.lineEdit_commid.setEnabled(valid_practice)
         self.comboBox_obs.setEnabled(valid_practice & valid_car)
+        self.pushButton_commid.setEnabled(valid_practice & valid_car)
 
         # Update the preview output path
         if valid_all:

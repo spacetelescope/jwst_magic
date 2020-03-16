@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1484</width>
-    <height>1065</height>
+    <height>1044</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -358,270 +358,6 @@ Image:</string>
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="1" column="1" colspan="2">
-            <widget class="QCheckBox" name="checkBox_coarsePointing">
-             <property name="toolTip">
-              <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
-             </property>
-             <property name="text">
-              <string>Add jitter rate (arcsec/sec):</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="3" colspan="2">
-            <widget class="QLineEdit" name="lineEdit_normalize">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">.QLineEdit:disabled {color: grey}</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_instrument">
-             <property name="toolTip">
-              <string>Which instrument was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1" colspan="4">
-            <widget class="QTextEdit" name="textEdit_backgroundStars">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QTextEdit { background-color : #ECECEC }
-\</string>
-             </property>
-             <property name="html">
-              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_backgroundStars">
-             <property name="toolTip">
-              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2" colspan="2">
-            <widget class="QRadioButton" name="radioButton_NIRCam">
-             <property name="toolTip">
-              <string>Which instrument was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>NIRCam</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_instrument</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="4" column="1" colspan="2">
-            <widget class="QCheckBox" name="checkBox_normalize">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
-             </property>
-             <property name="text">
-              <string>Normalize to:</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_detector">
-             <property name="toolTip">
-              <string>Which NIRCam detector was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_normalize">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Normalize the final image to a specified value</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1" colspan="4">
-            <widget class="QComboBox" name="comboBox_detector">
-             <property name="toolTip">
-              <string>Which NIRCam detector was used to take the input image</string>
-             </property>
-             <item>
-              <property name="text">
-               <string>- Parse from header -</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A1</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A2</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A3</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A4</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>A5 - long wave</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B1</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B2</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B3</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B4</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>B5 - long wave</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="5" column="5">
-            <widget class="QPushButton" name="pushButton_backgroundStars">
-             <property name="toolTip">
-              <string>Launch a dialog window to specify how to incorporate background stars in the image</string>
-             </property>
-             <property name="text">
-              <string>Add Background Stars</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_instrument_2">
-             <property name="toolTip">
-              <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coarse Pointing&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0" colspan="5">
-            <widget class="QCheckBox" name="checkBox_useConvertedImage">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>Bypass all image convertor functions, and run other tool functions with the converted image instead of the input image</string>
-             </property>
-             <property name="text">
-              <string>Use existing converted image (shown at right) rather than input image</string>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="5">
-            <widget class="QComboBox" name="comboBox_normalize">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Units to normalize to</string>
-             </property>
-             <property name="currentIndex">
-              <number>0</number>
-             </property>
-             <item>
-              <property name="text">
-               <string>Guide Star ID</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>FGS countrate</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>FGS Mag (10, 11, 12, 13, or 14)</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QRadioButton" name="radioButton_FGS">
-             <property name="toolTip">
-              <string>Which instrument was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>FGS</string>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_instrument</string>
-             </attribute>
-            </widget>
-           </item>
            <item row="1" column="3" colspan="3">
             <widget class="QFrame" name="frame_coarsePointing">
              <property name="enabled">
@@ -723,6 +459,270 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
              </layout>
+            </widget>
+           </item>
+           <item row="3" column="1" colspan="4">
+            <widget class="QComboBox" name="comboBox_detector">
+             <property name="toolTip">
+              <string>Which NIRCam detector was used to take the input image</string>
+             </property>
+             <item>
+              <property name="text">
+               <string>- Parse from header -</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A1</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A2</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A3</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A4</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A5 - long wave</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B1</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B2</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B3</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B4</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B5 - long wave</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_instrument_2">
+             <property name="toolTip">
+              <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coarse Pointing&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="5">
+            <widget class="QCheckBox" name="checkBox_useConvertedImage">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Bypass all image convertor functions, and run other tool functions with the converted image instead of the input image</string>
+             </property>
+             <property name="text">
+              <string>Use existing converted image (shown at right) rather than input image</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="5">
+            <widget class="QComboBox" name="comboBox_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Units to normalize to</string>
+             </property>
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>Guide Star ID</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>FGS countrate</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>FGS Mag (10, 11, 12, 13, or 14)</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_instrument">
+             <property name="toolTip">
+              <string>Which instrument was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Input Image Instrument&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Normalize the final image to a specified value</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Image Normalization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="5">
+            <widget class="QPushButton" name="pushButton_backgroundStars">
+             <property name="toolTip">
+              <string>Launch a dialog window to specify how to incorporate background stars in the image</string>
+             </property>
+             <property name="text">
+              <string>Add Background Stars</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1" colspan="2">
+            <widget class="QCheckBox" name="checkBox_coarsePointing">
+             <property name="toolTip">
+              <string>Apply a Gaussian filter to the input image to simulate jitter present in coarse pointing</string>
+             </property>
+             <property name="text">
+              <string>Add jitter rate (arcsec/sec):</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="3" colspan="2">
+            <widget class="QLineEdit" name="lineEdit_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">.QLineEdit:disabled {color: grey}</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2" colspan="2">
+            <widget class="QRadioButton" name="radioButton_NIRCam">
+             <property name="toolTip">
+              <string>Which instrument was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>NIRCam</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_instrument</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="5" column="1" colspan="4">
+            <widget class="QTextEdit" name="textEdit_backgroundStars">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
+             </property>
+             <property name="html">
+              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_detector">
+             <property name="toolTip">
+              <string>Which NIRCam detector was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1" colspan="2">
+            <widget class="QCheckBox" name="checkBox_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
+             </property>
+             <property name="text">
+              <string>Normalize to:</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QRadioButton" name="radioButton_FGS">
+             <property name="toolTip">
+              <string>Which instrument was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>FGS</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_instrument</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_backgroundStars">
+             <property name="toolTip">
+              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
             </widget>
            </item>
           </layout>
@@ -1441,8 +1441,42 @@ p, li { white-space: pre-wrap; }
                   </item>
                   <item row="3" column="4">
                    <widget class="QPushButton" name="pushButton_commid">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>80</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>20</height>
+                     </size>
+                    </property>
                     <property name="toolTip">
                      <string>Update APT number</string>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">QPushButton:enabled {
+    border: 1px solid #5a94f3;
+    border-radius: 5px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #4486f5, stop: 1 #2671f6);
+    min-width: 80px;
+    color: white;
+}
+
+QPushButton:pressed {
+    border: 1px solid #1d60dc;
+    border-radius: 5px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #1d60dc, stop: 1 #1d60dc);
+    min-width: 80px;
+    color: white;
+}</string>
                     </property>
                     <property name="text">
                      <string>Update APT</string>
@@ -1632,13 +1666,32 @@ p, li { white-space: pre-wrap; }
                   <property name="geometry">
                    <rect>
                     <x>500</x>
-                    <y>86</y>
-                    <width>95</width>
-                    <height>32</height>
+                    <y>90</y>
+                    <width>84</width>
+                    <height>21</height>
                    </rect>
                   </property>
+                  <property name="styleSheet">
+                   <string notr="true">QPushButton {
+    border: 1px solid #5a94f3;
+    border-radius: 5px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #4486f5, stop: 1 #2671f6);
+    min-width: 80px;
+    color: white;
+}
+
+QPushButton:pressed {
+    border: 1px solid #1d60dc;
+    border-radius: 5px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #1d60dc, stop: 1 #1d60dc);
+    min-width: 80px;
+    color: white;
+}</string>
+                  </property>
                   <property name="text">
-                   <string>Use APT</string>
+                   <string>Query APT</string>
                   </property>
                  </widget>
                  <zorder>label_root</zorder>
@@ -2345,12 +2398,12 @@ p, li { white-space: pre-wrap; }
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_segmentGuiding"/>
-  <buttongroup name="buttonGroup_starSelector"/>
-  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
-  <buttongroup name="buttonGroup_guider"/>
-  <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_name"/>
   <buttongroup name="buttonGroup_idAttitude"/>
+  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
+  <buttongroup name="buttonGroup_starSelector"/>
+  <buttongroup name="buttonGroup_segmentGuiding"/>
+  <buttongroup name="buttonGroup_name"/>
+  <buttongroup name="buttonGroup_instrument"/>
+  <buttongroup name="buttonGroup_guider"/>
  </buttongroups>
 </ui>
