@@ -27,11 +27,11 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    2. Select the **Practice Name** directory (*D*) corresponding to the current practice/rehearsal.
    3. Select the **CAR/Step** name (*E*) of the activity you are generating an override file for.
    4. Select the **Observation** number (*G*) of the activity you are generating an override file for. _(The observations in the dropdown box that are preceded by `+` are extras, in the case that an unplanned observation gets generated on-the-fly.)_
-
+   5. (Optional) Re-set the APT number and select the **Update APT** button (*F*) to query a different APT file (e.g. if you are in a rehearsal, use the rehearsal APT number)
 
    Considering these parameters all together, the output files will be saved in the ``***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
 
-   Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up. If you would like to change the APT file being queried (e.g. you are using a file for a rehearsal), you can reset the APT number and press the **Update APT** button (*F*)
+   Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
 3. If you are running MAGIC on the SOGS network to generate files for commissioning, for an **unexpected** observation number:
 
@@ -41,18 +41,22 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    1. Check the **Manual** radio button (*H*) to set the naming method.
    2. Specify the **Root** name (*I*) to be `for_obs{obs}`, using the unexpected observation number.
    3. Specify the **Out** directory (*J*) to be `***REMOVED***/guiding/{practice}/{car}/`, filling in the directory for the current practice/rehearsal and the name of the current activity.
+   4. Specify the APT Program ID and Observation Number and select the **Query APT** button (*K*) to query the APT file and Guide Star Catalog
 
    Considering these parameters all together, the output files will be saved in the ``***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
-
-   You also have the option of setting the APT Program ID and observation number and pressing the **Query APT** button (*K*) which will query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
+   
+   Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
 4. If you are running MAGIC outside of SOGS, or to generate test data:
 
    1. Check the **Manual** radio button (*H*) to set the naming method.
    2. Specify a **Root** name (*I*). If different than the default name that was created when the input image was uploaded. The root will be used to to create the output directory where all created files will reside, out/{root}.
    3. Change the **Out** directory (*J*). Choose the location to where the files will be saved. An ``out/`` directory will be created in this location, and this is where all the files will be saved.
+   4. (Optional) Specify the APT Program ID and Observation Number and select the **Query APT** button (*K*) to query the APT file and Guide Star Catalog
 
    Considering these parameters all together, the output files will be saved in the ``{out}/out/{root}/`` directory, with names of the format ``{root}_G{guider}``
+
+   Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
 5. Set image conversion parameters: (Note: The steps labelled “optional” below will create higher-fidelity simulations, but are not necessary when using MAGIC to generate FSW input or segment override files.)
 
