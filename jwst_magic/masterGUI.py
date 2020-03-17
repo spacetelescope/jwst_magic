@@ -1298,14 +1298,15 @@ class MasterGui(QMainWindow):
             obs_number = int(obs_number)
 
         # Build temporary directory
-        if os.path.exists('temp_apt'):
-            shutil.rmtree('temp_apt')
-        os.mkdir('temp_apt')
+        apt_file_path = os.path.join(__location__, 'data', 'temp_apt')
+        if os.path.exists(apt_file_path):
+            shutil.rmtree(apt_file_path)
+        os.mkdir(apt_file_path)
 
         # Download the APT file (.aptx file) from online using the program ID
         urllib.request.urlretrieve(
             'http://www.stsci.edu/jwst/phase2-public/{}.aptx'.format(program_id),
-            'temp_apt/{}.aptx'.format(program_id)
+            '{}/{}.aptx'.format(apt_file_path,program_id)
         )
 
         # Get the path to the user's newest APT version
@@ -1322,11 +1323,11 @@ class MasterGui(QMainWindow):
         apt_path = apt_path.replace(' ', '\ ')  # fix issue with space in APT name to make path work
 
         # Run APT and export the XML file
-        command = ['{} -nogui -export xml temp_apt/{}.aptx'.format(apt_path + '/bin/apt', program_id)]
+        command = ['{} -nogui -export xml {}/{}.aptx'.format(apt_path + '/bin/apt', apt_file_path, program_id)]
         subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, shell=True)
 
         # Open the APT XML file
-        with open('temp_apt/{}.xml'.format(program_id)) as f:
+        with open('{}/{}.xml'.format(apt_file_path, program_id)) as f:
             tree = etree.parse(f)
 
         # Pull: List of Observations for the CAR > Specific Obs > Special Requirements Info (sr)
@@ -1354,7 +1355,7 @@ class MasterGui(QMainWindow):
         LOGGER.info('Master GUI: APT has been queried and found guide star {} and guider {}'.format(gs_id, guider))
 
         # Tear down temporary directory
-        shutil.rmtree('temp_apt')
+        shutil.rmtree(apt_file_path)
 
         # Use Guide Star ID to get RA/DEC using default GSC in fgscountrate module
         data_frame = fgscountrate.query_gsc(gs_id=gs_id)
