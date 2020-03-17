@@ -17,7 +17,7 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    ![General Input section of the Main GUI](./figs/figure2_main_general_input.png)
 
    1. Load the **Input Image** (*A*) and a preview of the image and the full path to the image will appear in the **Image Preview** box at right.
-   2. Specify the **Guider** (*B*) that the final image should simulate. If this is not known, check the APT file (see [Appendix B](appedix_b_opening_dhas.md) for more information about using APT).
+   2. Specify the **Guider** (*B*) that the final image should simulate. If this is not known, check the APT file (see [Appendix B](appedix_b_opening_dhas.md) for more information about using APT). If you plan to query APT for the guide star information, you will get a pop up if you selected guider does not match what is in the APT file.
 
 2. If you are running MAGIC on the SOGS network to generate files for commissioning, for an **expected** observation number:
 
@@ -26,27 +26,31 @@ MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR fil
    1. Check the **Commissioning** radio button (*C*) to set the naming method.
    2. Select the **Practice Name** directory (*D*) corresponding to the current practice/rehearsal.
    3. Select the **CAR/Step** name (*E*) of the activity you are generating an override file for.
-   4. Select the **Observation** number (*F*) of the activity you are generating an override file for. _(The observations in the dropdown box that are preceded by `+` are extras, in the case that an unplanned observation gets generated on-the-fly.)_
+   4. Select the **Observation** number (*G*) of the activity you are generating an override file for. _(The observations in the dropdown box that are preceded by `+` are extras, in the case that an unplanned observation gets generated on-the-fly.)_
 
 
    Considering these parameters all together, the output files will be saved in the ``/data/jwst/wss/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
+
+   Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up. If you would like to change the APT file being queried (e.g. you are using a file for a rehearsal), you can reset the APT number and press the **Update APT** button (*F*)
 
 3. If you are running MAGIC on the SOGS network to generate files for commissioning, for an **unexpected** observation number:
 
    ![Manual naming parameter section of the main GUI](./figs/figure4_main_manual_naming.png)
 
 
-   1. Check the **Manual** radio button (*G*) to set the naming method.
-   2. Specify the **Root** name (*H*) to be `for_obs{obs}`, using the unexpected observation number.
-   3. Specify the **Out** directory (*I*) to be `/data/jwst/wss/guiding/{practice}/{car}/`, filling in the directory for the current practice/rehearsal and the name of the current activity.
+   1. Check the **Manual** radio button (*H*) to set the naming method.
+   2. Specify the **Root** name (*I*) to be `for_obs{obs}`, using the unexpected observation number.
+   3. Specify the **Out** directory (*J*) to be `/data/jwst/wss/guiding/{practice}/{car}/`, filling in the directory for the current practice/rehearsal and the name of the current activity.
 
    Considering these parameters all together, the output files will be saved in the ``/data/jwst/wss/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
 
+   You also have the option of setting the APT Program ID and observation number and pressing the **Query APT** button (*K*) which will query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
+
 4. If you are running MAGIC outside of SOGS, or to generate test data:
 
-   1. Check the **Manual** radio button (*G*) to set the naming method.
-   2. Specify a **Root** name (*H*). If different than the default name that was created when the input image was uploaded. The root will be used to to create the output directory where all created files will reside, out/{root}.
-   3. Change the **Out** directory (*I*). Choose the location to where the files will be saved. An ``out/`` directory will be created in this location, and this is where all the files will be saved.
+   1. Check the **Manual** radio button (*H*) to set the naming method.
+   2. Specify a **Root** name (*I*). If different than the default name that was created when the input image was uploaded. The root will be used to to create the output directory where all created files will reside, out/{root}.
+   3. Change the **Out** directory (*J*). Choose the location to where the files will be saved. An ``out/`` directory will be created in this location, and this is where all the files will be saved.
 
    Considering these parameters all together, the output files will be saved in the ``{out}/out/{root}/`` directory, with names of the format ``{root}_G{guider}``
 
