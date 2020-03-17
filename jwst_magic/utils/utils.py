@@ -91,7 +91,7 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
     logger = logging.getLogger(module_name)
     logger.info('Started logging to file {}'.format(logfile))
 
-    return logger
+    return logger, logfile
 
 
 def determine_log_path():

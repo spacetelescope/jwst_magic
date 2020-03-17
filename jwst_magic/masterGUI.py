@@ -46,6 +46,7 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 # Standard Library Imports
 import glob
+import logging
 import os
 import re
 import shutil
@@ -81,6 +82,7 @@ PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 SOGS_PATH = '/data/jwst/wss/guiding/'
 
+LOGGER = logging.getLogger(__name__)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OUTPUT HANDLER
@@ -162,6 +164,8 @@ class MasterGui(QMainWindow):
         self.gs_ra = ''
         self.gs_dec = ''
         self._test_sg_dialog = None
+        self.log = None
+        self.log_filename = None
 
         # Initialize main window object
         QMainWindow.__init__(self)
@@ -466,7 +470,7 @@ class MasterGui(QMainWindow):
                 # Generate the file
                 segment_guiding.generate_photometry_override_file(
                     root, self.program_id, self.observation_num, self.visit_num, out_dir=out_dir,
-                    parameter_dialog=True, dialog_obj=self._test_sg_dialog
+                    parameter_dialog=True, dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
 
             else:
@@ -513,7 +517,7 @@ class MasterGui(QMainWindow):
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
                     root=root, out_dir=out_dir, selected_segs=selected_segs,
                     click_to_select_gui=GUI, data=data, master_gui_app=self.app,
-                    parameter_dialog=True, dialog_obj=self._test_sg_dialog
+                    parameter_dialog=True, dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
 
             # Update converted image preview
@@ -812,13 +816,13 @@ class MasterGui(QMainWindow):
         else:
             self.textEdit_name_preview.setText('')
 
+        # Update file previews
+        self.update_filepreview()
+
         # Update population of guide star information
         if valid_all and any([self.sender() == self.comboBox_car, self.sender() == self.comboBox_obs,
                               self.sender() == self.pushButton_commid]):
             self.update_apt_gs_values()
-
-        # Update file previews
-        self.update_filepreview()
 
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1192,6 +1196,13 @@ class MasterGui(QMainWindow):
                 root = 'for_obs{:02d}'.format(int(self.comboBox_obs.currentText()))
                 root_dir = self.textEdit_name_preview.toPlainText()
 
+            # Set log if not already set (for first file created with MAGIC)
+            if self.log is None:
+                self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+            # If root is changed, need to create a new log file
+            if root != self.log_filename.split('/')[-1].split('masterGUI_')[-1].split('.log')[0]:
+                self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+
             # Note: maintaining if statements and "old" file names for backwards compatibility.
 
             # Update guiding selections file path
@@ -1329,6 +1340,7 @@ class MasterGui(QMainWindow):
             gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
         except IndexError:
             self.lineEdit_normalize.setText('')
+            LOGGER.error("Master GUI: This observation doesn't have a Guide Star Special Requirement")
             raise ValueError("This observation doesn't have a Guide Star Special Requirement")
 
         # Pull out the guide star ID and the guider number
@@ -1338,6 +1350,8 @@ class MasterGui(QMainWindow):
         # Account for if the guider is written as "guider 1" or "guider1"
         if not isinstance(guider, int):
             guider = guider.lower().replace(' ', '').split('guider')[1]
+
+        LOGGER.info('Master GUI: APT has been queried and found guide star {} and guider {}'.format(gs_id, guider))
 
         # Tear down temporary directory
         shutil.rmtree('temp_apt')
@@ -1350,11 +1364,14 @@ class MasterGui(QMainWindow):
             gsc_series = data_frame.iloc[0]
         else:
             self.lineEdit_normalize.setText('')
+            LOGGER.error("Master GUI: This Guide Star ID points to multiple lines in catalog")
             raise ValueError("This Guide Star ID points to multiple lines in catalog")
 
         # Pull RA and DEC
         ra = gsc_series['ra']
         dec = gsc_series['dec']
+
+        LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra, dec))
 
         return gs_id, guider, ra, dec
 
