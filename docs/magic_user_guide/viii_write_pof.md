@@ -49,6 +49,8 @@ Creating a photometry override file through MAGIC:
    
    5. **Count rate uncertainty factor** - A multiplication factor to be applied to the computed count rate of each guide star and reference object of the visit that will be set at the count rate uncertainties. This factor should be greater than or equal to 0.01 and less than 1.0. 
 
+   Note: If you used the APT query functionality in [Section III](iii_determining_and_loading_the_input_image.md), the Program ID, Observation Number, Visit Number, and RA and DEC of the guide star should be pre-populated.
+
    *See [Appendix D](appendix_d_mirror_states.md) for information about the countrate factor based on the mirror state.*
 
 6. Click **OK**

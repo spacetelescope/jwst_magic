@@ -705,7 +705,8 @@ def convert_im(input_im, guider, root, nircam=True,
                 fgs_mag = ''
             elif norm_unit == 'FGS countrate' and isinstance(norm_value, str):
                 LOGGER.error("Image Conversion: Value type does not match expectation for unit type.")
-                raise TypeError("Mismatched normalization value and type")
+                raise TypeError("Mismatched normalization value ({}) and expected type ({}) for unit of {}".format(
+                    norm_value, "str", norm_unit))
             else: # If a GSID or magnitude, pass back gsid
                 # Sneaky string replacement for FGS Magnitude
                 norm_unit = 'FGS Magnitude' if norm_unit == 'FGS Mag (10, 11, 12, 13, or 14)' else norm_unit
@@ -750,7 +751,8 @@ def check_norm_value_unit(norm_value, norm_unit):
         gsid = query_jmag_mini_library(norm_value)
     else:
         LOGGER.error("Image Conversion: Value type does not match expectation for unit type.")
-        raise TypeError("Mismatched normalization value and type")
+        raise TypeError("Mismatched normalization value ({}) and expected type ({}) for unit of {}".format(
+            norm_value, ["float or int" if norm_unit == 'FGS Magnitude' else 'str'], norm_unit))
     return gsid
 
 

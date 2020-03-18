@@ -4,6 +4,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -16,6 +17,7 @@ import csv
 import itertools
 import logging.config
 import os
+import requests
 import socket
 import sys
 import time
@@ -23,6 +25,7 @@ import yaml
 
 # Third Party
 from astropy.io import fits
+from bs4 import BeautifulSoup
 import numpy as np
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
@@ -88,7 +91,7 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
     logger = logging.getLogger(module_name)
     logger.info('Started logging to file {}'.format(logfile))
 
-    return logger
+    return logger, logfile
 
 
 def determine_log_path():
@@ -434,3 +437,37 @@ def make_out_dir(out_dir, default_out_path, root):
         out_dir = os.path.join(out_dir, 'out', root)
 
     return out_dir
+
+
+def get_car_data():
+    """
+    Generate and return a dictionary in the form of {CAR: {apt: #, observations: #}} for
+    all the OTE and LOS CARs in commissioning. CARs and APT#s scraped from
+    http://www.stsci.edu/ftp/presto/ops/public/jwst-pit-status.html and # of observations
+    pulled from jwst_magic/data/commissioning_activities.yaml
+    """
+    commissioning_yaml = os.path.join(PACKAGE_PATH, 'data', 'commissioning_activities.yaml')
+    with open(commissioning_yaml, encoding="utf-8") as f:
+        yaml_dict = yaml.safe_load(f.read())
+
+    url = 'http://www.stsci.edu/ftp/presto/ops/public/jwst-pit-status.html'
+    html_page = requests.get(url).text
+    soup = BeautifulSoup(html_page, 'lxml')
+
+    gdp_table = soup.find("table", attrs={"class": "sortable"})
+    gdp_table_data = gdp_table.find_all("tr")[1:]
+
+    commissioning_dict = {}
+    for row in gdp_table_data:
+        cols = row.find_all('td')
+        cols = [ele.text.strip() for ele in cols]
+        if 'ote' in cols[1].lower() or 'los' in cols[1].lower():
+            match = [i for i, s in enumerate(yaml_dict.keys()) if s in cols[1].lower()]
+            if len(match) == 1:
+                name = list(yaml_dict)[match[0]]
+                obs = yaml_dict[name]['observations']
+                commissioning_dict[cols[1].lower()] = {'apt': cols[0], 'observations': obs}
+            else:
+                raise SyntaxWarning('{} has a mis-match (either no match of multiple matches) '
+                                    'with our CAR table'.format(cols[1].lower()))
+    return commissioning_dict

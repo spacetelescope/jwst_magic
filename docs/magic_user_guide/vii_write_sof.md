@@ -74,6 +74,8 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
    9. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. e.g., an uncertainty factor of 0.9 for a star with a count rate of 1,000 writes an uncertainty of 900.
 
+   Note: If you used the APT query functionality in [Section III](iii_determining_and_loading_the_input_image.md), the Program ID, Observation Number, Visit Number, and RA and DEC of the guide star should be pre-populated.
+
 7. Click **OK** to continue.
 
    If the **Click-to-Select 1 or more commands (GUI)** radio button was selected, the Segment Guiding GUI will appear:

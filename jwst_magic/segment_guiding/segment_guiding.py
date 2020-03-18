@@ -73,15 +73,12 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 # Open the SIAF with pysiaf
 FGS_SIAF = pysiaf.Siaf('FGS')
 
-# Start logger
-LOGGER = logging.getLogger(__name__)
-
 
 class SegmentGuidingCalculator:
     def __init__(self, override_type, program_id, observation_num, visit_num,
                  root, out_dir, segment_infile=None, guide_star_params_dict=None,
                  selected_segs=None, threshold_factor=0.9, countrate_factor=None,
-                 countrate_uncertainty_factor=None, oss_factor=0.6):
+                 countrate_uncertainty_factor=None, oss_factor=0.6, log=None):
         """Initialize the segment guiding calculator class.
 
         Parameters
@@ -132,6 +129,9 @@ class SegmentGuidingCalculator:
         oss_factor : float, optional
             The factor that OSS applies to the 3x3 box countrate in order to represent
             the full number of countrate that we care about.
+        log : logger object
+            Pass a logger object (output of tils.create_logger_from_yaml) or a new log
+            will be created
         """
 
         # Initialize parameters into attributes
@@ -145,6 +145,12 @@ class SegmentGuidingCalculator:
         self.countrate_factor = countrate_factor
         self.countrate_uncertainty_factor = countrate_uncertainty_factor
         self.oss_factor = oss_factor
+
+        # Start logger
+        if log is None:
+            self.log = logging.getLogger(__name__)
+        else:
+            self.log = log
 
         # Initialize other attributes
         # Will the override file be written out using the 'ref-only' syntax? Should be yes.
@@ -274,7 +280,7 @@ class SegmentGuidingCalculator:
                 out_file += "_1"
                 if self.visit_num is not None:
                     if int(self.visit_num) != 1:
-                        LOGGER.warning('Visit number set to 001. You cannot specify '
+                        self.log.warning('Visit number set to 001. You cannot specify '
                                        'visit numbers if specifying multiple observations.')
                 self.visit_num = 1
 
@@ -297,7 +303,7 @@ class SegmentGuidingCalculator:
                 Position angle: {8} degrees""".\
                 format(self.fgs_num, self.v2_ref, self.v3_ref, self.seg_num,
                        self.v2_boff, self.v3_boff, self.ra, self.dec, self.pa)
-            LOGGER.info('Segment Guiding: ' + summary_output)
+            self.log.info('Segment Guiding: ' + summary_output)
 
             all_segments = 'All Segment Locations'
             all_segments += '\n                Segment     dV2    dV3    xIdl' +\
@@ -308,7 +314,7 @@ class SegmentGuidingCalculator:
                                     self.v3_seg_array[p], self.x_idl_segs[p],
                                     self.y_idl_segs[p], self.seg_ra[p],
                                     self.seg_dec[p], self.x_det_segs[p], self.y_det_segs[p]))
-            LOGGER.info('Segment Guiding: ' + all_segments)
+            self.log.info('Segment Guiding: ' + all_segments)
 
         # Determine what the commands should be:
         if obs_num_list is None:
@@ -403,10 +409,10 @@ class SegmentGuidingCalculator:
             f.write(out_string)
 
             if verbose:
-                LOGGER.info('Segment Guiding: Guide Star Override: ' +
+                self.log.info('Segment Guiding: Guide Star Override: ' +
                             out_string.replace('-star', '\n                -star').
                             replace('-ref_only', '\n                -ref_only'))
-                LOGGER.info('Segment Guiding: Saved override command to {}'.
+                self.log.info('Segment Guiding: Saved override command to {}'.
                             format(out_file))
 
 
@@ -468,9 +474,9 @@ class SegmentGuidingCalculator:
         # Check to make sure no segments are off the detector, pixel-wise
         for x, y, i_seg in zip(self.x_det_segs, self.y_det_segs, self.seg_id_array):
             if x < 0.5 or x > 2048.5:
-                LOGGER.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
+                self.log.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
             if y < 0.5 or y > 2048.5:
-                LOGGER.warning('Segment Guiding: %8s off detector in Y direction' % i_seg)
+                self.log.warning('Segment Guiding: %8s off detector in Y direction' % i_seg)
 
         # Get the vertices of the given FGS detector
         vertices = [(self.fgs_siaf_aperture.XIdlVert1, self.fgs_siaf_aperture.YIdlVert1),
@@ -576,7 +582,7 @@ class SegmentGuidingCalculator:
         self.seg_id_array = segment_coords['SegID']
         self.v2_seg_array = segment_coords['V2Seg']
         self.v3_seg_array = segment_coords['V3Seg']
-        LOGGER.info(
+        self.log.info(
             'Segment Guiding: {} segment coordinates read from {}'.
             format(len(self.seg_id_array), segment_infile)
         )
@@ -598,7 +604,7 @@ class SegmentGuidingCalculator:
 
         # If the selected segments are an array of lists (passed from GUI)
         if isinstance(selected_segs, np.ndarray):
-            LOGGER.info('Segment Guiding: Guiding on segments selected from GUI')
+            self.log.info('Segment Guiding: Guiding on segments selected from GUI')
             # If there is more than one orientation provided
             if isinstance(selected_segs[0], list):
                 self.selected_segment_ids = []
@@ -611,7 +617,7 @@ class SegmentGuidingCalculator:
 
         # Else if they are a guiding_selections*.txt, parse it.
         elif os.path.exists(selected_segs):
-            LOGGER.info('Segment Guiding: Guiding on segments selected in {}'.format(selected_segs))
+            self.log.info('Segment Guiding: Guiding on segments selected in {}'.format(selected_segs))
             self.parse_guiding_selections_file(selected_segs)
 
         # Otherwise, we don't know what it is...
@@ -639,7 +645,7 @@ class SegmentGuidingCalculator:
         try:
             read_selected_segs = asc.read(selected_segs)
             column_names = read_selected_segs.colnames
-            LOGGER.info(
+            self.log.info(
                 'Segment Guiding: Selected segment coordinates read from {}'.
                 format(selected_segs)
             )
@@ -892,11 +898,12 @@ class SegmentGuidingCalculator:
 
 def generate_segment_override_file(segment_infile, guider,
                                    program_id, observation_num, visit_num,
+                                   ra=None, dec=None,
                                    root=None, out_dir=None, selected_segs=None,
                                    click_to_select_gui=True, data=None,
                                    guide_star_params_dict=None, threshold_factor=0.9,
                                    parameter_dialog=True, dialog_obj=None,
-                                   oss_factor=0.6, master_gui_app=None):
+                                   oss_factor=0.6, master_gui_app=None, log=None):
     """Run the segment guiding tool to select guide and reference stars and
     generate a segment guiding override file.
 
@@ -907,12 +914,16 @@ def generate_segment_override_file(segment_infile, guider,
         and countrates
     guider : int
         Which guider is being used: 1 or 2
-    program_id : int
+    program_id : int or str
         APT program number
-    observation_num : int
+    observation_num : int or str
         Observation number
-    visit_num : int
+    visit_num : int or str
         Visit number
+    ra :  float, optional
+        RA of guide star
+    dec :  float, optional
+        DEC of guide star
 
     root : str, optional
         Name used to generate output folder and output filenames. If not
@@ -956,18 +967,23 @@ def generate_segment_override_file(segment_infile, guider,
         the full number of countrate that we care about.
     master_gui_app : qApplication, optional
         qApplication instance of parent GUI
+    log : logger object
+        Pass a logger object (output of tils.create_logger_from_yaml) or a new log
+        will be created
     """
 
     root = utils.make_root(root, segment_infile)
-    utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+
+    if log is None:
+        log = logging.getLogger(__name__)
 
     try:
         # Get the guide star parameters
         if parameter_dialog:
             if dialog_obj is None:
                 dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
-                    "SOF", guider, program_id, observation_num, visit_num, log=None
+                    "SOF", guider, program_id, observation_num, visit_num, ra, dec, log=LOGGER
                 )
             accepted = dialog_obj.exec()
             params = dialog_obj.get_dialog_parameters() if accepted else None
@@ -976,7 +992,7 @@ def generate_segment_override_file(segment_infile, guider,
                 guide_star_params_dict, program_id, observation_num, visit_num, \
                     threshold_factor, _, _ = params
             else:
-                LOGGER.warning('Segment Guiding: SOF creation cancelled.')
+                log.warning('Segment Guiding: SOF creation cancelled.')
                 return
 
         elif guide_star_params_dict is None:
@@ -990,7 +1006,7 @@ def generate_segment_override_file(segment_infile, guider,
         # Check if there is an existing file with the same prog/obs/visit
         if not JENKINS:
             overwrite_existing_file = SegmentGuidingGUI.check_override_overwrite(
-                out_dir, program_id, observation_num, visit_num, logger=LOGGER
+                out_dir, program_id, observation_num, visit_num, logger=log
             )
             if overwrite_existing_file:
                 return
@@ -1007,7 +1023,7 @@ def generate_segment_override_file(segment_infile, guider,
 
             guide_star_params_dict, selected_segs = _click_to_select_segments(
                 segment_infile, data, guide_star_params_dict,
-                master_gui_app, selected_segs=selected_segs
+                master_gui_app, selected_segs=selected_segs, log=log
             )
         elif selected_segs is None:
             raise ValueError(
@@ -1024,7 +1040,7 @@ def generate_segment_override_file(segment_infile, guider,
             segment_infile=segment_infile,
             guide_star_params_dict=guide_star_params_dict,
             selected_segs=selected_segs, threshold_factor=threshold_factor,
-            oss_factor=oss_factor
+            oss_factor=oss_factor, log=log
         )
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params("SOF")
@@ -1040,15 +1056,15 @@ def generate_segment_override_file(segment_infile, guider,
             sg.plot_segments()  # Save .pngs of plots
 
     except Exception as e:
-        LOGGER.exception(e)
+        log.exception(e)
         raise
 
 
 def generate_photometry_override_file(root, program_id, observation_num, visit_num,
                                       countrate_factor=None,
                                       countrate_uncertainty_factor=None,
-                                      out_dir=None,
-                                      parameter_dialog=True, dialog_obj=None):
+                                      out_dir=None, parameter_dialog=True,
+                                      dialog_obj=None, log=None):
     """Generate a photometry override file (used for commissioning activities
     where the PSFs are stacked but unphased, like during MIMF).
 
@@ -1078,9 +1094,13 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
     dialog_obj : SegmentGuidingDialog object, optional
         If parameter_dialog is True, can pass a pre-set dialog object or
         re-create it if dialog_obj=None
+    log : logger object
+        Pass a logger object (output of tils.create_logger_from_yaml) or a new log
+        will be created
     """
 
-    utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+    if log is None:
+        log = logging.getLogger(__name__)
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
 
     try:
@@ -1088,7 +1108,7 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         if parameter_dialog:
             if dialog_obj is None:
                 dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
-                    "POF", None, program_id, observation_num, visit_num, log=LOGGER
+                    "POF", None, program_id, observation_num, visit_num, log=log
                 )
             accepted = dialog_obj.exec()
             params = dialog_obj.get_dialog_parameters() if accepted else None
@@ -1113,7 +1133,7 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         # Set up guiding calculator object
         sg = SegmentGuidingCalculator(
             "POF", program_id, observation_num, visit_num, root, out_dir,
-            countrate_factor=countrate_factor, countrate_uncertainty_factor=countrate_uncertainty_factor
+            countrate_factor=countrate_factor, countrate_uncertainty_factor=countrate_uncertainty_factor, log=log
         )
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params("POF")
@@ -1122,11 +1142,11 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         sg.write_override_file()
 
     except Exception as e:
-        LOGGER.exception(e)
+        log.exception(e)
         raise
 
 def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
-                              master_gui_app, selected_segs=None):
+                              master_gui_app, selected_segs=None, log=None):
     """Raise the segment guiding GUI and prompt the user to select which segments
     to use as the guide and reference stars.
 
@@ -1144,6 +1164,9 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
     selected_segs : str, optional
         File path to guiding_selections*.txt file with list of locations and
         countrates for the pre-selected segments (guide and reference stars)
+    log : logger object
+        Pass a logger object (output of tils.create_logger_from_yaml) or a new log
+        will be created
 
     Returns
     -------
@@ -1155,6 +1178,10 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
         reference stars
 
     """
+
+    if log is None:
+        log = logging.getLogger(__name__)
+
     if selected_segs is not None:
         # Parse all_found_psfs*.txt for locations of segments
         all_segment_locations = asc.read(segment_infile)
@@ -1180,7 +1207,7 @@ def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
         data, x, y, dist, selected_segs=selected_segs,
         masterGUIapp=master_gui_app
     )
-    LOGGER.info(
+    log.info(
         'Segment Guiding: {} segment override commands generated with seg_num = {}'.
         format(len(inds), seg_num)
     )

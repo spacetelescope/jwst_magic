@@ -26,7 +26,6 @@ if (utils.scm_checkout()) return
 // Define helpful variables
 ASTROCONDA_CHANNEL = "http://ssb.stsci.edu/astroconda"
 CONDAFORGE_CHANNEL = "conda-forge"
-CONDA_INSTALL = "conda install -y -q --file=requirements.txt"
 
 // Establish variables for the matrix
 matrix_os = ["linux-stable"] // (Note that Jenkins can only be run with Linux, not MacOSX/Windows)
@@ -62,7 +61,7 @@ for (os in matrix_os) {
             "conda config --add channels '${ASTROCONDA_CHANNEL}' ",
             "conda config --add channels '${CONDAFORGE_CHANNEL}' ",
             // Install package requirements for given python version
-            "${CONDA_INSTALL} python=${python_ver}",
+            "conda env update --file=environment.yml", // Update env from file
             // Install fgscountrate package
             "git clone https://github.com/spacetelescope/jwst-fgs-countrate.git",
             "pip install jwst-fgs-countrate/",
