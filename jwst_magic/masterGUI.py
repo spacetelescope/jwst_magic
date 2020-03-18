@@ -46,12 +46,18 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 # Standard Library Imports
 import glob
+import logging
 import os
 import re
+import shutil
+import subprocess
 import sys
+import urllib.request
 
 # Third Party Imports
 from astropy.io import ascii as asc
+import fgscountrate
+from lxml import etree
 import matplotlib
 import numpy as np
 if matplotlib.get_backend() != 'Qt5Agg':
@@ -75,6 +81,8 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 SOGS_PATH = '***REMOVED***/guiding/'
+
+LOGGER = logging.getLogger(__name__)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OUTPUT HANDLER
@@ -148,7 +156,16 @@ class MasterGui(QMainWindow):
         self.shifted_im_circles = []
         self.bkgd_stars = None
         self.itm = itm
+        self.program_id = ''
+        self.observation_num = ''
+        self.visit_num = ''
+        self.gs_id = ''
+        self.apt_guider = ''
+        self.gs_ra = ''
+        self.gs_dec = ''
         self._test_sg_dialog = None
+        self.log = None
+        self.log_filename = None
 
         # Initialize main window object
         QMainWindow.__init__(self)
@@ -228,10 +245,12 @@ class MasterGui(QMainWindow):
         self.pushButton_inputImage.clicked.connect(self.update_input)
         self.lineEdit_inputImage.editingFinished.connect(self.update_input)
         self.buttonGroup_guider.buttonClicked.connect(self.update_filepreview)
+        self.buttonGroup_guider.buttonClicked.connect(self.check_guider_against_apt)
         self.lineEdit_root.editingFinished.connect(self.update_filepreview)
         self.pushButton_root.clicked.connect(self.on_click_root)
         self.pushButton_out.clicked.connect(self.on_click_out)
         self.textEdit_out.installEventFilter(self)
+        self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
         # Image convertor widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
@@ -270,9 +289,7 @@ class MasterGui(QMainWindow):
                 sogs_dirs.remove(d)
 
         # Load all OTE cars from commissioning activities YAML file
-        commissioning_yaml = os.path.join(__location__, 'data', 'commissioning_activities.yaml')
-        with open(commissioning_yaml, encoding="utf-8") as f:
-            self.commissioning_dict = yaml.safe_load(f.read())
+        self.commissioning_dict = utils.get_car_data()
         cars_list = list(self.commissioning_dict.keys())
 
         # Use to populate practice and CAR dropdown boxes
@@ -285,6 +302,7 @@ class MasterGui(QMainWindow):
         self.comboBox_practice.currentIndexChanged.connect(self.update_commissioning_name)
         self.comboBox_car.currentIndexChanged.connect(self.update_commissioning_name)
         self.comboBox_obs.currentIndexChanged.connect(self.update_commissioning_name)
+        self.pushButton_commid.clicked.connect(self.update_commissioning_name)
 
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -437,47 +455,46 @@ class MasterGui(QMainWindow):
         # Segment guiding
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if self.groupBox_segmentGuiding.isChecked():
-
-            # If commissioning name, load the program and observation number
-            if self.radioButton_name_commissioning.isChecked():
-                program_id = int(self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt'])
-                observation_num = int(self.comboBox_obs.currentText())
-                visit_num = 1  # Will we ever have a visit that's not 1?
-            else:
-                program_id = ""
-                observation_num = ""
-                visit_num = ""
+            # If Id/Obs/Visit and/or GS info hasn't already been set by parse_header() or commissioning section
+            if not all(hasattr(self, attr) for attr in ["program_id", "observation_num", "visit_num"]):
+                self.program_id, self.observation_num, self.visit_num = '', '', ''
+            if not all(hasattr(self, attr) for attr in ["gs_id", "gs_ra", "gs_dec"]):
+                self.gs_id, self.gs_ra, self.gs_dec = '', '', ''
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
-                                       "POF", None, program_id, observation_num, visit_num, log=None
+                                       "POF", None, self.program_id, self.observation_num, self.visit_num, log=None
                 )
-
                 # Generate the file
                 segment_guiding.generate_photometry_override_file(
-                    root, program_id, observation_num, visit_num, out_dir=out_dir,
-                    parameter_dialog=True, dialog_obj=self._test_sg_dialog
+                    root, self.program_id, self.observation_num, self.visit_num, out_dir=out_dir,
+                    parameter_dialog=True, dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
+
             else:
                 # Get APT program information from parsed header
                 self.parse_header(input_image)
 
                 # Define location of all_found_psfs catalog file
-                if self.radioButton_shifted.isChecked():
-                    segment_infile = self.shifted_all_found_psfs_file
+                if self.lineEdit_regfileSegmentGuiding.text() is '':
+                    if self.radioButton_shifted.isChecked():
+                        segment_infile = self.shifted_all_found_psfs_file
+                    else:
+                        segment_infile = self.all_found_psfs_file
                 else:
-                    segment_infile = self.all_found_psfs_file
+                    segment_infile = self.lineEdit_regfileSegmentGuiding.text()
 
                 # Verify that the all_found_psfs*.txt file exists
                 if not os.path.exists(segment_infile):
                     raise OSError('Provided segment infile {} not found.'.format(segment_infile))
 
-                # Determine which image to use and load it
+                # Determine which image to use for the click-to-select GUI in generate_segment_override_file and load it
                 if self.radioButton_shifted.isChecked():
                     fgs_filename = self.shifted_im_file
-                elif self.radioButton_unshifted.isChecked() and os.path.exists(self.converted_im_file):
+                elif self.radioButton_unshifted.isChecked() and hasattr(self, 'converted_im_file') and \
+                        os.path.exists(self.converted_im_file):
                     fgs_filename = self.converted_im_file
                 elif self.radioButton_unshifted.isChecked():
                     fgs_filename = input_image
@@ -485,20 +502,22 @@ class MasterGui(QMainWindow):
 
                 # Determine whether to load guiding_selections*.txt or run GUI
                 GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
-                selected_segs = self.lineEdit_regfileStarSelector.text()
+                selected_segs = self.lineEdit_regfileSegmentGuiding.text()
 
                 # Run the tool and generate the file
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
-                    "SOF", guider, program_id, observation_num, visit_num, log=None
+                    "SOF", guider, self.program_id, self.observation_num, self.visit_num,
+                    ra=self.gs_ra, dec=self.gs_dec,log=None
                 )
 
                 # Generate the file
                 segment_guiding.generate_segment_override_file(
-                    segment_infile, guider, program_id, observation_num, visit_num,
+                    segment_infile, guider, self.program_id, self.observation_num,
+                    self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
                     root=root, out_dir=out_dir, selected_segs=selected_segs,
                     click_to_select_gui=GUI, data=data, master_gui_app=self.app,
-                    parameter_dialog=True, dialog_obj=self._test_sg_dialog
+                    parameter_dialog=True, dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
 
             # Update converted image preview
@@ -726,6 +745,37 @@ class MasterGui(QMainWindow):
 
         self.update_filepreview()
 
+    def check_guider_against_apt(self):
+        if self.apt_guider != '' and self.buttonGroup_guider.checkedButton() is not None:
+            # Check the guider in the APT file matches what's chosen in the GUI
+            if int(self.apt_guider) != int(self.buttonGroup_guider.checkedButton().text()):
+                self.mismatched_apt_guider_dialog()
+
+    def update_apt_gs_values(self):
+        # Query APT + call FGSCountrate tool for Guide Star Information
+        if self.radioButton_name_manual.isChecked():
+            if self.lineEdit_manualid.text() == '' and self.lineEdit_manualobs.text() == '':
+                self.program_id, self.observation_num, self.visit_num = '', '', ''
+                self.gs_id, self.gs_ra, self.gs_dec = '', '', ''
+            elif self.lineEdit_manualid.text() != '' and self.lineEdit_manualobs.text() != '':
+                self.program_id = int(self.lineEdit_manualid.text())
+                self.observation_num = int(self.lineEdit_manualobs.text())
+                self.visit_num = 1  # Will we ever have a visit that's not 1?
+                self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
+            else:
+                raise ValueError('Must set both program ID and observation number to use APT')
+        elif self.radioButton_name_commissioning.isChecked():
+            self.program_id = int(self.lineEdit_commid.text())
+            self.observation_num = int(self.comboBox_obs.currentText())
+            self.visit_num = 1  # Will we ever have a visit that's not 1?
+            self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
+
+        # Check the guider in the APT file matches what's chosen in the GUI
+        self.check_guider_against_apt()
+
+        # Update GSID in image normalization
+        self.lineEdit_normalize.setText(str(self.gs_id))
+
     def update_commissioning_name(self):
         # Check which values have been selected already
         valid_practice = self.comboBox_practice.currentText() != '- Select Practice -'
@@ -742,20 +792,20 @@ class MasterGui(QMainWindow):
             for i_obs in np.arange(n_obs, n_obs + 3):
                 self.comboBox_obs.addItem('+{:02d}'.format(i_obs + 1))
 
-            # Add the current APT program number
-            self.label_apt.setText('APT: {}'.format(
-                self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt'])
-            )
+            # Add/Update the current APT program number
+            self.lineEdit_commid.setText(str(self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt']))
 
-        valid_obs = '- Select Obs -' not in self.comboBox_obs.currentText() and \
-                    self.comboBox_obs.currentText() != ""
+        valid_obs = '- Select Obs -' not in self.comboBox_obs.currentText() and self.comboBox_obs.currentText() != ""
+        valid_all = valid_practice and valid_car and valid_obs
 
         # Update which boxes are enabled and disabled accordingly
         self.comboBox_car.setEnabled(valid_practice)
+        self.lineEdit_commid.setEnabled(valid_practice)
         self.comboBox_obs.setEnabled(valid_practice & valid_car)
+        self.pushButton_commid.setEnabled(valid_practice & valid_car)
 
         # Update the preview output path
-        if valid_practice and valid_car and valid_obs:
+        if valid_all:
             path = os.path.join(SOGS_PATH,
                                 self.comboBox_practice.currentText(),
                                 self.comboBox_car.currentText().lower().replace('-', ''),
@@ -768,6 +818,11 @@ class MasterGui(QMainWindow):
 
         # Update file previews
         self.update_filepreview()
+
+        # Update population of guide star information
+        if valid_all and any([self.sender() == self.comboBox_car, self.sender() == self.comboBox_obs,
+                              self.sender() == self.pushButton_commid]):
+            self.update_apt_gs_values()
 
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -788,6 +843,19 @@ class MasterGui(QMainWindow):
         no_guider_dialog.setInformativeText('The tool will not be able to continue. Please select Guider 1 or 2.')
         no_guider_dialog.setStandardButtons(QMessageBox.Ok)
         no_guider_dialog.exec()
+
+    def mismatched_apt_guider_dialog(self):
+        mismatched_apt_guider_dialog = QMessageBox()
+        mismatched_apt_guider_dialog.setText('Current guider does not match APT file' + ' ' * 30)
+        mismatched_apt_guider_dialog.setInformativeText('The GUI is currently set to use GUIDER{}, but the APT file '
+                                                        'you have selected has the guider set as GUIDER{}. '
+                                                        'Please change your guider selection to match the '
+                                                        'APT file.'.format(
+                                                         int(self.buttonGroup_guider.checkedButton().text()),
+                                                         self.apt_guider))
+        mismatched_apt_guider_dialog.setStandardButtons(QMessageBox.Ok)
+        mismatched_apt_guider_dialog.exec()
+
     def no_root_dialog(self):
         self.no_root_dialog_box = QMessageBox()
         self.no_root_dialog_box.setText('No root defined' + ' ' * 50)
@@ -818,10 +886,17 @@ class MasterGui(QMainWindow):
         # Import .ui file
         uic.loadUi(os.path.join(__location__, 'segment_guiding', 'segmentGuidingDialog.ui'), SGT_dialog)
 
-        # Set defaults from parsed header
-        SGT_dialog.lineEdit_programNumber.setText(self.prognum)
-        SGT_dialog.lineEdit_observationNumber.setText(self.obsnum)
-        SGT_dialog.lineEdit_visitNumber.setText(self.visitnum)
+        # Set defaults from parsed header or commissioning section
+        SGT_dialog.lineEdit_programNumber.setText(self.program_id)
+        SGT_dialog.lineEdit_observationNumber.setText(self.observation_num)
+        SGT_dialog.lineEdit_visitNumber.setText(self.visit_num)
+
+        # Setting only for SOF, not POF
+        try:
+            SGT_dialog.lineEdit_RA.setText(self.gs_ra)
+            SGT_dialog.lineEdit_DEC.setText(self.gs_dec)
+        except AttributeError:
+            pass
 
         # Run window and wait for response
         SGT_dialog.exec()
@@ -923,13 +998,14 @@ class MasterGui(QMainWindow):
             pass
 
         # Parse APT program, observation, and visit information
-        keywords = ['PROGRAM', 'OBSERVTN', 'VISIT']
-        attributes = ['prognum', 'obsnum', 'visitnum']
-        for keyword, attr in zip(keywords, attributes):
-            try:
-                setattr(self, attr, str(header[keyword]))
-            except KeyError:
-                pass
+        if self.radioButton_name_manual.isChecked():
+            keywords = ['PROGRAM', 'OBSERVTN', 'VISIT']
+            attributes = ['program_id', 'observation_num', 'visit_num']
+            for keyword, attr in zip(keywords, attributes):
+                try:
+                    setattr(self, attr, str(header[keyword]))
+                except KeyError:
+                    pass
 
     def is_valid_path_defined(self):
         if self.radioButton_name_manual.isChecked():
@@ -1120,6 +1196,13 @@ class MasterGui(QMainWindow):
                 root = 'for_obs{:02d}'.format(int(self.comboBox_obs.currentText()))
                 root_dir = self.textEdit_name_preview.toPlainText()
 
+            # Set log if not already set (for first file created with MAGIC)
+            if self.log is None:
+                self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+            # If root is changed, need to create a new log file
+            if root != self.log_filename.split('/')[-1].split('masterGUI_')[-1].split('.log')[0]:
+                self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+
             # Note: maintaining if statements and "old" file names for backwards compatibility.
 
             # Update guiding selections file path
@@ -1145,7 +1228,6 @@ class MasterGui(QMainWindow):
                 self.all_found_psfs_file = all_found_psfs_file_old
             else:
                 self.all_found_psfs_file = all_found_psfs_file
-
 
             # Update converted FGS image filepath
             self.converted_im_file = os.path.join(
@@ -1177,6 +1259,122 @@ class MasterGui(QMainWindow):
             # If possible, show converted and shifted image previews, too
             self.update_converted_image_preview()
             self.update_shifted_image_preview()
+
+    def query_apt_for_gs(self, program_id, obs_number):
+        """
+        Function to take in the desired APT Program ID and observation number and
+        output the ID, RA, and DEC of the guide star set under the Special Requirements
+        tab of that APT file for that ID/Obs. The RA and Dec is found by querying the GSC
+        Catalog using the jwst-fgs-countrate module.
+
+        Code adapted from:
+            https://github.com/spacetelescope/jwst_magic/blob/master/fgs-commissioning/
+                notebooks/generate_commissioning_activities_yaml.ipynb
+            https://grit.stsci.edu/jsahlmann/aptxml/blob/master/aptxml/manipulate.py
+
+        Parameters
+        ----------
+        program_id : int or str
+            The APT program ID of interest
+        obs_number : int or str
+            The observation number of interest
+
+        Returns
+        -------
+        gs_id : str
+            ID of the guide star from the program ID/Obs
+        guider : int
+            The guider number from the program ID/Obs
+        ra : float
+            RA of the guide star from the program ID/Obs
+        dec : float
+            DEC of the guide star from the program ID/Obs
+
+        """
+        # Check program_id and obs_number are ints
+        if not isinstance(program_id, int):
+            program_id = int(program_id)
+        if not isinstance(obs_number, int):
+            obs_number = int(obs_number)
+
+        # Build temporary directory
+        apt_file_path = os.path.join(__location__, 'data', 'temp_apt')
+        if os.path.exists(apt_file_path):
+            shutil.rmtree(apt_file_path)
+        os.mkdir(apt_file_path)
+
+        # Download the APT file (.aptx file) from online using the program ID
+        urllib.request.urlretrieve(
+            'http://www.stsci.edu/jwst/phase2-public/{}.aptx'.format(program_id),
+            '{}/{}.aptx'.format(apt_file_path,program_id)
+        )
+
+        # Get the path to the user's newest APT version
+        try:
+            apt_list = glob.glob('{}/Applications/*APT*'.format(os.path.expanduser('~')))
+            apt_path = apt_list[0]
+        except IndexError:
+            try:
+                apt_list = glob.glob('/Applications/*APT*')
+                apt_path = apt_list[0]
+            except IndexError:
+                self.lineEdit_normalize.setText('')
+                raise FileNotFoundError("APT not found in /Applications or ~/Applications")
+        apt_path = apt_path.replace(' ', '\ ')  # fix issue with space in APT name to make path work
+
+        # Run APT and export the XML file
+        command = ['{} -nogui -export xml {}/{}.aptx'.format(apt_path + '/bin/apt', apt_file_path, program_id)]
+        subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, shell=True)
+
+        # Open the APT XML file
+        with open('{}/{}.xml'.format(apt_file_path, program_id)) as f:
+            tree = etree.parse(f)
+
+        # Pull: List of Observations for the CAR > Specific Obs > Special Requirements Info (sr)
+        namespace_tag = '{http://www.stsci.edu/JWST/APT}'
+        observation_list = tree.find(namespace_tag + 'DataRequests').findall('.//' + namespace_tag + 'Observation')
+        observation = observation_list[obs_number - 1]  # indexes from 1
+        sr = [x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "SpecialRequirements"][0]
+
+        # Try to pull the Guide Star information
+        try:
+            gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
+        except IndexError:
+            self.lineEdit_normalize.setText('')
+            LOGGER.error("Master GUI: This observation doesn't have a Guide Star Special Requirement")
+            raise ValueError("This observation doesn't have a Guide Star Special Requirement")
+
+        # Pull out the guide star ID and the guider number
+        gs_id = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStar"][0].text
+        guider = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "Guider"][0].text
+
+        # Account for if the guider is written as "guider 1" or "guider1"
+        if not isinstance(guider, int):
+            guider = guider.lower().replace(' ', '').split('guider')[1]
+
+        LOGGER.info('Master GUI: APT has been queried and found guide star {} and guider {}'.format(gs_id, guider))
+
+        # Tear down temporary directory
+        shutil.rmtree(apt_file_path)
+
+        # Use Guide Star ID to get RA/DEC using default GSC in fgscountrate module
+        data_frame = fgscountrate.query_gsc(gs_id=gs_id)
+
+        # Check there's only 1 line in the GSC with this GS ID
+        if len(data_frame) == 1:
+            gsc_series = data_frame.iloc[0]
+        else:
+            self.lineEdit_normalize.setText('')
+            LOGGER.error("Master GUI: This Guide Star ID points to multiple lines in catalog")
+            raise ValueError("This Guide Star ID points to multiple lines in catalog")
+
+        # Pull RA and DEC
+        ra = gsc_series['ra']
+        dec = gsc_series['dec']
+
+        LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra, dec))
+
+        return gs_id, guider, ra, dec
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

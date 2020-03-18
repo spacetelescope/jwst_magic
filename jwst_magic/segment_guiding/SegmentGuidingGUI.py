@@ -431,12 +431,16 @@ class SegmentGuidingDialog(QDialog):
             file) or "POF" (photometry override file)
     guider : int
         Guider number (1 or 2)
-    program_id : int
+    program_id : int or str
         APT program number
-    observation_num : optional, int
+    observation_num : optional, int or str
         Observation number
-    visit_num : optional, int
+    visit_num : optional, int or str
         Visit number
+    ra :  optional, float
+        RA of guide star
+    dec :  optional, float
+        DEC of guide star
 
     Returns
     -------
@@ -445,13 +449,15 @@ class SegmentGuidingDialog(QDialog):
         program_id, observation_num, visit_num, threshold_factor,
         countrate_factor)
     """
-    def __init__(self, override_type, guider, program_id, observation_num, visit_num, log=None):
+    def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None, log=None):
         # Initialize attributes
         self.override_type = override_type
         self.guider = guider
         self.program_id = program_id
         self.observation_num = observation_num
         self.visit_num = visit_num
+        self.ra = ra
+        self.dec = dec
 
         # Start logger
         if log is None:
@@ -472,6 +478,13 @@ class SegmentGuidingDialog(QDialog):
         self.lineEdit_programNumber.setText(str(program_id))
         self.lineEdit_observationNumber.setText(str(observation_num))
         self.lineEdit_visitNumber.setText(str(visit_num))
+
+        # Setting only for SOF, not POF
+        try:
+            self.lineEdit_RA.setText(str(ra if ra is not None else ''))
+            self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
+        except AttributeError:
+            pass
 
     def get_dialog_parameters(self):
         """Parses the user input into the segment guiding dialog box, differentiating
