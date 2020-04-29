@@ -20,7 +20,7 @@ The Multi-Application Guiding Interface for Commissioning (MAGIC) package provid
 These tools comprise of four main components that can be run individually or together:
 
 ### 1. NIRCam or FGS science to FGS raw image conversion (``convert_image``)
-This module will convert an input image (from *any* NIRCam or FGS detectors) to a pseudo-FGS raw image. This pseudo-FGS raw image is *not* a simulated image, but an expectation of the image that the flight software will see. This module appropriately rotates the image from the science frame if necessary, adjusts the pixel scale and image size if converting from a NIRCam image, corrects bad pixels, and normalizes the image to the magnitude and count rates of a specified guide star.
+This module will convert an input image (from *any* NIRCam or FGS detectors) to a pseudo-FGS raw image. This pseudo-FGS raw image is *not* a simulated image, but an expectation of the image that the FGS flight software will see. This module appropriately rotates the image from the science frame if necessary, adjusts the pixel scale and image size if converting from a NIRCam image, corrects bad pixels, and normalizes the image to the magnitude and count rates of a specified guide star.
 
 ### 2. Star Selection Tool (``star_selector``)
 This module takes in a raw FGS image and allows the user to choose the guide and reference star PSFs using a GUI.
@@ -76,15 +76,24 @@ This package is developed in a Python ≥3.6 environment. Python 2 is not suppor
     pip install -e .
     ```
 
-The package installation process will also check for the following package dependencies, and automatically install them using pip if they are not found:
+The `jwst_magic` package installation process will also check for the following package dependencies, and automatically install them using pip if they are not found:
+
     * `astropy`
+
     * `matplotlib`
+
     * `numpy`
+
     * `photutils`
+
     * `PyQt5`
+
     * `pysiaf`
+
     * `pytest`
+
     * `pyyaml`
+
     * `requests`
 
 
