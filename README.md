@@ -77,24 +77,15 @@ This package is developed in a Python ≥3.6 environment. Python 2 is not suppor
     ```
 
 The `jwst_magic` package installation process will also check for the following package dependencies, and automatically install them using pip if they are not found:
-
-    * `astropy`
-
-    * `matplotlib`
-
-    * `numpy`
-
-    * `photutils`
-
-    * `PyQt5`
-
-    * `pysiaf`
-
-    * `pytest`
-
-    * `pyyaml`
-
-    * `requests`
+  * `astropy`
+  * `matplotlib`
+  * `numpy`
+  * `photutils`
+  * `PyQt5`
+  * `pysiaf`
+  * `pytest`
+  * `pyyaml`
+  * `requests`
 
 
 Running the Tools
@@ -150,7 +141,7 @@ the attention of a MAGIC team member listed below.
 
 Questions
 -----------------
-Any questions regarding the `jwst_magic` project or its software should be directed to `sosborne@stsci.edu` and `kbrooks@stsci.edu`.
+Any questions regarding the `jwst_magic` project or its software should be directed to the current development team.
 
 Current Development Team
 -----------------
