@@ -60,7 +60,7 @@ This package is developed in a Python ≥3.6 environment. Python 2 is not suppor
     git clone git@github.com:spacetelescope/jwst-fgs-countrate.git
     ```
 
-5. Install the `jwst-fg-countrate` package by navigating to the directory where the `setup.py` file lives in the `jwst-fg-countrate` package and installing it using `pip`:
+5. Install the `jwst-fgs-countrate` package by navigating to the directory where the `setup.py` file lives in the `jwst-fgs-countrate` package and installing it using `pip`:
 
     ```
     cd jwst-fgs-countrate/
@@ -90,7 +90,7 @@ The `jwst_magic` package installation process will also check for the following 
 
 Running the Tools
 -----------------
-These tools are best run in the `IPython` terminal, in the conda environment where you have installed `jwst_magic` an AstroConda environment. Simply activate your environment, and launch the GUI with the following steps:
+These tools are best run in the `IPython` terminal, in the conda environment where you have installed `jwst_magic`. Activate your environment, and launch the GUI with the following steps:
 
     In[1]: import jwst_magic
 
