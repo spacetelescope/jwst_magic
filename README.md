@@ -15,77 +15,60 @@
 
 The Multi-Application Guiding Interface for Commissioning (MAGIC) package provides convenient access to  numerous ancillary tools that will be used, as the name suggests, with the JWST FGS during OTE Commissioning. The package allows for user interaction with commissioning data and creates files that are needed for the operation of the flight software and the execution of visits.
 
-These tools comprise of four main components that can be run individually
-or together:
+**For more details on these tools and how to use them, please see the [MAGIC User's Guide](./docs/magic_user_guide).**
 
-### 1. NIRCam to FGS image conversion (``convert_image``)
-This tool can take in a simulated (or real) NIRCam image and will convert
-it to an FGS (guider 1 or guider 2) image. In addition to rotating the image,
-adjusting the pixel scale and image size, this tool corrects bad pixels and
-normalizes the image to a specific magnitude of star.
+These tools comprise of four main components that can be run individually or together:
 
+### 1. NIRCam or FGS science to FGS raw image conversion (``convert_image``)
+This module will convert an input image (from *any* NIRCam or FGS detectors) to a pseudo-FGS raw image. This pseudo-FGS raw image is *not* a simulated image, but an expectation of the image that the FGS flight software will see. This module appropriately rotates the image from the science frame if necessary, adjusts the pixel scale and image size if converting from a NIRCam image, corrects bad pixels, and normalizes the image to the magnitude and count rates of a specified guide star.
 
 ### 2. Star Selection Tool (``star_selector``)
-This tool will take the FGS image either created with the first tool, or
-an FGS image that it is passed by the user, and allow the user to choose
-the guide star and reference stars using a GUI.
+This module takes in a raw FGS image and allows the user to choose the guide and reference star PSFs using a GUI.
 
 
 ### 3. Flight Software File Writer (``fsw_file_writer``)
-This module requires an FGS image and a file that includes a list of the
-coordinates of the guide star and reference stars, along with their count
-rates. This tool will create all files necessary to test this image different
-flight software simulators (FGS DHAS, FGSES, etc.) These include all the
-files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
+This module creates all the files necessary to test guide and reference star candidates in an FGS raw image, with different flight software simulators such as the FGS DHAS, FGSES, etc. This includes all the files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
 
 
 ### 4. Segment Guiding Tool (``segment_guiding``)
-Used to facilitate guiding on unstacked segment arrays during commissioning. When
-provided 1) the commanded RA and Dec of a guide star and 2) the V2/V3 (or x/y)
-positions of all segments in an array, the segment guiding tool calculates the
-effective RA and Dec of all segments on the sky.
+Allows the user to override the guide star catalog with the selected guide and reference star PSFs that will be used to facilitate guiding on unstacked and/or un-phased PSFs during JWST commissioning.
 
 
 Installation notes
 ------------------
-This package was developed in a Python ≥3.6 environment. Python 2 is not supported.
+This package is developed in a Python ≥3.6 environment. Python 2 is not supported.
 
-The following supplemental packages are required, and will be **automatically installed** with the package:
-* `astropy`
-* `matplotlib`
-* `numpy`
-* `photutils`
-* `PyQt5`
-* `pysiaf`
-* `pytest`
-* `pyyaml`
-* `requests`
+##### To install
 
-##### To install:
+1. ``$ cd`` into the directory where you want to keep the package
 
-1. Activate your Python 3 (preferably Astroconda) environment.
-
-2. Clone the gitlab repository to your local machine (we recommend you have SSH keys set up)
+2. Clone the GitHub repository to your local machine (we recommend you have SSH keys set up)
 
     ```
     git clone git@github.com:spacetelescope/jwst_magic.git
     ```
 
-3. You will need the `jwst-fgs-countrate` module in order to run MAGIC. Clone the repository to your local machine. 
+3. Activate a AstroConda (Python 3) environment (For installing AstroConda go [here](http://stsci-env.readthedocs.io/en/latest/installing_anaconda.html)) or create a MAGIC-specific environment by navigating to the directory where the `setup.py` file lives in the `jwst_magic` package and create a new conda environment, for example named 'magic', from the `environment.yml` file:
+
+    ```
+    conda env create --name magic --file=environment.yml
+    ```
+
+4. You will need the `jwst-fgs-countrate` module in order to run MAGIC. Clone the repository to your local machine.
 
     ```
     git clone git@github.com:spacetelescope/jwst-fgs-countrate.git
     ```
 
-4. Install the `jwst-fg-countrate` package by navigating to the directory where the `setup.py` file lives and installing it using `pip`:
-   
+5. Install the `jwst-fgs-countrate` package by navigating to the directory where the `setup.py` file lives in the `jwst-fgs-countrate` package and installing it using `pip`:
+
     ```
     cd jwst-fgs-countrate/
 
     pip install -e .
     ```
 
-5. Install the `jwst_magic` package by navigating to the directory where the `setup.py` file lives and installing it using `pip`:
+6. Install the `jwst_magic` package by navigating to the directory where the `setup.py` file lives in the `jwst_magic` package and installing it using `pip`:
 
     ```
     cd jwst_magic/
@@ -93,15 +76,21 @@ The following supplemental packages are required, and will be **automatically in
     pip install -e .
     ```
 
+The `jwst_magic` package installation process will also check for the following package dependencies, and automatically install them using pip if they are not found:
+  * `astropy`
+  * `matplotlib`
+  * `numpy`
+  * `photutils`
+  * `PyQt5`
+  * `pysiaf`
+  * `pytest`
+  * `pyyaml`
+  * `requests`
 
-    
 
 Running the Tools
 -----------------
-These tools are best run in the `IPython` terminal, in an AstroConda environment
-(see the [AstroConda installation page](https://astroconda.readthedocs.io/en/latest/getting_started.html)
-for installing AstroConda). Simply activate your Python 3 environment, and
-launch the GUI with the following steps:
+These tools are best run in the `IPython` terminal, in the conda environment where you have installed `jwst_magic`. Activate your environment, and launch the GUI with the following steps:
 
     In[1]: import jwst_magic
 
@@ -113,7 +102,7 @@ As with all software packages, there are several known issues for MAGIC. A [curr
 
 Documentation
 -----------------
-For the full documentation, including step-by-step directions for using the package, see the [MAGIC User's Guide](./docs/magic_user_guide).
+For the full documentation, including step-by-step directions for using this package, see the [MAGIC User's Guide](./docs/magic_user_guide).
 
 Contributing
 -----------------
@@ -152,7 +141,7 @@ the attention of a MAGIC team member listed below.
 
 Questions
 -----------------
-Any questions regarding the `jwst_magic` project or its software should be directed to `sosborne@stsci.edu` and `kbrooks@stsci.edu`.
+Any questions regarding the `jwst_magic` project or its software should be directed to the current development team.
 
 Current Development Team
 -----------------
