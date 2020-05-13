@@ -143,8 +143,8 @@ class EmittingStream(QtCore.QObject):
 
 class MasterGui(QMainWindow):
     def __init__(self, root=None, norm_value=12.0, norm_units='FGS Magnitude',
-                 nircam_det=None, nircam=True, global_alignment=False, steps=None,
-                 in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
+                 nircam_det=None, nircam=True, global_alignment=False, no_smoothing=False,
+                 steps=None, in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                  star_selection=True, star_selection_gui=True, file_writer=True,
                  segment_guiding=False, app=None, itm=False):
 
@@ -400,6 +400,7 @@ class MasterGui(QMainWindow):
         # Star selection
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         global_alignment = self.checkBox_globalAlignment.isChecked()
+        no_smoothing = self.checkBox_noSmoothing.isChecked()
         star_selection = self.groupBox_starSelector.isChecked()
         star_selectiongui = self.radioButton_starSelectorGUI.isChecked()
         if not self.radioButton_regfileStarSelector.isChecked():
@@ -533,6 +534,7 @@ class MasterGui(QMainWindow):
                               nircam_det=nircam_det,
                               nircam=nircam,
                               global_alignment=global_alignment,
+                              no_smoothing=no_smoothing,
                               steps=steps,
                               guiding_selections_file=in_file,
                               bkgd_stars=bkgd_stars,
@@ -1382,7 +1384,7 @@ class MasterGui(QMainWindow):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_det=None,
-                  nircam=True, global_alignment=False, steps=None, in_file=None,
+                  nircam=True, global_alignment=False, no_smoothing=False, steps=None, in_file=None,
                   bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
                   segment_guiding=False, itm=False):
@@ -1391,8 +1393,8 @@ def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_
     if app is None:
         app = QApplication(sys.argv)
 
-    ex = MasterGui(root, norm_value, norm_unit, nircam_det, nircam, global_alignment, steps,
-                   in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
+    ex = MasterGui(root, norm_value, norm_unit, nircam_det, nircam, global_alignment, no_smoothing,
+                   steps, in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
                    file_writer, segment_guiding, app=app, itm=itm)
     # #return ex.settings
     out = app.exec()
