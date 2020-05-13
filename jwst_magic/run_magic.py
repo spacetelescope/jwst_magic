@@ -61,7 +61,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
-            nircam_det=None, nircam=True, global_alignment=False, steps=None,
+            nircam_det=None, nircam=True, global_alignment=False, no_smoothing=False, steps=None,
             guiding_selections_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
@@ -92,6 +92,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         If this is a FGS image, set this flag to False
     global_alignment: bool, optional
         If this is not a global_alignment image, set this flag to False
+    no_smoothing : bool, optional
+        True when the image should not be smoothed when looking
+        for guide stars (e.g. for MIMF)
     steps: list of strings, optional
         List of the steps to be completed
     guiding_selections_file: str, optional
@@ -181,6 +184,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         guiding_selections_file, _ = select_psfs.select_psfs(
             fgs_im, root, guider,
             global_alignment=global_alignment,
+            no_smoothing=no_smoothing,
             guiding_selections_file=guiding_selections_file,
             out_dir=out_dir,
             logger_passed=True, masterGUIapp=masterGUIapp)

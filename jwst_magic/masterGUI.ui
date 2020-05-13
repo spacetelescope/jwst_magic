@@ -746,29 +746,6 @@ p, li { white-space: pre-wrap; }
            <bool>true</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_4">
-           <item row="0" column="0" colspan="2">
-            <widget class="QCheckBox" name="checkBox_globalAlignment">
-             <property name="toolTip">
-              <string>Change the star-finding algorithm to account for the more diffused segments that appear in early commissioning stages</string>
-             </property>
-             <property name="text">
-              <string>Non-Standard PSFs (e.g. Global Alignment, unphased image array)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2">
-            <widget class="QPushButton" name="pushButton_regfileStarSelector">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>Open Finder window to select file with segment list</string>
-             </property>
-             <property name="text">
-              <string>Open</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="0" colspan="2">
             <widget class="QRadioButton" name="radioButton_starSelectorGUI">
              <property name="toolTip">
@@ -785,13 +762,13 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="lineEdit_regfileStarSelector">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
+           <item row="0" column="0" colspan="2">
+            <widget class="QCheckBox" name="checkBox_globalAlignment">
              <property name="toolTip">
-              <string>File containing guide and reference star locations and brightness</string>
+              <string>Change the star-finding algorithm to account for the more diffused segments that appear in early commissioning stages</string>
+             </property>
+             <property name="text">
+              <string>Non-Standard PSFs (e.g. Global Alignment, unphased image array)</string>
              </property>
             </widget>
            </item>
@@ -808,12 +785,49 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
+           <item row="2" column="3">
+            <widget class="QPushButton" name="pushButton_regfileStarSelector">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>80</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Open Finder window to select file with segment list</string>
+             </property>
+             <property name="text">
+              <string>Open</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1" colspan="2">
+            <widget class="QLineEdit" name="lineEdit_regfileStarSelector">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>File containing guide and reference star locations and brightness</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QCheckBox" name="checkBox_noSmoothing">
+             <property name="text">
+              <string>No Smoothing (e.g. MIMF)</string>
+             </property>
+            </widget>
+           </item>
           </layout>
           <zorder>checkBox_globalAlignment</zorder>
           <zorder>radioButton_starSelectorGUI</zorder>
           <zorder>radioButton_regfileStarSelector</zorder>
           <zorder>lineEdit_regfileStarSelector</zorder>
           <zorder>pushButton_regfileStarSelector</zorder>
+          <zorder>checkBox_noSmoothing</zorder>
          </widget>
         </item>
         <item row="3" column="0" colspan="2">
@@ -1446,7 +1460,7 @@ p, li { white-space: pre-wrap; }
                     </property>
                     <property name="minimumSize">
                      <size>
-                      <width>80</width>
+                      <width>82</width>
                       <height>0</height>
                      </size>
                     </property>
@@ -2398,12 +2412,12 @@ QPushButton:pressed {
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_idAttitude"/>
+  <buttongroup name="buttonGroup_guider"/>
   <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
   <buttongroup name="buttonGroup_starSelector"/>
-  <buttongroup name="buttonGroup_segmentGuiding"/>
   <buttongroup name="buttonGroup_name"/>
+  <buttongroup name="buttonGroup_segmentGuiding"/>
   <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_guider"/>
+  <buttongroup name="buttonGroup_idAttitude"/>
  </buttongroups>
 </ui>
