@@ -198,7 +198,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             fgs_files_obj= buildfgssteps.BuildFGSSteps(
                 fgs_im, guider, root, step, out_dir=out_dir,
                 logger_passed=True, guiding_selections_file=guiding_selections_file,
-                shift_id_attitude=shift_id_attitude, crowded_field=crowded_field
+                shift_id_attitude=shift_id_attitude, crowded_field=crowded_field,
+                recenter_trk=no_smoothing
             )
             write_files.write_all(fgs_files_obj)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")

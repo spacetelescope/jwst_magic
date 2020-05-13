@@ -569,7 +569,7 @@ def copy_all_found_psfs_file(guiding_selections_file, root, guider, out_dir):
             return copied_all_found_psfs
 
 
-def manual_star_selection(data, global_alignment, no_smoothing, testing=False, masterGUIapp=None):
+def manual_star_selection(data, global_alignment, no_smoothing, choose_center=False, testing=False, masterGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
@@ -587,6 +587,8 @@ def manual_star_selection(data, global_alignment, no_smoothing, testing=False, m
     no_smoothing : bool
         Denotes that the image should not be smoothed when looking
         for guide stars (e.g. for MIMF)
+    choose_center : bool
+        Automatically choose the one PSF found in the image
     testing : bool, optional
         Generates indices randomly (for running pytests)
     masterGUIapp : qApplication, optional
@@ -645,12 +647,19 @@ def manual_star_selection(data, global_alignment, no_smoothing, testing=False, m
     countrate, val = count_rate_total(data, objects, num_psfs, x, y, countrate_3x3=True)
 
     # Call the GUI to pick PSF indices
-    if not testing:
+    if not testing and not choose_center:
         gui_data = data.copy()
         gui_data[data == 0] = 1  # Alter null pixel values for LogNorm imshow
         inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
                                               print_output=False,
                                               masterGUIapp=masterGUIapp)
+    # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF
+    elif choose_center:
+        if num_psfs != 1:
+            LOGGER.info("Star Selection: WARNING: When trying to find the PSF center, the max smoothing "\
+                        "method found more than 1 star. The code is automatically pulling the first in the "\
+                        "list - this may be a problem.")
+        inds = [0]
     # If in testing mode, just make a random list of indices
     else:
         # Make random list of inds
@@ -679,7 +688,7 @@ def manual_star_selection(data, global_alignment, no_smoothing, testing=False, m
 
 
 def select_psfs(data, root, guider, guiding_selections_file=None,
-                global_alignment=False, no_smoothing=False,
+                global_alignment=False, no_smoothing=False, choose_center=False,
                 testing=False, out_dir=None, masterGUIapp=None, logger_passed=False):
     """Select guide and reference segments.
 
@@ -709,6 +718,8 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
     no_smoothing : bool, optional
         Denotes that the image should not be smoothed when looking
         for guide stars (e.g. for MIMF)
+    choose_center : bool, optional
+        Automatically choose the one PSF found in the image
     testing : bool, optional
         Randomly select guide and reference stars (for use with pytests)
     out_dir : str, optional
@@ -760,6 +771,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             cols, coords, nref, all_cols = manual_star_selection(data,
                                                                  global_alignment,
                                                                  no_smoothing,
+                                                                 choose_center,
                                                                  testing,
                                                                  masterGUIapp)
             all_found_psfs_path = None
@@ -781,6 +793,26 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         utils.write_cols_to_file(guiding_selections_path,
                                  labels=['y', 'x', 'countrate'],
                                  cols=cols, log=LOGGER)
+
+        # Calculate and write out center of PSF information for trk file if no_smoothing is True
+        if no_smoothing is True:
+            LOGGER.info(
+                "Star Selection: No smoothing chosen so re-running star selection to also calculate PSF center")
+            cols_center, _, _, _ = manual_star_selection(data,
+                                                         global_alignment=True,
+                                                         no_smoothing=False,
+                                                         choose_center=True,
+                                                         testing=testing,
+                                                         masterGUIapp=masterGUIapp)
+
+            LOGGER.info(
+                "Star Selection: PSF center information {} vs Guiding knot information {}".format(
+                    cols_center, cols))
+            psf_center_path = os.path.join(out_dir, 'psf_center_{}_G{}.txt'.format(root, guider))
+            utils.write_cols_to_file(psf_center_path,
+                                     labels=['y', 'x', 'countrate'],
+                                     cols=cols_center, log=LOGGER)
+
     except Exception as e:
         LOGGER.exception(e)
         raise
