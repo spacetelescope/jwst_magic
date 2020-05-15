@@ -616,6 +616,9 @@ def manual_star_selection(data, global_alignment, no_smoothing, choose_center=Fa
     elif no_smoothing:
         gauss_sigma = 1
         npeaks = 1
+    elif choose_center:
+        gauss_sigma = 26
+        npeaks = 1
     else:
         gauss_sigma = 5
         npeaks = np.inf
@@ -653,12 +656,8 @@ def manual_star_selection(data, global_alignment, no_smoothing, choose_center=Fa
         inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
                                               print_output=False,
                                               masterGUIapp=masterGUIapp)
-    # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF
+    # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF)
     elif choose_center:
-        if num_psfs != 1:
-            LOGGER.info("Star Selection: WARNING: When trying to find the PSF center, the max smoothing "\
-                        "method found more than 1 star. The code is automatically pulling the first in the "\
-                        "list - this may be a problem.")
         inds = [0]
     # If in testing mode, just make a random list of indices
     else:
@@ -799,7 +798,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             LOGGER.info(
                 "Star Selection: No smoothing chosen so re-running star selection to also calculate PSF center")
             cols_center, _, _, _ = manual_star_selection(data,
-                                                         global_alignment=True,
+                                                         global_alignment=False,
                                                          no_smoothing=False,
                                                          choose_center=True,
                                                          testing=testing,
