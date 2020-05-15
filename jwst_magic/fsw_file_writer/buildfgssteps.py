@@ -177,8 +177,9 @@ class BuildFGSSteps(object):
 
         # Make sure the TRK box is centered on the center of the PSF, not on the brightest point
         if self.step == 'TRK' and recenter_trk is True:
+            file_path = guiding_selections_file.split('/guiding_selections')[0]
             trk_file = 'psf_center_{}_G{}.txt'.format(self.root, self.guider)
-            self.yarr, self.xarr, _ = np.loadtxt(os.path.join(self.out_dir, trk_file),
+            self.yarr, self.xarr, _ = np.loadtxt(os.path.join(file_path, trk_file),
                                                  delimiter=' ',
                                                  skiprows=1).T
 

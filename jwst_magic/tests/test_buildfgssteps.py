@@ -27,9 +27,11 @@ from ..utils import utils
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
+CONVERTED_NIRCAM_IM_MIMF = os.path.join(__location__, 'data', 'converted_nircam_data_1_mimf.fits')
 ROOT = "test_buildfgssteps"
-SEGMENT_INFILE = os.path.join(__location__, 'data', '{}_ALLpsfs.txt'.format(ROOT))
-SELECTED_SEGS = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
+SEGMENT_INFILE_CMIMF = os.path.join(__location__, 'data', '{}_ALLpsfs.txt'.format(ROOT))
+SELECTED_SEGS_CMIMF = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
+SELECTED_SEGS_MIMF = os.path.join(__location__, 'data/guiding_selections_nircam_data_1_mimf.txt')
 # PROGRAM_ID = 1141
 # OBSERVATION_NUM = 7
 VISIT_NUM = 1
@@ -92,8 +94,8 @@ shift_to_id_attitude_parameters = [
 def test_shift_to_id_attitude(open_image, test_directory, crowded_field, guider,
                               guiding_selections_coords, all_found_psfs_coords):
     # Run the code
-    BFS = BuildFGSSteps(open_image, guider, ROOT, 'ID', guiding_selections_file=SELECTED_SEGS,
-                        out_dir=__location__, catalog=SEGMENT_INFILE, crowded_field=crowded_field)
+    BFS = BuildFGSSteps(open_image, guider, ROOT, 'ID', guiding_selections_file=SELECTED_SEGS_CMIMF,
+                        out_dir=__location__, catalog=SEGMENT_INFILE_CMIMF, crowded_field=crowded_field)
     write_files.write_all(BFS)
 
     # Define filenames
@@ -145,8 +147,8 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
     assert np.isclose(np.max(open_image), 15693.34), 'Incorrect input data max - changed your file?'
 
     # Run the code
-    BFS = BuildFGSSteps(open_image, guider, ROOT, step, guiding_selections_file=SELECTED_SEGS,
-                        out_dir=__location__, catalog=SEGMENT_INFILE)
+    BFS = BuildFGSSteps(open_image, guider, ROOT, step, guiding_selections_file=SELECTED_SEGS_CMIMF,
+                        out_dir=__location__, catalog=SEGMENT_INFILE_CMIMF)
 
     # Assert ~exactly for time-normalized data (before detector effects are added)
     assert np.isclose(correct_data_dict['time_normed_im'][0], np.min(BFS.time_normed_im)), \
@@ -195,3 +197,25 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
     # Assert exact ount rates
     assert (BFS.countrate == correct_data_dict['countrates']).all(), \
         'Incorrect {} count rate.'.format(step)
+
+def test_recenter_trk():
+    """Test that when recenter_trk is set as True, the array position for TRK
+    is pulled from the psf_center file rather than the guiding selections file
+    which is used for all other steps.
+    """
+    image = fits.getdata(CONVERTED_NIRCAM_IM_MIMF, 0)
+    guider = 1
+    recenter_trk = True
+
+    # Run the code
+    fileobj_acq = BuildFGSSteps(
+        image, guider, ROOT, step='ACQ1', guiding_selections_file=SELECTED_SEGS_MIMF,
+        out_dir=__location__, recenter_trk=recenter_trk
+    )
+    fileobj_trk = BuildFGSSteps(
+        image, guider, ROOT, step='TRK', guiding_selections_file=SELECTED_SEGS_MIMF,
+        out_dir=__location__, recenter_trk=recenter_trk
+    )
+
+    assert (fileobj_acq.xarr, fileobj_acq.yarr) != (fileobj_trk.xarr, fileobj_trk.yarr)
+    assert fileobj_acq.countrate == fileobj_trk.countrate
