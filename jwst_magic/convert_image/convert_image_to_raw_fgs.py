@@ -632,10 +632,10 @@ def convert_im(input_im, guider, root, nircam=True,
 
         # Try to check that the units on the input image are as expected (Dn/s = ADU/s; *_rate.fits)
         for hdr in [header, header_sci]:
-            if {'BUNIT', 'PHOTMJSR'}.issubset(hdr.keys()):
+            if 'BUNIT' in hdr:
                 input_unit = hdr['BUNIT'].lower()
+            if 'PHOTMJSR' in hdr:
                 photmjsr = hdr['PHOTMJSR']
-                break
 
         try:
             if input_unit == 'mjy/sr':
