@@ -613,7 +613,6 @@ def convert_im(input_im, guider, root, nircam=True,
 
         data = fits.getdata(input_im, header=False)
         header = fits.getheader(input_im, ext=0)
-        header_sci = fits.getheader(input_im, extname='sci')
 
         if len(data.shape) > 2:
             raise TypeError('Expecting a single frame or slope image.')
@@ -631,6 +630,11 @@ def convert_im(input_im, guider, root, nircam=True,
             origin = None
 
         # Try to check that the units on the input image are as expected (Dn/s = ADU/s; *_rate.fits)
+        try:
+            header_sci = fits.getheader(input_im, extname='sci')
+        except KeyError:
+            header_sci = {}
+
         for hdr in [header, header_sci]:
             if 'BUNIT' in hdr:
                 input_unit = hdr['BUNIT'].lower()
