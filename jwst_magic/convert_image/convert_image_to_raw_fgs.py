@@ -613,6 +613,7 @@ def convert_im(input_im, guider, root, nircam=True,
 
         data = fits.getdata(input_im, header=False)
         header = fits.getheader(input_im, ext=0)
+        header_sci = fits.getheader(input_im, extname='sci')
 
         if len(data.shape) > 2:
             raise TypeError('Expecting a single frame or slope image.')
@@ -629,6 +630,24 @@ def convert_im(input_im, guider, root, nircam=True,
         except KeyError:
             origin = None
 
+        # Try to check that the units on the input image are as expected (Dn/s = ADU/s; *_rate.fits)
+        for hdr in [header, header_sci]:
+            if {'BUNIT', 'PHOTMJSR'}.issubset(hdr.keys()):
+                input_unit = hdr['BUNIT'].lower()
+                photmjsr = hdr['PHOTMJSR']
+                break
+
+        try:
+            if input_unit == 'mjy/sr':
+                convert_to_adu_s = photmjsr
+                data /= convert_to_adu_s
+                LOGGER.info('Image Conversion: Input is a Cal image. Converting from MJy/sr to ADU/s')
+            elif input_unit == 'dn/s':
+                LOGGER.info('Image Conversion: Image in correct units of ADU/s.')
+        except NameError:
+            LOGGER.info("Image Conversion: Can't check image type because of missing "
+                        "BUNIT keyword. User should confirm the input image is a rate image.")
+            pass
 
         # Create raw FGS image...
         # -------------- From NIRCam --------------
