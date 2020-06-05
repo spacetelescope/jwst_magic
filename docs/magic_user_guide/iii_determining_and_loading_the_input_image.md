@@ -11,7 +11,7 @@ III.	Determining and Loading the Input Image
 
 MAGIC takes in any FGS image or a NIRCam image that was taken with the CLEAR filter (the NIRCam weak lens (WL) filter will cause MAGIC to crash). If you want MAGIC to convert this image into a raw detector FGS image, you can indicate this by checking the **Convert Image** check box. In most cases MAGIC can determine from the header information which instrument and detector the image is from, however if it can’t figure this out from header information, you will have to help it out by telling it which instrument and detector your input image comes from. You can also renormalize and/or add background images to your seed image.
 
-MAGIC expects to use a *_rate.fits input image, ie one with units of Dn/s (also known as ADU/s). However, if a *_cal.fits image is used as the input, MAGIC will check for the PHOTMJSR header keyword and use that to convert the image to the correct units. 
+MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also known as ADU/s). However, if a cal.fits image is used as the input, MAGIC will check for the PHOTMJSR header keyword and use that to convert the image to the correct units. 
 
 1. Set general input parameters:
 
