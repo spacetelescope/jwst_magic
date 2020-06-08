@@ -69,21 +69,21 @@ def test_select_psfs_with_file(test_directory):
 
 
 test_data = PARAMETRIZED_DATA['test_select_psfs_without_file']
-select_psfs_without_file_parameters = [(CONVERTED_NIRCAM_IM_GA, False, False, 21, test_data['non-ga']),
-                                       (CONVERTED_NIRCAM_IM_GA, True, False, 18, test_data['ga']),
-                                       (CONVERTED_NIRCAM_IM_MIMF, False, True, 1, test_data['mimf'])
+select_psfs_without_file_parameters = [(CONVERTED_NIRCAM_IM_GA, 'default', 21, test_data['non-ga']),
+                                       (CONVERTED_NIRCAM_IM_GA, 'high', 18, test_data['ga']),
+                                       (CONVERTED_NIRCAM_IM_MIMF, 'low', 1, test_data['mimf'])
                                        ]
-@pytest.mark.parametrize('in_data, ga, no_smooth, n_psfs, correct_all_found_psfs_txt', select_psfs_without_file_parameters)
-def test_select_psfs_without_file(test_directory, in_data, ga, no_smooth, n_psfs, correct_all_found_psfs_txt):
+@pytest.mark.parametrize('in_data, smooth, n_psfs, correct_all_found_psfs_txt', select_psfs_without_file_parameters)
+def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, correct_all_found_psfs_txt):
     guiding_selections_path, all_found_psfs_path = select_psfs(
-        in_data, ROOT, 2, global_alignment=ga, no_smoothing=no_smooth, testing=True,
+        in_data, ROOT, 2, smoothing=smooth, testing=True,
         out_dir=test_directory
     )
 
     # Ensure the correct files were generated
     assert os.path.exists(guiding_selections_path), 'guiding_selections_test_select_psfs_G2.txt not generated.'
     assert os.path.exists(all_found_psfs_path), 'all_found_psfs_test_select_psfs_G2.txt not generated.'
-    if no_smooth is True:
+    if smooth is 'low':
         main_path = guiding_selections_path.split('/guiding_selections')[0]
         no_smooth_path = os.path.join(main_path, 'psf_center_{}_G2.txt'.format(ROOT))
         assert os.path.exists(no_smooth_path), 'psf_center_test_select_psfs_G2.txt not generated.'
@@ -100,7 +100,7 @@ def test_select_psfs_without_file(test_directory, in_data, ga, no_smooth, n_psfs
 
     # Check PSF location in guiding selections doesn't match psf center
     # guiding selections should have found a knot in the PSF not at the center
-    if no_smooth is True:
+    if smooth is 'low':
         with open(guiding_selections_path) as f:
             guiding_selections_contents = f.read()
         with open(no_smooth_path) as f:
