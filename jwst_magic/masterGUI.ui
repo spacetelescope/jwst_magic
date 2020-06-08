@@ -35,7 +35,7 @@
          <x>0</x>
          <y>0</y>
          <width>1553</width>
-         <height>1044</height>
+         <height>1047</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -358,107 +358,80 @@ Image:</string>
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="1" column="3" colspan="3">
-            <widget class="QFrame" name="frame_coarsePointing">
+           <item row="5" column="1" colspan="4">
+            <widget class="QTextEdit" name="textEdit_backgroundStars">
              <property name="enabled">
               <bool>false</bool>
              </property>
-             <property name="minimumSize">
+             <property name="maximumSize">
               <size>
-               <width>0</width>
-               <height>30</height>
+               <width>16777215</width>
+               <height>40</height>
               </size>
              </property>
-             <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
+             <property name="toolTip">
+              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
              </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
+             <property name="styleSheet">
+              <string notr="true">QTextEdit { background-color : #ECECEC }
+\</string>
              </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_2">
-              <property name="leftMargin">
-               <number>5</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>5</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="label_jitterMin">
-                <property name="toolTip">
-                 <string>Speed of the jitter in arcsec/sec</string>
-                </property>
-                <property name="text">
-                 <string>0</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSlider" name="horizontalSlider_coarsePointing">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Speed of the jitter in arcsec/sec</string>
-                </property>
-                <property name="maximum">
-                 <number>100</number>
-                </property>
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="tickPosition">
-                 <enum>QSlider::TicksBelow</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_jitterMax">
-                <property name="toolTip">
-                 <string>Speed of the jitter in arcsec/sec</string>
-                </property>
-                <property name="text">
-                 <string>0.3 (max)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="lineEdit_coarsePointing">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>50</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>50</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Speed of the jitter in arcsec/sec</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">.QLineEdit:disabled {color: grey}</string>
-                </property>
-                <property name="text">
-                 <string>0.0</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
+             <property name="html">
+              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_detector">
+             <property name="toolTip">
+              <string>Which NIRCam detector was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1" colspan="2">
+            <widget class="QCheckBox" name="checkBox_normalize">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
+             </property>
+             <property name="text">
+              <string>Normalize to:</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QRadioButton" name="radioButton_FGS">
+             <property name="toolTip">
+              <string>Which instrument was used to take the input image</string>
+             </property>
+             <property name="text">
+              <string>FGS</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_instrument</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_backgroundStars">
+             <property name="toolTip">
+              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
             </widget>
            </item>
            <item row="3" column="1" colspan="4">
@@ -649,185 +622,110 @@ Image:</string>
              </attribute>
             </widget>
            </item>
-           <item row="5" column="1" colspan="4">
-            <widget class="QTextEdit" name="textEdit_backgroundStars">
+           <item row="1" column="3" colspan="3">
+            <widget class="QFrame" name="frame_coarsePointing">
              <property name="enabled">
               <bool>false</bool>
              </property>
-             <property name="maximumSize">
+             <property name="minimumSize">
               <size>
-               <width>16777215</width>
-               <height>40</height>
+               <width>0</width>
+               <height>30</height>
               </size>
              </property>
-             <property name="toolTip">
-              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
              </property>
-             <property name="styleSheet">
-              <string notr="true">QTextEdit { background-color : #ECECEC }
-\</string>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
              </property>
-             <property name="html">
-              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;No background stars added&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_detector">
-             <property name="toolTip">
-              <string>Which NIRCam detector was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NIRCam Detector&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1" colspan="2">
-            <widget class="QCheckBox" name="checkBox_normalize">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
-             </property>
-             <property name="text">
-              <string>Normalize to:</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QRadioButton" name="radioButton_FGS">
-             <property name="toolTip">
-              <string>Which instrument was used to take the input image</string>
-             </property>
-             <property name="text">
-              <string>FGS</string>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_instrument</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_backgroundStars">
-             <property name="toolTip">
-              <string>Copy the input image and place it at other locations on the final image to simulate the presence of background stars</string>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Background Stars&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_jitterMin">
+                <property name="toolTip">
+                 <string>Speed of the jitter in arcsec/sec</string>
+                </property>
+                <property name="text">
+                 <string>0</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSlider" name="horizontalSlider_coarsePointing">
+                <property name="minimumSize">
+                 <size>
+                  <width>100</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Speed of the jitter in arcsec/sec</string>
+                </property>
+                <property name="maximum">
+                 <number>100</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="tickPosition">
+                 <enum>QSlider::TicksBelow</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_jitterMax">
+                <property name="toolTip">
+                 <string>Speed of the jitter in arcsec/sec</string>
+                </property>
+                <property name="text">
+                 <string>0.3 (max)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_coarsePointing">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>50</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>50</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Speed of the jitter in arcsec/sec</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">.QLineEdit:disabled {color: grey}</string>
+                </property>
+                <property name="text">
+                 <string>0.0</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </widget>
            </item>
           </layout>
-         </widget>
-        </item>
-        <item row="2" column="0" colspan="2">
-         <widget class="QGroupBox" name="groupBox_starSelector">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
-          </property>
-          <property name="title">
-           <string>Star Selector</string>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_4">
-           <item row="1" column="0" colspan="2">
-            <widget class="QRadioButton" name="radioButton_starSelectorGUI">
-             <property name="toolTip">
-              <string>Define guide and reference stars by clicking on them in the image</string>
-             </property>
-             <property name="text">
-              <string>Click-to-Select (GUI)</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_starSelector</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="0" column="0" colspan="2">
-            <widget class="QCheckBox" name="checkBox_globalAlignment">
-             <property name="toolTip">
-              <string>Change the star-finding algorithm to account for the more diffused segments that appear in early commissioning stages</string>
-             </property>
-             <property name="text">
-              <string>Non-Standard PSFs (e.g. Global Alignment, unphased image array)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QRadioButton" name="radioButton_regfileStarSelector">
-             <property name="toolTip">
-              <string>Define guide and reference stars by loading their locations and brightness from a file</string>
-             </property>
-             <property name="text">
-              <string>Load from File</string>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_starSelector</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="2" column="3">
-            <widget class="QPushButton" name="pushButton_regfileStarSelector">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>80</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Open Finder window to select file with segment list</string>
-             </property>
-             <property name="text">
-              <string>Open</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1" colspan="2">
-            <widget class="QLineEdit" name="lineEdit_regfileStarSelector">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>File containing guide and reference star locations and brightness</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QCheckBox" name="checkBox_noSmoothing">
-             <property name="text">
-              <string>No Smoothing (e.g. MIMF)</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-          <zorder>checkBox_globalAlignment</zorder>
-          <zorder>radioButton_starSelectorGUI</zorder>
-          <zorder>radioButton_regfileStarSelector</zorder>
-          <zorder>lineEdit_regfileStarSelector</zorder>
-          <zorder>pushButton_regfileStarSelector</zorder>
-          <zorder>checkBox_noSmoothing</zorder>
          </widget>
         </item>
         <item row="3" column="0" colspan="2">
@@ -1729,6 +1627,134 @@ QPushButton:pressed {
           </layout>
          </widget>
         </item>
+        <item row="2" column="0" colspan="2">
+         <widget class="QGroupBox" name="groupBox_starSelector">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QGroupBox { font-size: 18px; font-weight: bold; margin-top: 35px } QGroupBox::title { top: -25px }</string>
+          </property>
+          <property name="title">
+           <string>Star Selector</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="maximumSize">
+              <size>
+               <width>500</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Change Smoothing (optional):</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QRadioButton" name="radioButton_starSelectorGUI">
+             <property name="toolTip">
+              <string>Define guide and reference stars by clicking on them in the image</string>
+             </property>
+             <property name="text">
+              <string>Click-to-Select (GUI)</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_starSelector</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="2" column="1" colspan="2">
+            <widget class="QLineEdit" name="lineEdit_regfileStarSelector">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>File containing guide and reference star locations and brightness</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="3">
+            <widget class="QPushButton" name="pushButton_regfileStarSelector">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>80</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Open Finder window to select file with segment list</string>
+             </property>
+             <property name="text">
+              <string>Open</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QCheckBox" name="checkBox_globalAlignment">
+             <property name="maximumSize">
+              <size>
+               <width>700</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Change the star-finding algorithm to account for the more diffused segments that appear in early commissioning stages</string>
+             </property>
+             <property name="text">
+              <string>High Smoothing (For Early Commissioning)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QRadioButton" name="radioButton_regfileStarSelector">
+             <property name="toolTip">
+              <string>Define guide and reference stars by loading their locations and brightness from a file</string>
+             </property>
+             <property name="text">
+              <string>Load from File</string>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">buttonGroup_starSelector</string>
+             </attribute>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QCheckBox" name="checkBox_noSmoothing">
+             <property name="maximumSize">
+              <size>
+               <width>600</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>No Smoothing (For MIMF)</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+          <zorder>checkBox_globalAlignment</zorder>
+          <zorder>radioButton_starSelectorGUI</zorder>
+          <zorder>radioButton_regfileStarSelector</zorder>
+          <zorder>lineEdit_regfileStarSelector</zorder>
+          <zorder>pushButton_regfileStarSelector</zorder>
+          <zorder>label</zorder>
+          <zorder>checkBox_noSmoothing</zorder>
+         </widget>
+        </item>
        </layout>
       </widget>
      </widget>
@@ -2412,12 +2438,12 @@ QPushButton:pressed {
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_guider"/>
+  <buttongroup name="buttonGroup_instrument"/>
   <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
+  <buttongroup name="buttonGroup_guider"/>
+  <buttongroup name="buttonGroup_segmentGuiding"/>
+  <buttongroup name="buttonGroup_idAttitude"/>
   <buttongroup name="buttonGroup_starSelector"/>
   <buttongroup name="buttonGroup_name"/>
-  <buttongroup name="buttonGroup_segmentGuiding"/>
-  <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_idAttitude"/>
  </buttongroups>
 </ui>
