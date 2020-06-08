@@ -132,7 +132,7 @@ class BuildFGSSteps(object):
             Re-center the TRK box to not be centered on the guiding
             selections PSF location, but on the actual center of
             the PSF (found with smoothing; tuple of (y,x)). Used when
-            no_smoothing is True.
+            smoothing='low'.
         """
         # Define paths
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
@@ -161,7 +161,7 @@ class BuildFGSSteps(object):
             Re-center the TRK box to not be centered on the guiding
             selections PSF location, but on the actual center of
             the PSF (found with smoothing; tuple of (y,x)). Used when
-            no_smoothing is True.
+            smoothing='low'.
         """
         LOGGER.info("FSW File Writing: Using {} as the guiding selections file".format(guiding_selections_file))
 

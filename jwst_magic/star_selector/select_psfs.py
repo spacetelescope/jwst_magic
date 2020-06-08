@@ -329,7 +329,7 @@ def create_cols_for_coords_counts(x, y, countrate, val, labels=None, inds=None):
     return cols
 
 
-def match_psfs_to_segments(x, y, global_alignment):
+def match_psfs_to_segments(x, y, smoothing):
     """Match PSFs found in the image to their alphabetic label (between A and R)
 
     Parameters
@@ -338,9 +338,9 @@ def match_psfs_to_segments(x, y, global_alignment):
         List of x-coordinates of identified PSFs
     y : list
         List of y-coordinates of identified PSFs
-    global_alignment : bool
-        Denotes that the image is from unphased, unstacked early
-        commissioning data
+    smoothing: str
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
 
     Returns
     -------
@@ -386,7 +386,7 @@ def match_psfs_to_segments(x, y, global_alignment):
                 i_seg = i_sc
         matched_labels.append(labels[i_seg])
 
-    if len(set(matched_labels)) != len(matched_labels) and global_alignment:
+    if len(set(matched_labels)) != len(matched_labels) and smoothing == 'high':
         LOGGER.warning('Could not accurately map labels to segments. It will not '
                        'be possible to run fsw_file_writer.rewrite_prc using the '
                        'all_found_psfs*.txt file generated here.')
@@ -569,7 +569,7 @@ def copy_all_found_psfs_file(guiding_selections_file, root, guider, out_dir):
             return copied_all_found_psfs
 
 
-def manual_star_selection(data, global_alignment, no_smoothing, choose_center=False, testing=False, masterGUIapp=None):
+def manual_star_selection(data, smoothing, choose_center=False, testing=False, masterGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
@@ -581,14 +581,11 @@ def manual_star_selection(data, global_alignment, no_smoothing, choose_center=Fa
     ----------
     data : 2-D numpy array
         Image data
-    global_alignment : bool
-        Denotes that the image is from unphased, unstacked early
-        commissioning data
-    no_smoothing : bool
-        Denotes that the image should not be smoothed when looking
-        for guide stars (e.g. for MIMF)
+    smoothing: str, optional
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
     choose_center : bool
-        Automatically choose the one PSF found in the image
+        Automatically choose the one, highly-smoothed, PSF found in the image
     testing : bool, optional
         Generates indices randomly (for running pytests)
     masterGUIapp : qApplication, optional
@@ -610,16 +607,16 @@ def manual_star_selection(data, global_alignment, no_smoothing, choose_center=Fa
     ValueError
         The user closed the GUI without selecting any stars.
     """
-    if global_alignment:
+    if smoothing == 'high':
         gauss_sigma = 26
         npeaks = np.inf
-    elif no_smoothing:
+    elif smoothing == 'low':
         gauss_sigma = 1
         npeaks = 1
     elif choose_center:
         gauss_sigma = 26
         npeaks = 1
-    else:
+    elif smoothing == 'default':
         gauss_sigma = 5
         npeaks = np.inf
 
@@ -672,7 +669,7 @@ def manual_star_selection(data, global_alignment, no_smoothing, choose_center=Fa
     else:
         LOGGER.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
 
-    segment_labels = match_psfs_to_segments(x, y, global_alignment)
+    segment_labels = match_psfs_to_segments(x, y, smoothing)
     all_cols = create_cols_for_coords_counts(x, y, countrate, val,
                                              labels=segment_labels,
                                              inds=range(len(x)))
@@ -687,7 +684,7 @@ def manual_star_selection(data, global_alignment, no_smoothing, choose_center=Fa
 
 
 def select_psfs(data, root, guider, guiding_selections_file=None,
-                global_alignment=False, no_smoothing=False, choose_center=False,
+                smoothing='default', choose_center=False,
                 testing=False, out_dir=None, masterGUIapp=None, logger_passed=False):
     """Select guide and reference segments.
 
@@ -711,12 +708,9 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         Guider number (1 or 2)
     guiding_selections_file : str, optional
         File containing locations and count rates of selected segments
-    global_alignment : bool, optional
-        Denotes that the image is from unphased, unstacked early
-        commissioning data
-    no_smoothing : bool, optional
-        Denotes that the image should not be smoothed when looking
-        for guide stars (e.g. for MIMF)
+    smoothing: str, optional
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
     choose_center : bool, optional
         Automatically choose the one PSF found in the image
     testing : bool, optional
@@ -768,8 +762,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
             cols, coords, nref, all_cols = manual_star_selection(data,
-                                                                 global_alignment,
-                                                                 no_smoothing,
+                                                                 smoothing,
                                                                  choose_center,
                                                                  testing,
                                                                  masterGUIapp)
@@ -793,13 +786,12 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
                                  labels=['y', 'x', 'countrate'],
                                  cols=cols, log=LOGGER)
 
-        # Calculate and write out center of PSF information for trk file if no_smoothing is True
-        if no_smoothing is True:
+        # Calculate and write out center of PSF information for trk file if smoothing is low
+        if smoothing == 'low':
             LOGGER.info(
                 "Star Selection: No smoothing chosen so re-running star selection to also calculate PSF center")
             cols_center, _, _, _ = manual_star_selection(data,
-                                                         global_alignment=False,
-                                                         no_smoothing=False,
+                                                         smoothing='default',
                                                          choose_center=True,
                                                          testing=testing,
                                                          masterGUIapp=masterGUIapp)
