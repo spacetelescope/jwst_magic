@@ -23,9 +23,9 @@ class RunningTheTool():
 
         # Get parameters to run through functions
         if 'ga' in input_im.lower():
-            self.global_alignment = True
+            self.smoothing = 'high'
         else:
-            self.global_alignment = False
+            self.smoothing = 'default'
 
         self.root = utils.make_root(None, input_im)
 
@@ -44,7 +44,7 @@ class RunningTheTool():
 
         # Find peaks in data and create a reg file with randomly selected PSFs
         select_psfs.select_psfs(data, self.root, self.guider,
-                                global_alignment=self.global_alignment,
+                                smoothing=self.smoothing,
                                 testing=True, out_dir=OUT_PATH)
 
         # Write all steps accordingly
@@ -84,7 +84,7 @@ class RunningTheTool():
 
         # (Only need the coords but reading out the whole thing anyway)
         strips_params = select_psfs.manual_star_selection(self.strips_data_cds,
-                                                          self.global_alignment,
+                                                          self.smoothing,
                                                           testing=True)
         strips_coords = strips_params[1]
 

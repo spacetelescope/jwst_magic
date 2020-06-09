@@ -67,7 +67,7 @@ DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 LOGGER = logging.getLogger(__name__)
 
 
-def count_psfs(smoothed_data, gauss_sigma, choose=False):
+def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, choose=False):
     """Use photutils.find_peaks to count how many PSFS are present in the data
 
     Parameters
@@ -76,6 +76,8 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
         Image data that has been smoothed with a Gaussian filter
     gauss_sigma : float
         The sigma of the Gaussian smoothing filter
+    npeaks : int or np.inf
+        Number of peaks to choose with photutils.find_peaks
     choose : bool, optional
         Prompt the user to choose which method to use to select the
         threshold
@@ -101,7 +103,7 @@ def count_psfs(smoothed_data, gauss_sigma, choose=False):
         # Find PSFs
         threshold = median + (3 * std)  # Used to be median + 3 * std
 
-        sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma)
+        sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma, npeaks=npeaks)
         num_psfs = len(sources)
         if num_psfs == 0:
             raise ValueError("You have no sources in your data.")
@@ -327,7 +329,7 @@ def create_cols_for_coords_counts(x, y, countrate, val, labels=None, inds=None):
     return cols
 
 
-def match_psfs_to_segments(x, y, global_alignment):
+def match_psfs_to_segments(x, y, smoothing):
     """Match PSFs found in the image to their alphabetic label (between A and R)
 
     Parameters
@@ -336,9 +338,9 @@ def match_psfs_to_segments(x, y, global_alignment):
         List of x-coordinates of identified PSFs
     y : list
         List of y-coordinates of identified PSFs
-    global_alignment : bool
-        Denotes that the image is from unphased, unstacked early
-        commissioning data
+    smoothing: str
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
 
     Returns
     -------
@@ -384,7 +386,7 @@ def match_psfs_to_segments(x, y, global_alignment):
                 i_seg = i_sc
         matched_labels.append(labels[i_seg])
 
-    if len(set(matched_labels)) != len(matched_labels) and global_alignment:
+    if len(set(matched_labels)) != len(matched_labels) and smoothing == 'high':
         LOGGER.warning('Could not accurately map labels to segments. It will not '
                        'be possible to run fsw_file_writer.rewrite_prc using the '
                        'all_found_psfs*.txt file generated here.')
@@ -567,7 +569,7 @@ def copy_all_found_psfs_file(guiding_selections_file, root, guider, out_dir):
             return copied_all_found_psfs
 
 
-def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=None):
+def manual_star_selection(data, smoothing, choose_center=False, testing=False, masterGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
@@ -579,9 +581,11 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     ----------
     data : 2-D numpy array
         Image data
-    global_alignment : bool
-        Denotes that the image is from unphased, unstacked early
-        commissioning data
+    smoothing: str, optional
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
+    choose_center : bool
+        Automatically choose the one, highly-smoothed, PSF found in the image
     testing : bool, optional
         Generates indices randomly (for running pytests)
     masterGUIapp : qApplication, optional
@@ -603,17 +607,25 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     ValueError
         The user closed the GUI without selecting any stars.
     """
-    if global_alignment:
+    if smoothing == 'high':
         gauss_sigma = 26
-    else:
+        npeaks = np.inf
+    elif smoothing == 'low':
+        gauss_sigma = 1
+        npeaks = 1
+    elif choose_center:
+        gauss_sigma = 26
+        npeaks = 1
+    elif smoothing == 'default':
         gauss_sigma = 5
+        npeaks = np.inf
 
     data = data.astype(float)
 
     smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
 
     # Use photutils.find_peaks to locate all PSFs in image
-    num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma,
+    num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, npeaks=npeaks,
                                              choose=False)
     x, y = map(list, zip(*coords))
 
@@ -635,12 +647,15 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     countrate, val = count_rate_total(data, objects, num_psfs, x, y, countrate_3x3=True)
 
     # Call the GUI to pick PSF indices
-    if not testing:
+    if not testing and not choose_center:
         gui_data = data.copy()
         gui_data[data == 0] = 1  # Alter null pixel values for LogNorm imshow
         inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
                                               print_output=False,
                                               masterGUIapp=masterGUIapp)
+    # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF)
+    elif choose_center:
+        inds = [0]
     # If in testing mode, just make a random list of indices
     else:
         # Make random list of inds
@@ -654,7 +669,7 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
     else:
         LOGGER.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
 
-    segment_labels = match_psfs_to_segments(x, y, global_alignment)
+    segment_labels = match_psfs_to_segments(x, y, smoothing)
     all_cols = create_cols_for_coords_counts(x, y, countrate, val,
                                              labels=segment_labels,
                                              inds=range(len(x)))
@@ -669,8 +684,8 @@ def manual_star_selection(data, global_alignment, testing=False, masterGUIapp=No
 
 
 def select_psfs(data, root, guider, guiding_selections_file=None,
-                global_alignment=False, testing=False,
-                out_dir=None, masterGUIapp=None, logger_passed=False):
+                smoothing='default', choose_center=False,
+                testing=False, out_dir=None, masterGUIapp=None, logger_passed=False):
     """Select guide and reference segments.
 
     Locate all of the segments in the provided data, then either parse a
@@ -693,9 +708,11 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         Guider number (1 or 2)
     guiding_selections_file : str, optional
         File containing locations and count rates of selected segments
-    global_alignment : bool, optional
-        Denotes that the image is from unphased, unstacked early
-        commissioning data
+    smoothing: str, optional
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
+    choose_center : bool, optional
+        Automatically choose the one PSF found in the image
     testing : bool, optional
         Randomly select guide and reference stars (for use with pytests)
     out_dir : str, optional
@@ -745,7 +762,8 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
             cols, coords, nref, all_cols = manual_star_selection(data,
-                                                                 global_alignment,
+                                                                 smoothing,
+                                                                 choose_center,
                                                                  testing,
                                                                  masterGUIapp)
             all_found_psfs_path = None
@@ -767,6 +785,25 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         utils.write_cols_to_file(guiding_selections_path,
                                  labels=['y', 'x', 'countrate'],
                                  cols=cols, log=LOGGER)
+
+        # Calculate and write out center of PSF information for trk file if smoothing is low
+        if smoothing == 'low':
+            LOGGER.info(
+                "Star Selection: No smoothing chosen so re-running star selection to also calculate PSF center")
+            cols_center, _, _, _ = manual_star_selection(data,
+                                                         smoothing='default',
+                                                         choose_center=True,
+                                                         testing=testing,
+                                                         masterGUIapp=masterGUIapp)
+
+            LOGGER.info(
+                "Star Selection: PSF center information {} vs Guiding knot information {}".format(
+                    cols_center, cols))
+            psf_center_path = os.path.join(out_dir, 'psf_center_{}_G{}.txt'.format(root, guider))
+            utils.write_cols_to_file(psf_center_path,
+                                     labels=['y', 'x', 'countrate'],
+                                     cols=cols_center, log=LOGGER)
+
     except Exception as e:
         LOGGER.exception(e)
         raise
