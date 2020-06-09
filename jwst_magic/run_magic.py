@@ -61,7 +61,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
-            nircam_det=None, nircam=True, global_alignment=False, steps=None,
+            nircam_det=None, nircam=True, smoothing='default', steps=None,
             guiding_selections_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
@@ -90,8 +90,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         images and if cannot be parsed from header.
     nircam: bool, optional
         If this is a FGS image, set this flag to False
-    global_alignment: bool, optional
-        If this is not a global_alignment image, set this flag to False
+    smoothing: str, optional
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
     steps: list of strings, optional
         List of the steps to be completed
     guiding_selections_file: str, optional
@@ -180,13 +181,14 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     if star_selection:
         guiding_selections_file, _ = select_psfs.select_psfs(
             fgs_im, root, guider,
-            global_alignment=global_alignment,
+            smoothing=smoothing,
             guiding_selections_file=guiding_selections_file,
             out_dir=out_dir,
             logger_passed=True, masterGUIapp=masterGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
 
     # Create all files for FSW/DHAS/FGSES/etc.
+    recenter_trk = True if smoothing == 'low' else False
     if file_writer:
         if steps is None:
             steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
@@ -194,7 +196,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             fgs_files_obj= buildfgssteps.BuildFGSSteps(
                 fgs_im, guider, root, step, out_dir=out_dir,
                 logger_passed=True, guiding_selections_file=guiding_selections_file,
-                shift_id_attitude=shift_id_attitude, crowded_field=crowded_field
+                shift_id_attitude=shift_id_attitude, crowded_field=crowded_field,
+                recenter_trk=recenter_trk
             )
             write_files.write_all(fgs_files_obj)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")

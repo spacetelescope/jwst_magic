@@ -72,7 +72,7 @@ class BuildFGSSteps(object):
     """
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
                  out_dir=None, logger_passed=False, shift_id_attitude=True,
-                 crowded_field=False, catalog=None):
+                 crowded_field=False, catalog=None, recenter_trk=False):
         """Initialize the class and call build_fgs_steps().
         """
         # Set up logger
@@ -102,13 +102,13 @@ class BuildFGSSteps(object):
                                                           crowded_field=crowded_field)
 
             # Build FGS steps
-            self.build_fgs_steps(im, root, guiding_selections_file, configfile)
+            self.build_fgs_steps(im, root, guiding_selections_file, configfile, recenter_trk)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, im, root, guiding_selections_file, configfile):
+    def build_fgs_steps(self, im, root, guiding_selections_file, configfile, recenter_trk=False):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
@@ -128,13 +128,18 @@ class BuildFGSSteps(object):
         configfile : str
             File defining parameters for each guider step. If not
             defined, defaults to jwst_magic/data/config.ini
+        recenter_trk : bool, optional
+            Re-center the TRK box to not be centered on the guiding
+            selections PSF location, but on the actual center of
+            the PSF (found with smoothing; tuple of (y,x)). Used when
+            smoothing='low'.
         """
         # Define paths
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
         utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
 
-        self.get_coords_and_counts(guiding_selections_file)
+        self.get_coords_and_counts(guiding_selections_file, recenter_trk)
 
         section = '{}_dict'.format(self.step.lower())
         config_ini = self.build_step(section, configfile)
@@ -143,7 +148,7 @@ class BuildFGSSteps(object):
         # Write the files
         LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
 
-    def get_coords_and_counts(self, guiding_selections_file):
+    def get_coords_and_counts(self, guiding_selections_file, recenter_trk=False):
         """Get coordinate information and countrates of guide star and
         reference stars.
 
@@ -152,6 +157,11 @@ class BuildFGSSteps(object):
         guiding_selections_file : str
             File containing X/Y positions and countrates for all stars
             in the provided image
+        recenter_trk : bool, optional
+            Re-center the TRK box to not be centered on the guiding
+            selections PSF location, but on the actual center of
+            the PSF (found with smoothing; tuple of (y,x)). Used when
+            smoothing='low'.
         """
         LOGGER.info("FSW File Writing: Using {} as the guiding selections file".format(guiding_selections_file))
 
@@ -164,6 +174,14 @@ class BuildFGSSteps(object):
             self.yarr, self.xarr, self.countrate = np.loadtxt(guiding_selections_file,
                                                               delimiter=' ',
                                                               skiprows=1).T
+
+        # Make sure the TRK box is centered on the center of the PSF, not on the brightest point
+        if self.step == 'TRK' and recenter_trk is True:
+            file_path = guiding_selections_file.split('/guiding_selections')[0]
+            trk_file = 'psf_center_{}_G{}.txt'.format(self.root, self.guider)
+            self.yarr, self.xarr, _ = np.loadtxt(os.path.join(file_path, trk_file),
+                                                 delimiter=' ',
+                                                 skiprows=1).T
 
         # Cover cases where there is only one entry in the reg file
         try:
@@ -187,7 +205,6 @@ class BuildFGSSteps(object):
         configfile : str, optional
             File defining parameters for each guider step. If not
             defined, defaults to jwst_magic/data/config.ini
-
         Returns
         -------
         config_ini : obj
