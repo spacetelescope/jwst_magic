@@ -1004,7 +1004,8 @@ class MasterGui(QMainWindow):
             pass
 
         # Parse APT program, observation, and visit information
-        if self.radioButton_name_manual.isChecked():
+        if self.radioButton_name_manual.isChecked() and not all(hasattr(self, attr) for attr in
+                                                                ["program_id", "observation_num"]):
             keywords = ['PROGRAM', 'OBSERVTN', 'VISIT']
             attributes = ['program_id', 'observation_num', 'visit_num']
             for keyword, attr in zip(keywords, attributes):
