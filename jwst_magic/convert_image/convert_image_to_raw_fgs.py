@@ -690,7 +690,7 @@ def convert_im(input_im, guider, root, nircam=True,
         else:
             LOGGER.info("Image Conversion: This is an FGS image")
             # Check if header keyword is equal to fgs raw to determine if rotation to raw is needed
-            if origin.upper() == 'FGSRAW':  # this is a magic-team keyword that should only be in test files
+            if origin is not None and origin.upper() == 'FGSRAW':  # this is a magic-team keyword that should only be in test files
                 LOGGER.info("Image Conversion: Data is already provided in raw frame; no rotation done")
                 LOGGER.warning("Assume input guider is same as output guider; no rotation done")
             else:
