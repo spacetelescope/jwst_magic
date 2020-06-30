@@ -95,7 +95,7 @@
          <string>Number of the observation within the APT program</string>
         </property>
         <property name="placeholderText">
-         <string>e.g. 1-4, 7, 9</string>
+         <string>e.g. 1</string>
         </property>
        </widget>
       </item>
