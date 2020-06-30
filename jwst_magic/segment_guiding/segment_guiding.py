@@ -783,6 +783,16 @@ class SegmentGuidingCalculator:
                 else:
                     self.pa = float(self.pa)
 
+            for val in ['observation_num', 'visit_num']:
+                attr = getattr(self, val)
+                if attr is not None:
+                    try:
+                        int(attr)
+                    except ValueError:
+                        raise ValueError('Invalid input for SOF: multiple {} numbers not allowed'.format(val.split('_')[0]))
+                else:
+                    raise ValueError('Invalid input for SOF: {} number must be set. It cannot be None.'.format(val.split('_')[0]))
+
         elif override_type == "POF":
             # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ COUNT RATE FACTOR ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
             # Count rate factor has to be between 0 and 1 (required by VSS)
