@@ -1298,6 +1298,8 @@ class MasterGui(QMainWindow):
             DEC of the guide star from the program ID/Obs
 
         """
+        LOGGER.info('Master GUI: Beginning APT Query. This may take a moment.')
+
         # Check program_id and obs_number are ints
         if not isinstance(program_id, int):
             program_id = int(program_id)

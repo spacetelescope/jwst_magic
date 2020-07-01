@@ -34,7 +34,7 @@ Another very important part of MAGIC is creating the override file that can be u
 
    4. Otherwise, select the **Click-to-Select 1 or more commands (GUI)** radio button (*D*) to launch the GUI (see figure below) that will allow you to click-to-select multiple orientations of guide and reference stars.
 4.
-   Before running the tool, obtain the following parameters with the following methods:
+   Before running the tool, obtain the following parameters with the following methods (skip to iii if you used the APT query):
 
    1. APT parameters: If you do not know, ask the Wavefront Ops for the **Program Number**, **Observation Number(s)**, and the **Visit Number**.
 
@@ -58,7 +58,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
    1. **Program Number** – of the current APT program; three to five digits. Input *only* the Program Number if *all* observations and visits in the program will use the same file.
 
-   2. **Observation Number(s)** (optional) - of the observation(s) that will be executed. To write a file for only one observation, simply write one number (e.g. "13"). To write a file for multiple observations, write a comma-separated list of numbers, and use hyphens to denote ranges (e.g. "1, 3, 5" or "3-7" or "1, 3, 5-7, 9"). Input *only* the Program Number and Observation Number if *all* visits in a given observation will use the same file.
+   2. **Observation Number** - of the observation that will be executed: one number (e.g. "13"). Note that while POFs can have multiple observations input, this is not true for SOFs. You can only input 1 observation number. Input *only* the Program Number and Observation Number if *all* visits in a given observation will use the same file.
 
    3. **Visit Number** (optional) – of the visit that will be executed (this is usually 1, but will be different when mosaics, etc. are taken)
 
