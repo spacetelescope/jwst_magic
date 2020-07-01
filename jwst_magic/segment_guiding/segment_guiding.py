@@ -27,7 +27,7 @@ Use
             segment_infile, guider, program_id, observation_num, visit_num,
             root=None, out_dir=None, selected_segs=None,
             click_to_select_GUI=True, data=None, guide_star_params_dict=None,
-            threshold_factor=0.9, parameter_dialog=True, oss_factor=0.6,
+            threshold_factor=0.9, parameter_dialog=True,
             masterGUIapp=None):
 
 
@@ -78,7 +78,7 @@ class SegmentGuidingCalculator:
     def __init__(self, override_type, program_id, observation_num, visit_num,
                  root, out_dir, segment_infile=None, guide_star_params_dict=None,
                  selected_segs=None, threshold_factor=0.9, countrate_factor=None,
-                 countrate_uncertainty_factor=None, oss_factor=0.6, log=None):
+                 countrate_uncertainty_factor=None, log=None):
         """Initialize the segment guiding calculator class.
 
         Parameters
@@ -126,9 +126,6 @@ class SegmentGuidingCalculator:
             The factor by which countrate uncertainties are multiplied by to simulate
             diffuse PSFs (e.g. in MIMF)
             Used for POF Generation
-        oss_factor : float, optional
-            The factor that OSS applies to the 3x3 box countrate in order to represent
-            the full number of countrate that we care about.
         log : logger object
             Pass a logger object (output of tils.create_logger_from_yaml) or a new log
             will be created
@@ -144,7 +141,6 @@ class SegmentGuidingCalculator:
         self.threshold_factor = threshold_factor
         self.countrate_factor = countrate_factor
         self.countrate_uncertainty_factor = countrate_uncertainty_factor
-        self.oss_factor = oss_factor
 
         # Start logger
         if log is None:
@@ -371,10 +367,9 @@ class SegmentGuidingCalculator:
                         guide_segments.append(new_seg[0])
 
                 # If countrates were included in the input file, use them!
-                # The OSS factor is multiplied by OSS to account for the 3x3 countrates
-                # So we need to divide it out here and for every segment override file
-                rate = self.countrate_array / self.oss_factor
-                uncertainty = self.countrate_array * self.threshold_factor / self.oss_factor
+                # Note: This used to be where the oss factor was divded out, but htat is now removed
+                rate = self.countrate_array
+                uncertainty = self.countrate_array * self.threshold_factor
 
                 # Write the commands for each orientation
                 for i_o, orientation in enumerate(orientations):
@@ -913,7 +908,7 @@ def generate_segment_override_file(segment_infile, guider,
                                    click_to_select_gui=True, data=None,
                                    guide_star_params_dict=None, threshold_factor=0.9,
                                    parameter_dialog=True, dialog_obj=None,
-                                   oss_factor=0.6, master_gui_app=None, log=None):
+                                   master_gui_app=None, log=None):
     """Run the segment guiding tool to select guide and reference stars and
     generate a segment guiding override file.
 
@@ -972,9 +967,6 @@ def generate_segment_override_file(segment_infile, guider,
     dialog_obj : SegmentGuidingDialog object, optional
         If parameter_dialog is True, can pass a pre-set dialog object or
         re-create it if dialog_obj=None
-    oss_factor : float, optional
-        The factor that OSS applies to the 3x3 box countrate in order to represent
-        the full number of countrate that we care about.
     master_gui_app : qApplication, optional
         qApplication instance of parent GUI
     log : logger object
@@ -1050,7 +1042,7 @@ def generate_segment_override_file(segment_infile, guider,
             segment_infile=segment_infile,
             guide_star_params_dict=guide_star_params_dict,
             selected_segs=selected_segs, threshold_factor=threshold_factor,
-            oss_factor=oss_factor, log=log
+            log=log
         )
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params("SOF")
