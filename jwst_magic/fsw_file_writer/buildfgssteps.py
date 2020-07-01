@@ -102,26 +102,18 @@ class BuildFGSSteps(object):
                                                           crowded_field=crowded_field)
 
             # Build FGS steps
-            self.build_fgs_steps(im, root, guiding_selections_file, configfile, recenter_trk)
+            self.build_fgs_steps(guiding_selections_file, configfile, recenter_trk)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, im, root, guiding_selections_file, configfile, recenter_trk=False):
+    def build_fgs_steps(self, guiding_selections_file, configfile, recenter_trk=False):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
         Parameters
         ----------
-        im : 2-D numpy array or str
-            Image data or filepath to image
-        root : str
-            Name used to create the output directory, {out_dir}/out/{root}
-        out_dir : str
-            Where output files will be saved. If not provided, the
-            image(s) will be saved within the repository at
-            jwst_magic/
         guiding_selections_file : str
             File containing X/Y positions and countrates for all stars
             in the provided image
