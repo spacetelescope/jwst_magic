@@ -1123,6 +1123,7 @@ class MasterGui(QMainWindow):
 
             # Toggle the "use shifted image" buttons
             self.radioButton_shifted.setChecked(True)
+            self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
 
             # Enable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(True)
