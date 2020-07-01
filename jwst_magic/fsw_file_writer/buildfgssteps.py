@@ -9,6 +9,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -361,7 +362,6 @@ class BuildFGSSteps(object):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Define filenames
         file_root = '{}_G{}'.format(self.root, self.guider)
-        FGS_img = os.path.join(self.out_dir, 'FGS_imgs', file_root + '.fits')
         guiding_selections_file = guiding_selections_file or os.path.join(
             self.out_dir, 'guiding_selections_{}.txt'.format(file_root)
         )
@@ -461,7 +461,10 @@ class BuildFGSSteps(object):
                                        file_root + '.fits')
 
         # Write new FITS files
-        utils.write_fits(shifted_FGS_img, shifted_image, header=hdr, log=LOGGER)
+        # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
+        saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
+        saved_shifted_image = np.uint16(saved_shifted_image)
+        utils.write_fits(shifted_FGS_img, saved_shifted_image, header=hdr, log=LOGGER)
 
         return shifted_image
 
