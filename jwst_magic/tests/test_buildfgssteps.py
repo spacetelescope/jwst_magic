@@ -124,9 +124,9 @@ def test_shift_to_id_attitude(open_image, test_directory, crowded_field, guider,
     # Make sure the location of the PSFs in the image matches the all_found_psfs*.txt
     with fits.open(FGS_img) as hdulist:
         image = hdulist[0].data
-        sources = find_peaks(image, np.max(image) * .8, box_size=5)
+        sources = find_peaks(image, np.median(image+ (3 * np.std(image))), box_size=5)
         img_coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
-        assert set(img_coords) == set([(x, y) for (x, y) in all_found_psfs_cat['x', 'y']])
+        assert set(img_coords) == set([(int(x), int(y)) for (x, y) in all_found_psfs_cat['x', 'y']])
 
 
 correct_count_rate_parameters = []
