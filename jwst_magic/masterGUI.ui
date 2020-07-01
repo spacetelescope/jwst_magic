@@ -865,9 +865,6 @@ p, li { white-space: pre-wrap; }
            </item>
            <item row="1" column="0" colspan="3">
             <widget class="QCheckBox" name="checkBox_id_attitude">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
              <property name="text">
               <string>Place the guide star at the ID attitude</string>
              </property>
@@ -992,6 +989,9 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="checkable">
               <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_segmentGuiding_idAttitude</string>
