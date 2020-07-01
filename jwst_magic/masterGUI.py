@@ -707,14 +707,14 @@ class MasterGui(QMainWindow):
     def on_click_showstars(self, show):
         """Show or hide plots of star positions and selected stars.
         """
-        if self.sender == self.checkBox_showStars:
+        if self.sender() == self.checkBox_showStars:
             for line in self.converted_im_circles:
                 line[0].set_visible(show)
             self.canvas_converted.peaks.set_visible(show)
 
             self.canvas_converted.draw()
 
-        elif self.sender == self.checkBox_showStars_shifted:
+        elif self.sender() == self.checkBox_showStars_shifted:
             for line in self.shifted_im_circles:
                 line[0].set_visible(show)
             self.canvas_shifted.peaks.set_visible(show)
