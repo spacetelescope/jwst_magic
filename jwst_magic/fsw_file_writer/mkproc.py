@@ -246,12 +246,7 @@ class Mkproc(object):
         eol = '\n'
 
         # Corner coordinates & guide star counts
-        xarr1, yarr1 = coordinate_transforms.Raw2DHAS(xarr - acq1_imgsize // 2,
-                                                      yarr - acq1_imgsize // 2,
-                                                      guider)
-        xarr2, yarr2 = coordinate_transforms.Raw2DHAS(xarr - acq2_imgsize // 2,
-                                                      yarr - acq2_imgsize // 2,
-                                                      guider)
+        xangle, yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
 
         # Get threshold from countrate (not from STC file)
         threshgs = 0.50 * counts
@@ -269,8 +264,8 @@ class Mkproc(object):
 
             # Write guide star coordinates
             file_out.write('@IFGS_GUIDESTAR {0}, 2, {1:12.4f}, {2:12.4f}, \
-                           {3:12.4f}, {4:8d}'.format(self.guider, float(xarr1),
-                                                     float(yarr1), float(counts),
+                           {3:12.4f}, {4:8d}'.format(self.guider, float(xangle),
+                                                     float(xangle), float(counts),
                                                      int(threshgs)))
 
             self.write_from_template(self.template_b, file_out)
@@ -279,8 +274,8 @@ class Mkproc(object):
             file_out.write('@IFGS_CONFIG {0}, SWADDRESS=spaceWireAddr1, SLOT=1, NINTS=1, \
             NGROUPS=groupNum1, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=128, NCOLS=128, \
             ROWCORNER={1:12.4f},COLCORNER={2:12.4f}'.format(self.guider,
-                                                            float(xarr1),
-                                                            float(yarr1)))
+                                                            float(xangle),
+                                                            float(xangle)))
             file_out.write(eol)
 
             self.write_from_template(self.template_c, file_out)
@@ -289,8 +284,8 @@ class Mkproc(object):
             file_out.write('@IFGS_CONFIG {0}, spaceWireAddr2, SLOT=2, NINTS=1, \
             NGROUPS=groupNum2, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=32, NCOLS=32, \
             ROWCORNER={1:12.4f}, COLCORNER={2:12.4f}'.format(self.guider,
-                                                             float(xarr2),
-                                                             float(yarr2)))
+                                                             float(xangle),
+                                                             float(xangle)))
             file_out.write(eol)
 
             self.write_from_template(self.template_d, file_out)
