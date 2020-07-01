@@ -263,6 +263,7 @@ class MasterGui(QMainWindow):
         # Segment guiding widgets
         self.pushButton_regfileSegmentGuiding.clicked.connect(self.on_click_infile)
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
+        self.groupBox_segmentGuiding.toggled.connect(self.update_segment_guiding_shift)
 
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
