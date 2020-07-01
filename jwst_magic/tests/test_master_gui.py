@@ -271,6 +271,8 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name):
     elif type == 'manual':
         qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
         qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
+        qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
+        qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)
         qtbot.keyClicks(master_gui.lineEdit_manualid, '1148')
         qtbot.keyClicks(master_gui.lineEdit_manualobs, '01')
         qtbot.mouseClick(master_gui.pushButton_manualid, QtCore.Qt.LeftButton)
