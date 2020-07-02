@@ -152,9 +152,10 @@ def write_fits(outfile, data, header=None, log=None):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    hdul = fits.PrimaryHDU(data=data)
-    if header is not None:
-        hdul.header = header
+    if not any([isinstance(header, fits.header.Header), header is None]):
+        raise TypeError('Header to be written out in {} is not either "None" or of type fits.header.Header'.format(outfile))
+
+    hdul = fits.PrimaryHDU(data=data, header=header)
 
     hdul.writeto(outfile, overwrite=True)
 

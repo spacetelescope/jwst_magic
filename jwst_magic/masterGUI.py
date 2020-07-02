@@ -263,6 +263,7 @@ class MasterGui(QMainWindow):
         # Segment guiding widgets
         self.pushButton_regfileSegmentGuiding.clicked.connect(self.on_click_infile)
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
+        self.groupBox_segmentGuiding.toggled.connect(self.update_segment_guiding_shift)
 
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
@@ -706,14 +707,14 @@ class MasterGui(QMainWindow):
     def on_click_showstars(self, show):
         """Show or hide plots of star positions and selected stars.
         """
-        if self.sender == self.checkBox_showStars:
+        if self.sender() == self.checkBox_showStars:
             for line in self.converted_im_circles:
                 line[0].set_visible(show)
             self.canvas_converted.peaks.set_visible(show)
 
             self.canvas_converted.draw()
 
-        elif self.sender == self.checkBox_showStars_shifted:
+        elif self.sender() == self.checkBox_showStars_shifted:
             for line in self.shifted_im_circles:
                 line[0].set_visible(show)
             self.canvas_shifted.peaks.set_visible(show)
@@ -1122,6 +1123,7 @@ class MasterGui(QMainWindow):
 
             # Toggle the "use shifted image" buttons
             self.radioButton_shifted.setChecked(True)
+            self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
 
             # Enable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(True)
