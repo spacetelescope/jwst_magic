@@ -9,6 +9,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -102,26 +103,18 @@ class BuildFGSSteps(object):
                                                           crowded_field=crowded_field)
 
             # Build FGS steps
-            self.build_fgs_steps(im, root, guiding_selections_file, configfile, recenter_trk)
+            self.build_fgs_steps(guiding_selections_file, configfile, recenter_trk)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, im, root, guiding_selections_file, configfile, recenter_trk=False):
+    def build_fgs_steps(self, guiding_selections_file, configfile, recenter_trk=False):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
         Parameters
         ----------
-        im : 2-D numpy array or str
-            Image data or filepath to image
-        root : str
-            Name used to create the output directory, {out_dir}/out/{root}
-        out_dir : str
-            Where output files will be saved. If not provided, the
-            image(s) will be saved within the repository at
-            jwst_magic/
         guiding_selections_file : str
             File containing X/Y positions and countrates for all stars
             in the provided image
@@ -369,7 +362,6 @@ class BuildFGSSteps(object):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Define filenames
         file_root = '{}_G{}'.format(self.root, self.guider)
-        FGS_img = os.path.join(self.out_dir, 'FGS_imgs', file_root + '.fits')
         guiding_selections_file = guiding_selections_file or os.path.join(
             self.out_dir, 'guiding_selections_{}.txt'.format(file_root)
         )
@@ -469,7 +461,10 @@ class BuildFGSSteps(object):
                                        file_root + '.fits')
 
         # Write new FITS files
-        utils.write_fits(shifted_FGS_img, shifted_image, header=hdr, log=LOGGER)
+        # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
+        saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
+        saved_shifted_image = np.uint16(saved_shifted_image)
+        utils.write_fits(shifted_FGS_img, saved_shifted_image, header=hdr, log=LOGGER)
 
         return shifted_image
 
