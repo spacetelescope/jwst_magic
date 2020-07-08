@@ -125,6 +125,26 @@ class FGSDetectorEffects:
     def add_pedestal(self):
         """Add pedestal, which imprints at reset, to the bias.
         """
+        # The pedestal is a variable amp-to-amp offset that imprints at reset.
+        # The pedestal is currently turned off in this code, as it (mostly) CDS-es out;
+        # (in reality it is not a pure DC offset; it is a slowly varying drift, with each
+        # amp drifting independently, but it is modeled here as a DC offset).
+        # If anyone ever wants to turn the pedestal back on, the pedestal cube and
+        # for loop step size will need to be changed from what is currently coded,
+        # as explained below.
+        # ID readout is 36 X (reset, read, read, reset, read, read).
+        # For ID, we want a pedestal cube that has 72 sets of twin pedestal frames,
+        # with each twin-set different from all other twin-sets. This would correspond to
+        # a for loop that looks like this: for i in range (0, nreads*nramps*nstrips, nread)
+        # where nreads=2, nramps=2, and nstrips=36.
+        # Each pedestal twin-set corresponds to one (reset, read, read) in the readout pattern.
+        # Because this section of the MAGIC code doesn't seem to have the nstrips=36 parameter,
+        # maybe if the pedestal is ever turned back on again, the pedestal cube could be
+        # scaled to the image size like the read noise is?
+        # Similar considerations would need to applied to the sub-array pedestal calculations,
+        # taking the readout pattern into account and imprinting the pedestal at the resets.
+        # - Sherie Holfeltz 07/08/2020
+
         # For full frame images (ID, CAL)
         if self.imgsize == 2048:
             # Create the full frame pedestal image
