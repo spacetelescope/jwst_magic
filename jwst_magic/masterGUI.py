@@ -46,6 +46,7 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 # Standard Library Imports
 import glob
+import io
 import logging
 import os
 import re
@@ -53,6 +54,7 @@ import shutil
 import subprocess
 import sys
 import urllib.request
+import zipfile
 
 # Third Party Imports
 from astropy.io import ascii as asc
@@ -1300,8 +1302,6 @@ class MasterGui(QMainWindow):
             DEC of the guide star from the program ID/Obs
 
         """
-        LOGGER.info('Master GUI: Beginning APT Query. This may take a moment.')
-
         # Check program_id and obs_number are ints
         if not isinstance(program_id, int):
             program_id = int(program_id)
@@ -1320,26 +1320,10 @@ class MasterGui(QMainWindow):
             '{}/{}.aptx'.format(apt_file_path,program_id)
         )
 
-        # Get the path to the user's newest APT version
-        try:
-            apt_list = glob.glob('{}/Applications/*APT*'.format(os.path.expanduser('~')))
-            apt_path = apt_list[0]
-        except IndexError:
-            try:
-                apt_list = glob.glob('/Applications/*APT*')
-                apt_path = apt_list[0]
-            except IndexError:
-                self.lineEdit_normalize.setText('')
-                raise FileNotFoundError("APT not found in /Applications or ~/Applications")
-        apt_path = apt_path.replace(' ', '\ ')  # fix issue with space in APT name to make path work
-
-        # Run APT and export the XML file
-        command = ['{} -nogui -export xml {}/{}.aptx'.format(apt_path + '/bin/apt', apt_file_path, program_id)]
-        subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, shell=True)
-
-        # Open the APT XML file
-        with open('{}/{}.xml'.format(apt_file_path, program_id)) as f:
-            tree = etree.parse(f)
+        # Pull XML data from APT file
+        with zipfile.ZipFile('{}/{}.aptx'.format(apt_file_path,program_id), 'r') as zf:
+            data = zf.read('{}.xml'.format(program_id))
+        tree = etree.parse(io.BytesIO(data))
 
         # Pull: List of Observations for the CAR > Specific Obs > Special Requirements Info (sr)
         namespace_tag = '{http://www.stsci.edu/JWST/APT}'
