@@ -509,13 +509,17 @@ def normalize_data(data, fgs_countrate, threshold=0.05):
     return data_norm
 
 
-def remove_pedestal(data):
-    """Subtract the vertical pedestals/amps from a raw frame
+def remove_pedestal(data, nircam):
+    """Subtract the vertical (for NIRCam) or horizontal (for FGS)
+     pedestals/amps from a raw frame
 
     Parameters
     ----------
     data : 2-D numpy array
         Image data
+    nircam : bool
+        True if the data is NIRCam SCI frame data. False if
+        the data is FGS SCI frame data.
 
     Returns
     -------
@@ -529,15 +533,23 @@ def remove_pedestal(data):
     for i in range(4):
         ped_start = i * ped_size
         ped_stop = (i + 1) * ped_size
-        ped_strip = data[:, ped_start:ped_stop]
+
+        if nircam:
+            ped_strip = data[:, ped_start:ped_stop]
+        else:
+            ped_strip = data[ped_start:ped_stop, :]
+
         pedestal = np.median(ped_strip)
         pedestals.append(pedestal)
 
         # Subtract median from each pedestal strip
-        noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
+        if nircam:
+            noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
+        else:
+            noped_data[ped_start:ped_stop, :] = data[ped_start:ped_stop, :] - pedestal
 
     LOGGER.info("Image Conversion: " +
-                "Removed pedestal values from NIRCam image: {} ".
+                "Removed pedestal values from image: {} ".
                 format(', '.join(['{:.2f}'.format(p) for p in pedestals])))
 
     return noped_data
@@ -654,6 +666,14 @@ def convert_im(input_im, guider, root, nircam=True,
             pass
 
         # Create raw FGS image...
+
+        # Remove pedestal from NIRCam or FGS data
+        # pedestal should be taken out in refpix correction - only run if that hasn't been run
+        if 'S_REFPIX' in header.keys() and header['S_REFPIX'] == 'COMPLETE':
+            LOGGER.info("Image Conversion: Reference pixel correction run in pipeline. Skipping removing pedestal")
+        else:
+            data = remove_pedestal(data, nircam)
+
         # -------------- From NIRCam --------------
         if nircam:
             LOGGER.info("Image Conversion: This is a NIRCam image")
@@ -679,8 +699,6 @@ def convert_im(input_im, guider, root, nircam=True,
             except KeyError:
                 LOGGER.warning("Image Conversion: No DQ extension found; DQ correction cannot be performed.")
 
-            # Remove pedestal from NIRCam data
-            data = remove_pedestal(data)
             # Rotate the NIRCAM image into FGS frame
             nircam_scale, data = transform_nircam_image(data, guider, nircam_det, header)
             # Pad image
