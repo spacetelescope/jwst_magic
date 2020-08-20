@@ -11,6 +11,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Shannon Osborne
 
 
 Use
@@ -476,8 +477,10 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
     return fgs_data
 
 
-def normalize_data(data, fgs_countrate, threshold=0.05):
-    """Re-normalize data to the desired FGS countrate
+def normalize_data(data, fgs_countrate):
+    """Re-normalize data to the desired FGS countrate without
+    masking out any ofthe background. See JWSTFGS-160 for the
+    reasoning behind this.
 
     Parameters
     ----------
@@ -485,26 +488,16 @@ def normalize_data(data, fgs_countrate, threshold=0.05):
         Image data
     fgs_countrate : float
         The FGS countrate value to normalize to
-    threshold : float, optional
-        The percentage of the maximum above which pixels are considered "data"
-        and below which pixels are considered "background" and thus are not
-        included in the normalization calculation
 
     Returns
     -------
     data_norm
         Normalized image data
 
-    Notes
-    -----
-        Threshold of 0.05 assumes background is very low.
-        *This will need to be automated later.*
     """
-    mask = data > (data * threshold) #FIXME This doesn't actually mask anything. This entire process needs to be reevaluated
 
-    data_norm = np.copy(mask * data.astype(np.float64))
-    data_norm *= (fgs_countrate / data_norm.sum())  # renormalize by sum of non-masked data
-    data_norm[mask == 0] = data[mask == 0]  # background is not normalized
+    data_norm = np.copy(data.astype(np.float64))
+    data_norm *= (fgs_countrate / data_norm.sum())
 
     return data_norm
 
