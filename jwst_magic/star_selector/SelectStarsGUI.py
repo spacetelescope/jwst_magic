@@ -350,7 +350,7 @@ class StarSelectorWindow(QDialog):
         self.qApp = qApp
         self.print_output = print_output
         self.in_master_GUI = in_master_GUI
-        self.in_SGT_GUI = in_SGT_GUI
+        self.in_SGT_GUI = in_SGT_GUI  # TODO: there is no more segment guiding GUI so this variable will need to go away
 
         # Initialize construction attributes
         self.image_dim = 800
@@ -368,33 +368,14 @@ class StarSelectorWindow(QDialog):
         self.current_row = -1
         self.circles = []
 
+        # Initialize dialog object
+        QDialog.__init__(self, modal=True)
+
         # Import .ui file
-        # (It is imported as a widget, rather than a QDialog window, so that it
-        # can also be imported into the SegmentGuidingGUI module)
-        self.central_widget = QWidget()
-        uic.loadUi(os.path.join(__location__, 'SelectStarsGUI.ui'), self.central_widget)
-        self.__dict__.update(self.central_widget.__dict__)
-
-        # Initialize dialog object and add imported UI
-        if not in_SGT_GUI:
-            QDialog.__init__(self, modal=True)
-            # Set dialog window layout
-            self.setLayout(QVBoxLayout())
-
-            # Create scroll area and add it to the dialog window
-            self.scrollArea_selectStars = QScrollArea()
-            self.layout().addWidget(self.scrollArea_selectStars)
-
-            # Modify scroll area
-            self.scrollArea_selectStars.setMinimumSize(1110, 950)
-            self.scrollArea_selectStars.setFrameShape(QFrame.NoFrame)
-            self.scrollArea_selectStars.setWidgetResizable(True)
-
-            # Add central widget to scroll area
-            self.scrollArea_selectStars.setWidget(self.central_widget)
+        uic.loadUi(os.path.join(__location__, 'SelectStarsGUI.ui'), self)
 
         # Create and load GUI session
-        self.setWindowTitle('JWST MaGIC - Guide and Reference Star Selector')
+        self.setWindowTitle('JWST MAGIC - Guide and Reference Star Selector')
         canvas_left, profile_bottom = self.adjust_screen_size_select_stars()
         self.init_matplotlib(canvas_left, profile_bottom)
         self.define_StarSelectionGUI_connections()
@@ -413,35 +394,27 @@ class StarSelectorWindow(QDialog):
         width, height = screen_size.width(), screen_size.height()
 
         # Adjust the matplotlib frame sizes
-        if height < 1100:
+        if height < 1482:
             canvas_left = 0.13
             profile_bottom = 0.2
         else:
-            self.frame_canvas.setMinimumSize(800, 0)
-            self.tableWidget_selectedStars.setMinimumSize(420, 300)
+            self.frame_canvas.setMinimumSize(650, 0)
+            self.tableWidget_selectedStars.setMinimumSize(400, 300)
             self.groupBox_selectedStars.setMinimumSize(440, 380)
-            self.frame_profile.setMinimumSize(0, 300)
+            self.frame_profile.setMinimumSize(0, 250)
             if not self.in_SGT_GUI:
-                self.scrollArea_selectStars.setMinimumSize(1110 + 200, 950 + 200)
+                self.scrollArea_selectStars.setMinimumSize(1482 + 200, 973 + 200)
             canvas_left = 0.1
             profile_bottom = 0.15
 
         # If the window is standalone, adjust the scroll window size
-        if not self.in_SGT_GUI:
-            # Window is too wide
-            if width - 200 < self.scrollArea_selectStars.minimumWidth():
-                # print(
-                #     'Star selection window is too wide (screen size: {}); resizing to {}'.
-                #     format(width, width - 200)
-                # )
-                self.scrollArea_selectStars.setMinimumWidth(width - 200)
-            # Window is too tall
-            if height - 200 < self.scrollArea_selectStars.minimumHeight():
-                # print(
-                #     'Star selection window is too tall (screen size: {}); resizing to {}'.
-                #     format(height, height - 200)
-                # )
-                self.scrollArea_selectStars.setMinimumHeight(height - 200)
+        #if not self.in_SGT_GUI:
+        # Window is too wide
+        if width - 200 < self.scrollArea_selectStars.minimumWidth():
+            self.scrollArea_selectStars.setMinimumWidth(width - 200)
+        # Window is too tall
+        if height - 200 < self.scrollArea_selectStars.minimumHeight():
+            self.scrollArea_selectStars.setMinimumHeight(height - 200)
 
         return canvas_left, profile_bottom
 
@@ -1098,7 +1071,7 @@ def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
 
     window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
                                 in_master_GUI=in_master_GUI,
-                                print_output=print_output)
+                                print_output=True)
 
     try:
         plt.get_current_fig_manager().window.raise_()  # Bring window to front
