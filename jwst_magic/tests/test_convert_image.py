@@ -54,7 +54,7 @@ norm_parameters = [
     (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', 1992.7434250045358),
     (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', 5563.853153791558),
     (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', 1770.7861951935322),
-    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', 170.69277282101652),
+    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', 171.37823193763356),
     (NIRCAM_IM, 2, True, '', 'Guide Star ID', 5563.853153791558)
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, data_max', norm_parameters)
