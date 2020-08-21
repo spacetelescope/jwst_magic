@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1484</width>
-    <height>1044</height>
+    <width>1594</width>
+    <height>1068</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,8 +34,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1553</width>
-         <height>1047</height>
+         <width>1570</width>
+         <height>1053</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -166,7 +166,7 @@ Image:</string>
                   <string>Converted FGS Image</string>
                  </attribute>
                  <layout class="QGridLayout" name="gridLayout_6">
-                  <item row="1" column="0" colspan="2">
+                  <item row="3" column="0" colspan="2">
                    <widget class="QCheckBox" name="checkBox_showStars">
                     <property name="enabled">
                      <bool>false</bool>
@@ -182,7 +182,7 @@ Image:</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="1">
+                  <item row="2" column="1">
                    <widget class="QTextEdit" name="textEdit_showingConverted">
                     <property name="enabled">
                      <bool>false</bool>
@@ -208,7 +208,7 @@ Image:</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="0">
+                  <item row="2" column="0">
                    <widget class="QLabel" name="label_showingConverted">
                     <property name="toolTip">
                      <string>Path to the converted FGS image found at the out and root directories specified</string>
@@ -222,7 +222,19 @@ Image:</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="2" column="0" colspan="2">
+                  <item row="1" column="1">
+                   <widget class="QComboBox" name="comboBox_showcommandsconverted">
+                    <property name="toolTip">
+                     <string>Choose the guiding command to show the guide and reference star locations</string>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>- Guiding Command - </string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item row="4" column="0" colspan="2">
                    <widget class="QWidget" name="canvas_converted_slot" native="true">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -238,6 +250,16 @@ Image:</string>
                     </property>
                    </widget>
                   </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_showcommandsconverted">
+                    <property name="toolTip">
+                     <string>Choose the guiding command to show the guide and reference star locations</string>
+                    </property>
+                    <property name="text">
+                     <string>Choose guiding command: </string>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </widget>
                 <widget class="QWidget" name="tab_shifted">
@@ -245,23 +267,19 @@ Image:</string>
                   <string>Shifted FGS Image</string>
                  </attribute>
                  <layout class="QGridLayout" name="gridLayout_10">
-                  <item row="2" column="0" colspan="2">
-                   <widget class="QWidget" name="canvas_shifted_slot" native="true">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
+                  <item row="1" column="1">
+                   <widget class="QComboBox" name="comboBox_showcommandsshifted">
+                    <property name="toolTip">
+                     <string>Choose the guiding command to show the guide and reference star locations</string>
                     </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>600</width>
-                      <height>600</height>
-                     </size>
-                    </property>
+                    <item>
+                     <property name="text">
+                      <string>- Guiding Command - </string>
+                     </property>
+                    </item>
                    </widget>
                   </item>
-                  <item row="0" column="0">
+                  <item row="2" column="0">
                    <widget class="QLabel" name="label_showingShifted">
                     <property name="toolTip">
                      <string>Path to the converted FGS image found at the out and root directories specified</string>
@@ -275,7 +293,7 @@ Image:</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="1">
+                  <item row="2" column="1">
                    <widget class="QTextEdit" name="textEdit_showingShifted">
                     <property name="enabled">
                      <bool>false</bool>
@@ -301,7 +319,7 @@ Image:</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="1" column="0" colspan="2">
+                  <item row="3" column="0" colspan="2">
                    <widget class="QCheckBox" name="checkBox_showStars_shifted">
                     <property name="enabled">
                      <bool>false</bool>
@@ -314,6 +332,32 @@ Image:</string>
                     </property>
                     <property name="checked">
                      <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="0" colspan="2">
+                   <widget class="QWidget" name="canvas_shifted_slot" native="true">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>600</width>
+                      <height>600</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_showcommandsshifted">
+                    <property name="toolTip">
+                     <string>Choose the guiding command to show the guide and reference star locations</string>
+                    </property>
+                    <property name="text">
+                     <string>Choose guiding command: </string>
                     </property>
                    </widget>
                   </item>
@@ -922,34 +966,18 @@ p, li { white-space: pre-wrap; }
            <item row="3" column="1">
             <widget class="QLineEdit" name="lineEdit_regfileSegmentGuiding">
              <property name="toolTip">
-              <string>File containing guide and reference star locations and brightness</string>
+              <string>Path to root where there are file(s) containing guide and reference star locations and brightness</string>
              </property>
             </widget>
            </item>
            <item row="3" column="0">
             <widget class="QRadioButton" name="radioButton_regfileSegmentGuiding">
              <property name="toolTip">
-              <string>Define one command with guide and reference stars by loading their locations and brightness loaded from a file</string>
+              <string>Define one or more commands with guide and reference stars by loading their locations and brightness loaded from a file</string>
              </property>
              <property name="text">
-              <string>Read 1 command from file
+              <string>Read commands from root
 (assume segNum=0)</string>
-             </property>
-             <attribute name="buttonGroup">
-              <string notr="true">buttonGroup_segmentGuiding</string>
-             </attribute>
-            </widget>
-           </item>
-           <item row="4" column="0" colspan="2">
-            <widget class="QRadioButton" name="radioButton_segmentGuidingGUI">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create one or more segment guiding override commands by clicking on guide and reference stars in the image&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>Click-to-Select 1 or more commands (GUI)</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_segmentGuiding</string>
@@ -1018,6 +1046,28 @@ p, li { white-space: pre-wrap; }
             <widget class="Line" name="line">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QComboBox" name="comboBox_guidingcommands">
+             <property name="toolTip">
+              <string>Select guiding commands to include when writing out segment override file(s)</string>
+             </property>
+             <item>
+              <property name="text">
+               <string>- Choose Guiding Command(s) - </string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_guidingcommands">
+             <property name="toolTip">
+              <string>Select guiding commands to include when writing out segment override file(s)</string>
+             </property>
+             <property name="text">
+              <string>                Select commands to run:</string>
              </property>
             </widget>
            </item>
@@ -2005,38 +2055,6 @@ QPushButton:pressed {
    </hints>
   </connection>
   <connection>
-   <sender>radioButton_segmentGuidingGUI</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>lineEdit_regfileSegmentGuiding</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>380</x>
-     <y>1006</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>688</x>
-     <y>969</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButton_segmentGuidingGUI</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>pushButton_regfileSegmentGuiding</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>380</x>
-     <y>1006</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>767</x>
-     <y>977</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>checkBox_useConvertedImage</sender>
    <signal>toggled(bool)</signal>
    <receiver>label_instrument</receiver>
@@ -2438,12 +2456,12 @@ QPushButton:pressed {
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
-  <buttongroup name="buttonGroup_guider"/>
-  <buttongroup name="buttonGroup_segmentGuiding"/>
-  <buttongroup name="buttonGroup_idAttitude"/>
-  <buttongroup name="buttonGroup_starSelector"/>
   <buttongroup name="buttonGroup_name"/>
+  <buttongroup name="buttonGroup_idAttitude"/>
+  <buttongroup name="buttonGroup_guider"/>
+  <buttongroup name="buttonGroup_instrument"/>
+  <buttongroup name="buttonGroup_starSelector"/>
+  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
+  <buttongroup name="buttonGroup_segmentGuiding"/>
  </buttongroups>
 </ui>
