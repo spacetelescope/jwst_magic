@@ -71,7 +71,7 @@ This package is developed in a Python ≥3.6 environment. Python 2 is not suppor
 6. Install the `jwst_magic` package by navigating to the directory where the `setup.py` file lives in the `jwst_magic` package and installing it using `pip`:
 
     ```
-    cd jwst_magic/
+    cd jwst-magic/
 
     pip install -e .
     ```
