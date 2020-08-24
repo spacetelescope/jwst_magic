@@ -9,7 +9,8 @@
 [![STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Build Status](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/badge/icon)](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/)
 
-#### For use internal to STScI, please see our mirror repository on grit: https://grit.stsci.edu/JWST-FGS/jwst-magic/
+For use internal to STScI, please clone our mirror repository on grit: https://grit.stsci.edu/JWST-FGS/jwst-magic/
+For developers, see the GitHub repository: https://github.com/spacetelescope/jwst_magic/
 
 ----------
 
@@ -42,10 +43,14 @@ This package is developed in a Python ≥3.6 environment. Python 2 is not suppor
 
 1. ``$ cd`` into the directory where you want to keep the package
 
-2. Clone the GitHub repository to your local machine (we recommend you have SSH keys set up)
-
+2. Clone the repository to your local machine (we recommend you have SSH keys set up). 
+    If you are on GitHub:
     ```
     git clone git@github.com:spacetelescope/jwst_magic.git
+    ```
+    OR, using GitLab:
+    ```
+    git clone git@grit.stsci.edu:JWST-FGS/jwst-magic.git
     ```
 
 3. Activate a AstroConda (Python 3) environment (For installing AstroConda go [here](http://stsci-env.readthedocs.io/en/latest/installing_anaconda.html)) or create a MAGIC-specific environment by navigating to the directory where the `setup.py` file lives in the `jwst_magic` package and create a new conda environment, for example named 'magic', from the `environment.yml` file:
