@@ -64,6 +64,7 @@ Notes
 """
 
 # Standard Library Imports
+import copy
 import itertools
 import logging
 import os
@@ -479,7 +480,7 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
 
 def normalize_data(data, fgs_countrate):
     """Re-normalize data to the desired FGS countrate without
-    masking out any ofthe background. See JWSTFGS-160 for the
+    masking out any of the background. See JWSTFGS-160 for the
     reasoning behind this.
 
     Parameters
@@ -502,9 +503,11 @@ def normalize_data(data, fgs_countrate):
     return data_norm
 
 
-def remove_pedestal(data, nircam):
+def remove_pedestal(data, nircam, itm):
     """Subtract the vertical (for NIRCam) or horizontal (for FGS)
-     pedestals/amps from a raw frame
+     pedestals/amps from a raw frame. The pedestal is calculated
+     as the median of the amps if the image is ITM and the median
+     of the reference pixels if it is not.
 
     Parameters
     ----------
@@ -513,6 +516,9 @@ def remove_pedestal(data, nircam):
     nircam : bool
         True if the data is NIRCam SCI frame data. False if
         the data is FGS SCI frame data.
+    itm : bool
+        True if the data is an ITM image (which won't have
+        accurate reference pixels)
 
     Returns
     -------
@@ -521,25 +527,54 @@ def remove_pedestal(data, nircam):
     """
     size = np.shape(data)[0]
     ped_size = size // 4
-    noped_data = np.zeros(np.shape(data))
     pedestals = []
-    for i in range(4):
-        ped_start = i * ped_size
-        ped_stop = (i + 1) * ped_size
 
-        if nircam:
-            ped_strip = data[:, ped_start:ped_stop]
-        else:
-            ped_strip = data[ped_start:ped_stop, :]
+    if itm is True:  # Use the median of the amps and subtract it from the whole amp
+        noped_data = np.zeros(np.shape(data))
+        for i in range(4):
+            ped_start = i * ped_size
+            ped_stop = (i + 1) * ped_size
 
-        pedestal = np.median(ped_strip)
-        pedestals.append(pedestal)
+            # Subtract median from each pedestal strip
+            if nircam:
+                ped_strip = data[:, ped_start:ped_stop]
+                pedestal = np.median(ped_strip)
+                pedestals.append(pedestal)
+                noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
+            else:
+                ped_strip = data[ped_start:ped_stop, :]
+                pedestal = np.median(ped_strip)
+                pedestals.append(pedestal)
+                noped_data[ped_start:ped_stop, :] = data[ped_start:ped_stop, :] - pedestal
 
-        # Subtract median from each pedestal strip
-        if nircam:
-            noped_data[:, ped_start:ped_stop] = data[:, ped_start:ped_stop] - pedestal
-        else:
-            noped_data[ped_start:ped_stop, :] = data[ped_start:ped_stop, :] - pedestal
+    # For CV3/Other hardware data (that includes reference pixels)
+    else:  # Use the median of the refpix and subtract it only from the non-refpix on the amp
+        noped_data = copy.deepcopy(data)  # retain the refpix - will overwrite everything else
+        for i in range(4):
+            ped_start = i * ped_size
+            ped_stop = (i + 1) * ped_size
+
+            # Get pedestal start/stop points excluding the reference pixels
+            if i == 0:
+                start = ped_start + 4  # for left rows of refpix
+                stop = ped_stop
+            elif i == 3:
+                start = ped_start
+                stop = ped_stop - 4  # for right rows of refpix
+            else:
+                start = ped_start
+                stop = ped_stop
+
+            # Pull each pedestral strip (FGS vs NIRCam pedestal runs different ways)
+            # Subtract median of 4px refpix from each pedestal strip (not including the reference pixels)
+            if nircam:
+                pedestal = np.median([data[0:4, start:stop], data[-4:, start:stop]])
+                pedestals.append(pedestal)
+                noped_data[4:-4, start:stop] = data[4:-4, start:stop] - pedestal
+            else:
+                pedestal = np.median([data[start:stop, 0:4], data[start:stop, -4:]])
+                pedestals.append(pedestal)
+                noped_data[start:stop, 4:-4] = data[start:stop, 4:-4] - pedestal
 
     LOGGER.info("Image Conversion: " +
                 "Removed pedestal values from image: {} ".
@@ -662,10 +697,13 @@ def convert_im(input_im, guider, root, nircam=True,
 
         # Remove pedestal from NIRCam or FGS data
         # pedestal should be taken out in refpix correction - only run if that hasn't been run
+        # and if not labeled as test data which is made without a pedestal
         if 'S_REFPIX' in header.keys() and header['S_REFPIX'] == 'COMPLETE':
-            LOGGER.info("Image Conversion: Reference pixel correction run in pipeline. Skipping removing pedestal")
+            LOGGER.info("Image Conversion: Skipping removing pedestal - Reference pixel correction run in pipeline.")
+        elif 'TEST' in header.keys() and header['TEST'] == 'True':
+            LOGGER.info("Image Conversion: Skipping removing pedestal - Test flag found in image header.")
         else:
-            data = remove_pedestal(data, nircam)
+            data = remove_pedestal(data, nircam, itm)
 
         # -------------- From NIRCam --------------
         if nircam:
