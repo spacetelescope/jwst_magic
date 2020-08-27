@@ -37,7 +37,7 @@ INSTALL_REQUIRES = [
     'photutils',
     'scipy',
     'pytest-qt',
-    'bs4'
+    'pandas',
 ]
 
 # Determine if PyQt5 needs to be included in the install_requires
