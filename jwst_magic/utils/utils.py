@@ -25,8 +25,8 @@ import yaml
 
 # Third Party
 from astropy.io import fits
-from bs4 import BeautifulSoup
 import numpy as np
+import pandas as pd
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
@@ -442,10 +442,10 @@ def make_out_dir(out_dir, default_out_path, root):
 
 def get_car_data():
     """
-    Generate and return a dictionary in the form of {CAR: {apt: #, observations: #}} for
+    Generate and return a dictionary in the form of {car: {apt: #, observations: #}} for
     all the OTE and LOS CARs in commissioning. CARs and APT#s scraped from
     http://www.stsci.edu/ftp/presto/ops/public/jwst-pit-status.html and # of observations
-    pulled from jwst_magic/data/commissioning_activities.yaml
+    pulled from jwst_magic/jwst_magic/data/commissioning_activities.yaml
     """
     commissioning_yaml = os.path.join(PACKAGE_PATH, 'data', 'commissioning_activities.yaml')
     with open(commissioning_yaml, encoding="utf-8") as f:
@@ -453,22 +453,21 @@ def get_car_data():
 
     url = 'http://www.stsci.edu/ftp/presto/ops/public/jwst-pit-status.html'
     html_page = requests.get(url).text
-    soup = BeautifulSoup(html_page, 'lxml')
+    l = pd.read_html(html_page)
+    df = l[0]
+    df_set = df[df['Activity ID'].str.contains("OTE|LOS", case=False)]  # only include OTE and LOS rows
 
-    gdp_table = soup.find("table", attrs={"class": "sortable"})
-    gdp_table_data = gdp_table.find_all("tr")[1:]
+    def match_car_to_obs(car):
+        match = [i for i, s in enumerate(yaml_dict.keys()) if s in car.lower()]
+        if len(match) == 1:
+            name = list(yaml_dict)[match[0]]
+            num_obs = yaml_dict[name]['observations']
+        else:
+            raise SyntaxWarning('{} has a mis-match (either no match of multiple matches) '
+                                'with our CAR table'.format(car.lower()))
+        return num_obs
 
-    commissioning_dict = {}
-    for row in gdp_table_data:
-        cols = row.find_all('td')
-        cols = [ele.text.strip() for ele in cols]
-        if 'ote' in cols[1].lower() or 'los' in cols[1].lower():
-            match = [i for i, s in enumerate(yaml_dict.keys()) if s in cols[1].lower()]
-            if len(match) == 1:
-                name = list(yaml_dict)[match[0]]
-                obs = yaml_dict[name]['observations']
-                commissioning_dict[cols[1].lower()] = {'apt': cols[0], 'observations': obs}
-            else:
-                raise SyntaxWarning('{} has a mis-match (either no match of multiple matches) '
-                                    'with our CAR table'.format(cols[1].lower()))
+    commissioning_dict = {car.lower(): {'apt':str(int(apt)), 'observations':match_car_to_obs(car)}
+                          for car, apt in zip(df_set['Activity ID'].values, df_set['Program'].values)}
+
     return commissioning_dict
