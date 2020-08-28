@@ -26,7 +26,7 @@ Use
         segment_guiding.generate_segment_override_file(
             segment_infile, guider, program_id, observation_num, visit_num,
             root=None, out_dir=None, selected_segs=None,
-            click_to_select_GUI=True, data=None, guide_star_params_dict=None,
+            guide_star_params_dict=None,
             threshold_factor=0.9, parameter_dialog=True,
             masterGUIapp=None):
 
@@ -905,7 +905,6 @@ def generate_segment_override_file(segment_infile, guider,
                                    program_id, observation_num, visit_num,
                                    ra=None, dec=None,
                                    root=None, out_dir=None, selected_segs=None,
-                                   click_to_select_gui=True, data=None,
                                    guide_star_params_dict=None, threshold_factor=0.9,
                                    parameter_dialog=True, dialog_obj=None,
                                    master_gui_app=None, log=None):
@@ -936,16 +935,9 @@ def generate_segment_override_file(segment_infile, guider,
     out_dir : str, optional
         Location of out/ directory. If not specified, will be placed
         within the repository: .../jwst_magic/out/
-    selected_segs : str, optional
+    selected_segs : str
         File path to guiding_selections*.txt file with list of locations and
         countrates for the selected segments (guide and reference stars)
-        Required if click_to_select_GUI=False
-    click_to_select_gui : bool, optional
-        Will the tool use the segment guiding GUI?
-        Required if selected_segs=None
-    data : 2-D numpy array, optional
-        Image that will be displayed in the click-to-select GUI
-        Required if click_to_select_GUI=True
     guide_star_params_dict : dict, optional
         Dictionary containing guide star parameters, for example:
             {'v2_boff': 0.1,  # boresight offset in V2 (arcsec)
@@ -1014,26 +1006,12 @@ def generate_segment_override_file(segment_infile, guider,
                 return
 
         # Determine which segments are the guide and reference segments
-        if click_to_select_gui:
-            if data is None:
-                raise ValueError(
-                    'In order to run the segment guiding tool with '
-                    '`click_to_select_GUI=True`, you must provide a 2-D '
-                    'numpy array of the image to the `data` argument in '
-                    '`segment_guiding.generate_segment_override_file()`.'
-                )
-
-            guide_star_params_dict, selected_segs = _click_to_select_segments(
-                segment_infile, data, guide_star_params_dict,
-                master_gui_app, selected_segs=selected_segs, log=log
-            )
-        elif selected_segs is None:
+        if selected_segs is None:
             raise ValueError(
-                'In order to run the segment guiding tool with '
-                '`click_to_select_GUI=False`, you must provide a file '
-                'specifying the locations and count rates of the guide '
-                'and reference stars as the `selected_segs` argument in'
-                '`segment_guiding.generate_segment_override_file()`.'
+                'In order to run the segment guiding tool, you must '
+                'provide a file specifying the locations and count rates '
+                'of the guide and reference stars as the `selected_segs` '
+                'argument in `segment_guiding.generate_segment_override_file()`.'
             )
 
         # Set up guiding calculator object
@@ -1146,76 +1124,3 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
     except Exception as e:
         log.exception(e)
         raise
-
-def _click_to_select_segments(segment_infile, data, guide_star_params_dict,
-                              master_gui_app, selected_segs=None, log=None):
-    """Raise the segment guiding GUI and prompt the user to select which segments
-    to use as the guide and reference stars.
-
-    Parameters
-    ----------
-    segment_infile : str
-        File path to all_found_psfs*.txt file with list of all segment locations
-        and countrates
-    data : 2-D numpy array
-        Image that will be displayed in the click-to-select GUI
-    guide_star_params_dict : dict
-        Dictionary containing guide star parameters
-    master_gui_app : qApplication or None
-        qApplication instance of parent GUI
-    selected_segs : str, optional
-        File path to guiding_selections*.txt file with list of locations and
-        countrates for the pre-selected segments (guide and reference stars)
-    log : logger object
-        Pass a logger object (output of tils.create_logger_from_yaml) or a new log
-        will be created
-
-    Returns
-    -------
-    guide_star_params_dict : dict
-        Dictionary containing guide star parameters with redefined seg_num
-        value based on user selection
-    selected_segs : str
-        Array of indices corresponding to the segments to use as guide and
-        reference stars
-
-    """
-
-    if log is None:
-        log = logging.getLogger(__name__)
-
-    if selected_segs is not None:
-        # Parse all_found_psfs*.txt for locations of segments
-        all_segment_locations = asc.read(segment_infile)
-        x = all_segment_locations['x']
-        y = all_segment_locations['y']
-        coords = [(x_i, y_i) for x_i, y_i in zip(x, y)]
-
-        # Find the minimum distance between PSFs
-        if len(coords) < 2:
-            # For cases where we only have star, we assume that we are sufficiently
-            # isolated from other stars, but also that the guide star's PSF may be
-            # distorted enough that it might appear quite large on the detector
-            dist = 20
-        else:
-            dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
-    else:
-        x = []
-        y = []
-        dist = 20
-
-    # Run the GUI to select guide and reference stars
-    inds, seg_num = SegmentGuidingGUI.run_segment_override_gui(
-        data, x, y, dist, selected_segs=selected_segs,
-        masterGUIapp=master_gui_app
-    )
-    log.info(
-        'Segment Guiding: {} segment override commands generated with seg_num = {}'.
-        format(len(inds), seg_num)
-    )
-    guide_star_params_dict['seg_num'] = seg_num
-
-    # Turn index list into selected segments file
-    selected_segs = np.array(inds)
-
-    return guide_star_params_dict, selected_segs

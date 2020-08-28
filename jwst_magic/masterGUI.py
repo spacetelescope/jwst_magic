@@ -498,18 +498,7 @@ class MasterGui(QMainWindow):
                 if not os.path.exists(segment_infile):
                     raise OSError('Provided segment infile {} not found.'.format(segment_infile))
 
-                # Determine which image to use for the click-to-select GUI in generate_segment_override_file and load it
-                if self.radioButton_shifted.isChecked():
-                    fgs_filename = self.shifted_im_file
-                elif self.radioButton_unshifted.isChecked() and hasattr(self, 'converted_im_file') and \
-                        os.path.exists(self.converted_im_file):
-                    fgs_filename = self.converted_im_file
-                elif self.radioButton_unshifted.isChecked():
-                    fgs_filename = input_image
-                data, _ = utils.get_data_and_header(fgs_filename)
-
-                # Determine whether to load guiding_selections*.txt or run GUI
-                GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
+                # Load guiding_selections*.txt
                 selected_segs = self.lineEdit_regfileSegmentGuiding.text()
 
                 # Run the tool and generate the file
@@ -524,8 +513,8 @@ class MasterGui(QMainWindow):
                     segment_infile, guider, self.program_id, self.observation_num,
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
                     root=root, out_dir=out_dir, selected_segs=selected_segs,
-                    click_to_select_gui=GUI, data=data, master_gui_app=self.app,
-                    parameter_dialog=True, dialog_obj=self._test_sg_dialog, log=LOGGER
+                    master_gui_app=self.app, parameter_dialog=True,
+                    dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
 
             # Update converted image preview

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1482</width>
-    <height>973</height>
+    <height>945</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -37,7 +37,7 @@
         <x>0</x>
         <y>0</y>
         <width>1481</width>
-        <height>973</height>
+        <height>962</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -794,7 +794,7 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
           <item>
-           <widget class="QGroupBox" name="groupBox_commands_2">
+           <widget class="QGroupBox" name="groupBox_commands">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
               <horstretch>0</horstretch>
@@ -1311,7 +1311,7 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_save_2">
+           <widget class="QPushButton" name="pushButton_save">
             <property name="minimumSize">
              <size>
               <width>0</width>
