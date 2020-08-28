@@ -12,6 +12,7 @@ Built using template found at matplotlib.org (see references).
 Authors
 -------
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -62,6 +63,7 @@ import sys
 import os
 
 # Third Party Imports
+from astropy.io import ascii as asc
 import numpy as np
 import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -70,8 +72,7 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
-                             QTableWidgetItem, QWidget, QVBoxLayout, QScrollArea,
-                             QFrame)
+                             QTableWidgetItem, QWidget, QFileDialog)
 from PyQt5.QtCore import pyqtSlot, QSize
 from PyQt5.QtGui import QIcon
 
@@ -321,7 +322,7 @@ class StarSelectorWindow(QDialog):
         Closes the application
     """
     def __init__(self, data, x, y, dist, qApp, in_master_GUI,
-                 print_output=False, in_SGT_GUI=False):
+                 print_output=False):
         """Initializes class; sets up user interface.
 
         Parameters
@@ -342,15 +343,11 @@ class StarSelectorWindow(QDialog):
             the master GUI
         print_output : bool, optional
             Flag enabling output to the terminal
-        in_SGT_GUI : bool, optional
-            Denotes if this instance of the StarSelectorWindow was
-            created within ``SegmentGuidingGUI.py``
         """
         # Initialize runtime attributes
         self.qApp = qApp
         self.print_output = print_output
         self.in_master_GUI = in_master_GUI
-        self.in_SGT_GUI = in_SGT_GUI  # TODO: there is no more segment guiding GUI so this variable will need to go away
 
         # Initialize construction attributes
         self.image_dim = 800
@@ -368,6 +365,11 @@ class StarSelectorWindow(QDialog):
         self.current_row = -1
         self.circles = []
 
+        # Initialize multiple guiding selections attributes
+        self.n_orientations = 0
+        self.segNum = None
+        self.center = None
+
         # Initialize dialog object
         QDialog.__init__(self, modal=True)
 
@@ -380,6 +382,10 @@ class StarSelectorWindow(QDialog):
         self.init_matplotlib(canvas_left, profile_bottom)
         self.define_StarSelectionGUI_connections()
         self.show()
+
+        # Add the number of stars/segments to the pointing center dropdown menu
+        for i in range(len(x)):
+            self.comboBox_segmentCenter.addItem('{}'.format(i+1))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # GUI CONSTRUCTION
@@ -402,8 +408,7 @@ class StarSelectorWindow(QDialog):
             self.tableWidget_selectedStars.setMinimumSize(400, 300)
             self.groupBox_selectedStars.setMinimumSize(440, 380)
             self.frame_profile.setMinimumSize(0, 250)
-            if not self.in_SGT_GUI:
-                self.scrollArea_selectStars.setMinimumSize(1482 + 200, 973 + 200)
+            self.scrollArea_selectStars.setMinimumSize(1482 + 200, 973 + 200)
             canvas_left = 0.1
             profile_bottom = 0.15
 
@@ -450,9 +455,7 @@ class StarSelectorWindow(QDialog):
     def define_StarSelectionGUI_connections(self):
         """Connect widgets' signals to the appropriate methods.
         """
-        # If not in SGT, define the main GUI widgets
-        if not self.in_SGT_GUI:
-            self.pushButton_done.clicked.connect(self.quit_star_selection)
+        self.pushButton_done.clicked.connect(self.quit_star_selection)
         self.pushButton_cancel.clicked.connect(self.cancel)
 
         # Main matplotlib canvas widget
@@ -481,8 +484,21 @@ class StarSelectorWindow(QDialog):
         self.pushButton_clearStars.installEventFilter(self)
         self.tableWidget_selectedStars.viewport().installEventFilter(self)
 
+        # Multiple guiding selections widgets
+        self.pushButton_save.clicked.connect(self.save_orientation_to_list)
+
+        # Command widgets
+        self.pushButton_loadCommand.clicked.connect(self.load_orientation)
+        self.pushButton_deleteCommand.clicked.connect(self.delete_orientation)
+        self.toolButton_moveUp.clicked.connect(self.move_orientation)
+        self.toolButton_moveDown.clicked.connect(self.move_orientation)
+
+        # Override center widgets
+        self.checkBox_meanCenter.toggled.connect(self.update_center_mean)
+        self.comboBox_segmentCenter.activated.connect(self.update_center_seg)
+
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # WIDGET CONNECTIONS
+    # STAR SELECTOR WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     @pyqtSlot()
@@ -815,13 +831,214 @@ class StarSelectorWindow(QDialog):
         if self.print_output:
             print(remstar_string)
 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # MULTIPLE GUIDING SELECTIONS WIDGET CONNECTIONS
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def save_orientation_to_list(self):
+        """Save the currently selected segment orientation to the list
+        of override commands.
+        """
+        if not self.inds:
+            no_stars_selected_dialog = QMessageBox()
+            no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
+            no_stars_selected_dialog.setInformativeText(
+                'Please select at least one star to command.'
+            )
+            no_stars_selected_dialog.setStandardButtons(QMessageBox.Ok)
+            no_stars_selected_dialog.exec()
+            return
+
+        if not self.tableWidget_commands.isEnabled():
+            self.tableWidget_commands.setEnabled(True)
+            self.tableWidget_commands.removeRow(0)
+
+        n_commands = self.tableWidget_commands.rowCount()
+
+        self.reorder_indices()
+
+        orientation_summary = ', '.join([str(i + 1) for i in self.inds])
+        item = QTableWidgetItem(orientation_summary)
+        self.tableWidget_commands.insertRow(n_commands)
+        self.tableWidget_commands.setItem(n_commands, 0, item)
+        self.clear_selected_stars()
+        self.n_orientations += 1
+
+
+    def load_orientation(self):
+        """Plot the segments in the currently selected override command
+        on the matplotlib canvas
+
+        Parameters
+        ----------
+        selected_segs : str, optional
+            Filepath to guiding_selections*.txt file with list of locations and
+            countrates for the selected segments (guide and reference stars).
+
+        """
+        if self.sender() == self.pushButton_loadCommand:
+            self.selected_segs = self.open_regfile_dialog(title='Guiding Selections File',
+                                                          file_type="Input file (*.txt *.incat);;All files (*.*)")
+
+        # Determine what are the indices of the stars to load
+
+        # Read them from a guiding_selections*.txt
+        guiding_selections_locations = asc.read(self.selected_segs)
+        x_reg = guiding_selections_locations['x']
+        y_reg = guiding_selections_locations['y']
+        selected_indices = []
+        for x, y in zip(x_reg, y_reg):
+            for i in range(len(self.x)):
+                if self.x[i] == x and self.y[i] == y:
+                    selected_indices.append(i + 1)
+        guiding_selections_file_message = ' from guiding_selections*.txt'
+
+        # If the guiding_selections*.txt doesn't match the all_found_psfs*.txt locations,
+        # don't try to load anything.
+        if not selected_indices:
+            return
+
+        # Enable table if not already done
+        if not self.tableWidget_commands.isEnabled():
+            self.tableWidget_commands.setEnabled(True)
+            self.tableWidget_commands.removeRow(0)
+
+        # Add guiding command to table
+        # TODO: this will need to be in a loop when i make this function handle multiple commands in the regfile
+        n_commands = self.tableWidget_commands.rowCount()
+
+        orientation_summary = ', '.join([str(i) for i in selected_indices])
+        item = QTableWidgetItem(orientation_summary)
+        self.tableWidget_commands.insertRow(n_commands)
+        self.tableWidget_commands.setItem(n_commands, 0, item)
+        self.n_orientations += 1
+
+        # Update the canvas TODO: do this for the last row of the table only
+        for i_row, ind in enumerate(selected_indices):
+            ind = ind - 1
+            gs = i_row == 0
+
+            # Load matplotlib canvas
+            if gs:
+                c = 'yellow'
+            else:
+                c = 'darkorange'
+            self.circles += self.canvas.axes.plot(self.x[ind], self.y[ind], 'o',
+                                                  ms=25, mfc='none', mec=c,
+                                                  mew=2, lw=0)
+        self.canvas.draw()
+
+        # Load index list
+        self.inds = [i - 1 for i in selected_indices]
+
+        # Send message to output
+        remstar_string = 'Loaded orientation{}: {}'.\
+            format(guiding_selections_file_message, ', '.join([str(i) for i in selected_indices]))
+        self.textEdit_output.setHtml(remstar_string + "<br>" + self.textEdit_output.toHtml())
+        if self.print_output:
+            print(remstar_string)
+
+        self.clear_selected_stars()
+
+    def delete_orientation(self):
+        """Delete the selected override command.
+        """
+        selected_orientation_index = self.tableWidget_commands.selectedItems()[0].row()
+        self.tableWidget_commands.removeRow(selected_orientation_index)
+        self.n_orientations -= 1
+
+    def move_orientation(self):
+        """Move the selected override command up or down within the
+        list of commands.
+        """
+        # Remove the item
+        selected_orientation_index = self.tableWidget_commands.selectedItems()[0].row()
+        item = self.tableWidget_commands.takeItem(selected_orientation_index, 0)
+        self.tableWidget_commands.removeRow(selected_orientation_index)
+
+        # Move it up or down (but don't move if at the end of the list)
+        if self.sender() == self.toolButton_moveUp:
+            new_index = max(0, selected_orientation_index - 1)
+        elif self.sender() == self.toolButton_moveDown:
+            new_index = min(self.tableWidget_commands.rowCount(), selected_orientation_index + 1)
+        self.tableWidget_commands.insertRow(new_index)
+        self.tableWidget_commands.setItem(new_index, 0, item)
+
+        # Maintain which item is selected
+        self.tableWidget_commands.setCurrentItem(item)
+
+    def update_center_seg(self):
+        """Use the location of a specific segment as the pointing center.
+        """
+        # Uncheck "use segment center" box
+        self.checkBox_meanCenter.setChecked(False)
+
+        # Remove old center
+        if self.center:
+            self.canvas.axes.lines.remove(self.center[0])
+            self.center = None
+        self.segNum = None
+
+        if self.comboBox_segmentCenter.currentText() != "-Select Segment-":
+            # Replace with new center
+            i_seg_center = int(self.comboBox_segmentCenter.currentText()) - 1
+            self.center = self.canvas.axes.plot(self.x[i_seg_center],
+                                                self.y[i_seg_center], 'x', ms=20,
+                                                alpha=0.8, mfc='red',
+                                                mec='red', mew=5, lw=0)
+
+            self.segNum = int(self.comboBox_segmentCenter.currentText())
+
+        self.canvas.draw()
+
+    def update_center_mean(self, use_mean_as_center):
+        """Use the mean of the array as the pointing center.
+        """
+        # Remove old center
+        if self.center:
+            self.canvas.axes.lines.remove(self.center[0])
+            self.center = None
+        self.segNum = None
+
+        if use_mean_as_center:
+            self.comboBox_segmentCenter.setCurrentIndex(0)
+
+            # Calculate center of array
+            x_mean = np.average(self.x)
+            y_mean = np.average(self.y)
+
+            # Plot mean location of array on canvas
+            self.center = self.canvas.axes.plot(x_mean, y_mean, 'x', ms=20, alpha=0.8,
+                                                mfc='red', mec='red', mew=5, lw=0)
+
+            self.segNum = 0
+
+        self.canvas.draw()
+
     def quit_star_selection(self):
         """Closes the star selector window.
         """
 
         self.answer = True
-        # If the user didn't choose any stars, ask if they really want to quit.
-        if not self.inds:
+
+        # If the center segment number hasn't been set, don't quit.
+        if self.segNum is None:
+            no_segNum_selected_dialog = QMessageBox()
+            no_segNum_selected_dialog.setText('No center segment number' + ' ' * 50)
+            no_segNum_selected_dialog.setInformativeText(
+                'The center of override pointing (segNum) has not been defined.'
+                ' Please define before quitting.'
+            )
+            no_segNum_selected_dialog.setStandardButtons(QMessageBox.Ok)
+            no_segNum_selected_dialog.exec()
+            return
+
+        # If the user selected stars but didn't explicitly save them as a
+        # command, do it for them
+        if self.inds != [] and self.n_orientations == 0:
+            self.save_orientation_to_list()
+        # If the user really didn't choose any stars, ask if they really want to quit.
+        elif self.inds == [] and self.n_orientations == 0:
             no_stars_selected_dialog = QMessageBox()
             no_stars_selected_dialog.setText('No stars selected' + ' ' * 50)
             no_stars_selected_dialog.setInformativeText(
@@ -831,17 +1048,16 @@ class StarSelectorWindow(QDialog):
             no_stars_selected_dialog.buttonClicked.connect(self.nostars_dialog)
             no_stars_selected_dialog.exec()
 
-        # If they do, then quit.
-        if self.answer:
-            # Save out the indices, applying guide star information
-            self.reorder_indices()
 
+        # If they do everything they're supposed to, then quit.
+        if self.answer:
             # If not being called from the master GUI, exit the whole application
             if not self.in_master_GUI:
                 self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
 
             # Close the star selector dialog window
             self.close()
+
 
     def cancel(self):
         """Closes the star selector window and clears indices.
@@ -993,6 +1209,20 @@ class StarSelectorWindow(QDialog):
         if 'No' in button.text():
             self.answer = False
 
+    def open_regfile_dialog(self, title, file_type="All Files (*)"):
+        """ Dialog box for loading a regfile of commands"""
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open {}".format(title),
+                                                  "", file_type)
+        if fileName:
+            return fileName
+
+    def open_dirname_dialog(self):
+        """ Dialog box for opening a directory"""
+        options = QFileDialog.Options()
+        dirName = QFileDialog.getExistingDirectoryUrl(self, "Select Directory").toString()[7:]
+        if dirName:
+            return dirName
+
     def calc_new_gs_ind(self, star_ind):
         """Determine the new guide star index after a star was removed.
 
@@ -1033,7 +1263,7 @@ class StarSelectorWindow(QDialog):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
+def run_SelectStars(data, x, y, dist, print_output=True, masterGUIapp=None):
     """Calls a PyQt GUI to allow interactive user selection of guide and
     reference stars.
 
@@ -1071,7 +1301,7 @@ def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
 
     window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
                                 in_master_GUI=in_master_GUI,
-                                print_output=True)
+                                print_output=print_output)
 
     try:
         plt.get_current_fig_manager().window.raise_()  # Bring window to front
@@ -1082,6 +1312,15 @@ def run_SelectStars(data, x, y, dist, print_output=False, masterGUIapp=None):
         window.exec_()  # Begin interactive session; pauses until window.exit() is called
     else:
         qApp.exec_()
-    inds = window.inds
 
-    return inds
+    # Save indices of selected stars to pass
+    inds = []
+    for i in range(window.n_orientations):
+        orientation = window.tableWidget_commands.item(i, 0).text()
+        selected_indices = [int(s) for s in orientation.split(', ')]
+        inds.append(selected_indices)
+
+    # Save index of center segment (pointing)
+    segNum = window.segNum
+
+    return inds, segNum
