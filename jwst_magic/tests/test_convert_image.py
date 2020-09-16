@@ -43,6 +43,8 @@ from ..convert_image import convert_image_to_raw_fgs
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_convertim"
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
+NIRCAM_PED_IM = os.path.join(__location__, 'data', 'nircam_w_ped.fits')
+FGS_PED_IM = os.path.join(__location__, 'data', 'fgs_w_ped.fits')
 FGS_GA_IM = os.path.join(__location__, 'data', 'fgs_data_1_beforelos2ga.fits')
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
 
@@ -51,14 +53,16 @@ PARAMETRIZED_DATA = parametrized_data()['test_convert_image']
 
 
 norm_parameters = [
-    (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', 1992.7434250045358),
-    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', 5563.853153791558),
-    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', 1770.7861951935322),
-    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', 170.69277282101652),
-    (NIRCAM_IM, 2, True, '', 'Guide Star ID', 5563.853153791558)
+    (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 1992.7434250045358),
+    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 5563.853153791558),
+    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1770.7861951935322),
+    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 171.37823193763356),
+    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 5563.853153791558),
+    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 2994.680894443115), # NRC contains TEST keyword - tests ped
+    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 136580.37527457761) # non-ITM FGS image - tests ped
 ]
-@pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, data_max', norm_parameters)
-def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, data_max):
+@pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
+def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, itm, data_max):
     """
     Test how the normalization is done with  in terms of the interface with the
     fgscountrate module
@@ -69,7 +73,7 @@ def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, 
                                                norm_unit=norm_unit,
                                                coarse_pointing=False,
                                                jitter_rate_arcsec=None,
-                                               logger_passed=False, itm=True)
+                                               logger_passed=False, itm=itm)
 
     assert np.isclose(data.max(), data_max)
 
