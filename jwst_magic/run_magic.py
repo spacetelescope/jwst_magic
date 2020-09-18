@@ -179,7 +179,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Select guide & reference PSFs
     if star_selection:
-        guiding_selections_file, _ = select_psfs.select_psfs(
+        guiding_selections_file, all_found_psfs, psf_center_file = select_psfs.select_psfs(
             fgs_im, root, guider,
             smoothing=smoothing,
             guiding_selections_file=guiding_selections_file,
@@ -188,16 +188,20 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         LOGGER.info("*** Star Selection: COMPLETE ***")
 
     # Create all files for FSW/DHAS/FGSES/etc.
-    recenter_trk = True if smoothing == 'low' else False
     if file_writer:
+        # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
+        if shift_id_attitude:
+            fgs_im, guiding_selections_file, psf_center_file = buildfgssteps.shift_to_id_attitude(
+                fgs_im, root, guider, out_dir, guiding_selections_file=guiding_selections_file,
+                all_found_psfs_file=all_found_psfs, psf_center_file=psf_center_file,
+                crowded_field=crowded_field, logger_passed=True)
         if steps is None:
             steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
         for step in steps:
             fgs_files_obj= buildfgssteps.BuildFGSSteps(
                 fgs_im, guider, root, step, out_dir=out_dir,
                 logger_passed=True, guiding_selections_file=guiding_selections_file,
-                shift_id_attitude=shift_id_attitude, crowded_field=crowded_field,
-                recenter_trk=recenter_trk
+                psf_center_file=psf_center_file, shift_id_attitude=shift_id_attitude,
             )
             write_files.write_all(fgs_files_obj)
         LOGGER.info("*** FSW File Writing: COMPLETE ***")

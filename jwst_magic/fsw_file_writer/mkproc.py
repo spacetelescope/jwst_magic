@@ -55,6 +55,7 @@ class Mkproc(object):
     """
 
     def __init__(self, guider, root, xarr, yarr, counts, step, thresh_factor=0.5,
+                 out_dir=None, dhas_dir='dhas', ground_system_dir='ground_system'):
         """ Initialize the class and create CECIL proc files for guider 1 and 2.
 
         Parameters
@@ -78,6 +79,10 @@ class Mkproc(object):
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
             jwst_magic/
+        dhas_dir : str
+            Name of dhas directory. Either 'dhas' or 'dhas_shifted'
+        ground_system_dir : str
+            Name of ground_system directory. Either 'ground_system' or 'ground_system_shifted'
         """
 
         # Create output directory if does not exist
@@ -87,6 +92,11 @@ class Mkproc(object):
             self.out_dir = out_dir
         if not os.path.exists(self.out_dir):
             os.makedirs(self.out_dir)
+
+        self.dhas_dir, self.ground_system_dir = dhas_dir, ground_system_dir
+        for dir in [dhas_dir, ground_system_dir]:
+            if not os.path.exists(os.path.join(self.out_dir, dir)):
+                os.makedirs(os.path.join(self.out_dir, dir))
 
         # Find templates. If template path not given, script will assume that a
         # 'templates' directory that includes are necessary prc templates lives
@@ -100,6 +110,7 @@ class Mkproc(object):
             self.create_id_proc_file(guider, root, xarr, yarr, counts,
                                      thresh_factor=thresh_factor)
         elif step == 'ACQ':
+            self.create_acq_proc_file(guider, root, xarr, yarr, counts)
 
     def find_templates(self, guider, step, template_path):
         """Open the different templates used to make the proc file.
@@ -146,7 +157,7 @@ class Mkproc(object):
         """
         eol = '\n'
         nref = len(xarr) - 1
-        dhas_filename = os.path.join(self.out_dir, 'dhas',
+        dhas_filename = os.path.join(self.out_dir, self.dhas_dir,
                                      '{0}_G{1}_ID.prc'.format(root, guider))
 
         with open(dhas_filename, 'w') as file_out:
@@ -208,9 +219,9 @@ class Mkproc(object):
         file_out.close()
         LOGGER.info("Successfully wrote: {}".format(dhas_filename))
         shutil.copy2(dhas_filename,
-                     os.path.join(self.out_dir, 'ground_system'))
+                     os.path.join(self.out_dir, self.ground_system_dir))
         LOGGER.info("Successfully wrote: {}".format(os.path.join(self.out_dir,
-                                                                 'ground_system',
+                                                                 self.ground_system_dir,
                                                                  '{0}_G{1}_ID.prc'.
                                                                  format(root, guider))))
 
@@ -244,7 +255,7 @@ class Mkproc(object):
             counts = counts[0]
         threshgs = 0.50 * counts
 
-        dhas_filename = os.path.join(self.out_dir, 'dhas',
+        dhas_filename = os.path.join(self.out_dir, self.dhas_dir,
                                      '{0}_G{1}_ACQ.prc'.format(root, guider))
 
         with open(dhas_filename, 'w') as file_out:
@@ -285,9 +296,9 @@ class Mkproc(object):
         file_out.close()
         LOGGER.info("Successfully wrote: {}".format(dhas_filename))
         shutil.copy2(dhas_filename,
-                     os.path.join(self.out_dir, 'ground_system'))
+                     os.path.join(self.out_dir, self.ground_system_dir))
         LOGGER.info("Successfully wrote: {}".format(os.path.join(
-            self.out_dir, 'ground_system', '{0}_G{1}_ACQ.prc'.format(root,
+            self.out_dir, self.ground_system_dir, '{0}_G{1}_ACQ.prc'.format(root,
                                                                      guider)
         )
         ))
