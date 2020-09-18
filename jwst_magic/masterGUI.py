@@ -454,7 +454,8 @@ class MasterGui(QMainWindow):
             inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
+            rewrite_prc.rewrite_prc(inds, guider, root, out_dir, shifted=shift_id_attitude,
+                                    crowded_field=crowded_field)
 
             # Update converted image preview
             self.update_filepreview()

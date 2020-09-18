@@ -35,6 +35,7 @@ Use
 """
 
 # Standard Library Imports
+import copy
 import logging
 import os
 
@@ -43,7 +44,7 @@ from astropy.io import ascii as asc
 import numpy as np
 
 # Local Imports
-from jwst_magic.fsw_file_writer.mkproc import Mkproc
+from jwst_magic.fsw_file_writer import buildfgssteps, write_files
 from jwst_magic.star_selector import select_psfs
 from jwst_magic.utils import utils
 
@@ -51,8 +52,7 @@ from jwst_magic.utils import utils
 LOGGER = logging.getLogger(__name__)
 
 
-def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
-                prc=True, guiding_selections_file=True):
+def rewrite_prc(inds, guider, root, out_dir, shifted, crowded_field):
     """For a given dataset, rewrite the PRC and guiding_selections*.txt to select a
     new commanded guide star and reference stars
 
@@ -70,13 +70,10 @@ def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
         jwst_magic/
-    thresh_factor : float, optional
-        Factor by which to multiply the countrates to determine
-        the threshold count rate
-    prc : bool, optional
-        Denotes whether to rewrite {root}_G{guider}_ID.prc
-    guiding_selections_file : bool, optional
-        Denotes whether to rewrite guiding_selections_{root}_G{guider}.txt
+    shifted : bool
+        If the image has been chosen to be shifted to the ID attitude
+    crowded_field : bool
+        If the image is a crowded field image
 
     Raises
     ------
@@ -88,51 +85,65 @@ def rewrite_prc(inds, guider, root, out_dir, thresh_factor=0.9,
             string or a list of integers.
     """
 
-    out_dir = os.path.join(out_dir, 'out', root)
+    out_path = os.path.join(out_dir, 'out', root)
     file_root = '{}_G{}'.format(root, guider)
+    LOGGER.info("Rewrite PRC: Reading from (and writing to) {}".format(out_path))
+
+    # Find converted FGS image
+    if os.path.exists(os.path.join(out_path, 'FGS_imgs/unshifted_{}.fits'.format(file_root))):
+        fgs_im = os.path.join(out_path, 'FGS_imgs/unshifted_{}.fits'.format(file_root))
+    elif os.path.exists( os.path.join(out_path, 'FGS_imgs/{}.fits'.format(file_root))):
+        fgs_im = os.path.join(out_path, 'FGS_imgs/{}.fits'.format(file_root))
+    else:
+        LOGGER.error("Cannot find expected raw FGS image input. Looked in {} for a file named "
+                     "unshifted_{}.fits.".format(out_path, file_root))
+
+    # Find psf_center file
+    psf_center_file = os.path.join(out_path, 'unshifted_psf_center_{}.txt'.format(file_root))
+    if not os.path.exists(psf_center_file):
+        LOGGER.warning("Cannot find psf_center file, assuming it is not relevant to this image type".format(
+            out_path, psf_center_file))
+        psf_center_file = None
 
     # Open log of all identified PSFs
-    LOGGER.info("Rewrite PRC: Reading from (and writing to) {}".format(out_dir))
-    all_psfs = os.path.join(out_dir, 'all_found_psfs_{}.txt'.format(file_root))
-    all_rows = asc.read(all_psfs)
+    all_psfs_unshifted = os.path.join(out_path, 'unshifted_all_found_psfs_{}.txt'.format(file_root))
+    all_psfs_old = os.path.join(out_path, 'all_found_psfs_{}.txt'.format(file_root))
 
-    # If the segments are specified as a string of alphabetic labels
-    if isinstance(inds, str):
-        labels = all_rows['label'].data
-        if len(set(labels)) != len(labels):
-            raise ValueError('Could not accurately map labels to segments. This is '
-                             'most likely due to incorrect labelling in the all_found_psfs*.txt file.')
-        if not inds.isalpha():
-            raise TypeError('Must enter only letters as PSF labels.')
-
-        # Match each segment to its label
-        inds = [np.argwhere(labels == letter)[0] for letter in inds]
-        inds = np.concatenate(inds)
-    # If the segments are specified as a list of inds, directly from the GUI
-    elif isinstance(inds, list):
-        pass
+    # Read in unshifted all psfs file(s)
+    if os.path.exists(all_psfs_unshifted):
+        unshifted_all_psfs = all_psfs_unshifted
     else:
-        raise ValueError(
-            'Invalid indices provided (must be string of alphabetic labels or '
-            'list of integer indices): ', inds)
+        unshifted_all_psfs = all_psfs_old
+    LOGGER.info("Rewrite PRC: Reading unshifted all psfs file: {}".format(all_psfs_unshifted.split('/')[-1]))
+    unshifted_all_rows = asc.read(unshifted_all_psfs)
 
-    rows = all_rows[inds]
+   # Rewrite new unshifted guiding selections file, with new selections
+    guiding_selections_file = os.path.join(out_path, 'unshifted_guiding_selections_{}.txt'.format(file_root))
+    cols = select_psfs.create_cols_for_coords_counts(unshifted_all_rows['x'], unshifted_all_rows['y'],
+                                                     unshifted_all_rows['countrate'], 0,
+                                                     inds=inds)
+    utils.write_cols_to_file(guiding_selections_file,
+                             labels=['y', 'x', 'countrate'],
+                             cols=cols,
+                             log=LOGGER)
+
+    # Shift data
+    if shifted:
+        fgs_im, guiding_selections_file, psf_center_file = buildfgssteps.shift_to_id_attitude(
+            fgs_im, root, guider, out_dir, guiding_selections_file=guiding_selections_file,
+            all_found_psfs_file=all_psfs_unshifted, psf_center_file=psf_center_file,
+            crowded_field=crowded_field, logger_passed=True)
 
     # Rewrite CECIL proc file
-    if prc:
-        # Add threshold
-        thresh = rows['countrate'] * thresh_factor
-        rows['threshold'] = thresh
-        LOGGER.info('Rewrite PRC: Threshold: {}'.format(thresh_factor))
-
-        Mkproc(guider, root, rows['x'], rows['y'], rows['countrate'], step='ID',
-               out_dir=out_dir, thresh_factor=thresh_factor)
-
-    # Rewrite guiding_selections*.txt
-    if guiding_selections_file:
-        cols = select_psfs.create_cols_for_coords_counts(all_rows['x'], all_rows['y'],
-                                                         all_rows['countrate'], 0,
-                                                         inds=inds)
-        utils.write_cols_to_file(os.path.join(out_dir, 'guiding_selections_{}.txt'.format(file_root)),
-                                 labels=['y', 'x', 'countrate'],
-                                 cols=cols)
+    for step in ['ID', 'ACQ1', 'ACQ2', 'TRK']:
+        fgs_files_obj= buildfgssteps.BuildFGSSteps(
+            fgs_im, guider, root, step, out_dir=out_dir,
+            logger_passed=True, guiding_selections_file=guiding_selections_file,
+            psf_center_file=psf_center_file, shift_id_attitude=shifted,
+            )
+        filename_root = '{}_G{}_{}'.format(root, guider, step)
+        fgs_files_obj.filename_root = filename_root
+        if step in ['ID', 'ACQ1']:
+            write_files.write_prc(fgs_files_obj)
+        if step != 'ID':
+            write_files.write_image(fgs_files_obj)
