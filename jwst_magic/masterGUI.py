@@ -1217,42 +1217,52 @@ class MasterGui(QMainWindow):
 
             # Update guiding selections file path
             guiding_selections_file = os.path.join(
-                root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)
+                root_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)
             )
             guiding_selections_file_old = os.path.join(
+                root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)
+            )
+            guiding_selections_file_old2 = os.path.join(
                 root_dir, '{}_G{}_regfile.txt'.format(root, guider)
             )
             if os.path.exists(guiding_selections_file_old):
                 self.guiding_selections_file = guiding_selections_file_old
+            elif os.path.exists(guiding_selections_file_old2):
+                self.guiding_selections_file = guiding_selections_file_old2
             else:
                 self.guiding_selections_file = guiding_selections_file
 
             # Update all found PSFs file path
             all_found_psfs_file = os.path.join(
-                root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)
+                root_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider)
             )
             all_found_psfs_file_old = os.path.join(
+                root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)
+            )
+            all_found_psfs_file_old2 = os.path.join(
                 root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider)
             )
             if os.path.exists(all_found_psfs_file_old):
                 self.all_found_psfs_file = all_found_psfs_file_old
+            elif os.path.exists(all_found_psfs_file_old2):
+                self.all_found_psfs_file = all_found_psfs_file_old2
             else:
                 self.all_found_psfs_file = all_found_psfs_file
 
             # Update converted FGS image filepath
             self.converted_im_file = os.path.join(
-                root_dir, 'FGS_imgs', '{}_G{}.fits'.format(root, guider)
+                root_dir, 'FGS_imgs', 'unshifted_{}_G{}.fits'.format(root, guider)
             )
 
             # Update shifted FGS image & catalog filepaths
             self.shifted_im_file = os.path.join(
-                root_dir, 'shifted', '{}_G{}.fits'.format(root, guider)
+                root_dir, 'FGS_imgs', 'shifted_{}_G{}.fits'.format(root, guider)
             )
             self.shifted_all_found_psfs_file = os.path.join(
-                root_dir, 'shifted', 'all_found_psfs_{}_G{}.txt'.format(root, guider)
+                root_dir, 'shifted_all_found_psfs_{}_G{}.txt'.format(root, guider)
             )
             self.shifted_guiding_selections_file = os.path.join(
-                root_dir, 'shifted', 'guiding_selections_{}_G{}.txt'.format(root, guider)
+                root_dir, 'shifted_guiding_selections_{}_G{}.txt'.format(root, guider)
             )
 
             # Update default guiding_selections*.txt paths in GUI

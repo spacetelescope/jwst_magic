@@ -843,7 +843,7 @@ p, li { white-space: pre-wrap; }
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rather than writing FITS images, .dat files, and .prc files for each step above, only rewrite the files needed to run DHAS. Will prompt user to re-select guide and reference stars. Requires that certain files already exist.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
-              <string>Only write ID.prc, ACQ.prc, and guiding_selections*.txt (for iterative DHAS testing)</string>
+              <string>Only write prcs, ACQ/TRK fits, and guiding_selections*.txt (for iterative DHAS testing)</string>
              </property>
             </widget>
            </item>
@@ -1725,7 +1725,7 @@ QPushButton:pressed {
               <string>Define guide and reference stars by loading their locations and brightness from a file</string>
              </property>
              <property name="text">
-              <string>Load from File</string>
+              <string>Load Unshifted Data from File</string>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_starSelector</string>

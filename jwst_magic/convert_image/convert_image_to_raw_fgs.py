@@ -733,7 +733,6 @@ def convert_im(input_im, guider, root, nircam=True,
             else: # If a GSID or magnitude, pass back gsid
                 # Sneaky string replacement for FGS Magnitude
                 norm_unit = 'FGS Magnitude' if norm_unit == 'FGS Mag (10, 11, 12, 13, or 14)' else norm_unit
-                print(norm_unit)
                 gsid = check_norm_value_unit(norm_value, norm_unit)
                 LOGGER.info("Image Conversion: Using GSID {} to normalize image.".format(gsid))
                 fgs = fgscountrate.FGSCountrate(guide_star_id=gsid, guider=guider)
@@ -853,7 +852,7 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     utils.ensure_dir_exists(output_path_save)
     if not fgsout_path:
         fgsout_path = os.path.join(output_path_save, 'FGS_imgs')
-    fgsout_file = os.path.join(fgsout_path, '{}_G{}.fits'.format(root, guider))
+    fgsout_file = os.path.join(fgsout_path, 'unshifted_{}_G{}.fits'.format(root, guider))
 
     # Load header file
     header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
