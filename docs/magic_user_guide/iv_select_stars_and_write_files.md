@@ -18,7 +18,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
    1. Ensure the **Star Selector** box is checked.
    2. Inspect the input image and determine if your PSF(s) meet one of the two scenarios that requires a change to the smoothing technique. If you are working with early commissioning PSFs, check the **High Smoothing (For Early Commissioning)** box (*A*). If you are working with MIMF PSFs, check the **Low Smoothing (For MIMF)** box (*B*). For high smoothing, this flag widens the smoothing filter for diffuse images in early commissioning stages when the telescope is unphased (If you are unsure if the PSFs are phased, consult the procedure’s information on your observation). For low smoothing, this flag applies very little smoothing to better find the bright knot on doughnut PSFs like in MIMF rather than finding the center of the PSF. 
-   3. If desired, load pre-selected guide and reference stars from a file by selecting the **Load from File** (*C*) option and selecting the desired input file. This file must include X/Y pixel coordinates and count rates in the form of a filepath to a regfile.txt or .incat file. Providing this will bypass using the Star Selection GUI to **Click-to-Select** the guide and reference stars.
+   3. If desired, load pre-selected guide and reference stars from a file by selecting the **Load from File** (*C*) option and selecting the desired input file (this should be an un-shifted guiding selections file). This file must include X/Y pixel coordinates and count rates in the form of a filepath to a regfile.txt or .incat file. Providing this will bypass using the Star Selection GUI to **Click-to-Select** the guide and reference stars.
 
 2. Set file writer parameters:
 

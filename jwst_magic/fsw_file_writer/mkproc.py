@@ -55,7 +55,7 @@ class Mkproc(object):
     """
 
     def __init__(self, guider, root, xarr, yarr, counts, step, thresh_factor=0.5,
-                 out_dir=None, acq1_imgsize=None, acq2_imgsize=None):
+                 out_dir=None, dhas_dir='dhas', ground_system_dir='ground_system'):
         """ Initialize the class and create CECIL proc files for guider 1 and 2.
 
         Parameters
@@ -79,10 +79,10 @@ class Mkproc(object):
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
             jwst_magic/
-        acq1_imgsize : int, optional
-            Dimension of ACQ1 images
-        acq2_imgsize : int, optional
-            Dimension of ACQ2 images
+        dhas_dir : str
+            Name of dhas directory. Either 'dhas' or 'dhas_shifted'
+        ground_system_dir : str
+            Name of ground_system directory. Either 'ground_system' or 'ground_system_shifted'
         """
 
         # Create output directory if does not exist
@@ -92,6 +92,11 @@ class Mkproc(object):
             self.out_dir = out_dir
         if not os.path.exists(self.out_dir):
             os.makedirs(self.out_dir)
+
+        self.dhas_dir, self.ground_system_dir = dhas_dir, ground_system_dir
+        for dir in [dhas_dir, ground_system_dir]:
+            if not os.path.exists(os.path.join(self.out_dir, dir)):
+                os.makedirs(os.path.join(self.out_dir, dir))
 
         # Find templates. If template path not given, script will assume that a
         # 'templates' directory that includes are necessary prc templates lives
@@ -105,8 +110,7 @@ class Mkproc(object):
             self.create_id_proc_file(guider, root, xarr, yarr, counts,
                                      thresh_factor=thresh_factor)
         elif step == 'ACQ':
-            self.create_acq_proc_file(guider, root, xarr, yarr, counts,
-                                      acq1_imgsize, acq2_imgsize)
+            self.create_acq_proc_file(guider, root, xarr, yarr, counts)
 
     def find_templates(self, guider, step, template_path):
         """Open the different templates used to make the proc file.
@@ -153,7 +157,7 @@ class Mkproc(object):
         """
         eol = '\n'
         nref = len(xarr) - 1
-        dhas_filename = os.path.join(self.out_dir, 'dhas',
+        dhas_filename = os.path.join(self.out_dir, self.dhas_dir,
                                      '{0}_G{1}_ID.prc'.format(root, guider))
 
         with open(dhas_filename, 'w') as file_out:
@@ -215,14 +219,13 @@ class Mkproc(object):
         file_out.close()
         LOGGER.info("Successfully wrote: {}".format(dhas_filename))
         shutil.copy2(dhas_filename,
-                     os.path.join(self.out_dir, 'ground_system'))
+                     os.path.join(self.out_dir, self.ground_system_dir))
         LOGGER.info("Successfully wrote: {}".format(os.path.join(self.out_dir,
-                                                                 'ground_system',
+                                                                 self.ground_system_dir,
                                                                  '{0}_G{1}_ID.prc'.
                                                                  format(root, guider))))
 
-    def create_acq_proc_file(self, guider, root, xarr, yarr, counts,
-                             acq1_imgsize, acq2_imgsize):
+    def create_acq_proc_file(self, guider, root, xarr, yarr, counts):
         """Creates the CECIL proc file for the acquisition (ACQ) steps.
         Writes to {out_dir}/out/{root}/dhas/{root}_G{guider}_ACQ.prc
 
@@ -238,20 +241,21 @@ class Mkproc(object):
             Y coordinates of guide and reference stars (pixels)
         counts : list
             Count rates of guide and reference stars
-        acq1_imgsize : int
-            Dimension of ACQ1 images
-        acq2_imgsize : int
-            Dimension of ACQ2 images
         """
         eol = '\n'
 
         # Corner coordinates & guide star counts
         xangle, yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
 
+        if len(xangle) != 1:
+            xangle, yangle = xangle[0], yangle[0]
+
         # Get threshold from countrate (not from STC file)
+        if len(counts) != 1:
+            counts = counts[0]
         threshgs = 0.50 * counts
 
-        dhas_filename = os.path.join(self.out_dir, 'dhas',
+        dhas_filename = os.path.join(self.out_dir, self.dhas_dir,
                                      '{0}_G{1}_ACQ.prc'.format(root, guider))
 
         with open(dhas_filename, 'w') as file_out:
@@ -265,7 +269,7 @@ class Mkproc(object):
             # Write guide star coordinates
             file_out.write('@IFGS_GUIDESTAR {0}, 2, {1:12.4f}, {2:12.4f}, \
                            {3:12.4f}, {4:8d}'.format(self.guider, float(xangle),
-                                                     float(xangle), float(counts),
+                                                     float(yangle), float(counts),
                                                      int(threshgs)))
 
             self.write_from_template(self.template_b, file_out)
@@ -275,7 +279,7 @@ class Mkproc(object):
             NGROUPS=groupNum1, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=128, NCOLS=128, \
             ROWCORNER={1:12.4f},COLCORNER={2:12.4f}'.format(self.guider,
                                                             float(xangle),
-                                                            float(xangle)))
+                                                            float(yangle)))
             file_out.write(eol)
 
             self.write_from_template(self.template_c, file_out)
@@ -285,16 +289,16 @@ class Mkproc(object):
             NGROUPS=groupNum2, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=32, NCOLS=32, \
             ROWCORNER={1:12.4f}, COLCORNER={2:12.4f}'.format(self.guider,
                                                              float(xangle),
-                                                             float(xangle)))
+                                                             float(yangle)))
             file_out.write(eol)
 
             self.write_from_template(self.template_d, file_out)
         file_out.close()
         LOGGER.info("Successfully wrote: {}".format(dhas_filename))
         shutil.copy2(dhas_filename,
-                     os.path.join(self.out_dir, 'ground_system'))
+                     os.path.join(self.out_dir, self.ground_system_dir))
         LOGGER.info("Successfully wrote: {}".format(os.path.join(
-            self.out_dir, 'ground_system', '{0}_G{1}_ACQ.prc'.format(root,
+            self.out_dir, self.ground_system_dir, '{0}_G{1}_ACQ.prc'.format(root,
                                                                      guider)
         )
         ))
