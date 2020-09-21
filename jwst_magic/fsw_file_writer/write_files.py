@@ -169,7 +169,7 @@ def write_sky(obj):
         FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
         created by ``buildfgssteps.py``
     """
-    filename_sky = os.path.join(obj.out_dir, 'stsci',
+    filename_sky = os.path.join(obj.out_dir, obj.stsci_dir,
                                 obj.filename_root + 'sky.fits')
     utils.write_fits(filename_sky, np.uint16(obj.time_normed_im), log=LOGGER)
 
@@ -188,7 +188,7 @@ def write_bias(obj):
     """
     if obj.bias is not None:
         filename_bias = os.path.join(obj.out_dir,
-                                     'stsci',
+                                     obj.stsci_dir,
                                      obj.filename_root + 'bias.fits')
         utils.write_fits(filename_bias, np.uint16(obj.bias), log=LOGGER)
 
@@ -208,7 +208,7 @@ def write_cds(obj):
     """
     if obj.cds is not None:
         filename_cds = os.path.join(obj.out_dir,
-                                    'stsci',
+                                    obj.stsci_dir,
                                     obj.filename_root + 'cds.fits')
         utils.write_fits(filename_cds, np.uint16(obj.cds), log=LOGGER)
 
@@ -228,15 +228,15 @@ def write_image(obj):
 
     if obj.step == 'ID':
         # Create "full-frame" (rather than strips) image
-        location = 'stsci'
+        location = obj.stsci_dir
         filetype = 'ff.fits'
     elif obj.step == 'LOSTRK':
         # Place the FITS file in stsci/, as it is just for reference
         # to the LOSTRK.dat file
-        location = 'stsci'
+        location = obj.stsci_dir
         filetype = '.fits'
     else:
-        location = 'dhas'
+        location = obj.dhas_dir
         filetype = '.fits'
 
     # Create image fits file
@@ -263,7 +263,7 @@ def write_strips(obj):
 
     # Extract strips from ff img
     filename_id_strips = os.path.join(obj.out_dir,
-                                      'dhas',
+                                      obj.dhas_dir,
                                       obj.filename_root + 'strips.fits')
     # Write to strips to fits file
     filename_hdr = os.path.join(DATA_PATH,
@@ -289,20 +289,15 @@ def write_prc(obj):
     """
     if obj.step == 'ID':
         step = 'ID'
-        acq1_imgsize = None
-        acq2_imgsize = None
-
     elif obj.step == 'ACQ1':
         step = 'ACQ'
-        acq1_imgsize = obj.acq1_imgsize
-        acq2_imgsize = obj.acq2_imgsize
 
     else:
         raise ValueError('Unknown step {}; cannot write .prc file.'.format(obj.step))
 
     mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
-                  step=step, out_dir=obj.out_dir, acq1_imgsize=acq1_imgsize,
-                  acq2_imgsize=acq2_imgsize)
+                  step=step, out_dir=obj.out_dir, dhas_dir=obj.dhas_dir,
+                  ground_system_dir=obj.ground_system_dir)
 
 
 def write_dat(obj):
@@ -320,7 +315,7 @@ def write_dat(obj):
     else:
         data_to_write = obj.image
 
-    out_dir = os.path.join(obj.out_dir, 'ground_system')
+    out_dir = os.path.join(obj.out_dir, obj.ground_system_dir)
 
     obsmode = obj.step.upper()
 
@@ -370,7 +365,7 @@ def write_stc(obj):
     """
     # STC files using offset, rotated catalog
     filename_stc = os.path.join(obj.out_dir,
-                                'stsci',
+                                obj.stsci_dir,
                                 obj.filename_root + '.stc')
     if obj.step == 'ACQ1' or obj.step == 'ACQ2':
         xarr = obj.xarr - obj.imgsize // 2
@@ -406,7 +401,7 @@ def write_cat(obj):
     else:
         filetype = '.cat'
 
-    filename_starcat = os.path.join(obj.out_dir, 'stsci',
+    filename_starcat = os.path.join(obj.out_dir, obj.stsci_dir,
                                     obj.filename_root + filetype)
 
     coords = np.array([obj.xarr, obj.yarr]).T
