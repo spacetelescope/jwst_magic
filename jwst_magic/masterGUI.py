@@ -1218,21 +1218,25 @@ class MasterGui(QMainWindow):
 
 
             txt_files = glob.glob(os.path.join(root_dir, "*.txt"))
-
             acceptable_guiding_files_list = [
                 os.path.join(root_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)), # newest
                 os.path.join(root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)),
                 os.path.join(root_dir, '{}_G{}_regfile.txt'.format(root, guider))] # oldest
-            self.guiding_selections_file = [f for f in acceptable_guiding_files_list if f in txt_files][0]
 
             acceptable_all_psf_files_list = [
                 os.path.join(root_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider)),
                 os.path.join(root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)),
                 os.path.join(root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))]
-            self.all_found_psfs_file = [f for f in acceptable_all_psf_files_list if f in txt_files][0]
+
+            try:
+                self.guiding_selections_file = [f for f in acceptable_guiding_files_list if f in txt_files][0]
+                self.all_found_psfs_file = [f for f in acceptable_all_psf_files_list if f in txt_files][0]
+            except IndexError:
+                self.guiding_selections_file = ''
+                self.all_found_psfs_file = ''
 
 
-           # Update converted FGS image filepath
+                # Update converted FGS image filepath
             self.converted_im_file = os.path.join(root_dir, 'FGS_imgs', 'unshifted_{}_G{}.fits'.format(root, guider))
 
             # Update shifted FGS image & catalog filepaths
