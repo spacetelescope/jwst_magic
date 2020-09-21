@@ -72,8 +72,8 @@ class BuildFGSSteps(object):
     to be used with DHAS.
     """
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
-                 out_dir=None, logger_passed=False, shift_id_attitude=True,
-                 crowded_field=False, catalog=None, recenter_trk=False):
+                 out_dir=None, logger_passed=False, psf_center_file=None,
+                 shift_id_attitude=True):
         """Initialize the class and call build_fgs_steps().
         """
         # Set up logger
@@ -82,6 +82,7 @@ class BuildFGSSteps(object):
 
         try:
             # Initialize attributes
+            self.input_im = im
             self.guider = guider
             self.root = root
             self.step = step
@@ -98,18 +99,22 @@ class BuildFGSSteps(object):
                 self.input_im = im
 
             # Shift image to ID attitude
-            if shift_id_attitude and step == 'ID':
-                self.input_im = self.shift_to_id_attitude(self.input_im, guiding_selections_file, catalog,
-                                                          crowded_field=crowded_field)
+            self.stsci_dir = 'stsci'
+            self.dhas_dir = 'dhas'
+            self.ground_system_dir = 'ground_system'
+            if shift_id_attitude:
+                self.stsci_dir = '{}_shifted'.format(self.stsci_dir)
+                self.dhas_dir = '{}_shifted'.format(self.dhas_dir)
+                self.ground_system_dir = '{}_shifted'.format(self.ground_system_dir)
 
             # Build FGS steps
-            self.build_fgs_steps(guiding_selections_file, configfile, recenter_trk)
+            self.build_fgs_steps(guiding_selections_file, configfile, psf_center_file)
 
         except Exception as e:
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, guiding_selections_file, configfile, recenter_trk=False):
+    def build_fgs_steps(self, guiding_selections_file, configfile, psf_center_file=None):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
@@ -117,22 +122,22 @@ class BuildFGSSteps(object):
         ----------
         guiding_selections_file : str
             File containing X/Y positions and countrates for all stars
-            in the provided image
+            in the provided image. Will be the shifted or unshifted version
+            based on the shift_id_attitude keyword
         configfile : str
             File defining parameters for each guider step. If not
             defined, defaults to jwst_magic/data/config.ini
-        recenter_trk : bool, optional
-            Re-center the TRK box to not be centered on the guiding
-            selections PSF location, but on the actual center of
-            the PSF (found with smoothing; tuple of (y,x)). Used when
-            smoothing='low'.
+        psf_center_file : str, optional
+            Path to psf center file in order to re-center the TRK box
+            to not be centered on the guiding elections PSF location,
+            but on the actual center of the PSF (found with smoothing;
+            tuple of (y,x)). Used when smoothing='low'.
         """
-        # Define paths
-        utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
-        utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
-        utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
+        utils.ensure_dir_exists(os.path.join(self.out_dir, self.dhas_dir))
+        utils.ensure_dir_exists(os.path.join(self.out_dir, self.ground_system_dir))
+        utils.ensure_dir_exists(os.path.join(self.out_dir, self.stsci_dir))
 
-        self.get_coords_and_counts(guiding_selections_file, recenter_trk)
+        self.get_coords_and_counts(guiding_selections_file, psf_center_file)
 
         section = '{}_dict'.format(self.step.lower())
         config_ini = self.build_step(section, configfile)
@@ -141,7 +146,7 @@ class BuildFGSSteps(object):
         # Write the files
         LOGGER.info("FSW File Writing: Creating {} FSW files".format(self.step))
 
-    def get_coords_and_counts(self, guiding_selections_file, recenter_trk=False):
+    def get_coords_and_counts(self, guiding_selections_file, psf_center_file=None):
         """Get coordinate information and countrates of guide star and
         reference stars.
 
@@ -149,12 +154,14 @@ class BuildFGSSteps(object):
         ----------
         guiding_selections_file : str
             File containing X/Y positions and countrates for all stars
-            in the provided image
-        recenter_trk : bool, optional
-            Re-center the TRK box to not be centered on the guiding
-            selections PSF location, but on the actual center of
-            the PSF (found with smoothing; tuple of (y,x)). Used when
-            smoothing='low'.
+            in the provided image. Will be the shifted or unshifted version
+            based on the shift_id_attitude keyword
+        psf_center_file : str, optional
+            Path to psf center file in order to re-center the TRK box
+            to not be centered on the guiding elections PSF location,
+            but on the actual center of the PSF (found with smoothing;
+            tuple of (y,x)). Used when smoothing='low'. Will be the
+            shifted or unshifted version based on the shift_id_attitude keyword
         """
         LOGGER.info("FSW File Writing: Using {} as the guiding selections file".format(guiding_selections_file))
 
@@ -169,12 +176,8 @@ class BuildFGSSteps(object):
                                                               skiprows=1).T
 
         # Make sure the TRK box is centered on the center of the PSF, not on the brightest point
-        if self.step == 'TRK' and recenter_trk is True:
-            file_path = guiding_selections_file.split('/guiding_selections')[0]
-            trk_file = 'psf_center_{}_G{}.txt'.format(self.root, self.guider)
-            self.yarr, self.xarr, _ = np.loadtxt(os.path.join(file_path, trk_file),
-                                                 delimiter=' ',
-                                                 skiprows=1).T
+        if self.step == 'TRK' and psf_center_file is not None:
+            self.yarr, self.xarr, _ = np.loadtxt(psf_center_file, delimiter=' ', skiprows=1).T
 
         # Cover cases where there is only one entry in the reg file
         try:
@@ -331,142 +334,6 @@ class BuildFGSSteps(object):
             image = image / np.sum(image) * 1000
 
         return image
-
-    def shift_to_id_attitude(self, image, guiding_selections_file,
-                             all_found_psfs_file, crowded_field=False):
-        """Shift the FGS image such that the guide star is at the ID
-        attitude. Rewrite the FGS FITS file, guiding_selections, and all_found_psfs
-        catalog files for this shifted case. (Rename old versions of those files
-        to be "_unshifted".)
-
-        Parameters
-        ----------
-        image : 2D numpy array
-            Image data
-        guiding_selections_file : str
-            Path to existing guiding_selections_{root}_G{guider}.txt
-        all_found_psfs_file : str
-            Path to existing all_found_psfs_{root}_G{guider}.txt
-        crowded_field : bool, optional
-            Denotes whether the current case is a crowded field,
-            in which the ID attitude changes.
-
-        Returns
-        -------
-        shifted_image : 2D numpy array
-            The image data shifted so that the guide star falls on the
-            ID attitude
-        """
-
-        # 0) Fetch existing information and determine ID attitude
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Define filenames
-        file_root = '{}_G{}'.format(self.root, self.guider)
-        guiding_selections_file = guiding_selections_file or os.path.join(
-            self.out_dir, 'guiding_selections_{}.txt'.format(file_root)
-        )
-        all_found_psfs_file = all_found_psfs_file or os.path.join(
-            self.out_dir, 'all_found_psfs_{}.txt'.format(file_root)
-        )
-
-        # Make sure shifted directory exists
-        utils.ensure_dir_exists(os.path.join(self.out_dir, 'shifted'))
-
-        # Load the catalogs
-        guiding_selections_cat = asc.read(guiding_selections_file)
-        all_found_psfs_cat = asc.read(all_found_psfs_file)
-
-        # Determine the pixel shift
-        if crowded_field:
-            # Locations obtained from Beverly Owens, 12/3/18:
-            # https://innerspace.stsci.edu/display/INSTEL/FGS+Specifications
-            if self.guider == 1:
-                xend, yend = (986, 1688)  # Converted from Ideal = (-45.6799, 1.2244)
-            elif self.guider == 2:
-                xend, yend = (1003, 1697)  # Converted from Ideal = (-45.6701, -0.8757)
-            hdr_keyword = '{}'.format((xend, yend))
-        else:
-            xend, yend = (1024, 1024)  # ID attitude; Different for crowded fields
-            # Note this should actually be 1024.5, but the guiding selections file
-            # needs an integer shift
-            hdr_keyword = '{}'.format((xend, yend))
-
-
-        # 1) Shift the image array
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        xstart, ystart = guiding_selections_cat['x', 'y'][0] # Guide star location
-        dx = xend - xstart
-        dy = yend - ystart
-
-        assert dx % 1 == 0, 'Trying to shift by a non-integer in x'
-        assert dy % 1 == 0, 'Trying to shift by a non-integer in y'
-
-        if (dx, dy) == (0, 0):
-            LOGGER.info('FSW File Writing: No need to shift file; guide star already at ID attitude.')
-            return image
-
-        bkg = np.median(image)
-
-        LOGGER.info("FSW File Writing: Shifting guide star to ID attitude ({}, {})".format(xend, yend))
-        shifted_image = shift(image, (dy, dx), mode='constant', cval=bkg, prefilter=True)
-
-        # 2) Write new shifted guiding_selections*.txt
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Shift the guiding selections catalog
-        shifted_guiding_selections_cat = guiding_selections_cat.copy()
-        shifted_guiding_selections_cat['x'] += dx
-        shifted_guiding_selections_cat['y'] += dy
-
-        shifted_guiding_selections = os.path.join(self.out_dir, 'shifted',
-                                       'guiding_selections_{}.txt'.format(file_root))
-
-        # Write new guiding_selections*.txts
-        utils.write_cols_to_file(os.path.join(self.out_dir, shifted_guiding_selections),
-                                 labels=['y', 'x', 'countrate'],
-                                 cols=shifted_guiding_selections_cat)
-
-
-        # 3) Write new shifted all_found_psfs*.txt
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Shift the all_found_psfs*.txt catalog
-        shifted_all_psfs_cat = all_found_psfs_cat.copy()
-        shifted_all_psfs_cat['x'] += dx
-        shifted_all_psfs_cat['y'] += dy
-
-        shifted_all_psfs = os.path.join(self.out_dir, 'shifted',
-                                       'all_found_psfs_{}.txt'.format(file_root))
-
-        all_cols = select_psfs.create_cols_for_coords_counts(shifted_all_psfs_cat['x'],
-                                                             shifted_all_psfs_cat['y'],
-                                                             shifted_all_psfs_cat['countrate'],
-                                                             None,
-                                                             labels=shifted_all_psfs_cat['label'],
-                                                             inds=range(len(shifted_all_psfs_cat['x'])))
-
-        # Write new all_found_psfs*.txts
-        utils.write_cols_to_file(os.path.join(self.out_dir, shifted_all_psfs),
-                                 labels=['label', 'y', 'x', 'countrate'],
-                                 cols=all_cols)
-
-
-
-        # 4) Rewrite the shifted FGS image and save old file as _unshifted.fits
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Load header file
-        header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(self.guider))
-        hdr = fits.getheader(header_file, ext=0)
-        hdr['IDATTPIX'] = (hdr_keyword, 'Image shifted to place GS at ID attitude')
-
-        shifted_FGS_img = os.path.join(self.out_dir, 'shifted',
-                                       file_root + '.fits')
-
-        # Write new FITS files
-        # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
-        saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
-        saved_shifted_image = np.uint16(saved_shifted_image)
-        utils.write_fits(shifted_FGS_img, saved_shifted_image, header=hdr, log=LOGGER)
-
-        return shifted_image
 
 # ------------------------------------------------------------------------------
 # ANCILLARY FUNCTIONS
@@ -657,3 +524,184 @@ def create_im_subarray(image, xcoord, ycoord, imgsize, show_fig=False):
         plt.show()
 
     return img
+
+
+def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
+                         all_found_psfs_file, psf_center_file=None, crowded_field=False,
+                         logger_passed=False):
+    """Shift the FGS image such that the guide star is at the ID
+    attitude. Rewrite the FGS FITS file, guiding_selections, and all_found_psfs
+    catalog files for this shifted case. (Rename old versions of those files
+    to be "unshifted_".)
+
+    Parameters
+    ----------
+    image : 2D numpy array
+        Image data
+    root : str
+        Name used to create the output directory, {out_dir}/out/{root}
+    guider : int
+        Guider number (1 or 2)
+    out_dir : str
+        Where output files will be saved. If not provided, the
+        image(s) will be saved within the repository at
+        jwst_magic/
+    guiding_selections_file : str
+        Path to existing unshifted_guiding_selections_{root}_G{guider}.txt
+    all_found_psfs_file : str
+        Path to existing unshifted_gall_found_psfs_{root}_G{guider}.txt
+    psf_center_file : str, optional
+        Path to existing unshifted_psf_center_{root}_G{guider}.txt
+        center psf file
+    crowded_field : bool, optional
+        Denotes whether the current case is a crowded field,
+        in which the ID attitude changes.
+    logger_passed : bool
+        T/F if a logger is passed into the function
+
+    Returns
+    -------
+    shifted_image : 2D numpy array
+        The image data shifted so that the guide star falls on the
+        ID attitude
+    shifted_guiding_selections : str
+        Path to the shifted guiding selections file which should be
+        used in future calculations over the unshift data
+    psf_center_file : str or None
+        Path to shifted psf center file if it exists
+    """
+    # Set up logger
+    if not logger_passed:
+        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+
+    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+
+    if isinstance(image, str):
+        image = fits.getdata(image)
+
+    # 0) Fetch existing information and determine ID attitude
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Define input filenames
+    file_root = '{}_G{}'.format(root, guider)
+    guiding_selections_file = guiding_selections_file or os.path.join(
+        out_dir, 'unshifted_guiding_selections_{}.txt'.format(file_root)
+    )
+    all_found_psfs_file = all_found_psfs_file or os.path.join(
+        out_dir, 'unshifted_all_found_psfs_{}.txt'.format(file_root)
+    )
+
+    # Load the catalogs with the unshifted data
+    guiding_selections_cat = asc.read(guiding_selections_file)
+    all_found_psfs_cat = asc.read(all_found_psfs_file)
+
+    # Determine the pixel shift
+    if crowded_field:
+        # Locations obtained from Beverly Owens, 12/3/18:
+        # https://innerspace.stsci.edu/display/INSTEL/FGS+Specifications
+        if guider == 1:
+            xend, yend = (986, 1688)  # Converted from Ideal = (-45.6799, 1.2244)
+        elif guider == 2:
+            xend, yend = (1003, 1697)  # Converted from Ideal = (-45.6701, -0.8757)
+        hdr_keyword = '{}'.format((xend, yend))
+    else:
+        xend, yend = (1024, 1024)  # ID attitude; Different for crowded fields
+        # Note this should actually be 1024.5, but the guiding selections file
+        # needs an integer shift
+        hdr_keyword = '{}'.format((xend, yend))
+
+
+    # 1) Shift the image array
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    xstart, ystart = guiding_selections_cat['x', 'y'][0] # Guide star location
+    dx = xend - xstart
+    dy = yend - ystart
+
+    assert dx % 1 == 0, 'Trying to shift by a non-integer in x'
+    assert dy % 1 == 0, 'Trying to shift by a non-integer in y'
+
+    if (dx, dy) == (0, 0):
+        LOGGER.info('FSW File Writing: No need to shift file; guide star already at ID attitude.')
+        return image, guiding_selections_file, psf_center_file
+
+    bkg = np.median(image)
+
+    LOGGER.info("FSW File Writing: Shifting guide star to ID attitude ({}, {})".format(xend, yend))
+    shifted_image = shift(image, (dy, dx), mode='constant', cval=bkg, prefilter=True)
+    # TODO: ? Should we be shifting the seed image and re-adding the bias on top of it?
+    # TODO: Save out seed and bias separately, shift seed here, and re-add bias on top of it
+
+    # 2) Write new shifted guiding_selections*.txt
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Shift the guiding selections catalog
+    shifted_guiding_selections_cat = guiding_selections_cat.copy()
+    shifted_guiding_selections_cat['x'] += dx
+    shifted_guiding_selections_cat['y'] += dy
+
+    shifted_guiding_selections = os.path.join(out_dir, 'shifted_guiding_selections_{}.txt'.format(file_root))
+
+    # Write new guiding_selections*.txts
+    utils.write_cols_to_file(shifted_guiding_selections,
+                             labels=['y', 'x', 'countrate'],
+                             cols=shifted_guiding_selections_cat,
+                             log=LOGGER)
+
+
+    # 3) Write new shifted all_found_psfs*.txt
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Shift the all_found_psfs*.txt catalog
+    shifted_all_psfs_cat = all_found_psfs_cat.copy()
+    shifted_all_psfs_cat['x'] += dx
+    shifted_all_psfs_cat['y'] += dy
+
+    shifted_all_psfs = os.path.join(out_dir, 'shifted_all_found_psfs_{}.txt'.format(file_root))
+
+    all_cols = select_psfs.create_cols_for_coords_counts(shifted_all_psfs_cat['x'],
+                                                         shifted_all_psfs_cat['y'],
+                                                         shifted_all_psfs_cat['countrate'],
+                                                         None,
+                                                         labels=shifted_all_psfs_cat['label'],
+                                                         inds=range(len(shifted_all_psfs_cat['x'])))
+
+    # Write new all_found_psfs*.txts
+    utils.write_cols_to_file(shifted_all_psfs,
+                             labels=['label', 'y', 'x', 'countrate'],
+                             cols=all_cols,
+                             log=LOGGER)
+
+
+    # 4) Write new shifted psf_center*.txt
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    if psf_center_file is not None:
+        psf_center_cat = asc.read(psf_center_file)
+
+        shifted_psf_center_cat = psf_center_cat.copy()
+        shifted_psf_center_cat['x'] += dx
+        shifted_psf_center_cat['y'] += dy
+
+        shifted_psf_center = os.path.join(out_dir, 'shifted_psf_center_{}_G{}.txt'.format(file_root, guider))
+        psf_center_file = shifted_psf_center
+
+        # Write new psf_center*.txts
+        utils.write_cols_to_file(shifted_psf_center,
+                                 labels=['y', 'x', 'countrate'],
+                                 cols=shifted_psf_center_cat,
+                                 log=LOGGER)
+
+
+    # 5) Rewrite the shifted FGS image and save old file as _unshifted.fits
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Load header file
+    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+    hdr = fits.getheader(header_file, ext=0)
+    hdr['IDATTPIX'] = (hdr_keyword, 'Image shifted to place GS at ID attitude')
+
+    shifted_FGS_img = os.path.join(out_dir, 'FGS_imgs',
+                                   'shifted_' + file_root + '.fits')
+
+    # Write new FITS files
+    # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
+    saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
+    saved_shifted_image = np.uint16(saved_shifted_image)
+    utils.write_fits(shifted_FGS_img, saved_shifted_image, header=hdr, log=LOGGER)
+
+    return shifted_image, shifted_guiding_selections, psf_center_file

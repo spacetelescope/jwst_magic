@@ -454,7 +454,8 @@ class MasterGui(QMainWindow):
             inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds, guider, root, out_dir)
+            rewrite_prc.rewrite_prc(inds, guider, root, out_dir, shifted=shift_id_attitude,
+                                    crowded_field=crowded_field)
 
             # Update converted image preview
             self.update_filepreview()
@@ -1215,44 +1216,36 @@ class MasterGui(QMainWindow):
 
             # Note: maintaining if statements and "old" file names for backwards compatibility.
 
-            # Update guiding selections file path
-            guiding_selections_file = os.path.join(
-                root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)
-            )
-            guiding_selections_file_old = os.path.join(
-                root_dir, '{}_G{}_regfile.txt'.format(root, guider)
-            )
-            if os.path.exists(guiding_selections_file_old):
-                self.guiding_selections_file = guiding_selections_file_old
-            else:
-                self.guiding_selections_file = guiding_selections_file
 
-            # Update all found PSFs file path
-            all_found_psfs_file = os.path.join(
-                root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)
-            )
-            all_found_psfs_file_old = os.path.join(
-                root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider)
-            )
-            if os.path.exists(all_found_psfs_file_old):
-                self.all_found_psfs_file = all_found_psfs_file_old
-            else:
-                self.all_found_psfs_file = all_found_psfs_file
+            txt_files = glob.glob(os.path.join(root_dir, "*.txt"))
+            acceptable_guiding_files_list = [
+                os.path.join(root_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)), # newest
+                os.path.join(root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, '{}_G{}_regfile.txt'.format(root, guider))] # oldest
 
-            # Update converted FGS image filepath
-            self.converted_im_file = os.path.join(
-                root_dir, 'FGS_imgs', '{}_G{}.fits'.format(root, guider)
-            )
+            acceptable_all_psf_files_list = [
+                os.path.join(root_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))]
+
+            try:
+                self.guiding_selections_file = [f for f in acceptable_guiding_files_list if f in txt_files][0]
+                self.all_found_psfs_file = [f for f in acceptable_all_psf_files_list if f in txt_files][0]
+            except IndexError:
+                self.guiding_selections_file = ''
+                self.all_found_psfs_file = ''
+
+
+                # Update converted FGS image filepath
+            self.converted_im_file = os.path.join(root_dir, 'FGS_imgs', 'unshifted_{}_G{}.fits'.format(root, guider))
 
             # Update shifted FGS image & catalog filepaths
-            self.shifted_im_file = os.path.join(
-                root_dir, 'shifted', '{}_G{}.fits'.format(root, guider)
-            )
+            self.shifted_im_file = os.path.join(root_dir, 'FGS_imgs', 'shifted_{}_G{}.fits'.format(root, guider))
             self.shifted_all_found_psfs_file = os.path.join(
-                root_dir, 'shifted', 'all_found_psfs_{}_G{}.txt'.format(root, guider)
+                root_dir, 'shifted_all_found_psfs_{}_G{}.txt'.format(root, guider)
             )
             self.shifted_guiding_selections_file = os.path.join(
-                root_dir, 'shifted', 'guiding_selections_{}_G{}.txt'.format(root, guider)
+                root_dir, 'shifted_guiding_selections_{}_G{}.txt'.format(root, guider)
             )
 
             # Update default guiding_selections*.txt paths in GUI
