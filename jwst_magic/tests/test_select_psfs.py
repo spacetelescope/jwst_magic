@@ -58,7 +58,7 @@ def test_directory(test_dir=TEST_DIRECTORY):
 
 
 def test_select_psfs_with_file(test_directory):
-    guiding_selections_path, all_found_psfs_path = select_psfs(
+    guiding_selections_path, all_found_psfs_path, _ = select_psfs(
         CONVERTED_NIRCAM_IM_GA, ROOT, 2, guiding_selections_file=SELECTED_SEGS,
         out_dir=test_directory
     )
@@ -75,18 +75,16 @@ select_psfs_without_file_parameters = [(CONVERTED_NIRCAM_IM_GA, 'default', 21, t
                                        ]
 @pytest.mark.parametrize('in_data, smooth, n_psfs, correct_all_found_psfs_txt', select_psfs_without_file_parameters)
 def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, correct_all_found_psfs_txt):
-    guiding_selections_path, all_found_psfs_path = select_psfs(
+    guiding_selections_path, all_found_psfs_path, psf_center_path = select_psfs(
         in_data, ROOT, 2, smoothing=smooth, testing=True,
         out_dir=test_directory
     )
 
     # Ensure the correct files were generated
-    assert os.path.exists(guiding_selections_path), 'guiding_selections_test_select_psfs_G2.txt not generated.'
-    assert os.path.exists(all_found_psfs_path), 'all_found_psfs_test_select_psfs_G2.txt not generated.'
+    assert os.path.exists(guiding_selections_path), 'unshifted_guiding_selections_test_select_psfs_G2.txt not generated.'
+    assert os.path.exists(all_found_psfs_path), 'unshifted_all_found_psfs_test_select_psfs_G2.txt not generated.'
     if smooth is 'low':
-        main_path = guiding_selections_path.split('/guiding_selections')[0]
-        no_smooth_path = os.path.join(main_path, 'psf_center_{}_G2.txt'.format(ROOT))
-        assert os.path.exists(no_smooth_path), 'psf_center_test_select_psfs_G2.txt not generated.'
+        assert os.path.exists(psf_center_path), 'unshifted_psf_center_test_select_psfs_G2.txt not generated.'
 
     # Test that the contents of all_found_psfs_test_select_psfs_G2.txt is correct
     # Right number of PSFs found?
@@ -103,6 +101,6 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
     if smooth is 'low':
         with open(guiding_selections_path) as f:
             guiding_selections_contents = f.read()
-        with open(no_smooth_path) as f:
+        with open(psf_center_path) as f:
             no_smooth_contents = f.read()
         assert guiding_selections_contents != no_smooth_contents
