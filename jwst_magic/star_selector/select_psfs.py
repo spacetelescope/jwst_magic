@@ -26,6 +26,7 @@ Use
 """
 
 # Standard Library Imports
+import glob
 import logging
 import os
 import random
@@ -511,7 +512,7 @@ def parse_in_file(in_file):
 
 def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir):
     """By parsing the name of an input guiding_selections*.txt file,
-    identify a corresponding all_found_psfs*.txt file.
+    identify a corresponding all_found_psfs*.txt or psf_center*.txt file.
 
     Parameters
     ----------
@@ -551,34 +552,31 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
     # Try to copy the corresponding *all_found_psfs*.txt or *psf_center*.txt file, if present.
     if imported_root is not None:
         dir_to_look = os.path.dirname(guiding_selections_file)
-        psfs_file = os.path.join(dir_to_look,
-                                           'unshifted_{}_{}.txt'.format(output_file, imported_root))
-        psfs_file_old = os.path.join(dir_to_look,
-                                           '{}_{}.txt'.format(output_file, imported_root))
-        if output_file == 'all_found_psfs':
-            all_found_psfs_file_old2 = os.path.join(dir_to_look,
-                                                   '{}_ALLpsfs.txt'.format(imported_root))
-        file_to_copy = None
 
-        if os.path.exists(psfs_file):
-            file_to_copy = psfs_file
-        elif os.path.exists(psfs_file_old):
-            file_to_copy = psfs_file_old
-        elif os.path.exists(all_found_psfs_file_old2) and output_file == 'all_found_psfs':
-            file_to_copy = all_found_psfs_file_old2
-        else:
-            LOGGER.warning(
-                'Could not find a corresponding *{}*.txt file for '
-                'the provided guiding selections file ({}) in {}'.format(output_file, filename, dir_to_look)
-            )
+        txt_files = glob.glob(os.path.join(dir_to_look, "*.txt"))
+        if output_file == 'psf_center':
+            acceptable_files = [
+                os.path.join(dir_to_look, 'unshifted_psf_center_{}.txt'.format(imported_root)),  # newest
+                os.path.join(dir_to_look, 'psf_center_{}.txt'.format(imported_root))]  # oldest
+        elif output_file == 'all_found_psfs':
+            acceptable_files = [
+                os.path.join(dir_to_look, 'unshifted_all_found_psfs_{}.txt'.format(imported_root)),
+                os.path.join(dir_to_look, 'all_found_psfs_{}.txt'.format(imported_root)),
+                os.path.join(dir_to_look, '{}_ALLpsfs.txt'.format(imported_root))]
+        file_to_copy = [f for f in acceptable_files if f in txt_files][0]
+
 
         if file_to_copy is not None:
             copied_psfs_file = os.path.join(out_dir, 'unshifted_{}_{}_G{}.txt'.format(output_file, root, guider))
             shutil.copy(file_to_copy, copied_psfs_file)
             LOGGER.info('Copying over {}'.format(file_to_copy))
             LOGGER.info('Successfully wrote: {}'.format(copied_psfs_file))
-
             return copied_psfs_file
+        else:
+            LOGGER.warning(
+                'Could not find a corresponding *{}*.txt file for '
+                'the provided guiding selections file ({}) in {}'.format(output_file, filename, dir_to_look)
+            )
 
 
 def manual_star_selection(data, smoothing, choose_center=False, testing=False, masterGUIapp=None):
@@ -784,10 +782,10 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
             cols, all_coords, nref, all_cols = manual_star_selection(data,
-                                                                 smoothing,
-                                                                 choose_center,
-                                                                 testing,
-                                                                 masterGUIapp)
+                                                                     smoothing,
+                                                                     choose_center,
+                                                                     testing,
+                                                                     masterGUIapp)
             all_found_psfs_path = None
             psf_center_path = None
 

@@ -92,7 +92,7 @@ def rewrite_prc(inds, guider, root, out_dir, shifted, crowded_field):
     # Find converted FGS image
     if os.path.exists(os.path.join(out_path, 'FGS_imgs/unshifted_{}.fits'.format(file_root))):
         fgs_im = os.path.join(out_path, 'FGS_imgs/unshifted_{}.fits'.format(file_root))
-    elif os.path.exists( os.path.join(out_path, 'FGS_imgs/{}.fits'.format(file_root))):
+    elif os.path.exists(os.path.join(out_path, 'FGS_imgs/{}.fits'.format(file_root))):
         fgs_im = os.path.join(out_path, 'FGS_imgs/{}.fits'.format(file_root))
     else:
         LOGGER.error("Cannot find expected raw FGS image input. Looked in {} for a file named "
@@ -101,8 +101,8 @@ def rewrite_prc(inds, guider, root, out_dir, shifted, crowded_field):
     # Find psf_center file
     psf_center_file = os.path.join(out_path, 'unshifted_psf_center_{}.txt'.format(file_root))
     if not os.path.exists(psf_center_file):
-        LOGGER.warning("Cannot find psf_center file, assuming it is not relevant to this image type".format(
-            out_path, psf_center_file))
+        LOGGER.warning("Cannot find psf_center file: {}. Assuming it is not relevant to this image type".format(
+            os.path.join(out_path, psf_center_file)))
         psf_center_file = None
 
     # Open log of all identified PSFs
