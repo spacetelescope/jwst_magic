@@ -99,14 +99,13 @@ class BuildFGSSteps(object):
                 self.input_im = im
 
             # Shift image to ID attitude
+            self.stsci_dir = 'stsci'
+            self.dhas_dir = 'dhas'
+            self.ground_system_dir = 'ground_system'
             if shift_id_attitude:
-                self.stsci_dir = 'stsci_shifted'
-                self.dhas_dir = 'dhas_shifted'
-                self.ground_system_dir = 'ground_system_shifted'
-            else:
-                self.stsci_dir = 'stsci'
-                self.dhas_dir = 'dhas'
-                self.ground_system_dir = 'ground_system'
+                self.stsci_dir = '{}_shifted'.format(self.stsci_dir)
+                self.dhas_dir = '{}_shifted'.format(self.dhas_dir)
+                self.ground_system_dir = '{}_shifted'.format(self.ground_system_dir)
 
             # Build FGS steps
             self.build_fgs_steps(guiding_selections_file, configfile, shift_id_attitude, psf_center_file)
@@ -115,7 +114,7 @@ class BuildFGSSteps(object):
             LOGGER.exception(e)
             raise
 
-    def build_fgs_steps(self, guiding_selections_file, configfile, shift_id_attitude, psf_center_file=None):
+    def build_fgs_steps(self, guiding_selections_file, configfile, psf_center_file=None):
         """Creates an FGS simulation object for ID, ACQ, and/or TRK stages
         to be used with DHAS.
 
@@ -128,23 +127,15 @@ class BuildFGSSteps(object):
         configfile : str
             File defining parameters for each guider step. If not
             defined, defaults to jwst_magic/data/config.ini
-        shift_id_attitude : bool
-            True/False to shift the image
         psf_center_file : str, optional
             Path to psf center file in order to re-center the TRK box
             to not be centered on the guiding elections PSF location,
             but on the actual center of the PSF (found with smoothing;
             tuple of (y,x)). Used when smoothing='low'.
         """
-        # Define paths
-        if shift_id_attitude:
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas_shifted'))
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system_shifted'))
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci_shifted'))
-        else:
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'dhas'))
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'ground_system'))
-            utils.ensure_dir_exists(os.path.join(self.out_dir, 'stsci'))
+        utils.ensure_dir_exists(os.path.join(self.out_dir, self.dhas_dir))
+        utils.ensure_dir_exists(os.path.join(self.out_dir, self.ground_system_dir))
+        utils.ensure_dir_exists(os.path.join(self.out_dir, self.stsci_dir))
 
         self.get_coords_and_counts(guiding_selections_file, psf_center_file)
 
