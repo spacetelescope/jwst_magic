@@ -108,7 +108,7 @@ class BuildFGSSteps(object):
                 self.ground_system_dir = '{}_shifted'.format(self.ground_system_dir)
 
             # Build FGS steps
-            self.build_fgs_steps(guiding_selections_file, configfile, shift_id_attitude, psf_center_file)
+            self.build_fgs_steps(guiding_selections_file, configfile, psf_center_file)
 
         except Exception as e:
             LOGGER.exception(e)
