@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1484</width>
-    <height>1000</height>
+    <width>1561</width>
+    <height>1072</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,8 +34,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1484</width>
-         <height>1000</height>
+         <width>1553</width>
+         <height>1048</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -224,6 +224,9 @@ Image:</string>
                   </item>
                   <item row="1" column="1">
                    <widget class="QComboBox" name="comboBox_showcommandsconverted">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
                     <property name="toolTip">
                      <string>Choose the guiding command to show the guide and reference star locations</string>
                     </property>
@@ -269,6 +272,9 @@ Image:</string>
                  <layout class="QGridLayout" name="gridLayout_10">
                   <item row="1" column="1">
                    <widget class="QComboBox" name="comboBox_showcommandsshifted">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
                     <property name="toolTip">
                      <string>Choose the guiding command to show the guide and reference star locations</string>
                     </property>
@@ -975,6 +981,9 @@ p, li { white-space: pre-wrap; }
              <property name="toolTip">
               <string>Define one or more commands with guide and reference stars by loading their locations and brightness loaded from a file</string>
              </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
              <property name="text">
               <string>Read commands from root
 (assume segNum=0)</string>
@@ -995,19 +1004,6 @@ p, li { white-space: pre-wrap; }
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_segmentGuiding</string>
              </attribute>
-            </widget>
-           </item>
-           <item row="3" column="2">
-            <widget class="QPushButton" name="pushButton_regfileSegmentGuiding">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="toolTip">
-              <string>Open Finder window to select file with segment list</string>
-             </property>
-             <property name="text">
-              <string>Open</string>
-             </property>
             </widget>
            </item>
            <item row="0" column="1">
@@ -1050,7 +1046,7 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item row="4" column="1">
-            <widget class="QComboBox" name="comboBox_guidingcommands">
+            <widget class="CheckableComboBox" name="comboBox_guidingcommands">
              <property name="toolTip">
               <string>Select guiding commands to include when writing out segment override file(s)</string>
              </property>
@@ -1812,6 +1808,13 @@ QPushButton:pressed {
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CheckableComboBox</class>
+   <extends>QComboBox</extends>
+   <header>utils/extra_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
@@ -2456,12 +2459,12 @@ QPushButton:pressed {
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="buttonGroup_name"/>
+  <buttongroup name="buttonGroup_starSelector"/>
   <buttongroup name="buttonGroup_idAttitude"/>
+  <buttongroup name="buttonGroup_segmentGuiding"/>
+  <buttongroup name="buttonGroup_name"/>
+  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
   <buttongroup name="buttonGroup_guider"/>
   <buttongroup name="buttonGroup_instrument"/>
-  <buttongroup name="buttonGroup_starSelector"/>
-  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
-  <buttongroup name="buttonGroup_segmentGuiding"/>
  </buttongroups>
 </ui>
