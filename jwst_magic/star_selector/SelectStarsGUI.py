@@ -69,6 +69,7 @@ import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm
+from matplotlib.cm import ScalarMappable
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
@@ -176,7 +177,7 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         if self.cbar:
             self.cbar.remove()
         self.cbar = self.fig.colorbar(self.fitsplot, ax=self.axes,
-                                      fraction=0.046, pad=0.04, norm=LogNorm())
+                                      fraction=0.046, pad=0.04,)
 
         # Add axis labels
         self.axes.set_xlabel(xlabel)
@@ -1317,10 +1318,11 @@ def run_SelectStars(data, x, y, dist, print_output=True, masterGUIapp=None):
     inds = []
     for i in range(window.n_orientations):
         orientation = window.tableWidget_commands.item(i, 0).text()
-        selected_indices = [int(s) for s in orientation.split(', ')]
+        selected_indices = [int(s)-1 for s in orientation.split(', ')]
         inds.append(selected_indices)
 
     # Save index of center segment (pointing)
     segNum = window.segNum
 
+    print(inds)
     return inds, segNum
