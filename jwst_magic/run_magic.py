@@ -189,17 +189,19 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Create all files for FSW/DHAS/FGSES/etc.
     if file_writer:
+        out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
         for i, guiding_selections_file in enumerate(guiding_selections_path_list):
 
-            # Change out_dir to write data to guiding_config_#/ sub-directory
+            # Change out_dir to write data to guiding_config_#/ sub-directory next to the selectionsf file
             if 'guiding_config' in guiding_selections_file:
-                out_dir = os.path.join(out_dir, 'guiding_config_{}'.format(
+                out_dir_fsw = os.path.join(out_dir, 'guiding_config_{}'.format(
                     guiding_selections_file.split('guiding_config_')[1].split('/')[0]))
 
             if shift_id_attitude:
                 fgs_im_fsw, guiding_selections_file_fsw, psf_center_file_fsw = buildfgssteps.shift_to_id_attitude(
-                    fgs_im, root, guider, out_dir, guiding_selections_file=guiding_selections_file,
+                    fgs_im, root, guider, out_dir_fsw, guiding_selections_file=guiding_selections_file,
                     all_found_psfs_file=all_found_psfs, psf_center_file=psf_center_file,
                     crowded_field=crowded_field, logger_passed=True)
             else:
@@ -212,12 +214,12 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
             for step in steps:
                 fgs_files_obj= buildfgssteps.BuildFGSSteps(
-                    fgs_im_fsw, guider, root, step, out_dir=out_dir,
+                    fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                     psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
                 )
                 write_files.write_all(fgs_files_obj)
-            LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i))
+            LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i+1))
 
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
 

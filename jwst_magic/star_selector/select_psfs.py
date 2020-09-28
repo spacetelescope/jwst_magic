@@ -554,8 +554,8 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
         roots.append(imported_root)
 
     # Remove any cases where the root is None
-    for i, root in enumerate(guiding_selections_file):
-        if roots is None:
+    for i, rt in enumerate(roots):
+        if rt is None:
             roots.pop(i)
             guiding_selections_file.pop(i)
             filenames.pop(i)
@@ -579,8 +579,6 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
 
         # Try to copy the corresponding *all_found_psfs*.txt or *psf_center*.txt file, if present.
         if imported_root is not None:
-            dir_to_look = os.path.dirname(guiding_selections_file)
-
             txt_files = glob.glob(os.path.join(dir_to_look, "*.txt"))
             if output_file == 'psf_center':
                 acceptable_files = [
@@ -594,11 +592,14 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
             file_to_copy = [f for f in acceptable_files if f in txt_files][0]
 
         if file_to_copy is not None:
-            copied_psfs_file = os.path.join(out_dir, 'unshifted_{}_{}_G{}.txt'.format(output_file, root, guider))
-            shutil.copy(file_to_copy, copied_psfs_file)
-            LOGGER.info('Copying over {}'.format(file_to_copy))
-            LOGGER.info('Successfully wrote: {}'.format(copied_psfs_file))
-            return copied_psfs_file
+            try:
+                copied_psfs_file = os.path.join(out_dir, 'unshifted_{}_{}_G{}.txt'.format(output_file, root, guider))
+                shutil.copy(file_to_copy, copied_psfs_file)
+                LOGGER.info('Copying over {}'.format(file_to_copy))
+                LOGGER.info('Successfully wrote: {}'.format(copied_psfs_file))
+                return copied_psfs_file
+            except shutil.SameFileError:
+                return file_to_copy
         else:
             LOGGER.warning(
                 'Could not find a corresponding *{}*.txt file for '
@@ -808,7 +809,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             all_cols = None
             segnum = None
             try:
-                all_found_psfs_path = copy_psfs_files(guiding_selections_file, 'all_found_psfs',root, guider, out_dir)
+                all_found_psfs_path = copy_psfs_files(guiding_selections_file, 'all_found_psfs', root, guider, out_dir)
             except shutil.SameFileError:
                 all_found_psfs_path = guiding_selections_file.replace('guiding_selections', 'all_found_psfs')
             _, all_coords, _= parse_in_file(all_found_psfs_path)
