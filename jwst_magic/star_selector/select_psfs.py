@@ -516,8 +516,8 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
 
     Parameters
     ----------
-    guiding_selections_file : str
-        Path to unshifted_guiding_selections*.txt file
+    guiding_selections_file : list of str
+        Path(s) to unshifted_guiding_selections*.txt file
     output_file : str
         The type of file to copy and return the path of.
         Eg 'all_found_psfs' or 'psf_center'
@@ -534,37 +534,64 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
         Path to the copied all_found_psfs*.txt file
     """
     # Determine the root of the imported guiding selections file name
-    filename = os.path.basename(guiding_selections_file)
-    if 'guiding_selections_' in filename:
-        if 'unshifted' in filename:
-            imported_root = filename.split('unshifted_guiding_selections_')[-1].split('.txt')[0]
+    filenames, roots= [], []
+    for file in guiding_selections_file:
+        filename = os.path.basename(file)
+        if 'guiding_selections_' in filename:
+            if 'unshifted' in filename:
+                imported_root = filename.split('unshifted_guiding_selections_')[-1].split('.txt')[0]
+            else:
+                imported_root = filename.split('guiding_selections_')[-1].split('.txt')[0]
+        elif '_regfile' in filename:
+            imported_root = filename.split('_regfile.txt')[0]
         else:
-            imported_root = filename.split('guiding_selections_')[-1].split('.txt')[0]
-    elif '_regfile' in filename:
-        imported_root = filename.split('_regfile.txt')[0]
-    else:
-        imported_root = None
-        LOGGER.warning(
-            'Could not parse root from provided guiding selections file ({}). '.format(filename) +
-            'Not able to copy over a corresponding {}*.txt file.'.format(output_file)
-        )
+            imported_root = None
+            LOGGER.warning(
+                'Could not parse root from provided guiding selections file ({}). '.format(filename) +
+                'Not able to copy over a corresponding {}*.txt file.'.format(output_file)
+            )
+        filenames.append(filename)
+        roots.append(imported_root)
 
-    # Try to copy the corresponding *all_found_psfs*.txt or *psf_center*.txt file, if present.
-    if imported_root is not None:
-        dir_to_look = os.path.dirname(guiding_selections_file)
+    # Remove any cases where the root is None
+    for i, root in enumerate(guiding_selections_file):
+        if roots is None:
+            roots.pop(i)
+            guiding_selections_file.pop(i)
+            filenames.pop(i)
 
-        txt_files = glob.glob(os.path.join(dir_to_look, "*.txt"))
-        if output_file == 'psf_center':
-            acceptable_files = [
-                os.path.join(dir_to_look, 'unshifted_psf_center_{}.txt'.format(imported_root)),  # newest
-                os.path.join(dir_to_look, 'psf_center_{}.txt'.format(imported_root))]  # oldest
-        elif output_file == 'all_found_psfs':
-            acceptable_files = [
-                os.path.join(dir_to_look, 'unshifted_all_found_psfs_{}.txt'.format(imported_root)),
-                os.path.join(dir_to_look, 'all_found_psfs_{}.txt'.format(imported_root)),
-                os.path.join(dir_to_look, '{}_ALLpsfs.txt'.format(imported_root))]
-        file_to_copy = [f for f in acceptable_files if f in txt_files][0]
+    # If there are any guiding files with a known root left
+    if len(roots) > 0:
+        dirs = [os.path.dirname(file) for file in guiding_selections_file]
+        rootdirs = ['{}_{}'.format(root, dir) for root, dir in zip(roots, dirs)]
 
+        # If the roots or basepaths differ, choose the first one, but log it
+        if len(guiding_selections_file) > 1 and len(set(rootdirs)) != 1:
+            LOGGER.warning('The multiple guiding selections files chosen do not have matching roots '
+                           'and/or basepaths. We will search for the all_found_psf*.txt file using the '
+                           'root/basepath of the first guiding selections file. If this is not the '
+                           'intended search location, re-arrange the order of the guiding selections files.')
+
+        # Use the info from the first guiding selections file in the list to search for the all found psfs file
+        filename = filenames[0]
+        imported_root = roots[0]
+        dir_to_look = dirs[0]
+
+        # Try to copy the corresponding *all_found_psfs*.txt or *psf_center*.txt file, if present.
+        if imported_root is not None:
+            dir_to_look = os.path.dirname(guiding_selections_file)
+
+            txt_files = glob.glob(os.path.join(dir_to_look, "*.txt"))
+            if output_file == 'psf_center':
+                acceptable_files = [
+                    os.path.join(dir_to_look, 'unshifted_psf_center_{}.txt'.format(imported_root)),  # newest
+                    os.path.join(dir_to_look, 'psf_center_{}.txt'.format(imported_root))]  # oldest
+            elif output_file == 'all_found_psfs':
+                acceptable_files = [
+                    os.path.join(dir_to_look, 'unshifted_all_found_psfs_{}.txt'.format(imported_root)),
+                    os.path.join(dir_to_look, 'all_found_psfs_{}.txt'.format(imported_root)),
+                    os.path.join(dir_to_look, '{}_ALLpsfs.txt'.format(imported_root))]
+            file_to_copy = [f for f in acceptable_files if f in txt_files][0]
 
         if file_to_copy is not None:
             copied_psfs_file = os.path.join(out_dir, 'unshifted_{}_{}_G{}.txt'.format(output_file, root, guider))
@@ -603,12 +630,12 @@ def manual_star_selection(data, smoothing, choose_center=False, testing=False, m
 
     Returns
     -------
-    cols : list
-        List of positions and countrates of selected segments
+    cols_list : list of lists
+        List of positions and countrates of selected segments, 1 sub-list per guiding config
     coords : list
-        List of tuples with X and Y positions of selected PSFs
-    nref : int
-        The number of selected reference stars
+        List of tuples with X and Y positions of found PSFs
+    nref : list of int
+        The number of selected reference stars, 1 int per guiding config
     all_cols : list
         List of positions and countrates of all segments in the image
 
@@ -660,32 +687,41 @@ def manual_star_selection(data, smoothing, choose_center=False, testing=False, m
     if not testing and not choose_center:
         gui_data = data.copy()
         gui_data[data == 0] = 1  # Alter null pixel values for LogNorm imshow
-        inds = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
+        inds_list, segnum = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
                                               print_output=False,
                                               masterGUIapp=masterGUIapp)
-    # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF)
+
+        # Print indices of each guiding configuration
+        for i in range(len(inds_list)):
+            ind = inds_list[i]
+            LOGGER.info('Star Selection: Guiding Configuration {} - GS = {}, RS = {}'.format(i, ind[0],
+                        ', '.join([str(c) for c in ind[1:]])))
+
+
+    # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF, e.g. MIMF)
     elif choose_center:
-        inds = [0]
+        inds_list = [[0]]
+        segnum = 0
     # If in testing mode, just make a random list of indices
     else:
         # Make random list of inds
         n_select = min(11, num_psfs)
         LOGGER.info('Star Selection: Testing mode; selecting {} PSFs at random.'.format(n_select))
-        inds = random.sample(range(num_psfs), n_select)
-
-    nref = len(inds) - 1
-    if len(inds) == 0:
+        inds_list = [random.sample(range(num_psfs), n_select)] # a single guiding config
+    nref_list = [len(inds) - 1 for inds in inds_list]
+    if len(inds_list) == 0:
         raise ValueError('Star Selection: No guide star and no reference stars selected')
     else:
-        LOGGER.info('Star Selection: 1 guide star and {} reference stars selected'.format(nref))
+        for i, nref in enumerate(nref_list):
+            LOGGER.info('Star Selection: Config {}: 1 guide star and {} reference stars selected'.format(i+1, nref))
 
     segment_labels = match_psfs_to_segments(x, y, smoothing)
     all_cols = create_cols_for_coords_counts(x, y, countrate, val,
                                              labels=segment_labels,
                                              inds=range(len(x)))
-    cols = create_cols_for_coords_counts(x, y, countrate, val, inds=inds)
+    cols_list = [create_cols_for_coords_counts(x, y, countrate, val, inds=inds) for inds in inds_list]
 
-    return cols, coords, nref, all_cols
+    return cols_list, coords, nref_list, all_cols, segnum
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -736,9 +772,9 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
 
     Returns
     -------
-    guiding_selections_path : str
-        Path to the unshifted_guiding_selections_{root}_G{guider}.txt file, which
-        contains the locations and count rates of the selected guide and
+    guiding_selections_path : list of str
+        List of paths to the guiding_config_#/unshifted_guiding_selections_{root}_G{guider}.txt
+        file, which contains the locations and count rates of the selected guide and
         reference segments
     all_found_psfs_path : str
         Path to the unshifted_all_found_psfs_{root}_G{guider}.txt file, which
@@ -755,17 +791,22 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         if isinstance(data, str):
             data = fits.getdata(data)
 
-        if guiding_selections_file:
+        if guiding_selections_file:  # will be a list of strings
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
             LOGGER.info(
                 "Star Selection: Reading guide and reference star positions from {}"
-                    .format(guiding_selections_file)
+                    .format(', '.join(guiding_selections_file))
             )
-            cols, _, _ = parse_in_file(guiding_selections_file)
+            cols_list, nref_list = [], []  # coords will be overwritten, but they should include the same data each time
+            for file in guiding_selections_file:
+                cols, coords, nref = parse_in_file(file)
+                cols_list.append(cols)
+                nref_list.append(nref)
 
             # Copy over corresponding all_found_psfs and psf_center file, if possible.
             all_cols = None
+            segnum = None
             try:
                 all_found_psfs_path = copy_psfs_files(guiding_selections_file, 'all_found_psfs',root, guider, out_dir)
             except shutil.SameFileError:
@@ -781,11 +822,11 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         else:
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
-            cols, all_coords, nref, all_cols = manual_star_selection(data,
-                                                                     smoothing,
-                                                                     choose_center,
-                                                                     testing,
-                                                                     masterGUIapp)
+            cols_list, all_coords, nref_list, all_cols, segnum = manual_star_selection(data,
+                                                                 smoothing,
+                                                                 choose_center,
+                                                                 testing,
+                                                                 masterGUIapp)
             all_found_psfs_path = None
             psf_center_path = None
 
@@ -800,32 +841,43 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
                                      labels=['label', 'y', 'x', 'countrate'],
                                      cols=all_cols, log=LOGGER)
 
+        if segnum:
+            # Write out center of pointing information
+            center_pointing_path = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
+            utils.write_cols_to_file(center_pointing_path, labels=['segnum'], cols=[segnum], log=LOGGER)
+
         # Write catalog of selected PSFs
-        guiding_selections_path = os.path.join(out_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider))
-        utils.write_cols_to_file(guiding_selections_path,
-                                 labels=['y', 'x', 'countrate'],
-                                 cols=cols, log=LOGGER)
+        guiding_selections_path_list = []
+        for i, cols in enumerate(cols_list):
+
+            guiding_selections_path = os.path.join(out_dir, 'guiding_config_{}'.format(i+1),
+                                                   'unshifted_guiding_selections_{}_{}_G{}.txt'.format(root, i+1, guider))
+            utils.write_cols_to_file(guiding_selections_path,
+                                     labels=['y', 'x', 'countrate'],
+                                     cols=cols, log=LOGGER)
+            guiding_selections_path_list.append(guiding_selections_path)
 
         # Calculate and write out center of PSF information for trk file if smoothing is low
-        if smoothing == 'low' and psf_center_path is None:
+        # The image won't change, so only 1 file is needed (not 1 per guiding command) - pull the 0th index
+        if smoothing == 'low':
             LOGGER.info(
                 "Star Selection: No smoothing chosen so re-running star selection to also calculate PSF center")
-            cols_center, _, _, _ = manual_star_selection(data,
+            cols_center, _, _, _, _ = manual_star_selection(data,
                                                          smoothing='default',
                                                          choose_center=True,
                                                          testing=testing,
                                                          masterGUIapp=masterGUIapp)
 
             LOGGER.info(
-                "Star Selection: PSF center information {} vs Guiding knot information {}".format(
-                    cols_center, cols))
+                "Star Selection: PSF center information {} vs Guiding knot information {}".format(cols_center[0], cols))
             psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
             utils.write_cols_to_file(psf_center_path,
                                      labels=['y', 'x', 'countrate'],
-                                     cols=cols_center, log=LOGGER)
+                                     cols=cols_center[0], log=LOGGER)
 
     except Exception as e:
         LOGGER.exception(e)
         raise
 
-    return guiding_selections_path, all_found_psfs_path, psf_center_path
+    return guiding_selections_path_list, all_found_psfs_path, psf_center_path
+
