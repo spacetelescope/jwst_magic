@@ -520,7 +520,7 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
         Path(s) to unshifted_guiding_selections*.txt file
     output_file : str
         The type of file to copy and return the path of.
-        Eg 'all_found_psfs' or 'psf_center'
+        Eg 'all_found_psfs', 'psf_center', or 'center_pointing'
     root : str
         Name used to generate output folder and output file names.
     guider : int
@@ -589,6 +589,10 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
                     os.path.join(dir_to_look, 'unshifted_all_found_psfs_{}.txt'.format(imported_root)),
                     os.path.join(dir_to_look, 'all_found_psfs_{}.txt'.format(imported_root)),
                     os.path.join(dir_to_look, '{}_ALLpsfs.txt'.format(imported_root))]
+            elif output_file == 'center_pointing':
+                acceptable_files = [
+                    os.path.join(dir_to_look, 'center_pointing_{}.txt'.format(imported_root))
+                ]
             file_to_copy = [f for f in acceptable_files if f in txt_files][0]
 
         if file_to_copy is not None:
@@ -805,9 +809,8 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
                 cols_list.append(cols)
                 nref_list.append(nref)
 
-            # Copy over corresponding all_found_psfs and psf_center file, if possible.
+            # Copy over corresponding all_found_psfs, psf_center, and center_pointing file, if possible.
             all_cols = None
-            segnum = None
             try:
                 all_found_psfs_path = copy_psfs_files(guiding_selections_file, 'all_found_psfs', root, guider, out_dir)
             except shutil.SameFileError:
@@ -817,6 +820,12 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             psf_center_path = None
             try:
                 psf_center_path = copy_psfs_files(guiding_selections_file, 'psf_center', root, guider, out_dir)
+            except:
+                pass
+
+            segnum = None
+            try:
+                center_pointing_path = copy_psfs_files(guiding_selections_file, 'center_pointing', root, guider, out_dir)
             except:
                 pass
 
@@ -842,7 +851,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
                                      labels=['label', 'y', 'x', 'countrate'],
                                      cols=all_cols, log=LOGGER)
 
-        if segnum:
+        if segnum is not None:
             # Write out center of pointing information
             center_pointing_path = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
             utils.write_cols_to_file(center_pointing_path, labels=['segnum'], cols=[segnum], log=LOGGER)
