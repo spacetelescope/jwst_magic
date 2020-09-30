@@ -861,7 +861,8 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         for i, cols in enumerate(cols_list):
 
             guiding_selections_path = os.path.join(out_dir, 'guiding_config_{}'.format(i+1),
-                                                   'unshifted_guiding_selections_{}_{}_G{}.txt'.format(root, i+1, guider))
+                                                   'unshifted_guiding_selections_{}_G{}_config{}.txt'.format(
+                                                       root, guider, i+1))
             utils.write_cols_to_file(guiding_selections_path,
                                      labels=['y', 'x', 'countrate'],
                                      cols=cols, log=LOGGER)
