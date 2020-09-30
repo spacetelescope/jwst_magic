@@ -576,7 +576,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     # 0) Fetch existing information and determine ID attitude
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Define input file info
-    file_root = '{}_G{}'.format(root, guider)
+    file_root = guiding_selections_file.split('guiding_selections_')[-1].split('.txt')[0]
 
     # Load the catalogs with the unshifted data
     guiding_selections_cat = asc.read(guiding_selections_file)

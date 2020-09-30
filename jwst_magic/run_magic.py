@@ -194,7 +194,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
         for i, guiding_selections_file in enumerate(guiding_selections_path_list):
 
-            # Change out_dir to write data to guiding_config_#/ sub-directory next to the selectionsf file
+            # Change out_dir to write data to guiding_config_#/ sub-directory next to the selections file
             if 'guiding_config' in guiding_selections_file:
                 out_dir_fsw = os.path.join(out_dir, 'guiding_config_{}'.format(
                     guiding_selections_file.split('guiding_config_')[1].split('/')[0]))

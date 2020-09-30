@@ -1322,7 +1322,7 @@ class MasterGui(QMainWindow):
             # Note: maintaining if statements and "old" file names for backwards compatibility.
             txt_files = glob.glob(os.path.join(root_dir, "**/*.txt"), recursive=True)
             acceptable_guiding_files_list = [
-                os.path.join(root_dir, 'guiding_config_*', 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)), # newest
+                os.path.join(root_dir, 'guiding_config_*', 'unshifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider)), # newest
                 os.path.join(root_dir, 'guiding_config_*', 'guiding_selections_{}_G{}.txt'.format(root, guider)),
                 os.path.join(root_dir, 'guiding_config_*', '{}_G{}_regfile.txt'.format(root, guider)),
                 os.path.join(root_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)),
@@ -1336,8 +1336,8 @@ class MasterGui(QMainWindow):
 
             # Pull every possible guiding selections file and 1 all found psfs file
             try:
-                self.guiding_selections_file_list = [file for f in acceptable_guiding_files_list
-                                                     for file in fnmatch.filter(txt_files, f)]  # TODO add .sorted()?
+                self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list
+                                                     for file in fnmatch.filter(txt_files, f)])
                 self.all_found_psfs_file = [f for f in acceptable_all_psf_files_list if f in txt_files][0]
             except IndexError:
                 self.guiding_selections_file_list = []
