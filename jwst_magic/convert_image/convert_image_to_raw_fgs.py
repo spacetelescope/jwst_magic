@@ -228,36 +228,6 @@ def correct_nircam_dq(image, dq_array, bit_arr=None):
     return im_copy
 
 
-def fgs_add_dq(image, guider):
-    """Apply a data quality array correction to an FGS image.
-
-    Parameters
-    ----------
-    image : 2-D numpy array
-        Image data
-    guider : int
-        Guider number (1 or 2)
-
-    Returns
-    -------
-    image : 2-D numpy array
-        Image data with DQ array corrections applied
-
-    Notes
-    -----
-    Currently, we only have a map of all flagged pixels but no
-    indication as to why they are flagged. For now, we set all flagged
-    pixels to saturation.
-    """
-    dq_arr = fits.getdata(os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(guider)))
-
-    # Apply dq_arr to image
-    # FIXME for now, set all flagged pixels to saturation
-    image[dq_arr == 1] = 65535
-
-    return image
-
-
 def transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector):
     """Transform image from NIRCam detector raw/det coordinate frame to FGS
     raw, using transformations as defined by the Science Instrument
