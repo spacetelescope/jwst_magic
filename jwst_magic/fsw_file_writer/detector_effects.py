@@ -125,8 +125,8 @@ class FGSDetectorEffects:
         dq_file = os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(self.guider))
         dq_arr = np.copy(fits.getdata(dq_file))
 
-        # For now, set all flagged pixels to saturation
-        dq_arr[dq_arr == 1] = 65535
+        # For now, set all flagged pixels to saturation in the range of 56k - 64k inclusive
+        dq_arr[dq_arr == 1] = np.random.randint(56000, 65000, size=len(dq_arr[dq_arr == 1]))
 
         # Add the correct part of the dq array to the bias
         xlow, xhigh, ylow, yhigh = self.array_bounds
