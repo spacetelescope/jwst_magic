@@ -186,8 +186,13 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
         if 'TRK' not in step:
             assert abs(correct_data_dict['cds'][0] - np.min(BFS.cds)) < assertion_range, \
                 '{} CDS counts out of expected range.'.format(step)
-            assert abs(correct_data_dict['cds'][1] - np.max(BFS.cds)) < assertion_range, \
-                '{} CDS counts out of expected range.'.format(step)
+            if step == 'ID':
+                assertion_range_id = 250 # ID CDS case needs a higher threshold
+                assert abs(correct_data_dict['cds'][1] - np.max(BFS.cds)) < assertion_range_id, \
+                    '{} CDS counts out of expected range.'.format(step)
+            else:
+                assert abs(correct_data_dict['cds'][1] - np.max(BFS.cds)) < assertion_range, \
+                    '{} CDS counts out of expected range.'.format(step)
 
         # Strips
         if step is 'ID':
