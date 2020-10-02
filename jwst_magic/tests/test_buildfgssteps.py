@@ -174,37 +174,33 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
     # For other steps/data types, assert within a range, to account for
     # randomness introduced by detector effects
     else:
-        assertion_range = 20  # Counts; Note full range is two times this
+        assertion_range_min = 20  # Counts; Note full range is two times this
+        assertion_range_max = 250  # Counts; needs to be more open than min because max is no longer 65540
 
         # Bias
-        assert abs(correct_data_dict['bias'][0] - np.min(BFS.bias)) < assertion_range, \
+        assert abs(correct_data_dict['bias'][0] - np.min(BFS.bias)) < assertion_range_min, \
             '{} bias image counts out of expected range.'.format(step)
-        assert abs(correct_data_dict['bias'][1] - np.max(BFS.bias)) < assertion_range, \
+        assert abs(correct_data_dict['bias'][1] - np.max(BFS.bias)) < assertion_range_max, \
             '{} bias image counts out of expected range.'.format(step)
 
         # CDS
         if 'TRK' not in step:
-            assert abs(correct_data_dict['cds'][0] - np.min(BFS.cds)) < assertion_range, \
+            assert abs(correct_data_dict['cds'][0] - np.min(BFS.cds)) < assertion_range_min, \
                 '{} CDS counts out of expected range.'.format(step)
-            if step == 'ID':
-                assertion_range_id = 250 # ID CDS case needs a higher threshold
-                assert abs(correct_data_dict['cds'][1] - np.max(BFS.cds)) < assertion_range_id, \
-                    '{} CDS counts out of expected range.'.format(step)
-            else:
-                assert abs(correct_data_dict['cds'][1] - np.max(BFS.cds)) < assertion_range, \
-                    '{} CDS counts out of expected range.'.format(step)
+            assert abs(correct_data_dict['cds'][1] - np.max(BFS.cds)) < assertion_range_max, \
+                '{} CDS counts out of expected range.'.format(step)
 
         # Strips
         if step is 'ID':
-            assert abs(correct_data_dict['strips'][0] - np.min(BFS.strips)) < assertion_range, \
+            assert abs(correct_data_dict['strips'][0] - np.min(BFS.strips)) < assertion_range_min, \
                 'ID strips counts out of expected range.'
-            assert abs(correct_data_dict['strips'][1] - np.max(BFS.strips)) < assertion_range, \
+            assert abs(correct_data_dict['strips'][1] - np.max(BFS.strips)) < assertion_range_max, \
                 'ID strips counts out of expected range.'
 
         # Final step product
-        assert abs(correct_data_dict[step][0] - np.min(BFS.image)) < assertion_range, \
+        assert abs(correct_data_dict[step][0] - np.min(BFS.image)) < assertion_range_min, \
             '{} counts out of expected range.'.format(step)
-        assert abs(correct_data_dict[step][1] - np.max(BFS.image)) < assertion_range, \
+        assert abs(correct_data_dict[step][1] - np.max(BFS.image)) < assertion_range_max, \
             '{} counts out of expected range.'.format(step)
 
     # Assert exact count rates
