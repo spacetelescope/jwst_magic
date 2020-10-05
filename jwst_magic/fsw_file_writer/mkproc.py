@@ -55,7 +55,8 @@ class Mkproc(object):
     """
 
     def __init__(self, guider, root, xarr, yarr, counts, step, thresh_factor=0.5,
-                 out_dir=None, dhas_dir='dhas', ground_system_dir='ground_system'):
+                 out_dir=None, dhas_dir='dhas', ground_system_dir='ground_system',
+                 acq1_imgsize=None, acq2_imgsize=None):
         """ Initialize the class and create CECIL proc files for guider 1 and 2.
 
         Parameters
@@ -83,6 +84,10 @@ class Mkproc(object):
             Name of dhas directory. Either 'dhas' or 'dhas_shifted'
         ground_system_dir : str
             Name of ground_system directory. Either 'ground_system' or 'ground_system_shifted'
+        acq1_imgsize : int
+            Array size of the ACQ1 window
+        acq2_imgsize : int
+            Array size of the ACQ2 window
         """
 
         # Create output directory if does not exist
@@ -110,7 +115,8 @@ class Mkproc(object):
             self.create_id_proc_file(guider, root, xarr, yarr, counts,
                                      thresh_factor=thresh_factor)
         elif step == 'ACQ':
-            self.create_acq_proc_file(guider, root, xarr, yarr, counts)
+            self.create_acq_proc_file(guider, root, xarr, yarr, counts,
+                                      acq1_imgsize=acq1_imgsize, acq2_imgsize=acq2_imgsize)
 
     def find_templates(self, guider, step, template_path):
         """Open the different templates used to make the proc file.
@@ -225,7 +231,7 @@ class Mkproc(object):
                                                                  '{0}_G{1}_ID.prc'.
                                                                  format(root, guider))))
 
-    def create_acq_proc_file(self, guider, root, xarr, yarr, counts):
+    def create_acq_proc_file(self, guider, root, xarr, yarr, counts, acq1_imgsize, acq2_imgsize):
         """Creates the CECIL proc file for the acquisition (ACQ) steps.
         Writes to {out_dir}/out/{root}/dhas/{root}_G{guider}_ACQ.prc
 
@@ -241,14 +247,22 @@ class Mkproc(object):
             Y coordinates of guide and reference stars (pixels)
         counts : list
             Count rates of guide and reference stars
+        acq1_imgsize : int
+            Array size of the ACQ1 window
+        acq2_imgsize : int
+            Array size of the ACQ2 window
         """
         eol = '\n'
 
-        # Corner coordinates & guide star counts
-        xangle, yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
+        if len(xarr) != 1:
+            xarr, yarr = xarr[0], yarr[0]
 
-        if len(xangle) != 1:
-            xangle, yangle = xangle[0], yangle[0]
+        # Corner coordinates & guide star counts
+        gs_xangle, gs_yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
+        a1_xangle, a1_yangle = coordinate_transforms.Raw2DHAS(int(xarr - acq1_imgsize / 2),
+                                                              int(yarr - acq1_imgsize / 2), guider)
+        a2_xangle, a2_yangle = coordinate_transforms.Raw2DHAS(int(xarr - acq2_imgsize / 2),
+                                                              int(yarr - acq2_imgsize / 2), guider)
 
         # Get threshold from countrate (not from STC file)
         if len(counts) != 1:
@@ -268,8 +282,8 @@ class Mkproc(object):
 
             # Write guide star coordinates
             file_out.write('@IFGS_GUIDESTAR {0}, 2, {1:12.4f}, {2:12.4f}, \
-                           {3:12.4f}, {4:8d}'.format(self.guider, float(xangle),
-                                                     float(yangle), float(counts),
+                           {3:12.4f}, {4:8d}'.format(self.guider, float(gs_xangle),
+                                                     float(gs_yangle), float(counts),
                                                      int(threshgs)))
 
             self.write_from_template(self.template_b, file_out)
@@ -278,8 +292,8 @@ class Mkproc(object):
             file_out.write('@IFGS_CONFIG {0}, SWADDRESS=spaceWireAddr1, SLOT=1, NINTS=1, \
             NGROUPS=groupNum1, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=128, NCOLS=128, \
             ROWCORNER={1:12.4f},COLCORNER={2:12.4f}'.format(self.guider,
-                                                            float(xangle),
-                                                            float(yangle)))
+                                                            float(a1_xangle),
+                                                            float(a1_yangle)))
             file_out.write(eol)
 
             self.write_from_template(self.template_c, file_out)
@@ -288,8 +302,8 @@ class Mkproc(object):
             file_out.write('@IFGS_CONFIG {0}, spaceWireAddr2, SLOT=2, NINTS=1, \
             NGROUPS=groupNum2, NFRAMES=1, NSAMPLES=1, GROUPGAP=1, NROWS=32, NCOLS=32, \
             ROWCORNER={1:12.4f}, COLCORNER={2:12.4f}'.format(self.guider,
-                                                             float(xangle),
-                                                             float(yangle)))
+                                                             float(a2_xangle),
+                                                             float(a2_yangle)))
             file_out.write(eol)
 
             self.write_from_template(self.template_d, file_out)

@@ -174,7 +174,7 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
     # For other steps/data types, assert within a range, to account for
     # randomness introduced by detector effects
     else:
-        assertion_range = 20  # Counts; Note full range is two times this
+        assertion_range = 250  # Counts;
 
         # Bias
         assert abs(correct_data_dict['bias'][0] - np.min(BFS.bias)) < assertion_range, \
