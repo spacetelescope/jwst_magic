@@ -97,8 +97,8 @@ class FGSDetectorEffects:
         self.array_bounds = self.get_subarray_location()
 
     def add_detector_effects(self):
-        """Create an array with zeroth read bias, read noise, and kTc
-        noise effects included
+        """Create an array with zeroth read bias, read noise, kTc
+        noise, and dq array effects included
 
         Returns
         -------
@@ -110,9 +110,28 @@ class FGSDetectorEffects:
         self.add_zeroth_read_bias()
         self.add_read_noise()
         self.add_ktc_noise()
+        self.add_fgs_dq()
         # bias = add_pedestal()
 
         return self.bias
+
+    def add_fgs_dq(self):
+        """Add DQ flags the same way as the bias
+
+        Currently, we only have a map of all flagged pixels but no
+        indication as to why they are flagged. For now, we set all flagged
+        pixels to saturation.
+        """
+        dq_file = os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(self.guider))
+        dq_arr = np.copy(fits.getdata(dq_file))
+
+        # For now, set all flagged pixels to saturation in the range of 56k - 64k inclusive
+        dq_arr[dq_arr == 1] = np.random.randint(56000, 65000, size=len(dq_arr[dq_arr == 1]))
+
+        # Add the correct part of the dq array to the bias
+        xlow, xhigh, ylow, yhigh = self.array_bounds
+        self.bias += dq_arr[xlow:xhigh, ylow:yhigh]
+
 
     def add_ktc_noise(self):
         """Add kTc noise, which imprints at reset, to the bias.
