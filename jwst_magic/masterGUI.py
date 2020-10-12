@@ -730,17 +730,17 @@ class MasterGui(QMainWindow):
         pass
 
     def update_segment_guiding_shift(self):
-        if self.sender() == self.groupBox_segmentGuiding:
-            if self.groupBox_segmentGuiding.isChecked():
-                self.radioButton_shifted.setEnabled(os.path.exists(self.shifted_im_file))
+        """This gets triggered when you select the segment guiding
+        box or when you click one of the id attitude buttons"""
+        if self.groupBox_segmentGuiding.isChecked():
+            if len(self.shifted_im_file_list) != 0:
+                self.radioButton_shifted.setEnabled(False not in
+                                                    [os.path.exists(path) for path in self.shifted_im_file_list])
             else:
                 self.radioButton_shifted.setEnabled(False)
 
-        else:
-            if self.radioButton_shifted.isChecked():
-                self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
-            elif self.radioButton_unshifted.isChecked():
-                self.lineEdit_regfileSegmentGuiding.setText(self.guiding_selections_file)
+            root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
+            self.lineEdit_regfileSegmentGuiding.setText(root_dir)
 
     def update_naming_method(self):
         if self.radioButton_name_manual.isChecked():
