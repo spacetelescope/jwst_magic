@@ -251,6 +251,7 @@ class MasterGui(QMainWindow):
         self.pushButton_root.clicked.connect(self.on_click_root)
         self.pushButton_out.clicked.connect(self.on_click_out)
         self.textEdit_out.installEventFilter(self)
+        self.textEdit_out.textChanged.connect(self.update_filepreview)
         self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
         # Image convertor widgets
@@ -1319,12 +1320,18 @@ class MasterGui(QMainWindow):
 
 
     def update_filepreview(self, new_guiding_selections=False):
-        # If either:
-        #   1) manual naming is selected and the root, out_dir, and guider have been defined, or
-        #   2) commissioning naming is selected and the practice, CAR, and observation have
-        #       been selected
-        # show an example filepath to a simulated image, and auto-populate the guiding_selections*.txt.text
-        # filepath. Also, auto-generate important filenames as class attributes.
+        """
+        If either:
+          1) manual naming is selected and the root, out_dir, and guider have been defined, or
+          2) commissioning naming is selected and the practice, CAR, and observation have
+              been selected
+        show an example filepath to a simulated image, and auto-populate the guiding_selections*.txt.text
+        filepath. Also, auto-generate important filenames as class attributes.
+        """
+        # If you change the main path, update the guiding selections based on that information
+        if self.sender() in [self.pushButton_inputImage, self.lineEdit_inputImage, self.buttonGroup_guider,
+                             self.lineEdit_root, self.textEdit_out]:
+            new_guiding_selections = True
 
         if self.is_valid_path_defined():
             manual_naming = self.radioButton_name_manual.isChecked()
