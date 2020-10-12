@@ -345,90 +345,76 @@ class SegmentGuidingCalculator:
 
             out_string += (countrate_qualifier)
             out_string += (countrate_uncertainty_qualifier)
-            out_string_start = out_string
 
-            if self.override_type == "POF":
-                f.write(out_string_start)
+            if self.override_type == "SOF":
+                # Determine which segments have been selected
+                orientations = list(self.selected_segment_ids)
+                guide_segments = [s[0] for s in orientations]
+                all_selected_segs = list(set(np.concatenate(orientations)))
 
-                if verbose:
-                    self.log.info('Segment Guiding: Guide Star Override: ' +
-                                  out_string_start.replace('-star', '\n                -star').
-                                  replace('-ref_only', '\n                -ref_only'))
+                if self._refonly:
+                    n_guide_segments = len(guide_segments)
 
-            elif self.override_type == "SOF":
-                for config_num, selected_segment_ids in enumerate(self.selected_segment_ids_list):
-                    # Determine which segments have been selected
-                    orientations = list(selected_segment_ids)
-                    guide_segments = [s[0] for s in orientations]
-                    all_selected_segs = list(set(np.concatenate(orientations)))
+                for i in range(len(all_selected_segs)):
+                    # Reorder all possible segments
+                    all_selected_segs.append(all_selected_segs[0])
+                    all_selected_segs.remove(all_selected_segs[0])
+                    new_seg = list(np.copy(all_selected_segs))
 
+                    # Add to orientation list if not already provided as guide star
+                    if new_seg[0] not in guide_segments:
+                        orientations.append(new_seg)
+                        guide_segments.append(new_seg[0])
+
+                # If countrates were included in the input file, use them!
+                # Note: This used to be where the oss factor was divded out, but htat is now removed
+                rate = self.countrate_array
+                uncertainty = self.countrate_array * self.threshold_factor
+
+                # Write the commands for each orientation
+                for i_o, orientation in enumerate(orientations):
+                    guide_seg_id = orientation[0]
+
+                    label = 'star'
+                    seg = i_o + 1
+                    # If implementing "ref_only" labels, determine if star is guide
+                    # or reference star, and alter label and ID accordingly
                     if self._refonly:
-                        n_guide_segments = len(guide_segments)
+                        if i_o >= n_guide_segments:
+                            label = 'ref_only'
+                            seg = i_o + 1 - n_guide_segments
 
-                    for i in range(len(all_selected_segs)):
-                        # Reorder all possible segments
-                        all_selected_segs.append(all_selected_segs[0])
-                        all_selected_segs.remove(all_selected_segs[0])
-                        new_seg = list(np.copy(all_selected_segs))
+                    # Format segment properties (ID, RA, Dec, countrate, uncertainty)
+                    star_string = ' -%s%d = %d, %.6f, %.6f, %.1f, %.1f' % (
+                        label, seg, guide_seg_id + 1, self.seg_ra[guide_seg_id],
+                        self.seg_dec[guide_seg_id], rate[guide_seg_id],
+                        uncertainty[guide_seg_id])
 
-                        # Add to orientation list if not already provided as guide star
-                        if new_seg[0] not in guide_segments:
-                            orientations.append(new_seg)
-                            guide_segments.append(new_seg[0])
+                    if not self._refonly or (self._refonly and label == 'star'):
+                        # Add list of segment IDs for all reference stars
+                        for ref_seg_id in orientation:
+                            if ref_seg_id != guide_seg_id:
+                                star_string += ', %d' % (ref_seg_id + 1)
 
-                    # If countrates were included in the input file, use them!
-                    # Note: This used to be where the oss factor was divided out, but htat is now removed
-                    rate = self.countrate_array
-                    uncertainty = self.countrate_array * self.threshold_factor
+                    out_string += star_string
 
-                    # Write the commands for each orientation
-                    for i_o, orientation in enumerate(orientations):
-                        guide_seg_id = orientation[0]
+                # Write out the override report
+                self.write_override_report(out_file, orientations, n_guide_segments, obs_list_name)
 
-                        label = 'star'
-                        seg = i_o + 1
-                        # If implementing "ref_only" labels, determine if star is guide
-                        # or reference star, and alter label and ID accordingly
-                        if self._refonly:
-                            if i_o >= n_guide_segments:
-                                label = 'ref_only'
-                                seg = i_o + 1 - n_guide_segments
-
-                        # Format segment properties (ID, RA, Dec, countrate, uncertainty)
-                        star_string = ' -%s%d = %d, %.6f, %.6f, %.1f, %.1f' % (
-                            label, seg, guide_seg_id + 1, self.seg_ra[guide_seg_id],
-                            self.seg_dec[guide_seg_id], rate[guide_seg_id],
-                            uncertainty[guide_seg_id])
-                        print('star_string1: ', star_string)
-
-                        if not self._refonly or (self._refonly and label == 'star'):
-                            # Add list of segment IDs for all reference stars
-                            for ref_seg_id in orientation:
-                                if ref_seg_id != guide_seg_id:
-                                    star_string += ', %d' % (ref_seg_id + 1)
-
-                        out_string = out_string_start + star_string
-
-                    # Write out the override report
-                    self.write_override_report(out_file, config_num+1, orientations, n_guide_segments, obs_list_name)
-
-                    f.write(out_string)
-                    f.write('/n')
-
-                    if verbose:
-                        self.log.info('Segment Guiding: Guide Star Override: ' +
-                                    out_string.replace('-star', '\n                -star').
-                                    replace('-ref_only', '\n                -ref_only'))
+            f.write(out_string)
 
             if verbose:
+                self.log.info('Segment Guiding: Guide Star Override: ' +
+                            out_string.replace('-star', '\n                -star').
+                            replace('-ref_only', '\n                -ref_only'))
                 self.log.info('Segment Guiding: Saved override command to {}'.
                             format(out_file))
 
 
-    def write_override_report(self, filename, config_num, orientations, n_guide_segments, obs_list_name):
+    def write_override_report(self, filename, orientations, n_guide_segments, obs_list_name):
         # Define path and name of output override report
         file_root = filename.split('.txt')[0]
-        out_file = '{}_config{}_REPORT.txt'.format(file_root, config_num)
+        out_file = '{}_REPORT.txt'.format(file_root)
         out_file = os.path.join(self.out_dir, out_file)
 
         username = getpass.getuser()
@@ -595,7 +581,7 @@ class SegmentGuidingCalculator:
             format(len(self.seg_id_array), segment_infile)
         )
 
-    def get_selected_segs(self, selected_segs_list):
+    def get_selected_segs(self, selected_segs):
         """If a file of selected segments has been provided, get their
         locations and count rates.
 
@@ -610,28 +596,33 @@ class SegmentGuidingCalculator:
         TypeError
             Incompatible file type provided as selected_segs
         """
-        self.selected_segment_ids_list = []
-        for selected_segs in selected_segs_list:
-            if isinstance(selected_segs, np.ndarray):
-                self.log.info('Segment Guiding: Reading in segments from array')
-                self.selected_segment_ids_list.append(selected_segs - 1)
+        # If the selected segments are an array of lists (passed from GUI)
+        if isinstance(selected_segs, np.ndarray):
+            self.log.info('Segment Guiding: Guiding on segments selected from GUI')
+            # If there is more than one orientation provided
+            if isinstance(selected_segs[0], list):
+                self.selected_segment_ids = []
+                for i, orientation in enumerate(selected_segs):
+                    self.selected_segment_ids.append([s - 1 for s in orientation])
 
-            # If they are a guiding_selections*.txt, parse it.
-            elif isinstance(selected_segs, str):
-                if os.path.exists(selected_segs):
-                    self.log.info('Segment Guiding: Reading in segments from {}'.format(selected_segs))
-                    selected_segment_ids = self.parse_guiding_selections_file(selected_segs)
-                    self.selected_segment_ids_list.append(selected_segment_ids)
-                else:
-                    raise FileNotFoundError(
-                        'Cannot find file {} passed to selected_segs_list'.format(selected_segs)
-                    )
-
+            # If there is only one
             else:
-                raise TypeError(
-                    'Cannot use type {} passed to selected_segs_list; must pass an existing '
-                    'guiding_selections*.txt path or array of indices.'.format(type(selected_segs))
-                )
+                self.selected_segment_ids = selected_segs - 1
+
+        # Else if they are a list of guiding_selections*.txt files, parse them.
+        elif bool(selected_segs) and all(isinstance(elem, str) for elem in selected_segs):
+            self.selected_segment_ids =[]
+            for path in selected_segs:
+                if os.path.exists(path):
+                    selected_segs_ids = self.parse_guiding_selections_file(path)
+                self.selected_segment_ids.append(selected_segs_ids)
+
+        # Otherwise, we don't know what it is...
+        else:
+            raise TypeError(
+                'Unrecognized data type passed to selected_segs ({}); must be guiding_selections*.txt path or array of indices.'.
+                format(selected_segs)
+            )
 
     def parse_guiding_selections_file(self, selected_segs):
         """Extract the segment positions and count rates from a guiding_selections*.txt
@@ -689,7 +680,7 @@ class SegmentGuidingCalculator:
                 'the provided input file.'
             )
 
-        return [selected_segs_ids]
+        return selected_segs_ids
 
     def plot_segments(self):
         """Generate and save plots of segments in V2/V3 and RA/Dec.
