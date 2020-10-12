@@ -399,6 +399,7 @@ class SegmentGuidingCalculator:
                             label, seg, guide_seg_id + 1, self.seg_ra[guide_seg_id],
                             self.seg_dec[guide_seg_id], rate[guide_seg_id],
                             uncertainty[guide_seg_id])
+                        print('star_string1: ', star_string)
 
                         if not self._refonly or (self._refonly and label == 'star'):
                             # Add list of segment IDs for all reference stars

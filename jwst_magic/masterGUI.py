@@ -487,27 +487,26 @@ class MasterGui(QMainWindow):
                 )
 
             else:
-                # TODO: These are the commands that the user chose. Need to use this info when saving out files
-                print([item.text() for item in self.comboBox_guidingcommands.checkedItems()])
-
                 # Get APT program information from parsed header
                 self.parse_header(input_image)
 
                 # Define location of all_found_psfs catalog file
-                if self.lineEdit_regfileSegmentGuiding.text() is '':
-                    if self.radioButton_shifted.isChecked():
-                        segment_infile = self.shifted_all_found_psfs_file
-                    else:
-                        segment_infile = self.all_found_psfs_file
+                if self.radioButton_shifted.isChecked():
+                    segment_infile = self.shifted_all_found_psfs_file
                 else:
-                    segment_infile = self.lineEdit_regfileSegmentGuiding.text()
+                    segment_infile = self.all_found_psfs_file
 
                 # Verify that the all_found_psfs*.txt file exists
                 if not os.path.exists(segment_infile):
-                    raise OSError('Provided segment infile {} not found.'.format(segment_infile))
+                    raise OSError('All founds psfs file {} not found.'.format(segment_infile))
 
-                # Load guiding_selections*.txt
-                selected_segs = self.lineEdit_regfileSegmentGuiding.text()
+                # Load selected guiding_selections*.txt
+                combobox_choices = [item.text() for item in self.comboBox_guidingcommands.checkedItems()]
+                combobox_filenames = [file.split(': ')[-1] for file in combobox_choices]
+                selected_segs_list = []
+                for file in combobox_filenames:
+                    ind = np.where([file in filepath for filepath in self.guiding_selections_file_list])[0][0]
+                    selected_segs_list.append(self.guiding_selections_file_list[ind])
 
                 # Run the tool and generate the file
                 # Initialize the dialog
@@ -520,7 +519,7 @@ class MasterGui(QMainWindow):
                 segment_guiding.generate_segment_override_file(
                     segment_infile, guider, self.program_id, self.observation_num,
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
-                    root=root, out_dir=out_dir, selected_segs=selected_segs,
+                    root=root, out_dir=out_dir, selected_segs_list=selected_segs_list,
                     master_gui_app=self.app, parameter_dialog=True,
                     dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
@@ -641,7 +640,7 @@ class MasterGui(QMainWindow):
             if not os.path.exists(dirname):
                 raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
 
-            self.update_filepreview()
+            self.update_filepreview(new_guiding_selections=True)
 
     def on_click_infile(self):
         """ Using the Infile Open button (open file) """
