@@ -1291,6 +1291,33 @@ class MasterGui(QMainWindow):
 
         return self.canvas_shifted.draw()
 
+    @staticmethod
+    def search_acceptable_files(root_dir, root, guider, shifted):
+        if shifted is False:
+            acceptable_guiding_files_list = [
+                os.path.join(root_dir, 'guiding_config_*',
+                             'unshifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider)),  # newest
+                os.path.join(root_dir, 'guiding_config_*', 'guiding_selections_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, 'guiding_config_*', '{}_G{}_regfile.txt'.format(root, guider)),
+                os.path.join(root_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, '{}_G{}_regfile.txt'.format(root, guider))]  # oldest
+
+            acceptable_all_psf_files_list = [
+                os.path.join(root_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))]
+
+        else:
+            acceptable_guiding_files_list = [os.path.join(root_dir, 'guiding_config_*',
+                                        'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider))]
+
+            acceptable_all_psf_files_list = [os.path.join(root_dir, 'guiding_config_*',
+                                        'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider))]
+
+        return acceptable_guiding_files_list, acceptable_all_psf_files_list
+
+
     def update_filepreview(self, new_guiding_selections=False):
         # If either:
         #   1) manual naming is selected and the root, out_dir, and guider have been defined, or
@@ -1319,20 +1346,11 @@ class MasterGui(QMainWindow):
             if root != self.log_filename.split('/')[-1].split('masterGUI_')[-1].split('.log')[0]:
                 self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-            # Note: maintaining if statements and "old" file names for backwards compatibility.
+            # Note: maintaining if statements and "old" file names for backwards compatibility
             txt_files = glob.glob(os.path.join(root_dir, "**/*.txt"), recursive=True)
-            acceptable_guiding_files_list = [
-                os.path.join(root_dir, 'guiding_config_*', 'unshifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider)), # newest
-                os.path.join(root_dir, 'guiding_config_*', 'guiding_selections_{}_G{}.txt'.format(root, guider)),
-                os.path.join(root_dir, 'guiding_config_*', '{}_G{}_regfile.txt'.format(root, guider)),
-                os.path.join(root_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)),
-                os.path.join(root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)),
-                os.path.join(root_dir, '{}_G{}_regfile.txt'.format(root, guider))] # oldest
-
-            acceptable_all_psf_files_list = [
-                os.path.join(root_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider)),
-                os.path.join(root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)),
-                os.path.join(root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))]
+            fits_files = glob.glob(os.path.join(root_dir, "**/*.fits"), recursive=True)
+            acceptable_guiding_files_list, acceptable_all_psf_files_list = \
+                self.search_acceptable_files(root_dir, root, guider, shifted=False)
 
             # Pull every possible guiding selections file and 1 all found psfs file
             try:
@@ -1349,20 +1367,27 @@ class MasterGui(QMainWindow):
             self.converted_im_file = os.path.join(root_dir, 'FGS_imgs', 'unshifted_{}_G{}.fits'.format(root, guider))
 
             # Update shifted FGS image & catalog filepaths
-            self.shifted_im_file = os.path.join(root_dir, 'FGS_imgs', 'shifted_{}_G{}.fits'.format(root, guider))
-            self.shifted_all_found_psfs_file = os.path.join(
-                root_dir, 'shifted_all_found_psfs_{}_G{}.txt'.format(root, guider)
-            )
-            self.shifted_guiding_selections_file = os.path.join(
-                root_dir, 'shifted_guiding_selections_{}_G{}.txt'.format(root, guider)
-            )
+            shifted_acceptable_guiding_files_list, shifted_acceptable_all_psf_files_list = \
+                self.search_acceptable_files(root_dir, root, guider, shifted=True)
+
+            self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(
+                txt_files, shifted_acceptable_all_psf_files_list[0]))
+
+            self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(
+                txt_files, shifted_acceptable_guiding_files_list[0]))
+
+            # Update shifted FGS image(s) filepath
+            self.shifted_im_file_list = sorted(fnmatch.filter(
+                fits_files, os.path.join(root_dir, 'guiding_config_*', 'FGS_imgs',
+                                         'shifted_{}_G{}_config*.fits'.format(root, guider))))
 
             # Update guiding_selections*.txt paths in GUI
+            print(self.guiding_selections_file_list)
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list]:
                 self.lineEdit_regfileStarSelector.setText(', '.join(self.guiding_selections_file_list))
                 if new_guiding_selections:
                     new_guiding_selections = self.guiding_selections_file_list
-                self.update_guiding_selections(new_selections=new_guiding_selections)
+                    self.update_guiding_selections(new_selections=new_guiding_selections) #TODO - not sure this is working correctly
             else:
                 self.lineEdit_regfileStarSelector.setText("")
                 self.lineEdit_regfileSegmentGuiding.setText("")
