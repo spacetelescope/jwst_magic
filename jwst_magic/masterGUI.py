@@ -745,6 +745,8 @@ class MasterGui(QMainWindow):
             root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
             self.lineEdit_regfileSegmentGuiding.setText(root_dir)
 
+            self.update_checkable_combobox()
+
     def update_naming_method(self):
         if self.radioButton_name_manual.isChecked():
             self.stackedWidget.setCurrentIndex(1)
@@ -1094,6 +1096,10 @@ class MasterGui(QMainWindow):
                 item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
                 self.comboBox_showcommandsshifted.addItem(item)
 
+        self.update_checkable_combobox()
+
+
+    def update_checkable_combobox(self):
         # Clear and re-populate checkable combobox in segment guiding section
         root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
         self.comboBox_guidingcommands.clear()
@@ -1101,7 +1107,7 @@ class MasterGui(QMainWindow):
         if not self.radioButton_shifted.isChecked():
             guiding_selections = self.guiding_selections_file_list
         else:
-            guiding_selections = self.shifted_guiding_selections_file
+            guiding_selections = self.shifted_guiding_selections_file_list
 
         for i, command_file in enumerate(guiding_selections):
             item = "Command {}: {}".format(i+1, command_file.split('/')[-1])
