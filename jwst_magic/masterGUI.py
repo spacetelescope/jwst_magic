@@ -1054,8 +1054,8 @@ class MasterGui(QMainWindow):
         Parameters
         ----------
         new_selections : list of str
-            List of new guiding selection file paths that will be loaded into the GUI and need
-            to show up as options in the above locations
+            List of new unshifted guiding selection file paths that will be loaded into the GUI
+            and need to show up as options in the above locations
         """
         # Update combobox in converted preview section if file(s) are loaded
         if isinstance(new_selections, list):
@@ -1076,25 +1076,28 @@ class MasterGui(QMainWindow):
             except AttributeError:
                 pass
 
-        # Add chosen files to combobox to choose from
+        # Add chosen files to converted image combobox to choose from
         if len(self.comboBox_showcommandsconverted) == 1 and "Guiding Command" in \
                 self.comboBox_showcommandsconverted.currentText():
             for i, command_file in enumerate(self.guiding_selections_file_list):
                 item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
                 self.comboBox_showcommandsconverted.addItem(item)
 
-        # TODO Update combobox in shifted preview section if file(s) are loaded
+        # Add chosen files to shifted image combobox to choose from
+        if len(self.comboBox_showcommandsshifted) == 1 and "Guiding Command" in \
+                self.comboBox_showcommandsshifted.currentText():
+            for i, command_file in enumerate(self.shifted_guiding_selections_file_list):
+                item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                self.comboBox_showcommandsshifted.addItem(item)
 
         # Clear and re-populate checkable combobox in segment guiding section
         root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
         self.comboBox_guidingcommands.clear()
+        self.lineEdit_regfileSegmentGuiding.setText(os.path.join(root_dir))
         if not self.radioButton_shifted.isChecked():
-            self.lineEdit_regfileSegmentGuiding.setText(os.path.join(root_dir))
             guiding_selections = self.guiding_selections_file_list
         else:
-            self.lineEdit_regfileSegmentGuiding.setText(os.path.join(root_dir, 'shifted'))
-            fakefile = '/Users/sosborne/Desktop/MAGIC/out/test3-6/guiding_selections_for_obs01_G1.txt'
-            guiding_selections = [self.shifted_guiding_selections_file, fakefile]  # TODO: fix this
+            guiding_selections = self.shifted_guiding_selections_file
 
         for i, command_file in enumerate(guiding_selections):
             item = "Command {}: {}".format(i+1, command_file.split('/')[-1])
@@ -1199,49 +1202,50 @@ class MasterGui(QMainWindow):
         if not self.is_valid_path_defined():
             return
 
-        # Does a shift image exist? If so, show it!
-        if os.path.exists(self.shifted_im_file):
+        # Is the self.shifted_im_file_list variable defined yet?
+        try:
+            self.shifted_im_file_list
+        except AttributeError:
+            return
+
+        # Do all the shifted images exist? If so, show thrm!
+        if False not in [os.path.exists(shifted_im_file) for shifted_im_file in self.shifted_im_file_list]:
             # Prepare to show shifted image
             self.canvas_shifted.axes.set_visible(True)
             self.tabWidget.setCurrentIndex(2)
             self.textEdit_showingShifted.setEnabled(True)
 
-            # Update filepath
-            self.textEdit_showingShifted.setText(self.shifted_im_file)
-
             # Toggle the "use shifted image" buttons
             self.radioButton_shifted.setChecked(True)
-            self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
+            #self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file) #TODO:??
 
             # Enable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(True)
 
             # Enable and populate guiding commands button
             self.comboBox_showcommandsshifted.setEnabled(True)
-            if len(self.comboBox_showcommandsshifted) == 1 and \
-                    "Guiding Command" in self.comboBox_showcommandsshifted.currentText():
-                self.shifted_guiding_selections_file_list = [self.shifted_guiding_selections_file] # TODO remove fix
-                for i, command_file in enumerate(sorted(self.shifted_guiding_selections_file_list)):
-                    item = "Command {}: {}".format(i, command_file.split('/')[-1])
-                    self.comboBox_showcommandsshifted.addItem(item)
-
-            # Load data
-            data, _ = utils.get_data_and_header(self.shifted_im_file)
-            data[data <= 0] = 1
-
-            # Load all_found_psfs*.text
-            x, y = [None, None]
-            if os.path.exists(self.shifted_all_found_psfs_file):
-                psf_list = asc.read(self.shifted_all_found_psfs_file)
-                x = psf_list['x']
-                y = psf_list['y']
-
-            # Plot data image and peak locations from all_found_psfs*.txt
-            self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
-
-            # If possible, plot the selected stars in the guiding_selections*.txt
             if self.comboBox_showcommandsshifted.currentIndex() != 0:
-                shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[self.comboBox_showcommandsshifted.currentIndex()-1]
+                i = self.comboBox_showcommandsshifted.currentIndex() - 1
+
+                # Update filepath
+                self.textEdit_showingShifted.setText(self.shifted_im_file_list[i])
+
+                # Load data
+                data, _ = utils.get_data_and_header(self.shifted_im_file_list[i])
+                data[data <= 0] = 1
+
+                # Load all_found_psfs*.text
+                x, y = [None, None]
+                if os.path.exists(self.shifted_all_found_psfs_file_list[i]):
+                    psf_list = asc.read(self.shifted_all_found_psfs_file_list[i])
+                    x = psf_list['x']
+                    y = psf_list['y']
+
+                # Plot data image and peak locations from all_found_psfs*.txt
+                self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
+
+                # If possible, plot the selected stars in the guiding_selections*.txt
+                shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[i]
 
                 if os.path.exists(shifted_guiding_selections_file):
                     selected_psf_list = asc.read(shifted_guiding_selections_file)
@@ -1251,29 +1255,34 @@ class MasterGui(QMainWindow):
                     # Remove old circles
                     for line in self.shifted_im_circles:
                         self.canvas_shifted.axes.lines.remove(line[0])
+
                     self.shifted_im_circles = [
                         self.canvas_shifted.axes.plot(x_selected[0], y_selected[0],
-                                                        'o', ms=25, mfc='none',
-                                                        mec='yellow', mew=2, lw=0)
+                                                      'o', ms=25, mfc='none',
+                                                      mec='yellow', mew=2, lw=0)
                     ]
                     self.shifted_im_circles.append(
                         self.canvas_shifted.axes.plot(x_selected[1:], y_selected[1:],
-                                                        'o', ms=25, mfc='none',
-                                                        mec='darkorange', mew=2, lw=0)
+                                                      'o', ms=25, mfc='none',
+                                                      mec='darkorange', mew=2, lw=0)
                    )
             else:
-                for line in self.converted_im_circles:
+                for line in self.shifted_im_circles:
                     line[0].set_visible(False)
-                self.canvas_converted.peaks.set_visible(False)
-
-                self.canvas_converted.draw()
+                try:
+                    self.canvas_shifted.peaks.set_visible(False) # won't be defined until after first pass
+                except AttributeError:
+                    pass
+                self.canvas_shifted.draw()
 
         # If not, show nothing.
         else:
             # Update textbox showing filepath
             self.textEdit_showingShifted.setText(
                 'No shifted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
-                                                                   self.shifted_im_file))
+                    '/'.join(self.shifted_im_file_list[0].split('/')[:-3] + \
+                             ['guiding_config_*/FGS_imgs/shifted_*_config*.fits'])))
+
             self.textEdit_showingShifted.setEnabled(False)
 
             # Disable the "use shifted image" buttons
@@ -1310,7 +1319,7 @@ class MasterGui(QMainWindow):
 
         else:
             acceptable_guiding_files_list = [os.path.join(root_dir, 'guiding_config_*',
-                                        'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider))]
+                                        'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider))]
 
             acceptable_all_psf_files_list = [os.path.join(root_dir, 'guiding_config_*',
                                         'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider))]
@@ -1392,8 +1401,8 @@ class MasterGui(QMainWindow):
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list]:
                 self.lineEdit_regfileStarSelector.setText(', '.join(self.guiding_selections_file_list))
                 if new_guiding_selections:
-                    new_guiding_selections = self.guiding_selections_file_list
-                    self.update_guiding_selections(new_selections=new_guiding_selections) #TODO - not sure this is working correctly
+                    new_selections = self.guiding_selections_file_list
+                    self.update_guiding_selections(new_selections=new_selections) #TODO - not sure this is working correctly
             else:
                 self.lineEdit_regfileStarSelector.setText("")
                 self.lineEdit_regfileSegmentGuiding.setText("")
