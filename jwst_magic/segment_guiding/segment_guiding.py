@@ -76,7 +76,7 @@ FGS_SIAF = pysiaf.Siaf('FGS')
 
 class SegmentGuidingCalculator:
     def __init__(self, override_type, program_id, observation_num, visit_num,
-                 root, out_dir, segment_infile=None, guide_star_params_dict=None,
+                 root, out_dir, segment_infile_list=None, guide_star_params_dict=None,
                  selected_segs_list=None, threshold_factor=0.9, countrate_factor=None,
                  countrate_uncertainty_factor=None, log=None):
         """Initialize the segment guiding calculator class.
@@ -96,9 +96,9 @@ class SegmentGuidingCalculator:
             Name used to generate output folder and output filenames.
         out_dir : str
             Location of out/ directory.
-        segment_infile : str, optional
-            Filepath to all_found_psfs*.txt file with list of all segment locations
-            and countrates
+        segment_infile_list : list of str, optional
+            Filepath(s) to all_found_psfs*.txt file with list of all
+            segment locations and countrates
             Used for SOF Generation
         guide_star_params_dict : dict, optional
             Dictionary containing guide star parameters, for example:
@@ -111,7 +111,7 @@ class SegmentGuidingCalculator:
              'seg_num': 0}  # selected segment to guide on
              Used for SOF Generation
         selected_segs_list : list of str, optional
-            List of filepath(s) to guiding_selections*.txt file with list of
+            List of filepath(s) to guiding_selections*.txt files with list of
             locations and countrates for the selected segments (guide and
             reference stars). Used for SOF Generation
         threshold_factor : float, optional
@@ -159,7 +159,7 @@ class SegmentGuidingCalculator:
         if self.override_type == "SOF":
             self.get_gs_params(guide_star_params_dict)
             self.get_guider_aperture()
-            self.parse_infile(segment_infile)
+            self.parse_infile(segment_infile_list)
             self.get_selected_segs(selected_segs_list)
 
     def get_center_pointing(self):
@@ -171,7 +171,8 @@ class SegmentGuidingCalculator:
         """
 
         # Ensure the provided segment ID is valid
-        segment_max = len(self.v2_seg_array)
+        flat_v2_array = [val for l in self.v2_seg_array for val in l]
+        segment_max = int(len(flat_v2_array) / self._num_infiles) # same number of founds psfs for each config
         if (self.seg_num < 0) or (self.seg_num > segment_max):
             msg = 'Segment number {} out of range (0, {})'.format(self.seg_num, segment_max)
             raise ValueError(msg)
@@ -182,25 +183,34 @@ class SegmentGuidingCalculator:
 
         # If a specific segment was provided, set the V2/V3 ref point to be
         # that segment's location
-        if self.seg_num > 0:
-            self.v2_seg_n = self.v2_seg_array[self.seg_num - 1]
-            self.v3_seg_n = self.v3_seg_array[self.seg_num - 1]
-        # Otherwise, if the input segment ID was 0, set the V2/V3 ref point to
-        # be the mean of all segments' locations
-        else:
-            self.v2_seg_n = self.v2_seg_array.mean()
-            self.v3_seg_n = self.v3_seg_array.mean()
+        self.v2_seg_n, self.v3_seg_n = [], []
+        self.v2_aim, self.v3_aim = [], []
+        self.x_idl_aim, self.y_idl_aim = [], []
 
-        # Calculate aim
-        self.v2_ref = float(self.v2_ref)   # obtained from FGS setup
-        self.v3_ref = float(self.v3_ref)
-        dv2_aim = self.v2_seg_n
-        dv3_aim = self.v3_seg_n
-        self.v2_aim = self.v2_ref + dv2_aim
-        self.v3_aim = self.v3_ref + dv3_aim
+        for i, (v2_seg_array, v3_seg_array) in enumerate(zip(self.v2_seg_array, self.v3_seg_array)):
+            if self.seg_num > 0:
+                v2_seg_n = v2_seg_array[self.seg_num - 1]
+                v3_seg_n = v3_seg_array[self.seg_num - 1]
+            # Otherwise, if the input segment ID was 0, set the V2/V3 ref point to
+            # be the mean of all segments' locations
+            else:
+                v2_seg_n = v2_seg_array.mean()
+                v3_seg_n = v3_seg_array.mean()
 
-        # Convert to Ideal coordinates
-        self.x_idl_aim, self.y_idl_aim = self.fgs_siaf_aperture.tel_to_idl(self.v2_aim, self.v3_aim)
+            # Calculate aim
+            v2_aim = self.v2_ref + v2_seg_n # v2_seg_n = dv2_aim
+            v3_aim = self.v3_ref + v3_seg_n # v3_seg_n = dv3_aim
+
+            # Convert to Ideal coordinates
+            x_idl_aim, y_idl_aim = self.fgs_siaf_aperture.tel_to_idl(v2_aim, v3_aim)
+
+            # Save variables to list attributes
+            self.v2_seg_n.append(v2_seg_n)
+            self.v3_seg_n.append(v3_seg_n)
+            self.v2_aim.append(v2_aim)
+            self.v3_aim.append(v3_aim)
+            self.x_idl_aim.append(x_idl_aim)
+            self.y_idl_aim.append(y_idl_aim)
 
     def get_guider_aperture(self):
         """Extract needed parameters from the SIAF file for the given FGS.
@@ -218,40 +228,54 @@ class SegmentGuidingCalculator:
 
         # Read SIAF for appropriate guider aperture with pysiaf
         self.fgs_siaf_aperture = FGS_SIAF[det]
-        self.v2_ref = self.fgs_siaf_aperture.V2Ref
-        self.v3_ref = self.fgs_siaf_aperture.V3Ref
+        self.v2_ref = float(self.fgs_siaf_aperture.V2Ref)
+        self.v3_ref = float(self.fgs_siaf_aperture.V3Ref)
         self.v3_idl_yangle = self.fgs_siaf_aperture.V3IdlYAngle
         self.v_idl_parity = self.fgs_siaf_aperture.VIdlParity
 
     def calculate_effective_ra_dec(self):
         """Calculate the effective RAs and Decs for each segment.
+        Loop through different configurations and save attributes in lists
         """
-        self.n_segments = len(self.seg_id_array)
+        self.n_segments = []
+        self.seg_ra, self.seg_dec = [], []
+        self.x_idl_segs, self.y_idl_segs = [], []
+        self.x_det_segs, self.y_det_segs = [], []
 
-        # Get the attitude matrix
-        attitude = rotations.attitude(self.v2_aim + self.v2_boff,
-                                      self.v3_aim + self.v3_boff,
-                                      self.ra, self.dec, self.pa)
+        for i, seg_id_array in enumerate(self.seg_id_array):
+            n_segments = len(seg_id_array)
 
-        # Get RA and Dec for each segment.
-        self.seg_ra = np.zeros(self.n_segments)
-        self.seg_dec = np.zeros(self.n_segments)
-        for i in range(self.n_segments):
-            v2 = self.v2_ref + self.v2_seg_array[i]
-            v3 = self.v3_ref + self.v3_seg_array[i]
-            self.seg_ra[i], self.seg_dec[i] = rotations.pointing(attitude, v2, v3,
-                                                                 positive_ra=True)
+            # Get the attitude matrix
+            attitude = rotations.attitude(self.v2_aim[i] + self.v2_boff,
+                                          self.v3_aim[i] + self.v3_boff,
+                                          self.ra, self.dec, self.pa)
 
-        # Convert V2/V3 coordinates to ideal coordinates and detector frame coordinates
-        idl_coords = self.fgs_siaf_aperture.tel_to_idl(self.v2_seg_array + self.v2_ref,
-                                                       self.v3_seg_array + self.v3_ref)
-        self.x_idl_segs, self.y_idl_segs = idl_coords
-        self.x_det_segs, self.y_det_segs = self.fgs_siaf_aperture.idl_to_det(self.x_idl_segs,
-                                                                             self.y_idl_segs)
+            # Get RA and Dec for each segment.
+            seg_ra = np.zeros(n_segments)
+            seg_dec = np.zeros(n_segments)
+            for j in range(n_segments):
+                v2 = self.v2_ref + self.v2_seg_array[i][j]
+                v3 = self.v3_ref + self.v3_seg_array[i][j]
+                seg_ra[j], seg_dec[j] = rotations.pointing(attitude, v2, v3,
+                                                                     positive_ra=True)
 
-        # Check to make sure all the computed segment locations are within
-        # the needed FOV
-        self.check_segments_inside_fov(attitude)
+            # Convert V2/V3 coordinates to ideal coordinates and detector frame coordinates
+            idl_coords = self.fgs_siaf_aperture.tel_to_idl(self.v2_seg_array[i] + self.v2_ref,
+                                                           self.v3_seg_array[i] + self.v3_ref)
+            x_idl_segs, y_idl_segs = idl_coords
+            x_det_segs, y_det_segs = self.fgs_siaf_aperture.idl_to_det(x_idl_segs,y_idl_segs)
+
+            # Check to make sure all the computed segment locations are within
+            # the needed FOV
+            self.check_segments_inside_fov(attitude, x_det_segs, y_det_segs, seg_id_array, seg_ra, seg_dec)
+
+            self.n_segments.append(n_segments)
+            self.seg_ra.append(seg_ra)
+            self.seg_dec.append(seg_dec)
+            self.x_idl_segs.append(x_idl_segs)
+            self.y_idl_segs.append(y_idl_segs)
+            self.x_det_segs.append(x_det_segs)
+            self.y_det_segs.append(y_det_segs)
 
     def write_override_file(self, verbose=True):
         """Write the segment guiding override file: {out_dir}/out/{root}/
@@ -262,6 +286,28 @@ class SegmentGuidingCalculator:
         verbose : bool, optional
             Log results of calculations and file content
         """
+        # Flatten data into 1 list of all PSFs
+        self.countrate_array_flat = [x for n in self.countrate_array for x in n.tolist()]
+        self.n_segments_flat = sum(self.n_segments)
+        self.seg_id_array_flat = np.arange(len([x for n in self.seg_id_array for x in n.tolist()]))+1 # Re-do numbering so all have unique numbers
+        self.v2_seg_array_flat = [x for n in self.v2_seg_array for x in n.tolist()]
+        self.v3_seg_array_flat = [x for n in self.v3_seg_array for x in n.tolist()]
+        self.x_idl_segs_flat = [x for n in self.x_idl_segs for x in n.tolist()]
+        self.y_idl_segs_flat = [x for n in self.y_idl_segs for x in n.tolist()]
+        self.seg_ra_flat = np.array(self.seg_ra).flatten()
+        self.seg_dec_flat = np.array(self.seg_dec).flatten()
+        self.x_det_segs_flat = [x for n in self.x_det_segs for x in n.tolist()]
+        self.y_det_segs_flat = [x for n in self.y_det_segs for x in n.tolist()]
+
+        # Re-match numbering in self.selected_segment_ids
+        self.selected_segment_ids_flat = []
+        for i, config in enumerate(self.selected_segment_ids):
+            new_config = []
+            for psf_ind in config:
+                shift = sum(self.n_segments[:i])
+                new_config.append(self.seg_id_array_flat[shift+psf_ind]-1)
+            self.selected_segment_ids_flat.append(new_config)
+
         # Split multiple specified observations up
         obs_num_list, obs_list_name = self._split_obs_num(self.observation_num)
 
@@ -304,12 +350,12 @@ class SegmentGuidingCalculator:
             all_segments = 'All Segment Locations'
             all_segments += '\n                Segment     dV2    dV3    xIdl' +\
                             '   yIdl     RA         Dec         xDet     yDet'
-            for p in range(self.n_segments):
+            for p in range(self.n_segments_flat):
                 all_segments += ('\n                %5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f'
-                                 % (self.seg_id_array[p], self.v2_seg_array[p],
-                                    self.v3_seg_array[p], self.x_idl_segs[p],
-                                    self.y_idl_segs[p], self.seg_ra[p],
-                                    self.seg_dec[p], self.x_det_segs[p], self.y_det_segs[p]))
+                                 % (self.seg_id_array_flat[p], self.v2_seg_array_flat[p],
+                                    self.v3_seg_array_flat[p], self.x_idl_segs_flat[p],
+                                    self.y_idl_segs_flat[p], self.seg_ra_flat[p],
+                                    self.seg_dec_flat[p], self.x_det_segs_flat[p], self.y_det_segs_flat[p]))
             self.log.info('Segment Guiding: ' + all_segments)
 
         # Determine what the commands should be:
@@ -348,7 +394,7 @@ class SegmentGuidingCalculator:
 
             if self.override_type == "SOF":
                 # Determine which segments have been selected
-                orientations = list(self.selected_segment_ids)
+                orientations = list(self.selected_segment_ids_flat)
                 guide_segments = [s[0] for s in orientations]
                 all_selected_segs = list(set(np.concatenate(orientations)))
 
@@ -367,9 +413,9 @@ class SegmentGuidingCalculator:
                         guide_segments.append(new_seg[0])
 
                 # If countrates were included in the input file, use them!
-                # Note: This used to be where the oss factor was divded out, but htat is now removed
-                rate = self.countrate_array
-                uncertainty = self.countrate_array * self.threshold_factor
+                # Note: This used to be where the oss factor was divided out, but that is now removed
+                rate = self.countrate_array_flat
+                uncertainty = np.array(self.countrate_array_flat) * self.threshold_factor
 
                 # Write the commands for each orientation
                 for i_o, orientation in enumerate(orientations):
@@ -386,8 +432,8 @@ class SegmentGuidingCalculator:
 
                     # Format segment properties (ID, RA, Dec, countrate, uncertainty)
                     star_string = ' -%s%d = %d, %.6f, %.6f, %.1f, %.1f' % (
-                        label, seg, guide_seg_id + 1, self.seg_ra[guide_seg_id],
-                        self.seg_dec[guide_seg_id], rate[guide_seg_id],
+                        label, seg, guide_seg_id + 1, self.seg_ra_flat[guide_seg_id],
+                        self.seg_dec_flat[guide_seg_id], rate[guide_seg_id],
                         uncertainty[guide_seg_id])
 
                     if not self._refonly or (self._refonly and label == 'star'):
@@ -447,16 +493,16 @@ class SegmentGuidingCalculator:
                         label = 'ref_only'
                         seg = i_o + 1 - n_guide_segments
 
-                values = [label + str(seg), int(guide_seg_id + 1), self.seg_ra[guide_seg_id], self.seg_dec[guide_seg_id],
-                           self.x_idl_segs[guide_seg_id], self.y_idl_segs[guide_seg_id],
-                           -self.x_idl_segs[guide_seg_id], self.y_idl_segs[guide_seg_id],
-                           self.x_det_segs[guide_seg_id], self.y_det_segs[guide_seg_id]]
+                values = [label + str(seg), int(guide_seg_id + 1), self.seg_ra_flat[guide_seg_id], self.seg_dec_flat[guide_seg_id],
+                           self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
+                           -self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
+                           self.x_det_segs_flat[guide_seg_id], self.y_det_segs_flat[guide_seg_id]]
 
                 row_string_to_format = '{:<13s}| ' + '{:<13d}| ' +  '{:<13f}| '* (len(values) - 2)
                 row_string = row_string_to_format[:-2].format(*values) + '\n'
                 f.write(row_string)
 
-    def check_segments_inside_fov(self, attitude):
+    def check_segments_inside_fov(self, attitude, x_det_segs, y_det_segs, seg_id_array, seg_ra, seg_dec):
         """Check to make sure that the calculated RA and Dec of each
         segment is within the field of view of the given FGS.
 
@@ -466,7 +512,7 @@ class SegmentGuidingCalculator:
             Attitude matrix generated by pysiaf.utils.rotations.attitude
         """
         # Check to make sure no segments are off the detector, pixel-wise
-        for x, y, i_seg in zip(self.x_det_segs, self.y_det_segs, self.seg_id_array):
+        for x, y, i_seg in zip(x_det_segs, y_det_segs, seg_id_array):
             if x < 0.5 or x > 2048.5:
                 self.log.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
             if y < 0.5 or y > 2048.5:
@@ -488,9 +534,8 @@ class SegmentGuidingCalculator:
         # Create a matplotlib Path that encompasses the entire detector
         fov_path = mpltPath.Path(vertices_sky)
 
-        # Determine if every segment RA and Dec is within that Path (i.e.
-        # within the guider FOV)
-        seg_pointings = [(seg_ra, seg_dec) for seg_ra, seg_dec in zip(self.seg_ra, self.seg_dec)]
+        # Determine if every segment RA and Dec is within that Path (i.e. within the guider FOV)
+        seg_pointings = [(seg_ra, seg_dec) for seg_ra, seg_dec in zip(seg_ra, seg_dec)]
         segs_in_fov = fov_path.contains_points(seg_pointings)
         if not segs_in_fov.all():
             segments_outside = np.where(segs_in_fov is False)[0]
@@ -528,58 +573,67 @@ class SegmentGuidingCalculator:
         self.pa = float(guide_star_params_dict['pa'])
         self.seg_num = int(guide_star_params_dict['seg_num'])
 
-    def parse_infile(self, segment_infile):
+    def parse_infile(self, segment_infile_list):
         """Get the segment positions and count rates from a file.
 
         Parameters
         ----------
-        segment_infile : str
-            File containing all segment locations and count rates
+        segment_infile_list : list of str
+            List of files containing all segment locations and count rates
 
         Raises
         ------
         TypeError
             Incompatible file type provided as segment_infile
         """
-        # If the input file is a .txt file, parse the file
-        if segment_infile[-4:] == '.txt':
-            read_table = asc.read(segment_infile)
-            column_names = read_table.colnames
-            n_segs = len(read_table)
+        self.countrate_array = []
+        self.seg_id_array = []
+        self.v2_seg_array = []
+        self.v3_seg_array = []
+        self._num_infiles = 0
 
-            # Are the segment positions already in V2/V3?
-            if (any(['V2Seg' == c for c in column_names])) and \
-               (any(['V3Seg' == c for c in column_names])):
-                segment_coords = read_table
+        for segment_infile in segment_infile_list:
+            # If the input file is a .txt file, parse the file
+            if segment_infile[-4:] == '.txt':
+                read_table = asc.read(segment_infile)
+                column_names = read_table.colnames
+                n_segs = len(read_table)
 
-            # If not, convert pixel x/y to V2/V3
-            elif (any(['x' == c for c in column_names])) and \
-                 (any(['y' == c for c in column_names])):
-                segment_coords = Table()
-                segment_coords['SegID'] = np.linspace(1, n_segs, n_segs).astype(int)
-                v2, v3 = coordinate_transforms.Raw2Tel(read_table['x'],
-                                                       read_table['y'],
-                                                       self.fgs_num)
-                segment_coords['V2Seg'], segment_coords['V3Seg'] = v2, v3
+                # Are the segment positions already in V2/V3?
+                if (any(['V2Seg' == c for c in column_names])) and \
+                   (any(['V3Seg' == c for c in column_names])):
+                    segment_coords = read_table
+
+                # If not, convert pixel x/y to V2/V3
+                elif (any(['x' == c for c in column_names])) and \
+                     (any(['y' == c for c in column_names])):
+                    segment_coords = Table()
+                    segment_coords['SegID'] = np.linspace(1, n_segs, n_segs).astype(int)
+                    v2, v3 = coordinate_transforms.Raw2Tel(read_table['x'],
+                                                           read_table['y'],
+                                                           self.fgs_num)
+                    segment_coords['V2Seg'], segment_coords['V3Seg'] = v2, v3
+
+                else:
+                    raise TypeError('Incompatible file type: ', segment_infile)
+
+                # If the countrates are included in the input file, read them!
+                if any(['countrate' == c for c in column_names]):
+                    self.countrate_array.append(read_table['countrate'])
 
             else:
                 raise TypeError('Incompatible file type: ', segment_infile)
 
-            # If the countrates are included in the input file, read them!
-            if any(['countrate' == c for c in column_names]):
-                self.countrate_array = read_table['countrate']
+            # Define the IDs and coordinates of all segments
+            self.seg_id_array.append(segment_coords['SegID'])
+            self.v2_seg_array.append(segment_coords['V2Seg'])
+            self.v3_seg_array.append(segment_coords['V3Seg'])
+            self._num_infiles += 1
 
-        else:
-            raise TypeError('Incompatible file type: ', segment_infile)
-
-        # Define the IDs and coordinates of all segments
-        self.seg_id_array = segment_coords['SegID']
-        self.v2_seg_array = segment_coords['V2Seg']
-        self.v3_seg_array = segment_coords['V3Seg']
-        self.log.info(
-            'Segment Guiding: {} segment coordinates read from {}'.
-            format(len(self.seg_id_array), segment_infile)
-        )
+            self.log.info(
+                'Segment Guiding: {} segment coordinates read from {}'.
+                format(len(segment_coords['SegID']), segment_infile)
+            )
 
     def get_selected_segs(self, selected_segs):
         """If a file of selected segments has been provided, get their
@@ -612,9 +666,9 @@ class SegmentGuidingCalculator:
         # Else if they are a list of guiding_selections*.txt files, parse them.
         elif bool(selected_segs) and all(isinstance(elem, str) for elem in selected_segs):
             self.selected_segment_ids =[]
-            for path in selected_segs:
+            for i, path in enumerate(selected_segs):
                 if os.path.exists(path):
-                    selected_segs_ids = self.parse_guiding_selections_file(path)
+                    selected_segs_ids = self.parse_guiding_selections_file(path, i)
                 self.selected_segment_ids.append(selected_segs_ids)
 
         # Otherwise, we don't know what it is...
@@ -624,13 +678,17 @@ class SegmentGuidingCalculator:
                 format(selected_segs)
             )
 
-    def parse_guiding_selections_file(self, selected_segs):
+    def parse_guiding_selections_file(self, selected_segs, num_file):
         """Extract the segment positions and count rates from a guiding_selections*.txt
 
         Parameters
         ----------
         selected_segs : str
             Filepath to guiding_selections*.txt
+        num_file : int
+            The index of the guiding_selections*.txt file in the input list.
+            Used to match PSFs in selections file to v2_seg_array and v3_seg_array
+            which were read in from the all_found_psfs file
 
         Raises
         ------
@@ -638,7 +696,7 @@ class SegmentGuidingCalculator:
             Incompatible guiding_selections*.txt file provided as selected_segs
         """
         # Make sure the file is ascii-readable
-        n_segs = len(self.seg_id_array)
+        n_segs = len(self.seg_id_array[num_file])
         try:
             read_selected_segs = asc.read(selected_segs)
             column_names = read_selected_segs.colnames
@@ -671,8 +729,8 @@ class SegmentGuidingCalculator:
         selected_segs_ids = []
         for coords in zip(selected_segment_coords['V2Seg', 'V3Seg']):
             for i_seg in range(n_segs):
-                if coords[0]['V2Seg'] == self.v2_seg_array[i_seg] and \
-                   coords[0]['V3Seg'] == self.v3_seg_array[i_seg]:
+                if coords[0]['V2Seg'] == self.v2_seg_array[num_file][i_seg] and \
+                   coords[0]['V3Seg'] == self.v3_seg_array[num_file][i_seg]:
                     selected_segs_ids.append(i_seg)
         if len(selected_segs_ids) == 0:
             raise TypeError(
@@ -903,7 +961,7 @@ class SegmentGuidingCalculator:
         return final_num_list, obs_list_string
 
 
-def generate_segment_override_file(segment_infile, guider,
+def generate_segment_override_file(segment_infile_list, guider,
                                    program_id, observation_num, visit_num,
                                    ra=None, dec=None,
                                    root=None, out_dir=None, selected_segs_list=None,
@@ -915,8 +973,8 @@ def generate_segment_override_file(segment_infile, guider,
 
     Parameters
     ----------
-    segment_infile : str
-        File path to all_found_psfs*.txt file with list of all segment locations
+    segment_infile_list : list of str
+        File path(s) to all_found_psfs*.txt file with list of all segment locations
         and countrates
     guider : int
         Which guider is being used: 1 or 2
@@ -930,7 +988,6 @@ def generate_segment_override_file(segment_infile, guider,
         RA of guide star
     dec :  float, optional
         DEC of guide star
-
     root : str, optional
         Name used to generate output folder and output filenames. If not
         specified, will be derived from the segment_infile name.
@@ -938,7 +995,7 @@ def generate_segment_override_file(segment_infile, guider,
         Location of out/ directory. If not specified, will be placed
         within the repository: .../jwst_magic/out/
     selected_segs_list : list of str
-        List of file path(s) to guiding_selections*.txt file with list of
+        List of file path(s) to guiding_selections*.txt files with list of
         locations and countrates for the selected segments (guide and
         reference stars)
     guide_star_params_dict : dict, optional
@@ -969,7 +1026,7 @@ def generate_segment_override_file(segment_infile, guider,
         will be created
     """
 
-    root = utils.make_root(root, segment_infile)
+    root = utils.make_root(root, segment_infile_list[0])  # pull the root from the 0th all psfs file
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
 
     if log is None:
@@ -1033,7 +1090,7 @@ def generate_segment_override_file(segment_infile, guider,
         # Set up guiding calculator object
         sg = SegmentGuidingCalculator(
             "SOF", program_id, observation_num, visit_num, root, out_dir,
-            segment_infile=segment_infile,
+            segment_infile_list=segment_infile_list,
             guide_star_params_dict=guide_star_params_dict,
             selected_segs_list=selected_segs_list, threshold_factor=threshold_factor,
             log=log

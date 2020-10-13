@@ -490,23 +490,27 @@ class MasterGui(QMainWindow):
                 # Get APT program information from parsed header
                 self.parse_header(input_image)
 
-                # Define location of all_found_psfs catalog file
+                # Define location of all_found_psfs catalog file(s)
                 if self.radioButton_shifted.isChecked():
-                    segment_infile = self.shifted_all_found_psfs_file
+                    all_psf_files = self.shifted_all_found_psfs_file_list
+                    guiding_files = self.shifted_guiding_selections_file_list
                 else:
-                    segment_infile = self.all_found_psfs_file
-
-                # Verify that the all_found_psfs*.txt file exists
-                if not os.path.exists(segment_infile):
-                    raise OSError('All founds psfs file {} not found.'.format(segment_infile))
+                    all_psf_files = [self.all_found_psfs_file]
+                    guiding_files = self.guiding_selections_file_list
 
                 # Load selected guiding_selections*.txt
                 combobox_choices = [item.text() for item in self.comboBox_guidingcommands.checkedItems()]
                 combobox_filenames = [file.split(': ')[-1] for file in combobox_choices]
                 selected_segs_list = []
+                segment_infile_list = []
                 for file in combobox_filenames:
-                    ind = np.where([file in filepath for filepath in self.guiding_selections_file_list])[0][0]
-                    selected_segs_list.append(self.guiding_selections_file_list[ind])
+                    ind = np.where([file in filepath for filepath in guiding_files])[0][0]
+                    selected_segs_list.append(guiding_files[ind])
+                    segment_infile_list.append(all_psf_files[ind])
+
+                # Verify that the all_found_psfs*.txt file(s) exist
+                if False in [os.path.exists(path) for path in segment_infile_list]:
+                    raise OSError('Missing all founds psfs file(s) {}.'.format(segment_infile_list))
 
                 # Run the tool and generate the file
                 # Initialize the dialog
@@ -517,7 +521,7 @@ class MasterGui(QMainWindow):
 
                 # Generate the file
                 segment_guiding.generate_segment_override_file(
-                    segment_infile, guider, self.program_id, self.observation_num,
+                    segment_infile_list, guider, self.program_id, self.observation_num,
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
                     root=root, out_dir=out_dir, selected_segs_list=selected_segs_list,
                     master_gui_app=self.app, parameter_dialog=True,
@@ -730,7 +734,7 @@ class MasterGui(QMainWindow):
 
     def update_segment_guiding_shift(self):
         """This gets triggered when you select the segment guiding
-        box or when you click one of the id attitude buttons"""
+        box or when you click one of the id attitude radio buttons"""
         if self.groupBox_segmentGuiding.isChecked():
             if len(self.shifted_im_file_list) != 0:
                 self.radioButton_shifted.setEnabled(False not in
