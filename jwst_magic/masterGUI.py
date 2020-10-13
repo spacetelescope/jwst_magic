@@ -492,21 +492,23 @@ class MasterGui(QMainWindow):
 
                 # Define location of all_found_psfs catalog file(s)
                 if self.radioButton_shifted.isChecked():
-                    all_psf_files = self.shifted_all_found_psfs_file_list
                     guiding_files = self.shifted_guiding_selections_file_list
+                    all_psf_files = self.shifted_all_found_psfs_file_list
+                    segment_infile_list = []
                 else:
-                    all_psf_files = [self.all_found_psfs_file]
                     guiding_files = self.guiding_selections_file_list
+                    segment_infile_list = [self.all_found_psfs_file] * len(guiding_files)
 
                 # Load selected guiding_selections*.txt
                 combobox_choices = [item.text() for item in self.comboBox_guidingcommands.checkedItems()]
                 combobox_filenames = [file.split(': ')[-1] for file in combobox_choices]
                 selected_segs_list = []
-                segment_infile_list = []
                 for file in combobox_filenames:
                     ind = np.where([file in filepath for filepath in guiding_files])[0][0]
                     selected_segs_list.append(guiding_files[ind])
-                    segment_infile_list.append(all_psf_files[ind])
+                    # for shifted, you'll have 1 all found psfs file per guiding selections file
+                    if self.radioButton_shifted.isChecked():
+                        segment_infile_list.append(all_psf_files[ind])
 
                 # Verify that the all_found_psfs*.txt file(s) exist
                 if False in [os.path.exists(path) for path in segment_infile_list]:
