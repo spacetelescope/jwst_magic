@@ -251,7 +251,6 @@ class MasterGui(QMainWindow):
         self.pushButton_root.clicked.connect(self.on_click_root)
         self.pushButton_out.clicked.connect(self.on_click_out)
         self.textEdit_out.installEventFilter(self)
-        self.textEdit_out.textChanged.connect(self.update_filepreview)
         self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
         # Image convertor widgets
@@ -267,6 +266,7 @@ class MasterGui(QMainWindow):
         self.groupBox_segmentGuiding.toggled.connect(self.update_segment_guiding_shift)
         self.radioButton_regfileSegmentGuiding.toggled.connect(self.enable_segment_guiding)
         self.radioButton_photometryOverride.toggled.connect(self.enable_segment_guiding)
+        self.lineEdit_regfileSegmentGuiding.editingFinished.connect(self.update_checkable_combobox)
 
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
@@ -337,7 +337,7 @@ class MasterGui(QMainWindow):
                     if not os.path.exists(dirname):
                         raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
 
-                self.update_filepreview()
+                self.update_filepreview(new_guiding_selections=True)
 
         return False
 
@@ -500,6 +500,8 @@ class MasterGui(QMainWindow):
                     segment_infile_list = [self.all_found_psfs_file] * len(guiding_files)
 
                 # Load selected guiding_selections*.txt
+                if len(self.comboBox_guidingcommands.checkedItems()) == 0:
+                    raise ValueError('No guiding commands chosen from dropdown box.')
                 combobox_choices = [item.text() for item in self.comboBox_guidingcommands.checkedItems()]
                 combobox_filenames = [file.split(': ')[-1] for file in combobox_choices]
                 selected_segs_list = []
@@ -1102,21 +1104,40 @@ class MasterGui(QMainWindow):
 
 
     def update_checkable_combobox(self):
-        # Clear and re-populate checkable combobox in segment guiding section
-        root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
-        self.comboBox_guidingcommands.clear()
-        self.lineEdit_regfileSegmentGuiding.setText(os.path.join(root_dir))
-        if not self.radioButton_shifted.isChecked():
-            guiding_selections = self.guiding_selections_file_list
-        else:
-            guiding_selections = self.shifted_guiding_selections_file_list
+        if self.groupBox_segmentGuiding.isChecked():
+            # Define path to look for files based on contents of lineEdit_regfileSegmentGuiding
+            if self.sender() == self.lineEdit_regfileSegmentGuiding:
+                path = self.lineEdit_regfileSegmentGuiding.text()
+                root = path.split('/out/')[-1].split('/')[0]
+            else:
+                root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
+                path = root_dir
+                root = self.lineEdit_root.text()
+                self.lineEdit_regfileSegmentGuiding.setText(os.path.join(root_dir))
 
-        for i, command_file in enumerate(guiding_selections):
-            item = "Command {}: {}".format(i+1, command_file.split('/')[-1])
-            self.comboBox_guidingcommands.addItem(item)
-            item = self.comboBox_guidingcommands.model().item(i, 0)
-            item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-            item.setCheckState(Qt.Unchecked)
+            # Re-define files based on path found above
+            txt_files = glob.glob(os.path.join(path, "**/*.txt"), recursive=True)
+            acceptable_guiding_files_list, acceptable_all_psf_files_list = \
+                self.search_acceptable_files(path, root, '*', shifted=self.radioButton_shifted.isChecked())
+
+            if not self.radioButton_shifted.isChecked():
+                self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list for file in fnmatch.filter(txt_files, f)])
+                self.all_found_psfs_file = sorted([file for f in acceptable_all_psf_files_list for file in fnmatch.filter(txt_files, f)])[0]
+                guiding_selections = self.guiding_selections_file_list
+
+            else:
+                self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(txt_files, acceptable_guiding_files_list[0]))
+                self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(txt_files, acceptable_all_psf_files_list[0]))
+                guiding_selections = self.shifted_guiding_selections_file_list
+
+            # Clear and re-populate checkable combobox in segment guiding section
+            self.comboBox_guidingcommands.clear()
+            for i, command_file in enumerate(guiding_selections):
+                item = "Command {}: {}".format(i+1, command_file.split('/')[-1])
+                self.comboBox_guidingcommands.addItem(item)
+                item = self.comboBox_guidingcommands.model().item(i, 0)
+                item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+                item.setCheckState(Qt.Unchecked)
 
 
     def update_converted_image_preview(self):
@@ -1216,11 +1237,12 @@ class MasterGui(QMainWindow):
 
         # Is the self.shifted_im_file_list variable defined yet?
         try:
-            self.shifted_im_file_list
+            if len(self.shifted_im_file_list) == 0:
+                return
         except AttributeError:
             return
 
-        # Do all the shifted images exist? If so, show thrm!
+        # Do all the shifted images exist? If so, show them!
         if False not in [os.path.exists(shifted_im_file) for shifted_im_file in self.shifted_im_file_list]:
             # Prepare to show shifted image
             self.canvas_shifted.axes.set_visible(True)
@@ -1229,7 +1251,7 @@ class MasterGui(QMainWindow):
 
             # Toggle the "use shifted image" buttons
             self.radioButton_shifted.setChecked(True)
-            #self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file) #TODO:??
+            self.update_checkable_combobox()
 
             # Enable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(True)
@@ -1330,11 +1352,13 @@ class MasterGui(QMainWindow):
                 os.path.join(root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))]
 
         else:
-            acceptable_guiding_files_list = [os.path.join(root_dir, 'guiding_config_*',
-                                        'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider))]
+            acceptable_guiding_files_list = [
+                os.path.join(root_dir, 'guiding_config_*', 'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider)),
+                os.path.join(root_dir,'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider))]
 
-            acceptable_all_psf_files_list = [os.path.join(root_dir, 'guiding_config_*',
-                                        'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider))]
+            acceptable_all_psf_files_list = [
+                os.path.join(root_dir, 'guiding_config_*', 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider)),
+                os.path.join(root_dir, 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider))]
 
         return acceptable_guiding_files_list, acceptable_all_psf_files_list
 
