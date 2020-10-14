@@ -1438,7 +1438,7 @@ class MasterGui(QMainWindow):
                 self.lineEdit_regfileStarSelector.setText(', '.join(self.guiding_selections_file_list))
                 if new_guiding_selections:
                     new_selections = self.guiding_selections_file_list
-                    self.update_guiding_selections(new_selections=new_selections) #TODO - not sure this is working correctly
+                    self.update_guiding_selections(new_selections=new_selections)
             else:
                 self.lineEdit_regfileStarSelector.setText("")
                 self.lineEdit_regfileSegmentGuiding.setText("")

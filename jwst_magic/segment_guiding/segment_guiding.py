@@ -299,6 +299,11 @@ class SegmentGuidingCalculator:
         self.x_det_segs_flat = [x for n in self.x_det_segs for x in n.tolist()]
         self.y_det_segs_flat = [x for n in self.y_det_segs for x in n.tolist()]
 
+        for radec in zip(self.seg_ra_flat, self.seg_dec_flat):
+            if list(zip(self.seg_ra_flat, self.seg_dec_flat)).count(radec) > 1:
+                inds = [i for i, x in enumerate(list(zip(self.seg_ra_flat, self.seg_dec_flat))) if x == radec]
+                for i in inds[1:]:
+                    self.seg_id_array_flat[i] = int(self.seg_id_array_flat[inds[0]])
         # Re-match numbering in self.selected_segment_ids
         self.selected_segment_ids_flat = []
         for i, config in enumerate(self.selected_segment_ids):
