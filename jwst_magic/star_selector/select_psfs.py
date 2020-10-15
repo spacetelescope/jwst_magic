@@ -618,8 +618,8 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
             if output_file == 'psf_center':
                 LOGGER.info(
                     'Star Selection: Could not find a corresponding unshifted_{}*.txt file for '
-                    'the provided guiding selections file ({}) in {}. This may be because '
-                    'this file is not needed for this PSF arrangement'.format(output_file, filename, dir_to_look)
+                    'the provided guiding selections file ({}) in {}. Assuming it is not relevant '
+                    'to this image type'.format(output_file, filename, dir_to_look)
                 )
                 return file_to_copy
             else:
@@ -720,17 +720,18 @@ def manual_star_selection(data, smoothing, choose_center=False, testing=False, m
             LOGGER.info('Star Selection: Guiding Configuration {} - GS = {}, RS = {}'.format(i, ind[0],
                         ', '.join([str(c) for c in ind[1:]])))
 
-
     # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF, e.g. MIMF)
     elif choose_center:
         inds_list = [[0]]
         segnum = 0
+
     # If in testing mode, just make a random list of indices
     else:
         # Make random list of inds
         n_select = min(11, num_psfs)
         LOGGER.info('Star Selection: Testing mode; selecting {} PSFs at random.'.format(n_select))
         inds_list = [random.sample(range(num_psfs), n_select)] # a single guiding config
+
     nref_list = [len(inds) - 1 for inds in inds_list]
     if len(inds_list) == 0:
         raise ValueError('Star Selection: No guide star and no reference stars selected')
@@ -866,11 +867,18 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
 
         # Write catalog of selected PSFs
         guiding_selections_path_list = []
-        for i, cols in enumerate(cols_list):
+        current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_dir)
+                               if os.path.isdir(os.path.join(out_dir, d)) if 'guiding_config' in d])
+        if len(current_dirs) == 0:
+            new_config_numbers = np.arange(1, max(current_dirs) + 1 + len(cols_list))
+        else:
+            new_config_numbers = np.arange(max(current_dirs) + 1, max(current_dirs) + 1 + len(cols_list))
+        guiding_selections_path_list = []
+        for (i, cols) in zip(new_config_numbers, cols_list):
 
-            guiding_selections_path = os.path.join(out_dir, 'guiding_config_{}'.format(i+1),
+            guiding_selections_path = os.path.join(out_dir, 'guiding_config_{}'.format(i),
                                                    'unshifted_guiding_selections_{}_G{}_config{}.txt'.format(
-                                                       root, guider, i+1))
+                                                       root, guider, i))
             utils.write_cols_to_file(guiding_selections_path,
                                      labels=['y', 'x', 'countrate'],
                                      cols=cols, log=LOGGER)
