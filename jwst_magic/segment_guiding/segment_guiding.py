@@ -749,38 +749,40 @@ class SegmentGuidingCalculator:
         """Generate and save plots of segments in V2/V3 and RA/Dec.
         """
         # Plot segments in V2/V3 frame
-        plt.figure(1)
-        plt.clf()
-        plt.plot(self.v2_seg_array, self.v3_seg_array, 'b*')
-        plt.plot(self.v2_seg_array.mean(), self.v3_seg_array.mean(), 'ro')
-        plt.grid(True)
-        plt.axis([40.0, -40.0, -40.0, 40.0])  # V2 to the left
-        plt.title('Segments')
-        plt.xlabel('<-- Delta V2')
-        plt.ylabel('Delta V3 -->')
-        for s in range(len(self.v2_seg_array)):
-            plt.text(self.v2_seg_array[s], self.v3_seg_array[s], self.seg_id_array[s])
-        plt.savefig(os.path.join(self.out_dir, self.root + '_V2V3segments.png'))
+        for j, (v2_seg_array, v3_seg_array, seg_id_array, seg_ra, seg_dec) in \
+                enumerate(zip(self.v2_seg_array, self.v3_seg_array, self.seg_id_array, self.seg_ra, self.seg_dec)):
+            plt.figure(1)
+            plt.clf()
+            plt.plot(v2_seg_array, v3_seg_array, 'b*')
+            plt.plot(v2_seg_array.mean(), v3_seg_array.mean(), 'ro')
+            plt.grid(True)
+            plt.axis([40.0, -40.0, -40.0, 40.0])  # V2 to the left
+            plt.title('Segments')
+            plt.xlabel('<-- Delta V2')
+            plt.ylabel('Delta V3 -->')
+            for s in range(len(v2_seg_array)):
+                plt.text(v2_seg_array[s], v3_seg_array[s], seg_id_array[s])
+            plt.savefig(os.path.join(self.out_dir, self.root + '_V2V3segments_config{}.png'.format(j+1)))
 
-        # Plot calculate segments' RA and Dec
-        plt.figure(2)
-        plt.clf()
-        plt.plot(self.seg_ra, self.seg_dec, 'b*')
-        ra_mean = self.seg_ra.mean()
-        dec_mean = self.seg_dec.mean()
-        plt.plot(ra_mean, dec_mean, 'ro')
-        seg_n = int(self.seg_num)
-        if seg_n > 0:
-            plt.plot(self.seg_ra[seg_n - 1], self.seg_dec[seg_n - 1], 'mx', markersize=12)
-        for i in range(len(self.v2_seg_array)):
-            plt.text(self.seg_ra[i], self.seg_dec[i], str(i + 1))
-        plt.grid(True)
-        plt.title('Segment RA and Dec')
-        plt.xlabel('RA')
-        plt.ylabel('Dec')
-        plt.gca().invert_xaxis()
-        plt.gca().ticklabel_format(useOffset=False)
-        plt.savefig(os.path.join(self.out_dir, self.root + '_RADecsegments.png'))
+            # Plot calculate segments' RA and Dec
+            plt.figure(2)
+            plt.clf()
+            plt.plot(seg_ra, seg_dec, 'b*')
+            ra_mean = seg_ra.mean()
+            dec_mean = seg_dec.mean()
+            plt.plot(ra_mean, dec_mean, 'ro')
+            seg_n = int(self.seg_num)
+            if seg_n > 0:
+                plt.plot(seg_ra[seg_n - 1], seg_dec[seg_n - 1], 'mx', markersize=12)
+            for i in range(len(v2_seg_array)):
+                plt.text(seg_ra[i], seg_dec[i], str(i + 1))
+            plt.grid(True)
+            plt.title('Segment RA and Dec')
+            plt.xlabel('RA')
+            plt.ylabel('Dec')
+            plt.gca().invert_xaxis()
+            plt.gca().ticklabel_format(useOffset=False)
+            plt.savefig(os.path.join(self.out_dir, self.root + '_RADecsegments_config{}.png'.format(j+1)))
 
     def check_guidestar_params(self, override_type):
         """Ensure all guidestar parameters (RA, Dec, PA, and boresight
