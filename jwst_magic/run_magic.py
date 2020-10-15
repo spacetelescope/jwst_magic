@@ -137,8 +137,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     utils.ensure_dir_exists(out_dir_root)
 
     LOGGER.info("Package directory: {}".format(PACKAGE_PATH))
-    LOGGER.info("Processing request for {}. \nAll data will be saved in: {}".format(root,
-                                                                                    out_dir_root))
+    LOGGER.info("Processing request for {}.".format(root))
+    LOGGER.info("All data will be saved in: {}".format(out_dir_root))
     LOGGER.info("Input image: {}".format(os.path.abspath(image)))
 
     # Copy input image into out directory

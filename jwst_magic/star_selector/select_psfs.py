@@ -542,12 +542,14 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
                 imported_root = filename.split('unshifted_guiding_selections_')[-1].split('.txt')[0]
             else:
                 imported_root = filename.split('guiding_selections_')[-1].split('.txt')[0]
+            if 'config' in imported_root:
+                imported_root = imported_root.split('_config')[0]
         elif '_regfile' in filename:
             imported_root = filename.split('_regfile.txt')[0]
         else:
             imported_root = None
             LOGGER.warning(
-                'Could not parse root from provided guiding selections file ({}). '.format(filename) +
+                'Star Selection: Could not parse root from provided guiding selections file ({}). '.format(filename) +
                 'Not able to copy over a corresponding {}*.txt file.'.format(output_file)
             )
         filenames.append(filename)
@@ -563,11 +565,12 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
     # If there are any guiding files with a known root left
     if len(roots) > 0:
         dirs = [os.path.dirname(file) for file in guiding_selections_file]
+        dirs = [dr.split('guiding_config')[0] if 'guiding_config_' in dr else dr for dr in dirs]
         rootdirs = ['{}_{}'.format(root, dir) for root, dir in zip(roots, dirs)]
 
         # If the roots or basepaths differ, choose the first one, but log it
         if len(guiding_selections_file) > 1 and len(set(rootdirs)) != 1:
-            LOGGER.warning('The multiple guiding selections files chosen do not have matching roots '
+            LOGGER.warning('Star Selection: The multiple guiding selections files chosen do not have matching roots '
                            'and/or basepaths. We will search for the all_found_psf*.txt file using the '
                            'root/basepath of the first guiding selections file. If this is not the '
                            'intended search location, re-arrange the order of the guiding selections files.')
@@ -593,22 +596,37 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
                 acceptable_files = [
                     os.path.join(dir_to_look, 'center_pointing_{}.txt'.format(imported_root))
                 ]
-            file_to_copy = [f for f in acceptable_files if f in txt_files][0]
+            try:
+                file_to_copy = [f for f in acceptable_files if f in txt_files][0]
+            except IndexError:
+                file_to_copy = None
 
         if file_to_copy is not None:
             try:
-                copied_psfs_file = os.path.join(out_dir, 'unshifted_{}_{}_G{}.txt'.format(output_file, root, guider))
+                if output_file == 'center_pointing':
+                    copied_psfs_file = os.path.join(out_dir, '{}_{}_G{}.txt'.format(output_file, root, guider))
+                else:
+                    copied_psfs_file = os.path.join(out_dir, 'unshifted_{}_{}_G{}.txt'.format(output_file, root, guider))
                 shutil.copy(file_to_copy, copied_psfs_file)
-                LOGGER.info('Copying over {}'.format(file_to_copy))
-                LOGGER.info('Successfully wrote: {}'.format(copied_psfs_file))
+                LOGGER.info('Star Selection: Copying over {}'.format(file_to_copy))
+                LOGGER.info('Star Selection: Successfully wrote: {}'.format(copied_psfs_file))
                 return copied_psfs_file
             except shutil.SameFileError:
+                LOGGER.info("Star Selection: {} file already exists in the right location.".format(output_file))
                 return file_to_copy
         else:
-            LOGGER.warning(
-                'Could not find a corresponding *{}*.txt file for '
-                'the provided guiding selections file ({}) in {}'.format(output_file, filename, dir_to_look)
-            )
+            if output_file == 'psf_center':
+                LOGGER.info(
+                    'Star Selection: Could not find a corresponding unshifted_{}*.txt file for '
+                    'the provided guiding selections file ({}) in {}. This may be because '
+                    'this file is not needed for this PSF arrangement'.format(output_file, filename, dir_to_look)
+                )
+                return file_to_copy
+            else:
+                LOGGER.warning(
+                    'Star Selection: Could not find a corresponding {}*.txt file for '
+                    'the provided guiding selections file ({}) in {}'.format(output_file, filename, dir_to_look)
+                )
 
 
 def manual_star_selection(data, smoothing, choose_center=False, testing=False, masterGUIapp=None):
@@ -811,23 +829,13 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
 
             # Copy over corresponding all_found_psfs, psf_center, and center_pointing file, if possible.
             all_cols = None
-            try:
-                all_found_psfs_path = copy_psfs_files(guiding_selections_file, 'all_found_psfs', root, guider, out_dir)
-            except shutil.SameFileError:
-                all_found_psfs_path = guiding_selections_file.replace('guiding_selections', 'all_found_psfs')
+            all_found_psfs_path = copy_psfs_files(guiding_selections_file, 'all_found_psfs', root, guider, out_dir)
             _, all_coords, _= parse_in_file(all_found_psfs_path)
 
-            psf_center_path = None
-            try:
-                psf_center_path = copy_psfs_files(guiding_selections_file, 'psf_center', root, guider, out_dir)
-            except:
-                pass
+            psf_center_path = copy_psfs_files(guiding_selections_file, 'psf_center', root, guider, out_dir)
 
             segnum = None
-            try:
-                center_pointing_path = copy_psfs_files(guiding_selections_file, 'center_pointing', root, guider, out_dir)
-            except:
-                pass
+            center_pointing_path = copy_psfs_files(guiding_selections_file, 'center_pointing', root, guider, out_dir)
 
         else:
             # If no .incat or reg file provided, create reg file with manual
