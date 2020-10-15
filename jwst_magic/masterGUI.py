@@ -455,14 +455,22 @@ class MasterGui(QMainWindow):
             y = all_rows['y'].data
 
             # Run the select stars GUI to determine the new orientation
-            inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
+            inds_list, segnum = run_SelectStars(data, x, y, 20,
+                                                               print_output=False,
+                                                               masterGUIapp=self.app)
+
+            # Print indices of each guiding configuration
+            for i in range(len(inds_list)):
+                ind = inds_list[i]
+                LOGGER.info('Guiding Configuration {} - GS = {}, RS = {}'.format(i, ind[0],
+                                                                                 ', '.join([str(c) for c in ind[1:]])))
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds, guider, root, out_dir, shifted=shift_id_attitude,
+            rewrite_prc.rewrite_prc(inds_list, segnum, guider, root, out_dir, shifted=shift_id_attitude,
                                     crowded_field=crowded_field)
 
             # Update converted image preview
-            self.update_filepreview()
+            self.update_filepreview(new_guiding_selections=True)
             return
 
         # Segment guiding
@@ -1071,18 +1079,33 @@ class MasterGui(QMainWindow):
         if isinstance(new_selections, list):
             self.guiding_selections_file_list = new_selections  # re-define to update chosen selections
 
-            # Clear and reset 0th index in combo box
+            # Clear and reset 0th index in converted combo box
             self.comboBox_showcommandsconverted.blockSignals(True)
             self.comboBox_showcommandsconverted.clear()
             self.comboBox_showcommandsconverted.addItem('- Guiding Command -')
             self.comboBox_showcommandsconverted.blockSignals(False)
 
-            # Remove circles on canvas
+            # Remove circles on converted canvas
             try:
                 for line in self.converted_im_circles:
                     line[0].set_visible(False)
                 self.canvas_converted.peaks.set_visible(False)
                 self.canvas_converted.draw()
+            except AttributeError:
+                pass
+
+            # Clear and reset 0th index in shifted combo box
+            self.comboBox_showcommandsshifted.blockSignals(True)
+            self.comboBox_showcommandsshifted.clear()
+            self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
+            self.comboBox_showcommandsshifted.blockSignals(False)
+
+            # Remove circles on shifted canvas
+            try:
+                for line in self.shifted_im_circles:
+                    line[0].set_visible(False)
+                self.canvas_shifted.peaks.set_visible(False)
+                self.canvas_shifted.draw()
             except AttributeError:
                 pass
 
@@ -1236,14 +1259,18 @@ class MasterGui(QMainWindow):
             return
 
         # Is the self.shifted_im_file_list variable defined yet?
+        noshow = False
         try:
             if len(self.shifted_im_file_list) == 0:
-                return
+                noshow = True
         except AttributeError:
-            return
+            noshow = True
+
+
+        print('noshow ', noshow)
 
         # Do all the shifted images exist? If so, show them!
-        if False not in [os.path.exists(shifted_im_file) for shifted_im_file in self.shifted_im_file_list]:
+        if noshow is False and False not in [os.path.exists(shifted_im_file) for shifted_im_file in self.shifted_im_file_list]:
             # Prepare to show shifted image
             self.canvas_shifted.axes.set_visible(True)
             self.tabWidget.setCurrentIndex(2)
@@ -1251,7 +1278,6 @@ class MasterGui(QMainWindow):
 
             # Toggle the "use shifted image" buttons
             self.radioButton_shifted.setChecked(True)
-            self.update_checkable_combobox()
 
             # Enable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(True)
@@ -1312,10 +1338,11 @@ class MasterGui(QMainWindow):
         # If not, show nothing.
         else:
             # Update textbox showing filepath
-            self.textEdit_showingShifted.setText(
-                'No shifted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
-                    '/'.join(self.shifted_im_file_list[0].split('/')[:-3] + \
-                             ['guiding_config_*/FGS_imgs/shifted_*_config*.fits'])))
+            if len(self.shifted_im_file_list) != 0:
+                self.textEdit_showingShifted.setText(
+                    'No shifted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
+                        '/'.join(self.shifted_im_file_list[0].split('/')[:-3] + \
+                                 ['guiding_config_*/FGS_imgs/shifted_*_config*.fits'])))
 
             self.textEdit_showingShifted.setEnabled(False)
 
