@@ -1324,5 +1324,4 @@ def run_SelectStars(data, x, y, dist, print_output=True, masterGUIapp=None):
     # Save index of center segment (pointing)
     segNum = window.segNum
 
-    print(inds)
     return inds, segNum

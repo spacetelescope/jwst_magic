@@ -870,7 +870,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_dir)
                                if os.path.isdir(os.path.join(out_dir, d)) if 'guiding_config' in d])
         if len(current_dirs) == 0:
-            new_config_numbers = np.arange(1, max(current_dirs) + 1 + len(cols_list))
+            new_config_numbers = np.arange(1, len(cols_list)+1)
         else:
             new_config_numbers = np.arange(max(current_dirs) + 1, max(current_dirs) + 1 + len(cols_list))
         guiding_selections_path_list = []
