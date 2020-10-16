@@ -286,33 +286,6 @@ class SegmentGuidingCalculator:
         verbose : bool, optional
             Log results of calculations and file content
         """
-        # Flatten data into 1 list of all PSFs
-        self.countrate_array_flat = [x for n in self.countrate_array for x in n.tolist()]
-        self.n_segments_flat = sum(self.n_segments)
-        self.seg_id_array_flat = np.arange(len([x for n in self.seg_id_array for x in n.tolist()]))+1 # Re-do numbering so all have unique numbers
-        self.v2_seg_array_flat = [x for n in self.v2_seg_array for x in n.tolist()]
-        self.v3_seg_array_flat = [x for n in self.v3_seg_array for x in n.tolist()]
-        self.x_idl_segs_flat = [x for n in self.x_idl_segs for x in n.tolist()]
-        self.y_idl_segs_flat = [x for n in self.y_idl_segs for x in n.tolist()]
-        self.seg_ra_flat = np.array(self.seg_ra).flatten()
-        self.seg_dec_flat = np.array(self.seg_dec).flatten()
-        self.x_det_segs_flat = [x for n in self.x_det_segs for x in n.tolist()]
-        self.y_det_segs_flat = [x for n in self.y_det_segs for x in n.tolist()]
-
-        for radec in zip(self.seg_ra_flat, self.seg_dec_flat):
-            if list(zip(self.seg_ra_flat, self.seg_dec_flat)).count(radec) > 1:
-                inds = [i for i, x in enumerate(list(zip(self.seg_ra_flat, self.seg_dec_flat))) if x == radec]
-                for i in inds[1:]:
-                    self.seg_id_array_flat[i] = int(self.seg_id_array_flat[inds[0]])
-        # Re-match numbering in self.selected_segment_ids
-        self.selected_segment_ids_flat = []
-        for i, config in enumerate(self.selected_segment_ids):
-            new_config = []
-            for psf_ind in config:
-                shift = sum(self.n_segments[:i])
-                new_config.append(self.seg_id_array_flat[shift+psf_ind]-1)
-            self.selected_segment_ids_flat.append(new_config)
-
         # Split multiple specified observations up
         obs_num_list, obs_list_name = self._split_obs_num(self.observation_num)
 
@@ -338,30 +311,62 @@ class SegmentGuidingCalculator:
 
         out_file = os.path.join(self.out_dir, out_file)
 
-        # Print summary of input data (guide star RA, Dec, and PA, etc...)
-        if verbose and self.override_type == "SOF":
-            # Print guide star and boresight parameters
-            summary_output = """Guide Star Parameters
-                Aperture FGS: {0}
-                V2/V3 Refs: ({1:10.4f}, {2:10.4f}) arc-sec
-                Guiding segment number: {3}
-                V2/V3 Boresight offset: ({4}, {5}) arc-sec
-                Guide star RA & Dec: ({6}, {7}) degrees
-                Position angle: {8} degrees""".\
-                format(self.fgs_num, self.v2_ref, self.v3_ref, self.seg_num,
-                       self.v2_boff, self.v3_boff, self.ra, self.dec, self.pa)
-            self.log.info('Segment Guiding: ' + summary_output)
+        # Update variables
+        if self.override_type == "SOF":
 
-            all_segments = 'All Segment Locations'
-            all_segments += '\n                Segment     dV2    dV3    xIdl' +\
-                            '   yIdl     RA         Dec         xDet     yDet'
-            for p in range(self.n_segments_flat):
-                all_segments += ('\n                %5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f'
-                                 % (self.seg_id_array_flat[p], self.v2_seg_array_flat[p],
-                                    self.v3_seg_array_flat[p], self.x_idl_segs_flat[p],
-                                    self.y_idl_segs_flat[p], self.seg_ra_flat[p],
-                                    self.seg_dec_flat[p], self.x_det_segs_flat[p], self.y_det_segs_flat[p]))
-            self.log.info('Segment Guiding: ' + all_segments)
+            # Flatten data into 1 list of all PSFs
+            self.countrate_array_flat = [x for n in self.countrate_array for x in n.tolist()]
+            self.n_segments_flat = sum(self.n_segments)
+            self.seg_id_array_flat = np.arange(len(
+                [x for n in self.seg_id_array for x in n.tolist()])) + 1  # Re-do numbering so all have unique numbers
+            self.v2_seg_array_flat = [x for n in self.v2_seg_array for x in n.tolist()]
+            self.v3_seg_array_flat = [x for n in self.v3_seg_array for x in n.tolist()]
+            self.x_idl_segs_flat = [x for n in self.x_idl_segs for x in n.tolist()]
+            self.y_idl_segs_flat = [x for n in self.y_idl_segs for x in n.tolist()]
+            self.seg_ra_flat = np.array(self.seg_ra).flatten()
+            self.seg_dec_flat = np.array(self.seg_dec).flatten()
+            self.x_det_segs_flat = [x for n in self.x_det_segs for x in n.tolist()]
+            self.y_det_segs_flat = [x for n in self.y_det_segs for x in n.tolist()]
+
+            for radec in zip(self.seg_ra_flat, self.seg_dec_flat):
+                if list(zip(self.seg_ra_flat, self.seg_dec_flat)).count(radec) > 1:
+                    inds = [i for i, x in enumerate(list(zip(self.seg_ra_flat, self.seg_dec_flat))) if x == radec]
+                    for i in inds[1:]:
+                        self.seg_id_array_flat[i] = int(self.seg_id_array_flat[inds[0]])
+
+            # Re-match numbering in self.selected_segment_ids
+            self.selected_segment_ids_flat = []
+            for i, config in enumerate(self.selected_segment_ids):
+                new_config = []
+                for psf_ind in config:
+                    shift = sum(self.n_segments[:i])
+                    new_config.append(self.seg_id_array_flat[shift + psf_ind] - 1)
+                self.selected_segment_ids_flat.append(new_config)
+
+            #  Print summary of input data (guide star RA, Dec, and PA, etc...)
+            if verbose:
+                # Print guide star and boresight parameters
+                summary_output = """Guide Star Parameters
+                    Aperture FGS: {0}
+                    V2/V3 Refs: ({1:10.4f}, {2:10.4f}) arc-sec
+                    Guiding segment number: {3}
+                    V2/V3 Boresight offset: ({4}, {5}) arc-sec
+                    Guide star RA & Dec: ({6}, {7}) degrees
+                    Position angle: {8} degrees""".\
+                    format(self.fgs_num, self.v2_ref, self.v3_ref, self.seg_num,
+                           self.v2_boff, self.v3_boff, self.ra, self.dec, self.pa)
+                self.log.info('Segment Guiding: ' + summary_output)
+
+                all_segments = 'All Segment Locations'
+                all_segments += '\n                Segment     dV2    dV3    xIdl' +\
+                                '   yIdl     RA         Dec         xDet     yDet'
+                for p in range(self.n_segments_flat):
+                    all_segments += ('\n                %5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f'
+                                     % (self.seg_id_array_flat[p], self.v2_seg_array_flat[p],
+                                        self.v3_seg_array_flat[p], self.x_idl_segs_flat[p],
+                                        self.y_idl_segs_flat[p], self.seg_ra_flat[p],
+                                        self.seg_dec_flat[p], self.x_det_segs_flat[p], self.y_det_segs_flat[p]))
+                self.log.info('Segment Guiding: ' + all_segments)
 
         # Determine what the commands should be:
         if obs_num_list is None:
@@ -1139,7 +1144,6 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         Observation number
     visit_num : int
         Visit number
-
     countrate_factor : float, optional
         The factor by which countrates are multiplied by to simulate
         diffuse PSFs (e.g. in MIMF).
