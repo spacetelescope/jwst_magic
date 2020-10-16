@@ -56,16 +56,33 @@ def test_directory(test_dir=TEST_DIRECTORY):
     if os.path.isdir(test_dir):
         shutil.rmtree(test_dir)
 
-
-def test_select_psfs_with_file(test_directory):
-    guiding_selections_path, all_found_psfs_path, _ = select_psfs(
-        CONVERTED_NIRCAM_IM_GA, ROOT, 2, guiding_selections_file=SELECTED_SEGS,
-        out_dir=test_directory
+select_psfs_with_file_parameters = [([SELECTED_SEGS], [1]), ([SELECTED_SEGS, SELECTED_SEGS], [2,3])]
+@pytest.mark.parametrize('guiding_selection_file, expected_configs', select_psfs_with_file_parameters)
+def test_select_psfs_with_file(test_directory, guiding_selection_file, expected_configs):
+    # Run code
+    guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
+        CONVERTED_NIRCAM_IM_GA, ROOT, 2, guiding_selections_file=guiding_selection_file,
+        out_dir=__location__
     )
 
-    # Ensure the correct files were generated
-    assert os.path.exists(guiding_selections_path), 'guiding_selections_test_select_psfs_G2.txt not generated.'
-    assert os.path.exists(all_found_psfs_path), 'all_found_psfs_test_select_psfs_G2.txt not generated.'
+    # Check for multiple commands
+    assert len(guiding_selection_file) == len(guiding_selections_path_list)
+
+    # Ensure the correct files were generated based on output path information nad have the right file names
+    # Check guiding selections file(s)
+    for i in range(len(guiding_selection_file)):
+        assert os.path.exists(guiding_selections_path_list[i]), \
+               'unshifted_guiding_selections_test_select_psfs_G2_config{}.txt not generated.'.format(expected_configs[i])
+        assert sorted(guiding_selections_path_list)[i] == \
+               os.path.join(TEST_DIRECTORY, 'guiding_config_{}'.format(expected_configs[i]),
+              'unshifted_guiding_selections_test_select_psfs_G2_config{}.txt'.format(expected_configs[i]))
+
+    # Check all found PSF file
+    assert os.path.exists(all_found_psfs_path), \
+        'unshifted_all_found_psfs_test_select_psfs_G2.txt not generated.'
+
+    assert all_found_psfs_path == os.path.join(TEST_DIRECTORY, 'unshifted_all_found_psfs_test_select_psfs_G2.txt')
+
 
 
 test_data = PARAMETRIZED_DATA['test_select_psfs_without_file']
@@ -75,13 +92,14 @@ select_psfs_without_file_parameters = [(CONVERTED_NIRCAM_IM_GA, 'default', 21, t
                                        ]
 @pytest.mark.parametrize('in_data, smooth, n_psfs, correct_all_found_psfs_txt', select_psfs_without_file_parameters)
 def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, correct_all_found_psfs_txt):
-    guiding_selections_path, all_found_psfs_path, psf_center_path = select_psfs(
+    guiding_selections_path_list, all_found_psfs_path, psf_center_path = select_psfs(
         in_data, ROOT, 2, smoothing=smooth, testing=True,
-        out_dir=test_directory
+        out_dir=__location__
     )
 
-    # Ensure the correct files were generated
-    assert os.path.exists(guiding_selections_path), 'unshifted_guiding_selections_test_select_psfs_G2.txt not generated.'
+    # Ensure the correct files were generated (1 selection by default in code for test cases)
+    assert len(guiding_selections_path_list) == 1
+    assert os.path.exists(guiding_selections_path_list[0]), 'unshifted_guiding_selections_test_select_psfs_G2.txt not generated.'
     assert os.path.exists(all_found_psfs_path), 'unshifted_all_found_psfs_test_select_psfs_G2.txt not generated.'
     if smooth is 'low':
         assert os.path.exists(psf_center_path), 'unshifted_psf_center_test_select_psfs_G2.txt not generated.'
@@ -99,7 +117,7 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
     # Check PSF location in guiding selections doesn't match psf center
     # guiding selections should have found a knot in the PSF not at the center
     if smooth is 'low':
-        with open(guiding_selections_path) as f:
+        with open(guiding_selections_path_list[0]) as f:
             guiding_selections_contents = f.read()
         with open(psf_center_path) as f:
             no_smooth_contents = f.read()
