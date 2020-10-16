@@ -729,6 +729,7 @@ def manual_star_selection(data, smoothing, choose_center=False, testing=False, m
     else:
         # Make random list of inds
         n_select = min(11, num_psfs)
+        segnum = 0
         LOGGER.info('Star Selection: Testing mode; selecting {} PSFs at random.'.format(n_select))
         inds_list = [random.sample(range(num_psfs), n_select)] # a single guiding config
 
@@ -776,8 +777,8 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         Name used to generate output folder and output filenames.
     guider : int
         Guider number (1 or 2)
-    guiding_selections_file : str, optional
-        File containing locations and count rates of selected segments
+    guiding_selections_file : list of  str, optional
+        List of files containing locations and count rates of selected segments
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), or "default" for medium smoothing for other cases
@@ -788,7 +789,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
     out_dir : str, optional
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
-        jwst_magic/
+        jwst_magic/. This path is the level outside the out/root/ dir
     masterGUIapp : qApplication, optional
         qApplication instance of parent GUI
     logger_passed : bool, optional
