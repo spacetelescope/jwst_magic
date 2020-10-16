@@ -576,7 +576,17 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     # 0) Fetch existing information and determine ID attitude
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Define input file info
-    file_root = guiding_selections_file.split('guiding_selections_')[-1].split('.txt')[0]
+    if 'guiding_selections_' in guiding_selections_file:
+        file_root = guiding_selections_file.split('guiding_selections_')[-1].split('.txt')[0]
+    elif 'regfile' in guiding_selections_file:
+        file_root = guiding_selections_file.split('/')[-1].split('_regfile.txt')[0]
+    else:
+        raise ValueError('Guiding selections file {} has a naming structure that cannot be '
+                         'parsed.'.format(guiding_selections_file))
+
+    # Add guider number to file root if not present - common for old regfiles
+    if 'G{}'.format(guider) not in file_root:
+        file_root += '_G{}'.format(guider)
 
     # Load the catalogs with the unshifted data
     guiding_selections_cat = asc.read(guiding_selections_file)
@@ -685,6 +695,8 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
 
     shifted_FGS_img = os.path.join(out_dir, 'FGS_imgs',
                                    'shifted_' + file_root + '.fits')
+    print('out_dir, ', out_dir)
+    print('shifted_FGS_img, ', shifted_FGS_img)
 
     # Write new FITS files
     # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match

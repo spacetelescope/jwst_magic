@@ -198,6 +198,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             if 'guiding_config' in guiding_selections_file:
                 out_dir_fsw = os.path.join(out_dir, 'guiding_config_{}'.format(
                     guiding_selections_file.split('guiding_config_')[1].split('/')[0]))
+            else:
+                out_dir_fsw = out_dir
 
             if shift_id_attitude:
                 fgs_im_fsw, guiding_selections_file_fsw, psf_center_file_fsw = buildfgssteps.shift_to_id_attitude(
