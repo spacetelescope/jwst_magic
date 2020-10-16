@@ -786,14 +786,16 @@ class MasterGui(QMainWindow):
                 self.program_id = int(self.lineEdit_manualid.text())
                 self.observation_num = int(self.lineEdit_manualobs.text())
                 self.visit_num = 1  # Will we ever have a visit that's not 1?
-                self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
+                self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id,
+                                                                                             self.observation_num)
             else:
                 raise ValueError('Must set both program ID and observation number to use APT')
         elif self.radioButton_name_commissioning.isChecked():
             self.program_id = int(self.lineEdit_commid.text())
             self.observation_num = int(self.comboBox_obs.currentText())
             self.visit_num = 1  # Will we ever have a visit that's not 1?
-            self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
+            self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id,
+                                                                                         self.observation_num)
 
         # Check the guider in the APT file matches what's chosen in the GUI
         self.check_guider_against_apt()
@@ -1152,13 +1154,17 @@ class MasterGui(QMainWindow):
             else:
                 try:
                     if not self.radioButton_shifted.isChecked():
-                        self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list for file in fnmatch.filter(txt_files, f)])
-                        self.all_found_psfs_file = sorted([file for f in acceptable_all_psf_files_list for file in fnmatch.filter(txt_files, f)])[0]
+                        self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list for
+                                                                    file in fnmatch.filter(txt_files, f)])
+                        self.all_found_psfs_file = sorted([file for f in acceptable_all_psf_files_list for file in
+                                                           fnmatch.filter(txt_files, f)])[0]
                         guiding_selections = self.guiding_selections_file_list
 
                     else:
-                        self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(txt_files, acceptable_guiding_files_list[0]))
-                        self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(txt_files, acceptable_all_psf_files_list[0]))
+                        self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(
+                            txt_files, acceptable_guiding_files_list[0]))
+                        self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(
+                            txt_files, acceptable_all_psf_files_list[0]))
                         guiding_selections = self.shifted_guiding_selections_file_list
 
                     # Clear and re-populate checkable combobox in segment guiding section
@@ -1217,7 +1223,8 @@ class MasterGui(QMainWindow):
 
             # If possible, plot the selected stars in the guiding_selections*.txt
             if self.comboBox_showcommandsconverted.currentIndex() != 0:
-                guiding_selections_file = self.guiding_selections_file_list[self.comboBox_showcommandsconverted.currentIndex()-1]
+                guiding_selections_file = self.guiding_selections_file_list[
+                    self.comboBox_showcommandsconverted.currentIndex()-1]
                 if os.path.exists(guiding_selections_file):
                     selected_psf_list = asc.read(guiding_selections_file)
                     x_selected = selected_psf_list['x']
@@ -1279,11 +1286,9 @@ class MasterGui(QMainWindow):
         except AttributeError:
             noshow = True
 
-
-        print('noshow ', noshow)
-
         # Do all the shifted images exist? If so, show them!
-        if noshow is False and False not in [os.path.exists(shifted_im_file) for shifted_im_file in self.shifted_im_file_list]:
+        if noshow is False and False not in [os.path.exists(shifted_im_file) for
+                                             shifted_im_file in self.shifted_im_file_list]:
             # Prepare to show shifted image
             self.canvas_shifted.axes.set_visible(True)
             self.tabWidget.setCurrentIndex(2)
@@ -1371,7 +1376,6 @@ class MasterGui(QMainWindow):
             dummy_img = self.canvas_shifted.axes.imshow(
                 np.array([[1e4, 1e4], [1e4, 1e4]]), cmap='bone', clim=(1e-1, 1e2)
             )
-
         return self.canvas_shifted.draw()
 
     @staticmethod
@@ -1393,11 +1397,13 @@ class MasterGui(QMainWindow):
 
         else:
             acceptable_guiding_files_list = [
-                os.path.join(root_dir, 'guiding_config_*', 'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider)),
+                os.path.join(root_dir, 'guiding_config_*', 'shifted_guiding_selections_{}_G{}_config*.txt'.format(
+                    root, guider)),
                 os.path.join(root_dir,'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider))]
 
             acceptable_all_psf_files_list = [
-                os.path.join(root_dir, 'guiding_config_*', 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider)),
+                os.path.join(root_dir, 'guiding_config_*', 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(
+                    root, guider)),
                 os.path.join(root_dir, 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider))]
 
         return acceptable_guiding_files_list, acceptable_all_psf_files_list
@@ -1473,7 +1479,6 @@ class MasterGui(QMainWindow):
                                          'shifted_{}_G{}_config*.fits'.format(root, guider))))
 
             # Update guiding_selections*.txt paths in GUI
-            print(self.guiding_selections_file_list)
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list]:
                 self.lineEdit_regfileStarSelector.setText(', '.join(self.guiding_selections_file_list))
                 if new_guiding_selections:
@@ -1583,7 +1588,8 @@ class MasterGui(QMainWindow):
         ra = gsc_series['ra']
         dec = gsc_series['dec']
 
-        LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra, dec))
+        LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra,
+                                                                                                                dec))
 
         return gs_id, guider, ra, dec
 
