@@ -34,7 +34,7 @@ Notes
 The following are ways to run segment_guiding:
 
     from jwst_magic.segment_guiding import segment_guiding
-    segment_guiding.run_tool(segment_infile=SEGMENT_INFILE, guider=guider)
+    segment_guiding.run_tool(SEGMENT_INFILE=SEGMENT_INFILE, guider=guider)
 
     Or with the segment dialog box:
     ::
@@ -132,13 +132,14 @@ test_data = PARAMETRIZED_DATA['test_generate_segment_override_file']
 sof_parameters = [(0, None, test_data[0]),
                   (4, None, test_data[1]),
                   (0, np.array([[1, 12, 6]]), test_data[2]),
-                  (0, np.array([[1, 2, 3], [4, 0, 17, 12, 2]]), test_data[3])]
+                  (0, np.array([[1, 2, 3], [4, 0, 17, 12, 2]]), test_data[3])
+                 ]
 @pytest.mark.parametrize('seg_num, selected_segs, correct_command', sof_parameters)
 def test_generate_segment_override_file(test_directory, seg_num, selected_segs, correct_command):
 
     # Define the input file locations and parameters
     if selected_segs is None:
-        selected_segs = SELECTED_SEGS
+        selected_segs = [SELECTED_SEGS]
     guider = 1
 
 
@@ -151,8 +152,8 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
                               'seg_num': seg_num}
 
     generate_segment_override_file(
-        SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
-        out_dir=__location__, selected_segs=selected_segs, click_to_select_gui=False,
+        [SEGMENT_INFILE], guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
+        out_dir=__location__, selected_segs_list=selected_segs,
         guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
     )
 
@@ -185,9 +186,9 @@ def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider,
 
     with pytest.raises(ValueError) as excinfo:
         generate_segment_override_file(
-            SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
-            root=ROOT, out_dir=__location__, selected_segs=SELECTED_SEGS,
-            click_to_select_gui=False, guide_star_params_dict=guide_star_params_dict,
+            [SEGMENT_INFILE], guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
+            root=ROOT, out_dir=__location__, selected_segs_list=[SELECTED_SEGS],
+            guide_star_params_dict=guide_star_params_dict,
             parameter_dialog=False
         )
     assert error_text in str(excinfo.value)
@@ -207,31 +208,11 @@ def test_generate_override_file_valueerrors(test_directory):
     # Test error if parameter_dialog=False and guide_star_params_dict=None
     with pytest.raises(ValueError) as excinfo:
         generate_segment_override_file(
-            SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
+            [SEGMENT_INFILE], guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
             root=ROOT, out_dir=__location__, guide_star_params_dict=None,
             parameter_dialog=False
         )
     assert '`parameter_dialog=False`' in str(excinfo.value)
-
-    # Test error if click_to_select_gui=True and data=None
-    with pytest.raises(ValueError) as excinfo:
-        generate_segment_override_file(
-            SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
-            root=ROOT, out_dir=__location__,
-            click_to_select_gui=True, guide_star_params_dict=guide_star_params_dict,
-            parameter_dialog=False
-        )
-    assert '`click_to_select_GUI=True`' in str(excinfo.value)
-
-    # Test error if click_to_select_gui=False and selected_segs=None
-    with pytest.raises(ValueError) as excinfo:
-        generate_segment_override_file(
-            SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
-            root=ROOT, out_dir=__location__,
-            click_to_select_gui=False, guide_star_params_dict=guide_star_params_dict,
-            parameter_dialog=False
-        )
-    assert '`click_to_select_GUI=False`' in str(excinfo.value)
 
     # Test error if parameter_dialog=False and countrate_factor=None and countrate_uncertainty_factor=None
     with pytest.raises(ValueError) as excinfo:
@@ -254,9 +235,9 @@ def test_segment_override_command_out_of_fov(test_directory):
 
     sg = SegmentGuidingCalculator(
         "SOF", PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, ROOT, __location__,
-        segment_infile=SEGMENT_INFILE,
+        segment_infile_list=[SEGMENT_INFILE],
         guide_star_params_dict=guide_star_params_dict,
-        selected_segs=SELECTED_SEGS
+        selected_segs_list=[SELECTED_SEGS]
     )
 
     # Determine the V2/V3 of the pointing center
@@ -440,8 +421,8 @@ def test_write_override_report(test_directory):
     selected_segs = np.array([[1, 2, 3], [4, 0, 17, 12, 2]])
 
     generate_segment_override_file(
-        SEGMENT_INFILE, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
-        out_dir=__location__, selected_segs=selected_segs, click_to_select_gui=False,
+        [SEGMENT_INFILE], guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
+        out_dir=__location__, selected_segs_list=[selected_segs],
         guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
     )
 
@@ -498,8 +479,8 @@ def test_segment_override_file_wo_obs_visit(obsnum, visitnum):
 
     with pytest.raises(ValueError) as excinfo:
         generate_segment_override_file(
-            SEGMENT_INFILE, guider, PROGRAM_ID, obsnum, visitnum, root=ROOT,
-            out_dir=__location__, selected_segs=SELECTED_SEGS, click_to_select_gui=False,
+            [SEGMENT_INFILE], guider, PROGRAM_ID, obsnum, visitnum, root=ROOT,
+            out_dir=__location__, selected_segs_list=[SELECTED_SEGS],
             guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
         )
     assert 'Invalid input for SOF: ' in str(excinfo.value)
@@ -579,8 +560,8 @@ def test_segment_override_file_single_obs(test_directory, obs_num, correct_file_
                               'seg_num': 0}
 
     generate_segment_override_file(
-        SEGMENT_INFILE, guider, PROGRAM_ID, obs_num, 1, root=ROOT,
-        out_dir=__location__, selected_segs=SELECTED_SEGS, click_to_select_gui=False,
+        [SEGMENT_INFILE], guider, PROGRAM_ID, obs_num, 1, root=ROOT,
+        out_dir=__location__, selected_segs_list=[SELECTED_SEGS],
         guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
     )
 
@@ -620,8 +601,8 @@ def test_segment_override_file_multiple_obs(test_directory, obs_num):
 
     with pytest.raises(ValueError)as excinfo:
         generate_segment_override_file(
-            SEGMENT_INFILE, guider, PROGRAM_ID, obs_num, 1, root=ROOT,
-            out_dir=__location__, selected_segs=SELECTED_SEGS, click_to_select_gui=False,
+            [SEGMENT_INFILE], guider, PROGRAM_ID, obs_num, 1, root=ROOT,
+            out_dir=__location__, selected_segs_list=[SELECTED_SEGS],
             guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
         )
     assert 'Invalid input for SOF: multiple observation numbers not allowed' in str(excinfo.value)
