@@ -905,7 +905,6 @@ class StarSelectorWindow(QDialog):
             self.tableWidget_commands.removeRow(0)
 
         # Add guiding command to table
-        # TODO: this will need to be in a loop when i make this function handle multiple commands in the regfile
         n_commands = self.tableWidget_commands.rowCount()
 
         orientation_summary = ', '.join([str(i) for i in selected_indices])
