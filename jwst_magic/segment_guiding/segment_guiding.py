@@ -651,7 +651,7 @@ class SegmentGuidingCalculator:
 
         Parameters
         ----------
-        selected_segs_list : list of str and/or arrays
+        selected_segs_list : list of str and/or an array
             List of file(s) containing locations and count rates of
             selected segments
 
