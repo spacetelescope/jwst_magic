@@ -1145,30 +1145,36 @@ class MasterGui(QMainWindow):
 
             # This would occur in the case of a POF
             if len(txt_files) == 0:
-                LOGGER.warning('No guiding_selections of all_found_psf files found. This may be okay depending on '
+                LOGGER.warning('No guiding_selections and/or all_found_psf files found. This may be okay depending on '
                                'the situation (e.g. when making a POF).')
                 pass
 
             else:
-                if not self.radioButton_shifted.isChecked():
-                    self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list for file in fnmatch.filter(txt_files, f)])
-                    self.all_found_psfs_file = sorted([file for f in acceptable_all_psf_files_list for file in fnmatch.filter(txt_files, f)])[0]
-                    guiding_selections = self.guiding_selections_file_list
+                try:
+                    if not self.radioButton_shifted.isChecked():
+                        self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list for file in fnmatch.filter(txt_files, f)])
+                        self.all_found_psfs_file = sorted([file for f in acceptable_all_psf_files_list for file in fnmatch.filter(txt_files, f)])[0]
+                        guiding_selections = self.guiding_selections_file_list
 
-                else:
-                    self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(txt_files, acceptable_guiding_files_list[0]))
-                    self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(txt_files, acceptable_all_psf_files_list[0]))
-                    guiding_selections = self.shifted_guiding_selections_file_list
+                    else:
+                        self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(txt_files, acceptable_guiding_files_list[0]))
+                        self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(txt_files, acceptable_all_psf_files_list[0]))
+                        guiding_selections = self.shifted_guiding_selections_file_list
 
-                # Clear and re-populate checkable combobox in segment guiding section
-                self.comboBox_guidingcommands.clear()
-                for i, command_file in enumerate(guiding_selections):
-                    item = "Command {}: {}".format(i+1, command_file.split('/')[-1])
-                    self.comboBox_guidingcommands.addItem(item)
-                    item = self.comboBox_guidingcommands.model().item(i, 0)
-                    item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-                    item.setCheckState(Qt.Unchecked)
+                    # Clear and re-populate checkable combobox in segment guiding section
+                    self.comboBox_guidingcommands.clear()
+                    for i, command_file in enumerate(guiding_selections):
+                        item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                        self.comboBox_guidingcommands.addItem(item)
+                        item = self.comboBox_guidingcommands.model().item(i, 0)
+                        item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+                        item.setCheckState(Qt.Unchecked)
 
+                except IndexError:
+                    LOGGER.warning(
+                        'Missing guiding_selections and/or all_found_psf files. This may be okay depending on '
+                        'the situation (e.g. when making a POF).')
+                    self.comboBox_guidingcommands.clear()
 
     def update_converted_image_preview(self):
         # Are all the necessary fields filled in? If not, don't even try.
