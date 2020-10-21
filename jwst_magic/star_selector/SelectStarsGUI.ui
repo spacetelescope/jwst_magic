@@ -1322,7 +1322,9 @@ p, li { white-space: pre-wrap; }
              <string>Save selected guide and reference stars as an override command</string>
             </property>
             <property name="styleSheet">
-             <string notr="true">QPushButton {color: black}</string>
+             <string notr="true">QPushButton {
+	background-color: rgb(185, 220, 254);
+}</string>
             </property>
             <property name="text">
              <string>Save Command</string>
