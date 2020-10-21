@@ -647,22 +647,25 @@ class SegmentGuidingCalculator:
 
     def get_selected_segs(self, selected_segs):
         """If a file of selected segments has been provided, get their
-        locations and count rates.
+        locations and count rates. Output variable self.selected_segment_ids
+        will count ids from 0->17
 
         Parameters
         ----------
         selected_segs_list : list of str and/or an array
-            List of file(s) containing locations and count rates of
-            selected segments
+            list of file(s) containing locations and count rates of
+            selected segments. If an array, reminder that the ids
+            should go from 1 -> 18
 
         Raises
         ------
         TypeError
             Incompatible file type provided as selected_segs
         """
-        # If the selected segments are an array of lists (passed from GUI)
+
+        # If the selected segments are an array of lists
         if isinstance(selected_segs, np.ndarray):
-            self.log.info('Segment Guiding: Guiding on segments selected from GUI')
+            self.log.info('Segment Guiding: Guiding on an array of segments')
             # If there is more than one orientation provided
             if isinstance(selected_segs[0], list):
                 self.selected_segment_ids = []
@@ -679,7 +682,10 @@ class SegmentGuidingCalculator:
             for i, path in enumerate(selected_segs):
                 if os.path.exists(path):
                     selected_segs_ids = self.parse_guiding_selections_file(path, i)
-                self.selected_segment_ids.append(selected_segs_ids)
+                    self.selected_segment_ids.append(selected_segs_ids)
+                else:
+                    # remove that path from the selected segs
+                    selected_segs.pop(i)
 
         # Otherwise, we don't know what it is...
         else:
@@ -1006,10 +1012,13 @@ def generate_segment_override_file(segment_infile_list, guider,
     out_dir : str, optional
         Location of out/ directory. If not specified, will be placed
         within the repository: .../jwst_magic/out/
-    selected_segs_list : list of str
+    selected_segs_list : list of str or array
         List of file path(s) to guiding_selections*.txt files with list of
         locations and countrates for the selected segments (guide and
-        reference stars)
+        reference stars). Can also be a array of lists, 1 list per command.
+        Reminder that the length of selected_segs_list should match the length
+        of segment_infile_list, both are the length of the number of commands.
+        If
     guide_star_params_dict : dict, optional
         Dictionary containing guide star parameters, for example:
             {'v2_boff': 0.1,  # boresight offset in V2 (arcsec)
