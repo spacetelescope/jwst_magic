@@ -241,8 +241,8 @@ def test_use_apt_button_manual(master_gui, test_directory):
     assert master_gui.gs_dec == ''
 
 
-apt_parameters = [#pytest.param("commissioning", 0, 'SOF', marks=pytest.mark.skipif(not SOGS, reason="SOGS naming not available")),
-                  #pytest.param("commissioning", 0, 'POF', marks=pytest.mark.skipif(not SOGS, reason="SOGS naming not available")),
+apt_parameters = [(pytest.param("commissioning", 0, 'SOF', marks=pytest.mark.skipif(not SOGS, reason="SOGS naming not available"))),
+                  (pytest.param("commissioning", 0, 'POF', marks=pytest.mark.skipif(not SOGS, reason="SOGS naming not available"))),
                   (pytest.param("manual", 1, 'SOF', marks=pytest.mark.skipif(SOGS, reason="SOGS naming not available"))),
                   (pytest.param("manual", 1, 'POF', marks=pytest.mark.skipif(SOGS, reason="SOGS naming not available")))]
 @pytest.mark.parametrize('type, button_name , filetype', apt_parameters)
@@ -299,23 +299,25 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
     # Set up SOF
     if filetype == 'SOF':
         qtbot.mouseClick(master_gui.radioButton_regfileSegmentGuiding, QtCore.Qt.LeftButton)
+        assert master_gui.radioButton_regfileSegmentGuiding.isChecked()
 
         # Check the pre-populated data (path to root_dir, contents are 0 txt files)
-        assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'out', ROOT)
+        if type == 'commissioning':
+            assert master_gui.lineEdit_regfileSegmentGuiding.text() == master_gui.textEdit_name_preview.toPlainText()
+        elif type == 'manual':
+            assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'out', ROOT)
         assert master_gui.comboBox_guidingcommands.count() == 1
 
         # Change to path that has guiding selections files
         master_gui.lineEdit_regfileSegmentGuiding.clear()
-        qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, s.path.join(__location__, 'data'))
+        qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, os.path.join(__location__, 'data'))
         qtbot.keyClick(master_gui.lineEdit_regfileSegmentGuiding, '\r')  # hit enter
+        assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data')
 
         # Check the box that contains the COMMAND_FILE
         i = [i for i in range(master_gui.comboBox_guidingcommands.count()) if COMMAND_FILE.split('/')[-1] in
              master_gui.comboBox_guidingcommands.itemText(i)]
         master_gui.comboBox_guidingcommands.model().item(i[0], 0).setCheckState(QtCore.Qt.Checked)
-
-        assert master_gui.radioButton_regfileSegmentGuiding.isChecked()
-        assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data')
         assert len(master_gui.comboBox_guidingcommands.checkedItems()) == 1
         assert COMMAND_FILE.split('/')[-1] in master_gui.comboBox_guidingcommands.checkedItems()[0].text()
         assert os.path.isfile(COMMAND_FILE)

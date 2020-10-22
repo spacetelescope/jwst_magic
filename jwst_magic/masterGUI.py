@@ -752,7 +752,11 @@ class MasterGui(QMainWindow):
             else:
                 self.radioButton_shifted.setEnabled(False)
 
-            root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
+            if self.radioButton_name_manual.isChecked():
+                root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
+            else:
+                root_dir = self.textEdit_name_preview.toPlainText()
+
             self.lineEdit_regfileSegmentGuiding.setText(root_dir)
 
             self.update_checkable_combobox()
@@ -1135,10 +1139,16 @@ class MasterGui(QMainWindow):
                 if root == '':
                     root = '*'
             else:
-                root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
-                path = root_dir
-                root = self.lineEdit_root.text()
-                self.lineEdit_regfileSegmentGuiding.setText(os.path.join(root_dir))
+                if self.radioButton_name_manual.isChecked():
+                    root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
+                    path = root_dir
+                    root = self.lineEdit_root.text()
+                else:
+                    root_dir = self.textEdit_name_preview.toPlainText()
+                    path = root_dir
+                    root = root_dir.split('out/')[-1].split('/')[0]
+
+                self.lineEdit_regfileSegmentGuiding.setText(root_dir)
 
             # Re-define files based on path found above
             txt_files = glob.glob(os.path.join(path, "**/*.txt"), recursive=True)
