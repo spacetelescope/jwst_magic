@@ -502,10 +502,9 @@ class MasterGui(QMainWindow):
                 if self.radioButton_shifted.isChecked():
                     guiding_files = self.shifted_guiding_selections_file_list
                     all_psf_files = self.shifted_all_found_psfs_file_list
-                    segment_infile_list = []
                 else:
                     guiding_files = self.guiding_selections_file_list
-                    segment_infile_list = [self.all_found_psfs_file] * len(guiding_files)
+                    all_psf_files = [self.all_found_psfs_file] * len(guiding_files)
 
                 # Load selected guiding_selections*.txt
                 if len(self.comboBox_guidingcommands.checkedItems()) == 0:
@@ -513,12 +512,11 @@ class MasterGui(QMainWindow):
                 combobox_choices = [item.text() for item in self.comboBox_guidingcommands.checkedItems()]
                 combobox_filenames = [file.split(': ')[-1] for file in combobox_choices]
                 selected_segs_list = []
+                segment_infile_list = []
                 for file in combobox_filenames:
                     ind = np.where([file in filepath for filepath in guiding_files])[0][0]
                     selected_segs_list.append(guiding_files[ind])
-                    # for shifted, you'll have 1 all found psfs file per guiding selections file
-                    if self.radioButton_shifted.isChecked():
-                        segment_infile_list.append(all_psf_files[ind])
+                    segment_infile_list.append(all_psf_files[ind])
 
                 # Verify that the all_found_psfs*.txt file(s) exist
                 if False in [os.path.exists(path) for path in segment_infile_list]:
@@ -1134,6 +1132,8 @@ class MasterGui(QMainWindow):
             if self.sender() == self.lineEdit_regfileSegmentGuiding:
                 path = self.lineEdit_regfileSegmentGuiding.text()
                 root = path.split('/out/')[-1].split('/')[0]
+                if root == '':
+                    root = '*'
             else:
                 root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
                 path = root_dir
@@ -1149,6 +1149,13 @@ class MasterGui(QMainWindow):
             if len(txt_files) == 0:
                 LOGGER.warning('No guiding_selections and/or all_found_psf files found. This may be okay depending on '
                                'the situation (e.g. when making a POF).')
+
+                # Clear and reset 0th index in shifted combo box
+                self.comboBox_showcommandsshifted.blockSignals(True)
+                self.comboBox_showcommandsshifted.clear()
+                self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
+                self.comboBox_showcommandsshifted.blockSignals(False)
+
                 pass
 
             else:
@@ -1180,7 +1187,13 @@ class MasterGui(QMainWindow):
                     LOGGER.warning(
                         'Missing guiding_selections and/or all_found_psf files. This may be okay depending on '
                         'the situation (e.g. when making a POF).')
-                    self.comboBox_guidingcommands.clear()
+
+                    # Clear and reset 0th index in shifted combo box
+                    self.comboBox_showcommandsshifted.blockSignals(True)
+                    self.comboBox_showcommandsshifted.clear()
+                    self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
+                    self.comboBox_showcommandsshifted.blockSignals(False)
+
 
     def update_converted_image_preview(self):
         # Are all the necessary fields filled in? If not, don't even try.

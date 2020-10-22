@@ -44,7 +44,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 DATA_DIRECTORY = os.path.join(__location__, 'data', ROOT)
 INPUT_IMAGE = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
-COMMAND_FILE = os.path.join(__location__, 'data', 'guiding_selections_for_obs01_G1.txt')
+COMMAND_FILE = os.path.join(__location__, 'data', 'guiding_selections_test_master_G1.txt')
 
 # Only needed if computer is on SOGS (directory in SOGS_PATH = '/data/jwst/wss/guiding/')
 COM_PRACTICE_DIR = 'magic_testing_practice'
@@ -241,14 +241,16 @@ def test_use_apt_button_manual(master_gui, test_directory):
     assert master_gui.gs_dec == ''
 
 
-apt_parameters = [pytest.param("commissioning", 0, marks=pytest.mark.skipif(not SOGS, reason="SOGS naming not available")),
-                  (pytest.param("manual", 1, marks=pytest.mark.skipif(SOGS, reason="SOGS naming not available")))]
-@pytest.mark.parametrize('type, button_name', apt_parameters)
+apt_parameters = [#pytest.param("commissioning", 0, 'SOF', marks=pytest.mark.skipif(not SOGS, reason="SOGS naming not available")),
+                  #pytest.param("commissioning", 0, 'POF', marks=pytest.mark.skipif(not SOGS, reason="SOGS naming not available")),
+                  (pytest.param("manual", 1, 'SOF', marks=pytest.mark.skipif(SOGS, reason="SOGS naming not available"))),
+                  (pytest.param("manual", 1, 'POF', marks=pytest.mark.skipif(SOGS, reason="SOGS naming not available")))]
+@pytest.mark.parametrize('type, button_name , filetype', apt_parameters)
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
-def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name):
+def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, filetype):
     """
-    Test APT info + GS Info are populated into segment guiding SOF GUI correctly
-    for both manual and commissioning naming methods
+    Test APT info + GS Info are populated into segment guiding SOFand POF GUIs
+    correctly for both manual and commissioning naming methods
     """
     # Initialize main window
     qtbot.addWidget(master_gui)
@@ -296,21 +298,40 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name):
     master_gui.groupBox_segmentGuiding.setChecked(True)
 
     # Set up SOF
-    qtbot.mouseClick(master_gui.radioButton_regfileSegmentGuiding, QtCore.Qt.LeftButton)
-    master_gui.lineEdit_regfileSegmentGuiding.clear()
-    qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, COMMAND_FILE)
+    if filetype == 'SOF':
+        qtbot.mouseClick(master_gui.radioButton_regfileSegmentGuiding, QtCore.Qt.LeftButton)
 
-    assert master_gui.radioButton_regfileSegmentGuiding.isChecked()
-    assert master_gui.lineEdit_regfileSegmentGuiding.text() == COMMAND_FILE
-    assert os.path.isfile(COMMAND_FILE)
+        # Check the pre-populated data (path to root_dir, contents are 0 txt files)
+        assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'out', ROOT)
+        assert master_gui.comboBox_guidingcommands.count() == 1
+
+        # Change to path that has guiding selections files
+        master_gui.lineEdit_regfileSegmentGuiding.clear()
+        qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, str(os.path.join(__location__, 'data/')))
+        qtbot.keyClick(master_gui.lineEdit_regfileSegmentGuiding, '\r')  # hit enter
+
+        # Check the box that contains the COMMAND_FILE
+        i = [i for i in range(master_gui.comboBox_guidingcommands.count()) if COMMAND_FILE.split('/')[-1] in
+             master_gui.comboBox_guidingcommands.itemText(i)]
+        master_gui.comboBox_guidingcommands.model().item(i[0], 0).setCheckState(QtCore.Qt.Checked)
+
+        assert master_gui.radioButton_regfileSegmentGuiding.isChecked()
+        assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data/')
+        assert len(master_gui.comboBox_guidingcommands.checkedItems()) == 1
+        assert COMMAND_FILE.split('/')[-1] in master_gui.comboBox_guidingcommands.checkedItems()[0].text()
+        assert os.path.isfile(COMMAND_FILE)
+
+    elif filetype == 'POF':
+        qtbot.mouseClick(master_gui.radioButton_photometryOverride, QtCore.Qt.LeftButton)
 
     def handle_dialog():
         try:
             assert master_gui._test_sg_dialog.lineEdit_programNumber.text() == '1148'
             assert master_gui._test_sg_dialog.lineEdit_observationNumber.text() == '1'
             assert master_gui._test_sg_dialog.lineEdit_visitNumber.text() == '1'
-            assert master_gui._test_sg_dialog.lineEdit_RA.text() != ''
-            assert master_gui._test_sg_dialog.lineEdit_Dec.text() != ''
+            if filetype == 'SOF':
+                assert master_gui._test_sg_dialog.lineEdit_RA.text() != ''
+                assert master_gui._test_sg_dialog.lineEdit_Dec.text() != ''
             qtbot.mouseClick(master_gui._test_sg_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
         except AssertionError:
             # If something raising an error above, need to close the pop up gui anyway
@@ -320,8 +341,14 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name):
         QtCore.QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(master_gui.pushButton_run, QtCore.Qt.LeftButton, delay=1)
 
-    # check the lack of PA entry causes an error
-    expected_err =  'could not convert string to float:'
+    if filetype == 'SOF':
+        # check the lack of PA entry causes an error
+        expected_err = 'could not convert string to float:'
+
+    elif filetype == 'POF':
+        # check the bad countrate value causes an error
+        expected_err = 'Countrate factor out of range for count_rate_factor'
+
     assert expected_err in str(exceptions[0][1]), "Wrong error captured. Caught: '{}', Expected: '{}'".format(
         str(exceptions[0][1]), expected_err)
 
