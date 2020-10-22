@@ -1412,12 +1412,16 @@ class MasterGui(QMainWindow):
             acceptable_guiding_files_list = [
                 os.path.join(root_dir, 'guiding_config_*', 'shifted_guiding_selections_{}_G{}_config*.txt'.format(
                     root, guider)),
-                os.path.join(root_dir,'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider))]
+                os.path.join(root_dir,'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider)),
+                os.path.join(root_dir,'shifted_guiding_selections_{}_G{}.txt'.format(root, guider)),
+            ]
 
             acceptable_all_psf_files_list = [
                 os.path.join(root_dir, 'guiding_config_*', 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(
                     root, guider)),
-                os.path.join(root_dir, 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider))]
+                os.path.join(root_dir, 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider)),
+                os.path.join(root_dir, 'shifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
+            ]
 
         return acceptable_guiding_files_list, acceptable_all_psf_files_list
 

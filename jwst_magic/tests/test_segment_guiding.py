@@ -87,6 +87,13 @@ SEGMENT_INFILE = os.path.join(__location__, 'data', '{}_ALLpsfs.txt'.format(ROOT
 SELECTED_SEGS = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
 SELECTED_SEGS2 = os.path.join(__location__, 'data', 'unshifted_guiding_selections_{}_G1_config1.txt'.format(ROOT))
 SELECTED_SEGS3 = os.path.join(__location__, 'data', 'unshifted_guiding_selections_{}_G1_config2.txt'.format(ROOT))
+SHIFTED_SEGS = os.path.join(__location__, 'data', 'shifted_guiding_selections_{}_G1_config1.txt'.format(ROOT))
+SHIFTED_SEGS2 = os.path.join(__location__, 'data', 'shifted_guiding_selections_{}_G1_config2.txt'.format(ROOT))
+SHIFTED_SEGS3 = os.path.join(__location__, 'data', 'shifted_guiding_selections_{}_G1_config3.txt'.format(ROOT))
+SHIFTED_INFILE = os.path.join(__location__, 'data', 'shifted_all_found_psfs_{}_G1_config1.txt'.format(ROOT))
+SHIFTED_INFILE2 = os.path.join(__location__, 'data', 'shifted_all_found_psfs_{}_G1_config2.txt'.format(ROOT))
+SHIFTED_INFILE3 = os.path.join(__location__, 'data', 'shifted_all_found_psfs_{}_G1_config3.txt'.format(ROOT))
+
 PROGRAM_ID = 1141
 OBSERVATION_NUM = 7
 VISIT_NUM = 1
@@ -131,12 +138,15 @@ def master_gui():
 
 
 test_data = PARAMETRIZED_DATA['test_generate_segment_override_file']
-sof_parameters = [(0, [SELECTED_SEGS], [SEGMENT_INFILE], test_data[0]),
+sof_parameters = [
+                  (0, [SELECTED_SEGS], [SEGMENT_INFILE], test_data[0]),
                   (4, [SELECTED_SEGS], [SEGMENT_INFILE], test_data[1]),
                   (0, [SELECTED_SEGS, SELECTED_SEGS2], [SEGMENT_INFILE, SEGMENT_INFILE], test_data[2]), # no matching segs
                   (0, [SELECTED_SEGS, SELECTED_SEGS3], [SEGMENT_INFILE, SEGMENT_INFILE], test_data[3]), # 2 matching segs
                   (0, np.array([[1, 12, 6]]), [SEGMENT_INFILE], test_data[4]),
-                  (0, np.array([[1, 2, 3], [4, 1, 18, 12, 2]]), [SEGMENT_INFILE, SEGMENT_INFILE], test_data[5])
+                  (0, np.array([[1, 2, 3], [4, 1, 18, 12, 2]]), [SEGMENT_INFILE, SEGMENT_INFILE], test_data[5]),
+                  (0, [SHIFTED_SEGS, SHIFTED_SEGS2], [SHIFTED_INFILE, SHIFTED_INFILE2], test_data[6]), # no matching segs
+                  (0, [SHIFTED_SEGS, SHIFTED_SEGS3], [SHIFTED_INFILE, SHIFTED_INFILE3], test_data[7]), # matching guide star
                  ]
 @pytest.mark.parametrize('seg_num, selected_segs, segment_infile, correct_command', sof_parameters)
 def test_generate_segment_override_file(test_directory, seg_num, selected_segs, segment_infile, correct_command):

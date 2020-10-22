@@ -291,7 +291,6 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
     assert master_gui.visit_num == 1
 
     # Go to segment guiding
-    #qtbot.mouseClick(master_gui.checkBox_useConvertedImage, QtCore.Qt.LeftButton)
     master_gui.groupBox_imageConverter.setChecked(False)
     master_gui.groupBox_starSelector.setChecked(False)
     master_gui.groupBox_fileWriter.setChecked(False)
@@ -307,7 +306,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
 
         # Change to path that has guiding selections files
         master_gui.lineEdit_regfileSegmentGuiding.clear()
-        qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, str(os.path.join(__location__, 'data/')))
+        qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, s.path.join(__location__, 'data'))
         qtbot.keyClick(master_gui.lineEdit_regfileSegmentGuiding, '\r')  # hit enter
 
         # Check the box that contains the COMMAND_FILE
@@ -316,7 +315,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
         master_gui.comboBox_guidingcommands.model().item(i[0], 0).setCheckState(QtCore.Qt.Checked)
 
         assert master_gui.radioButton_regfileSegmentGuiding.isChecked()
-        assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data/')
+        assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data')
         assert len(master_gui.comboBox_guidingcommands.checkedItems()) == 1
         assert COMMAND_FILE.split('/')[-1] in master_gui.comboBox_guidingcommands.checkedItems()[0].text()
         assert os.path.isfile(COMMAND_FILE)
@@ -409,3 +408,121 @@ def test_apt_guider_disagree_manual(mock_dialog, master_gui, test_directory):
     master_gui.lineEdit_manualobs.setText('02')
     master_gui.pushButton_manualid.click()
     assert mock_dialog.called  # Check dialog box pops up
+
+
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+def test_sg_commands(qtbot, master_gui):
+    """
+    Test that the segment guiding section of the GUI behaves as expected,
+    particularly in terms of populating the checkable combobox
+    """
+
+    shifted_file = 'shifted_guiding_selections_test_master_G1_config1.txt'
+    unshifted_file = 'unshifted_guiding_selections_test_master_G1_config1.txt'
+
+    # Set General Input
+    master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
+    master_gui.lineEdit_root.setText(ROOT)  # set root
+    master_gui.textEdit_out.setText(os.path.join(__location__, 'data'))  # set out directory
+    master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
+
+    # Go to segment guiding
+    master_gui.groupBox_imageConverter.setChecked(False)
+    master_gui.groupBox_starSelector.setChecked(False)
+    master_gui.groupBox_fileWriter.setChecked(False)
+    master_gui.groupBox_segmentGuiding.setChecked(True)
+
+    # Check that the path in the lineedit_regfile_guiding is correct
+    assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data', 'out', ROOT)
+
+    # Check that the contents of the checkable combobox is shifted only
+    cmds = [master_gui.comboBox_guidingcommands.itemText(i) for i in range(master_gui.comboBox_guidingcommands.count())]
+    assert len(cmds) == 1
+    assert cmds[0] == 'Command 1: ' + shifted_file
+
+    # Switch radio button to unshifted
+    master_gui.buttonGroup_segmentGuiding_idAttitude.buttons()[1].click()
+    assert master_gui.radioButton_unshifted.isChecked()
+
+    # Check that the path in the lineedit_regfile_guiding hasn't changed
+    assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data', 'out', ROOT)
+
+    # Check that the contents of the checkable combobox is unshifted only
+    cmds = [master_gui.comboBox_guidingcommands.itemText(i) for i in range(master_gui.comboBox_guidingcommands.count())]
+    assert len(cmds) == 1
+    assert cmds[0] == 'Command 1: ' + unshifted_file
+
+    # Change the path and select a command
+    master_gui.lineEdit_regfileSegmentGuiding.clear()
+    qtbot.keyClicks(master_gui.lineEdit_regfileSegmentGuiding, os.path.join(__location__, 'data'))
+    qtbot.keyClick(master_gui.lineEdit_regfileSegmentGuiding, '\r')  # hit enter
+    assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data')
+
+    i = [i for i in range(master_gui.comboBox_guidingcommands.count()) if COMMAND_FILE.split('/')[-1] in
+         master_gui.comboBox_guidingcommands.itemText(i)]
+    master_gui.comboBox_guidingcommands.model().item(i[0], 0).setCheckState(QtCore.Qt.Checked)
+    assert len(master_gui.comboBox_guidingcommands.checkedItems()) == 1
+
+    # Flip back to shifted and confirm the path is back to the original
+    master_gui.buttonGroup_segmentGuiding_idAttitude.buttons()[0].click()
+    assert master_gui.radioButton_shifted.isChecked()
+    assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data', 'out', ROOT)
+
+    # Flip back to unshifted and confirm the path is also back to the original and nothing is checked
+    master_gui.buttonGroup_segmentGuiding_idAttitude.buttons()[1].click()
+    assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data', 'out', ROOT)
+    assert len(master_gui.comboBox_guidingcommands.checkedItems()) == 0
+
+
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+def test_shifted_data(master_gui):
+    """
+    Check that if shifted data is created, the following parts of
+    the GUI are updated:
+     -  "Use shifted to ID attitude" radio button in SG is selected
+     - Contents of combobox are all shifted
+     - Shifted file preview is interactive
+    """
+    shifted_file = 'shifted_guiding_selections_test_master_G1_config1.txt'
+    unshifted_file = 'unshifted_guiding_selections_test_master_G1_config1.txt'
+
+    # Set General Input
+    master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
+    master_gui.lineEdit_root.setText(ROOT)  # set root
+    master_gui.textEdit_out.setText(os.path.join(__location__, 'data'))  # set out directory
+    master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
+
+    # Go to segment guiding
+    master_gui.groupBox_imageConverter.setChecked(False)
+    master_gui.groupBox_starSelector.setChecked(False)
+    master_gui.groupBox_fileWriter.setChecked(False)
+    master_gui.groupBox_segmentGuiding.setChecked(True)
+
+    # Check that since shifted data is in the out/root directory, that's the default radio button selected
+    assert master_gui.radioButton_shifted.isChecked()
+
+    # Check that the path in the lineedit_regfile_guiding is correct
+    assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data', 'out', ROOT)
+
+    # Check that the contents of the checkable combobox is shifted only
+    cmds = [master_gui.comboBox_guidingcommands.itemText(i) for i in range(master_gui.comboBox_guidingcommands.count())]
+    assert len(cmds) == 1
+    assert cmds[0] == 'Command 1: ' + shifted_file
+
+    # Check file previews
+    assert master_gui.comboBox_showcommandsconverted.isEnabled()
+    assert master_gui.comboBox_showcommandsshifted.isEnabled()
+
+    # Check 1 option is available in converted image preview
+    convert_cmds = [master_gui.comboBox_showcommandsconverted.itemText(i) for i in
+                    range(master_gui.comboBox_showcommandsconverted.count())]
+    assert len(convert_cmds) == 2
+    assert convert_cmds[0] == '- Guiding Command -'
+    assert convert_cmds[1] == 'Command 1: ' + unshifted_file
+
+    # Check 1 option is available in shifted image preview
+    shift_cmds = [master_gui.comboBox_showcommandsshifted.itemText(i) for i in
+                  range(master_gui.comboBox_showcommandsshifted.count())]
+    assert len(shift_cmds) == 2
+    assert shift_cmds[0] == '- Guiding Command -'
+    assert shift_cmds[1] == 'Command 1: ' + shifted_file
