@@ -101,10 +101,10 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
 
     #Run the prep code that's in run_magic.py
     if 'guiding_config' in guiding_selections:
-        out_dir_fsw = os.path.join(test_directory, 'guiding_config_{}'.format(
+        out_dir_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_{}'.format(
             guiding_selections.split('guiding_config_')[1].split('/')[0]))
     else:
-        out_dir_fsw = test_directory
+        out_dir_fsw = TEST_DIRECTORY
 
     # Run main function to test
     fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
@@ -163,10 +163,10 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
 
     # Run the code
     fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
-        open_image, ROOT, guider, __location__, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
+        open_image, ROOT, guider, TEST_DIRECTORY, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, psf_center_file=None, crowded_field=False, logger_passed=True)
     BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
-                        out_dir=__location__, shift_id_attitude=True)
+                        out_dir=TEST_DIRECTORY, shift_id_attitude=True)
 
     # Assert ~exactly for time-normalized data (before detector effects are added)
     assert np.isclose(correct_data_dict['time_normed_im'][0], np.min(BFS.time_normed_im)), \
@@ -228,16 +228,16 @@ def test_psf_center_file():
     # Run the code
     fileobj_id = BuildFGSSteps(
         image, guider, ROOT, step='ID', guiding_selections_file=SELECTED_SEGS_MIMF,
-        out_dir=__location__, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
+        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
     )
     fileobj_acq1 = BuildFGSSteps(
         image, guider, ROOT, step='ACQ1', guiding_selections_file=SELECTED_SEGS_MIMF,
-        out_dir=__location__, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
+        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
     )
 
     fileobj_trk = BuildFGSSteps(
         image, guider, ROOT, step='TRK', guiding_selections_file=SELECTED_SEGS_MIMF,
-        out_dir=__location__, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
+        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
     )
 
     assert (fileobj_id.xarr, fileobj_id.yarr) == (fileobj_acq1.xarr, fileobj_acq1.yarr)
