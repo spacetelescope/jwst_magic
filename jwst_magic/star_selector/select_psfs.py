@@ -717,7 +717,7 @@ def manual_star_selection(data, smoothing, choose_center=False, testing=False, m
         # Print indices of each guiding configuration
         for i in range(len(inds_list)):
             ind = inds_list[i]
-            LOGGER.info('Star Selection: Guiding Configuration {} - GS = {}, RS = {}'.format(i, ind[0],
+            LOGGER.info('Star Selection: Guiding Configuration {} - GS = {}, RS = {}'.format(i+1, ind[0],
                         ', '.join([str(c) for c in ind[1:]])))
 
     # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF, e.g. MIMF)
@@ -867,7 +867,6 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             utils.write_cols_to_file(center_pointing_path, labels=['segnum'], cols=[segnum], log=LOGGER)
 
         # Write catalog of selected PSFs
-        guiding_selections_path_list = []
         current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_dir)
                                if os.path.isdir(os.path.join(out_dir, d)) if 'guiding_config' in d])
         if len(current_dirs) == 0:
@@ -876,6 +875,13 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             new_config_numbers = np.arange(max(current_dirs) + 1, max(current_dirs) + 1 + len(cols_list))
         guiding_selections_path_list = []
         for (i, cols) in zip(new_config_numbers, cols_list):
+            for j in range(len(cols)):
+                if j == 0:
+                    LOGGER.info("Star Selection: PSF Config {}: Guide Star at "
+                                "({},{}) has 3x3 Count Rate of {}".format(i, cols[j][0], cols[j][1], cols[j][2]))
+                else:
+                    LOGGER.info("Star Selection: PSF Config {}: Ref Star at "
+                                "({},{}) has 3x3 Count Rate of {}".format(i, cols[j][0], cols[j][1], cols[j][2]))
 
             guiding_selections_path = os.path.join(out_dir, 'guiding_config_{}'.format(i),
                                                    'unshifted_guiding_selections_{}_G{}_config{}.txt'.format(
