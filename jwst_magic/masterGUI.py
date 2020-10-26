@@ -1199,23 +1199,17 @@ class MasterGui(QMainWindow):
             else:
                 try:
                     if not self.radioButton_shifted.isChecked():
-                        self.guiding_selections_file_list = [file for f in acceptable_guiding_files_list for
-                                                             file in fnmatch.filter(txt_files, f)
-                                                             ]
-                        self.guiding_selections_file_list.sort(key=utils.natural_keys)
-                        all_found_psfs_file = [file for f in acceptable_all_psf_files_list for file in
-                                                           fnmatch.filter(txt_files, f)]
-                        all_found_psfs_file.sort(key=utils.natural_keys)
-                        self.all_found_psfs_file = all_found_psfs_file[0]
+                        self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list for
+                                                                    file in fnmatch.filter(txt_files, f)],
+                                                                   key=utils.natural_keys)
+                        self.all_found_psfs_file = sorted([file for f in acceptable_all_psf_files_list for file in
+                                                           fnmatch.filter(txt_files, f)], key=utils.natural_keys)[0]
                         guiding_selections = self.guiding_selections_file_list
-
                     else:
-                        self.shifted_guiding_selections_file_list = fnmatch.filter(
-                            txt_files, acceptable_guiding_files_list[0])
-                        self.shifted_guiding_selections_file_list.sort(key=utils.natural_keys)
-                        self.shifted_all_found_psfs_file_list = fnmatch.filter(
-                            txt_files, acceptable_all_psf_files_list[0])
-                        self.shifted_all_found_psfs_file_list.sort(key=utils.natural_keys)
+                        self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(
+                            txt_files, acceptable_guiding_files_list[0]), key=utils.natural_keys)
+                        self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(
+                            txt_files, acceptable_all_psf_files_list[0]), key=utils.natural_keys)
                         guiding_selections = self.shifted_guiding_selections_file_list
 
                     # Clear and re-populate checkable combobox in segment guiding section
@@ -1512,11 +1506,10 @@ class MasterGui(QMainWindow):
 
             # Pull every possible guiding selections file and 1 all found psfs file
             try:
-                self.guiding_selections_file_list = [file for f in acceptable_guiding_files_list
-                                                     for file in fnmatch.filter(txt_files, f)
-                                                     ]
-                self.guiding_selections_file_list.sort(key=utils.natural_keys)
-                self.all_found_psfs_file = [f for f in acceptable_all_psf_files_list if f in txt_files][0]
+                self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list
+                                                     for file in fnmatch.filter(txt_files, f)], key=utils.natural_keys)
+                self.all_found_psfs_file = sorted([f for f in acceptable_all_psf_files_list if f in txt_files],
+                                                  key=utils.natural_keys)[0]
             except IndexError:
                 self.guiding_selections_file_list = []
                 self.all_found_psfs_file = ''
@@ -1530,20 +1523,16 @@ class MasterGui(QMainWindow):
             shifted_acceptable_guiding_files_list, shifted_acceptable_all_psf_files_list = \
                 self.search_acceptable_files(root_dir, root, guider, shifted=True)
 
-            self.shifted_all_found_psfs_file_list = fnmatch.filter(
-                txt_files, shifted_acceptable_all_psf_files_list[0])
-            self.shifted_all_found_psfs_file_list.sort(key=utils.natural_keys)
+            self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(
+                txt_files, shifted_acceptable_all_psf_files_list[0]), key=utils.natural_keys)
 
-            self.shifted_guiding_selections_file_list = fnmatch.filter(
-                txt_files, shifted_acceptable_guiding_files_list[0])
-            self.shifted_guiding_selections_file_list.sort(key=utils.natural_keys)
+            self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(
+                txt_files, shifted_acceptable_guiding_files_list[0]), key=utils.natural_keys)
 
             # Update shifted FGS image(s) filepath
-            self.shifted_im_file_list = fnmatch.filter(
+            self.shifted_im_file_list = sorted(fnmatch.filter(
                 fits_files, os.path.join(root_dir, 'guiding_config_*', 'FGS_imgs',
-                                         'shifted_{}_G{}_config*.fits'.format(root, guider))
-                                         )
-            self.shifted_im_file_list.sort(key=utils.natural_keys)
+                                         'shifted_{}_G{}_config*.fits'.format(root, guider))), key=utils.natural_keys)
 
             # Update guiding_selections*.txt paths in GUI
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list]:
