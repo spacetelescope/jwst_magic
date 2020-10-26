@@ -424,6 +424,12 @@ class MasterGui(QMainWindow):
         # File writer
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         file_writer = self.groupBox_fileWriter.isChecked()
+
+        if file_writer and not star_selection and not self.groupBox_segmentGuiding.isChecked():
+            raise ValueError('Cannot run FSW File Writer section on its own. Need to define the input guiding '
+                             'selections files in the Star Selector section either through the GUI or loading '
+                             'files.')
+
         steps = []
         if self.checkBox_CAL.isChecked():
             steps.append('CAL')
@@ -662,8 +668,6 @@ class MasterGui(QMainWindow):
         """ Using the Infile Open button (open file) """
         # Determine which infile is being edited
         if self.sender() == self.pushButton_regfileStarSelector:
-           # to_text = self.lineEdit_regfileStarSelector
-
             filename_list = self.open_filename_dialog('In/Reg file(s)', multiple_files=True,
                                                  file_type="Input file (*.txt *.incat);;All files (*.*)")
             self.comboBox_regfileStarSelector.clear()
