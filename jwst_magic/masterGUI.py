@@ -1175,9 +1175,10 @@ class MasterGui(QMainWindow):
                                                              file in fnmatch.filter(txt_files, f)
                                                              ]
                         self.guiding_selections_file_list.sort(key=utils.natural_keys)
-                        self.all_found_psfs_file = [file for f in acceptable_all_psf_files_list for file in
+                        all_found_psfs_file = [file for f in acceptable_all_psf_files_list for file in
                                                            fnmatch.filter(txt_files, f)]
-                        self.all_found_psfs_file.sort(key=utils.natural_keys)[0]
+                        all_found_psfs_file.sort(key=utils.natural_keys)
+                        self.all_found_psfs_file = all_found_psfs_file[0]
                         guiding_selections = self.guiding_selections_file_list
 
                     else:
