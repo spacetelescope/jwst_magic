@@ -116,6 +116,10 @@ class EmittingStream(QtCore.QObject):
         """
         self.stdout.write(text)
         try:
+            if 'warning' in text.lower():
+                text = "<span style=\" font-size:13pt; font-weight:600; color:#B8AE17;\" >" + text + "</span>"
+            if 'error' in text.lower():
+                text = "<span style=\" font-size:13pt; font-weight:600; color:#B84317;\" >" + text + "</span>"
             self.write_output(text)
         except RuntimeError:
             pass
@@ -132,7 +136,7 @@ class EmittingStream(QtCore.QObject):
         text_noANSI = re.sub(r'(\[.+?m)', '', text).replace('\n', '<br>')
         self.textEdit_log.setHtml(current_text + text_noANSI)
 
-        # Move the cursor to the end so that the most recent  text is visible
+        # Move the cursor to the end so that the most recent text is visible
         cursor = self.textEdit_log.textCursor()
         cursor.movePosition(QtGui.QTextCursor.End)
         self.textEdit_log.setTextCursor(cursor)
@@ -470,7 +474,7 @@ class MasterGui(QMainWindow):
             # Print indices of each guiding configuration
             for i in range(len(inds_list)):
                 ind = inds_list[i]
-                LOGGER.info('Guiding Configuration {} - GS = {}, RS = {}'.format(i, ind[0],
+                LOGGER.info('Master GUI: Guiding Configuration {} - GS = {}, RS = {}'.format(i, ind[0],
                                                                                  ', '.join([str(c) for c in ind[1:]])))
 
             # Rewrite the id.prc and acq.prc files
@@ -1174,8 +1178,8 @@ class MasterGui(QMainWindow):
 
             # This would occur in the case of a POF
             if len(txt_files) == 0:
-                LOGGER.warning('No guiding_selections and/or all_found_psf files found. This may be okay depending on '
-                               'the situation (e.g. when making a POF).')
+                LOGGER.warning('Master GUI: No guiding_selections and/or all_found_psf files found. This may be okay '
+                               'depending on the situation (e.g. when making a POF).')
 
                 # Clear and reset 0th index in shifted combo box
                 self.comboBox_showcommandsshifted.blockSignals(True)
@@ -1218,8 +1222,8 @@ class MasterGui(QMainWindow):
 
                 except IndexError:
                     LOGGER.warning(
-                        'Missing guiding_selections and/or all_found_psf files. This may be okay depending on '
-                        'the situation (e.g. when making a POF).')
+                        'Master GUI: Missing guiding_selections and/or all_found_psf files. This may be okay depending '
+                        'on the situation (e.g. when making a POF).')
 
                     # Clear and reset 0th index in shifted combo box
                     self.comboBox_showcommandsshifted.blockSignals(True)
@@ -1590,6 +1594,8 @@ class MasterGui(QMainWindow):
         if not isinstance(obs_number, int):
             obs_number = int(obs_number)
 
+        LOGGER.info("Master GUI: Checking Program ID {} and Obs #{}".format(program_id, obs_number))
+
         # Build temporary directory
         apt_file_path = os.path.join(__location__, 'data', 'temp_apt')
         if os.path.exists(apt_file_path):
@@ -1610,7 +1616,11 @@ class MasterGui(QMainWindow):
         # Pull: List of Observations for the CAR > Specific Obs > Special Requirements Info (sr)
         namespace_tag = '{http://www.stsci.edu/JWST/APT}'
         observation_list = tree.find(namespace_tag + 'DataRequests').findall('.//' + namespace_tag + 'Observation')
-        observation = observation_list[obs_number - 1]  # indexes from 1
+        try:
+            observation = observation_list[obs_number - 1]  # indexes from 1
+        except IndexError:
+            shutil.rmtree(apt_file_path)
+            raise ValueError("This program doesn't have any observations")
         sr = [x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "SpecialRequirements"][0]
 
         # Try to pull the Guide Star information
@@ -1618,7 +1628,7 @@ class MasterGui(QMainWindow):
             gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
         except IndexError:
             self.lineEdit_normalize.setText('')
-            LOGGER.error("Master GUI: This observation doesn't have a Guide Star Special Requirement")
+            shutil.rmtree(apt_file_path)
             raise ValueError("This observation doesn't have a Guide Star Special Requirement")
 
         # Pull out the guide star ID and the guider number
@@ -1642,7 +1652,6 @@ class MasterGui(QMainWindow):
             gsc_series = data_frame.iloc[0]
         else:
             self.lineEdit_normalize.setText('')
-            LOGGER.error("Master GUI: This Guide Star ID points to multiple lines in catalog")
             raise ValueError("This Guide Star ID points to multiple lines in catalog")
 
         # Pull RA and DEC
