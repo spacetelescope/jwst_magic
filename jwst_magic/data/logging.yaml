@@ -1,20 +1,20 @@
 version: 1
 disable_existing_loggers: False
 formatters:
-    simple:
-        format: "%(asctime)s - %(levelname)s - %(message)s"
+    myFormatter:
+      '()': jwst_magic.utils.utils.CustomFormatter
 
 handlers:
     console:
         class: logging.StreamHandler
         level: DEBUG
-        formatter: simple
+        formatter: myFormatter
         stream: ext://sys.stdout
 
     file_handler:
         class: logging.FileHandler
         level: INFO
-        formatter: simple
+        formatter: myFormatter
         filename: None
 
 loggers:
@@ -22,7 +22,9 @@ loggers:
         level: INFO
         handlers: [console, file_handler]
         propagate: no
+        formatter: myFormatter
 
 root:
     level: INFO
     handlers: [console]
+    formatter: myFormatter
