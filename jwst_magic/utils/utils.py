@@ -17,6 +17,7 @@ import csv
 import itertools
 import logging.config
 import os
+import re
 import requests
 import socket
 import sys
@@ -471,3 +472,18 @@ def get_car_data():
                           for car, apt in zip(df_set['Activity ID'].values, df_set['Program'].values)}
 
     return commissioning_dict
+
+
+def natural_keys(text):
+    """
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (from stack overflow:
+    https://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside)
+    """
+
+    # For sorting strings by numbers
+    def atoi(text):
+        return int(text) if text.isdigit() else text
+
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
