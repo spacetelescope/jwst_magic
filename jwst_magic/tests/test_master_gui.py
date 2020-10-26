@@ -290,6 +290,10 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
+    # Set threshold
+    master_gui.lineEdit_threshold.clear()
+    qtbot.keyClicks(master_gui.lineEdit_threshold, '0.9')
+
     # Go to segment guiding
     master_gui.groupBox_imageConverter.setChecked(False)
     master_gui.groupBox_starSelector.setChecked(False)
@@ -333,6 +337,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
             if filetype == 'SOF':
                 assert master_gui._test_sg_dialog.lineEdit_RA.text() != ''
                 assert master_gui._test_sg_dialog.lineEdit_Dec.text() != ''
+                assert master_gui._test_sg_dialog.lineEdit_countrateUncertainty.text() == '0.9'
             qtbot.mouseClick(master_gui._test_sg_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
         except AssertionError:
             # If something raising an error above, need to close the pop up gui anyway

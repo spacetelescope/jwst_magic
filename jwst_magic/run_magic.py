@@ -66,7 +66,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
             coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, crowded_field=False):
+            shift_id_attitude=True, crowded_field=False, threshold=0.6):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -122,8 +122,11 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     jitter_rate_arcsec : float, optional
         If coarse_pointing is true, the rate of jitter in arcseconds
         per second to apply in the form of a Gaussian filter.
-    itm: bool, Optional
+    itm : bool, Optional
         If this image come from the ITM simulator (important for normalization).
+    threshold : float
+        The threshold (aka count rate uncertainty factor) to use when writing
+        FSW files.
     """
 
     # Determine filename root
@@ -216,7 +219,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
             for step in steps:
                 fgs_files_obj= buildfgssteps.BuildFGSSteps(
-                    fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw,
+                    fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                     psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
                 )

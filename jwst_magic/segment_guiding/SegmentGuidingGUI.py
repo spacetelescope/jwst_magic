@@ -62,6 +62,8 @@ class SegmentGuidingDialog(QDialog):
         RA of guide star
     dec :  optional, float
         DEC of guide star
+    threshold : optional, float
+        Count rate uncertainty factor
 
     Returns
     -------
@@ -70,7 +72,8 @@ class SegmentGuidingDialog(QDialog):
         program_id, observation_num, visit_num, threshold_factor,
         countrate_factor)
     """
-    def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None, log=None):
+    def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None,
+                 log=None, threshold=None):
         # Initialize attributes
         self.override_type = override_type
         self.guider = guider
@@ -104,6 +107,7 @@ class SegmentGuidingDialog(QDialog):
         try:
             self.lineEdit_RA.setText(str(ra if ra is not None else ''))
             self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
+            self.lineEdit_countrateUncertainty.setText(str(threshold if threshold is not None else 0.6))
         except AttributeError:
             pass
 

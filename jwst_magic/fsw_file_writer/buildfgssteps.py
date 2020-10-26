@@ -72,7 +72,7 @@ class BuildFGSSteps(object):
     to be used with DHAS.
     """
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
-                 out_dir=None, logger_passed=False, psf_center_file=None,
+                 out_dir=None, threshold=0.6, logger_passed=False, psf_center_file=None,
                  shift_id_attitude=True):
         """Initialize the class and call build_fgs_steps().
         """
@@ -88,6 +88,7 @@ class BuildFGSSteps(object):
             self.step = step
             self.yoffset = 12
             self.out_dir = out_dir
+            self.threshold = threshold
 
             # READ IN IMAGE
             if isinstance(im, str):
