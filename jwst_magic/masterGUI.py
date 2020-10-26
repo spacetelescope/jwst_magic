@@ -674,11 +674,11 @@ class MasterGui(QMainWindow):
         if self.sender() == self.pushButton_regfileStarSelector:
             filename_list = self.open_filename_dialog('In/Reg file(s)', multiple_files=True,
                                                  file_type="Input file (*.txt *.incat);;All files (*.*)")
-            self.comboBox_regfileStarSelector.clear()
-            for item in filename_list:
-                self.comboBox_regfileStarSelector.addItem(item)
-
-            self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
+            if len(filename_list) != 0:
+                self.comboBox_regfileStarSelector.clear()
+                for item in filename_list:
+                    self.comboBox_regfileStarSelector.addItem(item)
+                self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
 
             self.update_guiding_selections(new_selections=filename_list)
 
@@ -1541,10 +1541,11 @@ class MasterGui(QMainWindow):
             # Update guiding_selections*.txt paths in GUI
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list]:
 
-                self.comboBox_regfileStarSelector.clear()
-                for item in self.guiding_selections_file_list:
-                    self.comboBox_regfileStarSelector.addItem(item)
-                self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
+                if len(self.guiding_selections_file_list) != 0:
+                    self.comboBox_regfileStarSelector.clear()
+                    for item in self.guiding_selections_file_list:
+                        self.comboBox_regfileStarSelector.addItem(item)
+                    self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
 
                 if new_guiding_selections:
                     new_selections = self.guiding_selections_file_list
