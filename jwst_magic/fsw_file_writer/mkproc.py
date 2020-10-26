@@ -115,7 +115,7 @@ class Mkproc(object):
             self.create_id_proc_file(guider, root, xarr, yarr, counts,
                                      thresh_factor=thresh_factor)
         elif step == 'ACQ':
-            self.create_acq_proc_file(guider, root, xarr, yarr, counts,
+            self.create_acq_proc_file(guider, root, xarr, yarr, counts, thresh_factor,
                                       acq1_imgsize=acq1_imgsize, acq2_imgsize=acq2_imgsize)
 
     def find_templates(self, guider, step, template_path):
@@ -231,7 +231,7 @@ class Mkproc(object):
                                                                  '{0}_G{1}_ID.prc'.
                                                                  format(root, guider))))
 
-    def create_acq_proc_file(self, guider, root, xarr, yarr, counts, acq1_imgsize, acq2_imgsize):
+    def create_acq_proc_file(self, guider, root, xarr, yarr, counts, threshold, acq1_imgsize, acq2_imgsize):
         """Creates the CECIL proc file for the acquisition (ACQ) steps.
         Writes to {out_dir}/out/{root}/dhas/{root}_G{guider}_ACQ.prc
 
@@ -247,6 +247,8 @@ class Mkproc(object):
             Y coordinates of guide and reference stars (pixels)
         counts : list
             Count rates of guide and reference stars
+        threshold : float
+            Count rate uncertainty
         acq1_imgsize : int
             Array size of the ACQ1 window
         acq2_imgsize : int
@@ -267,7 +269,7 @@ class Mkproc(object):
         # Get threshold from countrate (not from STC file)
         if len(counts) != 1:
             counts = counts[0]
-        threshgs = 0.50 * counts
+        threshgs = threshold * counts
 
         dhas_filename = os.path.join(self.out_dir, self.dhas_dir,
                                      '{0}_G{1}_ACQ.prc'.format(root, guider))

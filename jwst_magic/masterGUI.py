@@ -448,6 +448,12 @@ class MasterGui(QMainWindow):
         if self.checkBox_LOSTRK.isChecked():
             steps.append('LOSTRK')
 
+        # Check threshold type can be a float
+        try:
+            threshold = float(self.lineEdit_threshold.text())
+        except ValueError:
+            raise ValueError('Threshold value must be a float')
+
         # Shift image to ID attitude:
         shift_id_attitude = self.checkBox_id_attitude.isChecked()
         crowded_field = self.radioButton_crowded_id_attitude.isChecked()
@@ -538,7 +544,7 @@ class MasterGui(QMainWindow):
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
                     "SOF", guider, self.program_id, self.observation_num, self.visit_num,
-                    ra=self.gs_ra, dec=self.gs_dec,log=None
+                    ra=self.gs_ra, dec=self.gs_dec, threshold=float(self.lineEdit_threshold.text()), log=None
                 )
 
                 # Generate the file
@@ -578,7 +584,8 @@ class MasterGui(QMainWindow):
                               jitter_rate_arcsec=jitter_rate_arcsec,
                               itm=itm,
                               shift_id_attitude=shift_id_attitude,
-                              crowded_field=crowded_field
+                              crowded_field=crowded_field,
+                              threshold = threshold,
                               )
 
             # Update converted image preview

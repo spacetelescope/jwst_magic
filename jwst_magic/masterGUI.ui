@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1561</width>
-    <height>1072</height>
+    <height>1092</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
          <x>0</x>
          <y>0</y>
          <width>1553</width>
-         <height>1048</height>
+         <height>1068</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -796,7 +796,7 @@ p, li { white-space: pre-wrap; }
            <bool>true</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_2">
-           <item row="1" column="4" colspan="2">
+           <item row="2" column="4" colspan="2">
             <widget class="QRadioButton" name="radioButton_crowded_id_attitude">
              <property name="enabled">
               <bool>false</bool>
@@ -809,7 +809,7 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
-           <item row="0" column="2">
+           <item row="1" column="2">
             <widget class="QCheckBox" name="checkBox_ACQ1">
              <property name="toolTip">
               <string>Acquisition 1</string>
@@ -822,7 +822,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
+           <item row="1" column="1">
             <widget class="QCheckBox" name="checkBox_ID">
              <property name="toolTip">
               <string>Identification</string>
@@ -835,7 +835,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="0">
+           <item row="1" column="0">
             <widget class="QCheckBox" name="checkBox_CAL">
              <property name="toolTip">
               <string>Calibration</string>
@@ -845,7 +845,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
+           <item row="1" column="3">
             <widget class="QCheckBox" name="checkBox_ACQ2">
              <property name="toolTip">
               <string>Acquisition 2</string>
@@ -858,7 +858,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="4">
+           <item row="1" column="4">
             <widget class="QCheckBox" name="checkBox_TRK">
              <property name="toolTip">
               <string>Track</string>
@@ -871,7 +871,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="5">
+           <item row="1" column="5">
             <widget class="QCheckBox" name="checkBox_LOSTRK">
              <property name="toolTip">
               <string>Line-of-sight Track</string>
@@ -884,7 +884,27 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="2" column="0" colspan="4">
+          <item row="0" column="0">
+            <widget class="QLabel" name="label_threshold">
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Set Threshold&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="lineEdit_threshold">
+             <property name="maximumSize">
+              <size>
+               <width>150</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0.6</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3" colspan="3">
             <widget class="QCheckBox" name="checkBox_rewritePRC">
              <property name="enabled">
               <bool>true</bool>
@@ -893,11 +913,11 @@ p, li { white-space: pre-wrap; }
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rather than writing FITS images, .dat files, and .prc files for each step above, only rewrite the files needed to run DHAS. Will prompt user to re-select guide and reference stars. Requires that certain files already exist.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
-              <string>Only write prcs, ACQ/TRK fits, and guiding_selections*.txt (for iterative DHAS testing)</string>
+              <string>Only write prcs, ACQ/TRK fits, and guiding_selections*.txt</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="3">
+           <item row="2" column="3">
             <widget class="QRadioButton" name="radioButton_nominal_id_attitude">
              <property name="enabled">
               <bool>false</bool>
@@ -913,7 +933,7 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
-           <item row="1" column="0" colspan="3">
+           <item row="2" column="0" colspan="3">
             <widget class="QCheckBox" name="checkBox_id_attitude">
              <property name="text">
               <string>Place the guide star at the ID attitude</string>
@@ -935,6 +955,8 @@ p, li { white-space: pre-wrap; }
           <zorder>checkBox_ACQ1</zorder>
           <zorder>checkBox_ACQ2</zorder>
           <zorder>checkBox_TRK</zorder>
+          <zorder>label_threshold</zorder>
+          <zorder>lineEdit_threshold</zorder>
           <zorder>checkBox_rewritePRC</zorder>
           <zorder>checkBox_LOSTRK</zorder>
           <zorder>checkBox_id_attitude</zorder>
