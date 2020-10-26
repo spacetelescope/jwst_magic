@@ -1721,9 +1721,12 @@ QPushButton:pressed {
             </widget>
            </item>
            <item row="2" column="1" colspan="2">
-            <widget class="QLineEdit" name="lineEdit_regfileStarSelector">
+            <widget class="QComboBox" name="comboBox_regfileStarSelector">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="editable">
+              <bool>true</bool>
              </property>
              <property name="toolTip">
               <string>File containing guide and reference star locations and brightness</string>
@@ -1795,7 +1798,7 @@ QPushButton:pressed {
           <zorder>checkBox_globalAlignment</zorder>
           <zorder>radioButton_starSelectorGUI</zorder>
           <zorder>radioButton_regfileStarSelector</zorder>
-          <zorder>lineEdit_regfileStarSelector</zorder>
+          <zorder>comboBox_regfileStarSelector</zorder>
           <zorder>pushButton_regfileStarSelector</zorder>
           <zorder>label</zorder>
           <zorder>checkBox_noSmoothing</zorder>
@@ -2028,7 +2031,7 @@ QPushButton:pressed {
   <connection>
    <sender>radioButton_starSelectorGUI</sender>
    <signal>toggled(bool)</signal>
-   <receiver>lineEdit_regfileStarSelector</receiver>
+   <receiver>comboBox_regfileStarSelector</receiver>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

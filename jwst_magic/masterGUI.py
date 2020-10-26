@@ -260,6 +260,7 @@ class MasterGui(QMainWindow):
 
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
+        self.comboBox_regfileStarSelector.activated.connect(self.on_combobox_change)
 
         # Segment guiding widgets
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
@@ -417,7 +418,8 @@ class MasterGui(QMainWindow):
         if not self.radioButton_regfileStarSelector.isChecked():
             in_file = None
         else:
-            in_file = self.lineEdit_regfileStarSelector.text().split(', ')
+            in_file = [self.comboBox_regfileStarSelector.itemText(i) for i in
+                       range(self.comboBox_regfileStarSelector.count())]
 
         # File writer
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -660,11 +662,15 @@ class MasterGui(QMainWindow):
         """ Using the Infile Open button (open file) """
         # Determine which infile is being edited
         if self.sender() == self.pushButton_regfileStarSelector:
-            to_text = self.lineEdit_regfileStarSelector
+           # to_text = self.lineEdit_regfileStarSelector
 
             filename_list = self.open_filename_dialog('In/Reg file(s)', multiple_files=True,
                                                  file_type="Input file (*.txt *.incat);;All files (*.*)")
-            to_text.setText(', '.join(filename_list))
+            self.comboBox_regfileStarSelector.clear()
+            for item in filename_list:
+                self.comboBox_regfileStarSelector.addItem(item)
+
+            self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
 
             self.update_guiding_selections(new_selections=filename_list)
 
@@ -734,6 +740,13 @@ class MasterGui(QMainWindow):
             self.canvas_shifted.peaks.set_visible(show)
 
             self.canvas_shifted.draw()
+
+    def on_combobox_change(self):
+        """
+        Clicking comboBox_regfileStarSelector doesn't do anything
+        """
+        if self.sender() == self.comboBox_regfileStarSelector:
+            self.comboBox_regfileStarSelector.setCurrentIndex(0)
 
     def toggle_convert_im(self):
         # TODO: it's unclear why I (KJB) set this to false. but we want to be able
@@ -1519,12 +1532,17 @@ class MasterGui(QMainWindow):
 
             # Update guiding_selections*.txt paths in GUI
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list]:
-                self.lineEdit_regfileStarSelector.setText(', '.join(self.guiding_selections_file_list))
+
+                self.comboBox_regfileStarSelector.clear()
+                for item in self.guiding_selections_file_list:
+                    self.comboBox_regfileStarSelector.addItem(item)
+                self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
+
                 if new_guiding_selections:
                     new_selections = self.guiding_selections_file_list
                     self.update_guiding_selections(new_selections=new_selections)
             else:
-                self.lineEdit_regfileStarSelector.setText("")
+                self.comboBox_regfileStarSelector.clear()
                 self.lineEdit_regfileSegmentGuiding.setText("")
 
             # If possible, show converted and shifted image previews, too
