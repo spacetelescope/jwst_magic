@@ -59,8 +59,10 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 # Standard Library Imports
 from __future__ import unicode_literals
-import sys
+import io
 import os
+import sys
+import yaml
 
 # Third Party Imports
 from astropy.io import ascii as asc
@@ -322,7 +324,7 @@ class StarSelectorWindow(QDialog):
     quit
         Closes the application
     """
-    def __init__(self, data, x, y, dist, qApp, in_master_GUI,
+    def __init__(self, data, x, y, dist, out_dir, qApp, in_master_GUI,
                  print_output=False):
         """Initializes class; sets up user interface.
 
@@ -337,6 +339,10 @@ class StarSelectorWindow(QDialog):
         dist : int
             Minimum distance between identified PSFs; maximum distance from a star the user
             can click to select that star
+        out_dir : str
+            Where output files will be saved. If not provided, the
+            image(s) will be saved within the repository at
+            jwst_magic/. This path is the level outside the out/root/ dir
         qApp : qApplication
             qApplication instance of parent GUI
         in_master_GUI : bool
@@ -358,6 +364,7 @@ class StarSelectorWindow(QDialog):
         self.x = x
         self.y = y
         self.epsilon = dist
+        self.out_dir = out_dir
         self._ind = None
         self.inds = []
         self.inds_of_inds = []
@@ -836,6 +843,36 @@ class StarSelectorWindow(QDialog):
     # MULTIPLE GUIDING SELECTIONS WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    def check_for_duplicate_orientations(self):
+        """Check if star command has already been saved out
+        in a previous guiding selections file
+        """
+        # Read in yaml file containing previously made selections (if it exists)
+        out_yaml = os.path.join(self.out_dir, 'all_guiding_selections.yaml')
+        if os.path.exists(out_yaml):
+            with open(out_yaml, 'r') as stream:
+                data_loaded = yaml.safe_load(stream)
+
+            # If the current selection has already been made, raise dialog box
+            if [i+1 for i in self.inds] in data_loaded.values():
+                # Pull corresponding key
+                key = list(data_loaded.keys())[list(data_loaded.values()).index([i+1 for i in self.inds])]
+
+                # Raise pop up
+                duplicate_selection_dialog = QMessageBox()
+                duplicate_selection_dialog.setText('Selection Already Made' + ' ' * 50)
+                duplicate_selection_dialog.setInformativeText(
+                    'This selection was already made and is saved as {}/'.format(key)
+                )
+                duplicate_selection_dialog.setStandardButtons(QMessageBox.Ok)
+                duplicate_selection_dialog.exec()
+
+                return True
+
+        else:
+            return False
+
+
     def save_orientation_to_list(self):
         """Save the currently selected segment orientation to the list
         of override commands.
@@ -848,6 +885,9 @@ class StarSelectorWindow(QDialog):
             )
             no_stars_selected_dialog.setStandardButtons(QMessageBox.Ok)
             no_stars_selected_dialog.exec()
+            return
+
+        if self.check_for_duplicate_orientations():
             return
 
         if not self.tableWidget_commands.isEnabled():
@@ -1263,7 +1303,7 @@ class StarSelectorWindow(QDialog):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def run_SelectStars(data, x, y, dist, print_output=True, masterGUIapp=None):
+def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=None):
     """Calls a PyQt GUI to allow interactive user selection of guide and
     reference stars.
 
@@ -1278,6 +1318,10 @@ def run_SelectStars(data, x, y, dist, print_output=True, masterGUIapp=None):
     dist : int
         Minimum distance between identified PSFs; maximum distance from a star the user
         can click to select that star
+    out_dir : str
+        Where output files will be saved. If not provided, the
+        image(s) will be saved within the repository at
+        jwst_magic/. This path is the level outside the out/root/ dir
     print_output : bool, optional
         Flag enabling output to the terminal
     masterGUIapp : qApplication, optional
@@ -1299,8 +1343,8 @@ def run_SelectStars(data, x, y, dist, print_output=True, masterGUIapp=None):
             qApp = QApplication(sys.argv)
         in_master_GUI = False
 
-    window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, qApp=qApp,
-                                in_master_GUI=in_master_GUI,
+    window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, out_dir=out_dir,
+                                qApp=qApp, in_master_GUI=in_master_GUI,
                                 print_output=print_output)
 
     try:
@@ -1322,5 +1366,21 @@ def run_SelectStars(data, x, y, dist, print_output=True, masterGUIapp=None):
 
     # Save index of center segment (pointing)
     segNum = window.segNum
+
+    # Save inds to file for checking on future star selections
+    # ind numbers in yaml will match what is seen in the GUI, not what's in inds variable
+    out_yaml = os.path.join(out_dir, 'all_guiding_selections.yaml')
+    if os.path.exists(out_yaml):
+        append_write = 'a'  # append if already exists
+        with open(out_yaml, 'r') as stream:
+            data_loaded = yaml.safe_load(stream)
+        last_config = int(sorted(data_loaded.keys())[-1].split('_')[-1])
+        data_yaml = {'guiding_config_{}'.format(i+1+last_config): [i+1 for i in ind] for i, ind in enumerate(inds)}
+    else:
+        append_write = 'w'  # make a new file if not
+        data_yaml = {'guiding_config_{}'.format(i+1): [i+1 for i in ind] for i,ind in enumerate(inds)}
+
+    with io.open(out_yaml, append_write, encoding="utf-8") as f:
+        yaml.dump(data_yaml, f, default_flow_style=False, allow_unicode=True)
 
     return inds, segNum
