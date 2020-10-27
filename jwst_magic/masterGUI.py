@@ -681,12 +681,8 @@ class MasterGui(QMainWindow):
         if self.sender() == self.pushButton_regfileStarSelector:
             filename_list = self.open_filename_dialog('In/Reg file(s)', multiple_files=True,
                                                  file_type="Input file (*.txt *.incat);;All files (*.*)")
-            if len(filename_list) != 0:
-                self.comboBox_regfileStarSelector.clear()
-                for item in filename_list:
-                    self.comboBox_regfileStarSelector.addItem(item)
-                self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
 
+            self.update_regfile_starselector_combobox(filename_list)
             self.update_guiding_selections(new_selections=filename_list)
 
         return filename_list
@@ -1232,6 +1228,18 @@ class MasterGui(QMainWindow):
                     self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
                     self.comboBox_showcommandsshifted.blockSignals(False)
 
+    def update_regfile_starselector_combobox(self, files):
+        if len(files) != 0:
+            # Clear and populate
+            self.comboBox_regfileStarSelector.clear()
+            for item in files:
+                self.comboBox_regfileStarSelector.addItem(item)
+
+            self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
+
+            # Set width to match the longest entry name
+            w = self.comboBox_regfileStarSelector.fontMetrics().boundingRect(max(files, key=len)).width()
+            self.comboBox_regfileStarSelector.view().setFixedWidth(w + 10)
 
     def update_converted_image_preview(self):
         # Are all the necessary fields filled in? If not, don't even try.
@@ -1536,12 +1544,7 @@ class MasterGui(QMainWindow):
 
             # Update guiding_selections*.txt paths in GUI
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list]:
-
-                if len(self.guiding_selections_file_list) != 0:
-                    self.comboBox_regfileStarSelector.clear()
-                    for item in self.guiding_selections_file_list:
-                        self.comboBox_regfileStarSelector.addItem(item)
-                    self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
+                self.update_regfile_starselector_combobox(self.guiding_selections_file_list)
 
                 if new_guiding_selections:
                     new_selections = self.guiding_selections_file_list
