@@ -817,6 +817,10 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             data = fits.getdata(data)
 
         if guiding_selections_file:  # will be a list of strings
+            # Determine if the guiding file loaded already exists in the right dir - no need for a new config #
+            old_configs = [True if os.path.join(out_dir, 'guiding_config_') in path else False for path in
+                           guiding_selections_file]
+
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
             LOGGER.info(
@@ -849,6 +853,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
                                                                  masterGUIapp)
             all_found_psfs_path = None
             psf_center_path = None
+            old_configs = [False] * len(cols_list)
 
         # Save PNG of image and all PSF locations in out_dir
         if not JENKINS:
@@ -866,13 +871,21 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             center_pointing_path = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
             utils.write_cols_to_file(center_pointing_path, labels=['segnum'], cols=[segnum], log=LOGGER)
 
-        # Write catalog of selected PSFs
+        # Determine config numbers for selections (may re-use old config if loading a file from this out_dir/root)
         current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_dir)
                                if os.path.isdir(os.path.join(out_dir, d)) if 'guiding_config' in d])
-        if len(current_dirs) == 0:
-            new_config_numbers = np.arange(1, len(cols_list)+1)
-        else:
-            new_config_numbers = np.arange(max(current_dirs) + 1, max(current_dirs) + 1 + len(cols_list))
+        new_config_numbers = []
+        j = 1
+        for i, config in enumerate(old_configs):
+           if config is True:
+               num = int(guiding_selections_file[i].split('guiding_config_')[-1].split('/')[0])
+               new_config_numbers.append(num)
+           else:
+               num = len(current_dirs) + j
+               j += 1
+               new_config_numbers.append(num)
+
+        # Write catalog of selected PSFs
         guiding_selections_path_list = []
         for (i, cols) in zip(new_config_numbers, cols_list):
             for j in range(len(cols)):
