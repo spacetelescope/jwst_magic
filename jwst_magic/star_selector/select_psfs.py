@@ -629,7 +629,7 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
                 )
 
 
-def manual_star_selection(data, smoothing, choose_center=False, testing=False, masterGUIapp=None):
+def manual_star_selection(data, smoothing, out_dir, choose_center=False, testing=False, masterGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
@@ -644,6 +644,10 @@ def manual_star_selection(data, smoothing, choose_center=False, testing=False, m
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), or "default" for medium smoothing for other cases
+    out_dir : str
+        Where output files will be saved. If not provided, the
+        image(s) will be saved within the repository at
+        jwst_magic/. This path is the level outside the out/root/ dir
     choose_center : bool
         Automatically choose the one, highly-smoothed, PSF found in the image
     testing : bool, optional
@@ -711,6 +715,7 @@ def manual_star_selection(data, smoothing, choose_center=False, testing=False, m
         gui_data = data.copy()
         gui_data[data == 0] = 1  # Alter null pixel values for LogNorm imshow
         inds_list, segnum = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
+                                              out_dir=out_dir,
                                               print_output=False,
                                               masterGUIapp=masterGUIapp)
 
@@ -848,6 +853,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             # star selection using the SelectStarsGUI
             cols_list, all_coords, nref_list, all_cols, segnum = manual_star_selection(data,
                                                                  smoothing,
+                                                                 out_dir,
                                                                  choose_center,
                                                                  testing,
                                                                  masterGUIapp)
