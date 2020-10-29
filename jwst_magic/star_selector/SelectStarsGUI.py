@@ -1105,6 +1105,9 @@ class StarSelectorWindow(QDialog):
 
         # Clear the indices (i.e. don't save user selections)
         self.inds = []
+        self.n_orientations = 0
+        self.tableWidget_commands.clear()
+        self.segNum = None
 
         # If not being called from the master GUI, exit the whole application
         if not self.in_master_GUI:
@@ -1369,18 +1372,20 @@ def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=N
 
     # Save inds to file for checking on future star selections
     # ind numbers in yaml will match what is seen in the GUI, not what's in inds variable
-    out_yaml = os.path.join(out_dir, 'all_guiding_selections.yaml')
-    if os.path.exists(out_yaml):
-        append_write = 'a'  # append if already exists
-        with open(out_yaml, 'r') as stream:
-            data_loaded = yaml.safe_load(stream)
-        last_config = int(sorted(data_loaded.keys())[-1].split('_')[-1])
-        data_yaml = {'guiding_config_{}'.format(i+1+last_config): [i+1 for i in ind] for i, ind in enumerate(inds)}
-    else:
-        append_write = 'w'  # make a new file if not
-        data_yaml = {'guiding_config_{}'.format(i+1): [i+1 for i in ind] for i,ind in enumerate(inds)}
+    if len(inds) != 0:
+        out_yaml = os.path.join(out_dir, 'all_guiding_selections.yaml')
+        if os.path.exists(out_yaml):
+            append_write = 'a'  # append if already exists
+            with open(out_yaml, 'r') as stream:
+                data_loaded = yaml.safe_load(stream)
+            print(data_loaded)
+            last_config = int(sorted(data_loaded.keys())[-1].split('_')[-1])
+            data_yaml = {'guiding_config_{}'.format(i+1+last_config): [i+1 for i in ind] for i, ind in enumerate(inds)}
+        else:
+            append_write = 'w'  # make a new file if not
+            data_yaml = {'guiding_config_{}'.format(i+1): [i+1 for i in ind] for i,ind in enumerate(inds)}
 
-    with io.open(out_yaml, append_write, encoding="utf-8") as f:
-        yaml.dump(data_yaml, f, default_flow_style=False, allow_unicode=True)
+        with io.open(out_yaml, append_write, encoding="utf-8") as f:
+            yaml.dump(data_yaml, f, default_flow_style=False, allow_unicode=True)
 
     return inds, segNum
