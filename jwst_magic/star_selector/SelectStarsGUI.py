@@ -71,13 +71,12 @@ import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm
-from matplotlib.cm import ScalarMappable
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
-                             QTableWidgetItem, QWidget, QFileDialog)
-from PyQt5.QtCore import pyqtSlot, QSize
-from PyQt5.QtGui import QIcon
+                             QTableWidgetItem, QWidget, QFileDialog, QGridLayout, QLabel)
+from PyQt5.QtCore import pyqtSlot, QSize, Qt
+from PyQt5.QtGui import QIcon, QPixmap
 
 # Adjust matplotlib parameters
 matplotlib.rcParams['font.family'] = 'serif'
@@ -86,6 +85,9 @@ matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+PACKAGE_PATH = os.path.split(__location__)[0]
+DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
+WSS_NUMBERS = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_20200922.png')
 
 
 class StarClickerMatplotlibCanvas(FigureCanvas):
@@ -471,7 +473,6 @@ class StarSelectorWindow(QDialog):
         self.canvas.mpl_connect('motion_notify_event', self.update_cursor_position)
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
         self.canvas.mpl_connect('motion_notify_event', self.show_segment_id)
-        #   Star selection!
         self.canvas.mpl_connect('button_press_event', self.button_press_callback)
 
         # Colorbar widgets
@@ -483,6 +484,9 @@ class StarSelectorWindow(QDialog):
         self.pushButton_zoomFit.clicked.connect(self.update_textboxes)
         self.pushButton_cropToData.clicked.connect(self.canvas.zoom_to_crop)
         self.pushButton_cropToData.clicked.connect(self.update_textboxes)
+
+        # WSS naming widget
+        self.checkBox_wss_numbers.toggled.connect(self.show_wss_dialog)
 
         # Star selection widgets
         self.pushButton_makeGuideStar.clicked.connect(self.set_guidestar)
@@ -839,6 +843,41 @@ class StarSelectorWindow(QDialog):
         if self.print_output:
             print(remstar_string)
 
+    def show_wss_dialog(self):
+        """ Show/Close pop up of image that details WSS naming method """
+        if self.checkBox_wss_numbers.isChecked():
+            # Create dialog object
+            self.wss_popup = QDialog()
+            self.wss_popup.setWindowTitle('WSS Naming Schema in FGS Raw Frame')
+            self.wss_popup.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint |
+                                          QtCore.Qt.WindowStaysOnTopHint | Qt.Tool)
+            self.wss_popup.setWindowModality(Qt.NonModal)
+
+            self.wss_popup.resize(400, 400)
+            layout = QGridLayout()
+            layout.setContentsMargins(0, 0, 0, 0)
+
+            # Add WSS image
+            image_label = QLabel()
+            image_label.setPixmap(QPixmap(WSS_NUMBERS))
+            layout.addWidget(image_label, 0, 0)
+            self.wss_popup.setLayout(layout)
+
+            # Move dialog to the side near the pseudo-FGS image
+            point  = self.frame_canvas.rect().topRight()
+            global_point = self.frame_canvas.mapToGlobal(point)
+            self.wss_popup.move(global_point - QtCore.QPoint(self.width(), 0))
+
+            self.wss_popup.show()
+
+        else:
+            try:
+                self.wss_popup.close()
+            except AttributeError:
+                pass
+
+        return
+
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MULTIPLE GUIDING SELECTIONS WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1091,6 +1130,12 @@ class StarSelectorWindow(QDialog):
 
         # If they do everything they're supposed to, then quit.
         if self.answer:
+            # Close the wss dialog window if it's still open
+            try:
+                self.wss_popup.close()
+            except AttributeError:
+                pass
+
             # If not being called from the master GUI, exit the whole application
             if not self.in_master_GUI:
                 self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
@@ -1108,6 +1153,12 @@ class StarSelectorWindow(QDialog):
         self.n_orientations = 0
         self.tableWidget_commands.clear()
         self.segNum = None
+
+        # Close the wss dialog window if it's still open
+        try:
+            self.wss_popup.close()
+        except AttributeError:
+            pass
 
         # If not being called from the master GUI, exit the whole application
         if not self.in_master_GUI:
