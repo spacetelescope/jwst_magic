@@ -917,6 +917,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
                 "Star Selection: No smoothing chosen so re-running star selection to also calculate PSF center")
             cols_center, _, _, _, _ = manual_star_selection(data,
                                                          smoothing='default',
+                                                         out_dir=None,
                                                          choose_center=True,
                                                          testing=testing,
                                                          masterGUIapp=masterGUIapp)
