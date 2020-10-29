@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1482</width>
-    <height>945</height>
+    <width>1488</width>
+    <height>980</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -92,6 +92,25 @@
              <property name="bottomMargin">
               <number>0</number>
              </property>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_13">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <item>
+              <widget class="QCheckBox" name="checkBox_wss_numbers">
+               <property name="text">
+                <string>Show WSS Numbers Guide</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </item>
