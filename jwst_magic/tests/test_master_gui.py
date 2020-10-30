@@ -16,10 +16,10 @@ Notes
     above tests that call pyqt5
 """
 # Standard Library Imports
-from unittest.mock import patch
 import os
 import shutil
 import sys
+from unittest.mock import patch
 
 # Third Party Imports
 import numpy as np
@@ -47,7 +47,13 @@ INPUT_IMAGE = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
 COMMAND_FILE = os.path.join(__location__, 'data', 'guiding_selections_test_master_G1.txt')
 
 # Only needed if computer is on SOGS (directory in SOGS_PATH = '/data/jwst/wss/guiding/')
-COM_PRACTICE_DIR = 'magic_testing_practice'
+COM_PRACTICE_DIR = 'magic_pytest_practice'
+
+
+def delete_contents(directory):
+    if os.path.isdir(directory):
+        shutil.rmtree(directory)
+
 
 @pytest.fixture()
 def test_directory(test_dir=TEST_DIRECTORY):
@@ -270,6 +276,9 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
         assert master_gui.comboBox_obs.currentText() == '01'
         assert master_gui.lineEdit_commid.text() == '1148'
 
+        # Delete contents of directory to avoid auto-populating with old data
+        delete_contents(master_gui.textEdit_name_preview.toPlainText())
+
     elif type == 'manual':
         qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
         qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
@@ -310,7 +319,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
             assert master_gui.lineEdit_regfileSegmentGuiding.text() == master_gui.textEdit_name_preview.toPlainText()
         elif type == 'manual':
             assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'out', ROOT)
-        assert master_gui.comboBox_guidingcommands.count() == 1
+        assert master_gui.comboBox_guidingcommands.count() == 0
 
         # Change to path that has guiding selections files
         master_gui.lineEdit_regfileSegmentGuiding.clear()
@@ -441,6 +450,11 @@ def test_sg_commands(qtbot, master_gui):
 
     # Check that the path in the lineedit_regfile_guiding is correct
     assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data', 'out', ROOT)
+
+    # Check that the contents of the regfile star selector combobox are correct
+    assert master_gui.comboBox_regfileStarSelector.count() == 1
+    assert master_gui.comboBox_regfileStarSelector.currentText() == os.path.join(__location__, 'data', 'out', ROOT,
+                                        'guiding_config_1/unshifted_guiding_selections_test_master_G1_config1.txt')
 
     # Check that the contents of the checkable combobox is shifted only
     cmds = [master_gui.comboBox_guidingcommands.itemText(i) for i in range(master_gui.comboBox_guidingcommands.count())]
