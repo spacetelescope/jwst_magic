@@ -829,6 +829,8 @@ class MasterGui(QMainWindow):
 
         # Update GSID in image normalization
         self.lineEdit_normalize.setText(str(self.gs_id))
+        index = self.comboBox_normalize.findText('Guide Star ID', Qt.MatchFixedString)
+        self.comboBox_normalize.setCurrentIndex(index)
 
     def update_commissioning_name(self):
         # Check which values have been selected already
