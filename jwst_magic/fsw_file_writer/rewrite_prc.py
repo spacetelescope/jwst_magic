@@ -35,9 +35,11 @@ Use
 """
 
 # Standard Library Imports
-import copy
+from collections import OrderedDict
+import io
 import logging
 import os
+import yaml
 
 # Third Party Imports
 from astropy.io import ascii as asc
@@ -52,7 +54,7 @@ from jwst_magic.utils import utils
 LOGGER = logging.getLogger(__name__)
 
 
-def rewrite_prc(inds_list, segnum, guider, root, out_dir, shifted, crowded_field):
+def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, crowded_field):
     """For a given dataset, rewrite the PRC and guiding_selections*.txt to select a
     new commanded guide star and reference stars
 
@@ -71,6 +73,8 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, shifted, crowded_field
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
         jwst_magic/
+    threshold : float
+        Threshold to use in prc files
     shifted : bool
         If the image has been chosen to be shifted to the ID attitude
     crowded_field : bool
@@ -143,7 +147,6 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, shifted, crowded_field
 
     # Shift and write out FSW files
     for i, guiding_selections_file in enumerate(guiding_selections_path_list):
-
         # Change out_dir to write data to guiding_config_#/ sub-directory next to the selections file
         if 'guiding_config' in guiding_selections_file:
             out_dir_fsw = os.path.join(out_path, 'guiding_config_{}'.format(
@@ -162,7 +165,7 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, shifted, crowded_field
         # Rewrite CECIL proc file
         for step in ['ID', 'ACQ1', 'ACQ2', 'TRK']:
             fgs_files_obj = buildfgssteps.BuildFGSSteps(
-                fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw,
+                fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
                 logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                 psf_center_file=psf_center_file_fsw, shift_id_attitude=shifted,
             )
@@ -173,3 +176,25 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, shifted, crowded_field
                 write_files.write_prc(fgs_files_obj)
             if step != 'ID':
                 write_files.write_image(fgs_files_obj)
+
+    # Add config to yaml file
+    if len(inds_list) != 0:
+        utils.setup_yaml()
+        out_yaml = os.path.join(out_dir, 'out', root, 'all_guiding_selections.yaml')
+
+        if os.path.exists(out_yaml):
+            append_write = 'a'  # append if already exists
+            with open(out_yaml, 'r') as stream:
+                data_loaded = OrderedDict(yaml.safe_load(stream))
+
+            last_config = int(sorted(data_loaded.keys(), key=utils.natural_keys)[-1].split('_')[-1])
+            data_yaml = OrderedDict(
+                ('guiding_config_{}'.format(i + 1 + last_config), [i + 1 for i in ind]) for i, ind in
+                enumerate(inds_list))
+        else:
+            append_write = 'w'  # make a new file if not
+            data_yaml = OrderedDict(
+                ('guiding_config_{}'.format(i + 1), [i + 1 for i in ind]) for i, ind in enumerate(inds_list))
+
+        with io.open(out_yaml, append_write, encoding="utf-8") as f:
+            yaml.dump(data_yaml, f, default_flow_style=False, allow_unicode=True)

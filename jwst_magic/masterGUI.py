@@ -485,7 +485,8 @@ class MasterGui(QMainWindow):
                                                                                  ', '.join([str(c) for c in ind[1:]])))
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds_list, segnum, guider, root, out_dir, shifted=shift_id_attitude,
+            rewrite_prc.rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold=threshold,
+                                    shifted=shift_id_attitude,
                                     crowded_field=crowded_field)
 
             # Update converted image preview
