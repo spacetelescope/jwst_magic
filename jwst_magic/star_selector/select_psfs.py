@@ -673,7 +673,6 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, 
     else:
         final_data = OrderedDict()
         config = 1
-
     # For each guiding selections file passed in
     for file in guiding_selections_file:
         if '/guiding_config_' in file and data_loaded is not None:
