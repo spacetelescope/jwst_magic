@@ -686,6 +686,11 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, 
                 # Add that config to the new yaml
                 final_data['guiding_config_{}'.format(config)] = config_data
                 config += 1
+            elif out_dir in file:
+                LOGGER.info('Guiding selections file {} is already from this root. This '
+                            'configuration will not be re-added to all_guiding_selections.yaml file'.format(file))
+                return
+
             else:
                 final_data['guiding_config_{}'.format(config)] = []
                 config += 1
