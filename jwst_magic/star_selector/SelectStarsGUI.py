@@ -1145,7 +1145,6 @@ class StarSelectorWindow(QDialog):
             # Close the star selector dialog window
             self.close()
 
-
     def cancel(self):
         """Closes the star selector window and clears indices.
         """
@@ -1168,6 +1167,11 @@ class StarSelectorWindow(QDialog):
 
         # Close the star selector dialog window
         self.close()
+
+    def closeEvent(self, event):
+        """Defines red x in upper left hand corner"""
+        if self.sender() is not self.pushButton_done:
+            self.cancel()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # HELPER FUNCTIONS
