@@ -59,6 +59,7 @@ calling the QApplication instance to run a window/dialog/GUI.
 
 # Standard Library Imports
 from __future__ import unicode_literals
+from collections import OrderedDict
 import io
 import os
 import sys
@@ -894,6 +895,10 @@ class StarSelectorWindow(QDialog):
             with open(out_yaml, 'r') as stream:
                 data_loaded = yaml.safe_load(stream)
 
+            # handle an accidentally made empty file
+            if data_loaded is None:
+                return False
+
             # If the current selection has already been made, raise dialog box
             if [i+1 for i in self.inds] in data_loaded.values():
                 # Pull corresponding key
@@ -1428,16 +1433,17 @@ def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=N
     # Save inds to file for checking on future star selections
     # ind numbers in yaml will match what is seen in the GUI, not what's in inds variable
     if len(inds) != 0:
+        utils.setup_yaml()
         out_yaml = os.path.join(out_dir, 'all_guiding_selections.yaml')
         if os.path.exists(out_yaml):
             append_write = 'a'  # append if already exists
             with open(out_yaml, 'r') as stream:
-                data_loaded = yaml.safe_load(stream)
+                data_loaded = OrderedDict(yaml.safe_load(stream))
             last_config = int(sorted(data_loaded.keys(), key=utils.natural_keys)[-1].split('_')[-1])
-            data_yaml = {'guiding_config_{}'.format(i+1+last_config): [i+1 for i in ind] for i, ind in enumerate(inds)}
+            data_yaml = OrderedDict(('guiding_config_{}'.format(i+1+last_config), [i+1 for i in ind]) for i, ind in enumerate(inds))
         else:
             append_write = 'w'  # make a new file if not
-            data_yaml = {'guiding_config_{}'.format(i+1): [i+1 for i in ind] for i,ind in enumerate(inds)}
+            data_yaml = OrderedDict(('guiding_config_{}'.format(i+1), [i+1 for i in ind]) for i,ind in enumerate(inds))
 
         with io.open(out_yaml, append_write, encoding="utf-8") as f:
             yaml.dump(data_yaml, f, default_flow_style=False, allow_unicode=True)

@@ -13,6 +13,7 @@ Use
         utils.ensure_dir_exists(dir)
 """
 # STDLIB
+from collections import OrderedDict
 import csv
 import itertools
 import logging
@@ -512,3 +513,10 @@ def natural_keys(text):
         return int(text) if text.isdigit() else text
 
     return [atoi(c) for c in re.split(r'(\d+)', text)]
+
+def setup_yaml():
+    """
+    Set up a yaml file that will have an OrderedDict written to it
+    """
+    represent_dict_order = lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
+    yaml.add_representer(OrderedDict, represent_dict_order)

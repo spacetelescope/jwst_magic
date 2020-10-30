@@ -27,6 +27,7 @@ Use
 
 # Standard Library Imports
 import io
+from collections import OrderedDict
 import glob
 import logging
 import os
@@ -622,6 +623,7 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
         if output_file == 'all_selections_yaml':
             copied_psfs_file = os.path.join(out_dir, 'all_guiding_selections.yaml')
             copy_all_selections_yaml(file_to_copy, copied_psfs_file, guiding_selections_file, out_dir)
+            return file_to_copy
 
         if file_to_copy is not None:
             try:
@@ -654,6 +656,8 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
 
 def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, out_dir):
     """Handle copying the config information to the yaml file"""
+    utils.setup_yaml()
+
     # Open file to copy
     try:
         with open(file_to_copy, 'r') as stream:
@@ -664,10 +668,10 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, 
     # Open file to copy to if it exists, if not start from scratch
     if os.path.exists(final_file):
         with open(final_file, 'r') as stream:
-            final_data = yaml.safe_load(stream)
+            final_data = OrderedDict(yaml.safe_load(stream))
         config = int(sorted(final_data.keys(), key=utils.natural_keys)[-1].split('_')[-1]) + 1
     else:
-        final_data = {}
+        final_data = OrderedDict()
         config = 1
 
     # For each guiding selections file passed in
@@ -679,7 +683,7 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, 
             # Pull the corresponding config from the yaml file
             config_data = data_loaded['guiding_config_{}'.format(old_config)]
 
-            if config_data not in final_data.values() and out_dir in file:
+            if config_data not in final_data.values():
                 # Add that config to the new yaml
                 final_data['guiding_config_{}'.format(config)] = config_data
                 config += 1
@@ -694,6 +698,9 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, 
     # Write to file
     with io.open(final_file, 'w', encoding="utf-8") as f:
         yaml.dump(final_data, f, default_flow_style=False, allow_unicode=True)
+
+    LOGGER.info('Star Selection: Copying over {}'.format(file_to_copy))
+    LOGGER.info('Star Selection: Successfully wrote: {}'.format(final_file))
 
 
 def manual_star_selection(data, smoothing, out_dir, choose_center=False, testing=False, masterGUIapp=None):
