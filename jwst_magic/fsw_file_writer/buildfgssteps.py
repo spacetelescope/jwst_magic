@@ -696,8 +696,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
 
     shifted_FGS_img = os.path.join(out_dir, 'FGS_imgs',
                                    'shifted_' + file_root + '.fits')
-    print('out_dir, ', out_dir)
-    print('shifted_FGS_img, ', shifted_FGS_img)
 
     # Write new FITS files
     # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match

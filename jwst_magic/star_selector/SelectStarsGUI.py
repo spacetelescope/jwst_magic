@@ -78,6 +78,8 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
 from PyQt5.QtCore import pyqtSlot, QSize, Qt
 from PyQt5.QtGui import QIcon, QPixmap
 
+from jwst_magic.utils import utils
+
 # Adjust matplotlib parameters
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['font.weight'] = 'light'
@@ -1400,7 +1402,6 @@ def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=N
     window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, out_dir=out_dir,
                                 qApp=qApp, in_master_GUI=in_master_GUI,
                                 print_output=print_output)
-
     try:
         plt.get_current_fig_manager().window.raise_()  # Bring window to front
     except AttributeError:
@@ -1417,7 +1418,6 @@ def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=N
         orientation = window.tableWidget_commands.item(i, 0).text()
         selected_indices = [int(s)-1 for s in orientation.split(', ')]
         inds.append(selected_indices)
-
     # Save index of center segment (pointing)
     segNum = window.segNum
 
@@ -1429,8 +1429,7 @@ def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=N
             append_write = 'a'  # append if already exists
             with open(out_yaml, 'r') as stream:
                 data_loaded = yaml.safe_load(stream)
-            print(data_loaded)
-            last_config = int(sorted(data_loaded.keys())[-1].split('_')[-1])
+            last_config = int(sorted(data_loaded.keys(), key=utils.natural_keys)[-1].split('_')[-1])
             data_yaml = {'guiding_config_{}'.format(i+1+last_config): [i+1 for i in ind] for i, ind in enumerate(inds)}
         else:
             append_write = 'w'  # make a new file if not

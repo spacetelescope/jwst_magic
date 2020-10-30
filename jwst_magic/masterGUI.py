@@ -474,8 +474,9 @@ class MasterGui(QMainWindow):
 
             # Run the select stars GUI to determine the new orientation
             inds_list, segnum = run_SelectStars(data, x, y, 20,
-                                                               print_output=False,
-                                                               masterGUIapp=self.app)
+                                                out_dir=os.path.join(out_dir, 'out', self.lineEdit_root.text()),
+                                                print_output=False,
+                                                masterGUIapp=self.app)
 
             # Print indices of each guiding configuration
             for i in range(len(inds_list)):
@@ -1543,7 +1544,7 @@ class MasterGui(QMainWindow):
                                          'shifted_{}_G{}_config*.fits'.format(root, guider))), key=utils.natural_keys)
 
             # Update guiding_selections*.txt paths in GUI
-            if False not in [os.path.exists(file) for file in self.guiding_selections_file_list]:
+            if False not in [os.path.exists(file) for file in self.guiding_selections_file_list] and len(self.guiding_selections_file_list) != 0:
                 self.update_regfile_starselector_combobox(self.guiding_selections_file_list)
 
                 if new_guiding_selections:
@@ -1552,6 +1553,7 @@ class MasterGui(QMainWindow):
             else:
                 self.comboBox_regfileStarSelector.clear()
                 self.lineEdit_regfileSegmentGuiding.setText("")
+                self.comboBox_guidingcommands.clear()
 
             # If possible, show converted and shifted image previews, too
             self.update_converted_image_preview()

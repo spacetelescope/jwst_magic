@@ -26,12 +26,14 @@ Use
 """
 
 # Standard Library Imports
+import io
 import glob
 import logging
 import os
 import random
 import shutil
 import string
+import yaml
 
 # Third Party Imports
 from astropy.io import ascii as asc
@@ -520,7 +522,8 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
         Path(s) to unshifted_guiding_selections*.txt file
     output_file : str
         The type of file to copy and return the path of.
-        Eg 'all_found_psfs', 'psf_center', or 'center_pointing'
+        Eg 'all_found_psfs', 'psf_center', 'center_pointing',
+        'all_selections_yaml'
     root : str
         Name used to generate output folder and output file names.
     guider : int
@@ -583,31 +586,51 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
         # Try to copy the corresponding *all_found_psfs*.txt or *psf_center*.txt file, if present.
         if imported_root is not None:
             txt_files = glob.glob(os.path.join(dir_to_look, "*.txt"))
+            yaml_files = glob.glob(os.path.join(dir_to_look, "*.yaml"))
             if output_file == 'psf_center':
                 acceptable_files = [
                     os.path.join(dir_to_look, 'unshifted_psf_center_{}.txt'.format(imported_root)),  # newest
                     os.path.join(dir_to_look, 'psf_center_{}.txt'.format(imported_root))]  # oldest
+                ftype = 'txt'
             elif output_file == 'all_found_psfs':
                 acceptable_files = [
                     os.path.join(dir_to_look, 'unshifted_all_found_psfs_{}.txt'.format(imported_root)),
                     os.path.join(dir_to_look, 'all_found_psfs_{}.txt'.format(imported_root)),
                     os.path.join(dir_to_look, '{}_ALLpsfs.txt'.format(imported_root))]
+                ftype = 'txt'
             elif output_file == 'center_pointing':
                 acceptable_files = [
                     os.path.join(dir_to_look, 'center_pointing_{}.txt'.format(imported_root))
                 ]
-            try:
-                file_to_copy = [f for f in acceptable_files if f in txt_files][0]
-            except IndexError:
-                file_to_copy = None
+                ftype = 'txt'
+            elif output_file == 'all_selections_yaml':
+                acceptable_files = [
+                    os.path.join(dir_to_look, 'all_guiding_selections.yaml')
+                ]
+                ftype = 'yaml'
+            if ftype == 'txt':
+                try:
+                    file_to_copy = [f for f in acceptable_files if f in txt_files][0]
+                except IndexError:
+                    file_to_copy = None
+            elif ftype == 'yaml':
+                try:
+                    file_to_copy = [f for f in acceptable_files if f in yaml_files][0]
+                except IndexError:
+                    file_to_copy = None
+
+        if output_file == 'all_selections_yaml':
+            copied_psfs_file = os.path.join(out_dir, 'all_guiding_selections.yaml')
+            copy_all_selections_yaml(file_to_copy, copied_psfs_file, guiding_selections_file, out_dir)
 
         if file_to_copy is not None:
             try:
                 if output_file == 'center_pointing':
                     copied_psfs_file = os.path.join(out_dir, '{}_{}_G{}.txt'.format(output_file, root, guider))
+                    shutil.copy(file_to_copy, copied_psfs_file)
                 else:
                     copied_psfs_file = os.path.join(out_dir, 'unshifted_{}_{}_G{}.txt'.format(output_file, root, guider))
-                shutil.copy(file_to_copy, copied_psfs_file)
+                    shutil.copy(file_to_copy, copied_psfs_file)
                 LOGGER.info('Star Selection: Copying over {}'.format(file_to_copy))
                 LOGGER.info('Star Selection: Successfully wrote: {}'.format(copied_psfs_file))
                 return copied_psfs_file
@@ -627,6 +650,50 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
                     'Star Selection: Could not find a corresponding {}*.txt file for '
                     'the provided guiding selections file ({}) in {}'.format(output_file, filename, dir_to_look)
                 )
+
+
+def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, out_dir):
+    """Handle copying the config information to the yaml file"""
+    # Open file to copy
+    try:
+        with open(file_to_copy, 'r') as stream:
+            data_loaded = yaml.safe_load(stream)
+    except TypeError:
+        data_loaded = None
+
+    # Open file to copy to if it exists, if not start from scratch
+    if os.path.exists(final_file):
+        with open(final_file, 'r') as stream:
+            final_data = yaml.safe_load(stream)
+        config = int(sorted(final_data.keys(), key=utils.natural_keys)[-1].split('_')[-1]) + 1
+    else:
+        final_data = {}
+        config = 1
+
+    # For each guiding selections file passed in
+    for file in guiding_selections_file:
+        if '/guiding_config_' in file and data_loaded is not None:
+            # Pull the config number
+            old_config = file.split('/guiding_config_')[-1].split('/')[0]
+
+            # Pull the corresponding config from the yaml file
+            config_data = data_loaded['guiding_config_{}'.format(old_config)]
+
+            if config_data not in final_data.values() and out_dir in file:
+                # Add that config to the new yaml
+                final_data['guiding_config_{}'.format(config)] = config_data
+                config += 1
+            else:
+                final_data['guiding_config_{}'.format(config)] = []
+                config += 1
+        else:
+            final_data['guiding_config_{}'.format(config)] = []
+            config += 1
+            LOGGER.info('Cannot parse {} for a config number. This configuration will not be '
+                        'added to all_guiding_selections.yaml file'.format(file))
+    # Write to file
+    with io.open(final_file, 'w', encoding="utf-8") as f:
+        yaml.dump(final_data, f, default_flow_style=False, allow_unicode=True)
 
 
 def manual_star_selection(data, smoothing, out_dir, choose_center=False, testing=False, masterGUIapp=None):
@@ -847,6 +914,9 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
 
             segnum = None
             center_pointing_path = copy_psfs_files(guiding_selections_file, 'center_pointing', root, guider, out_dir)
+
+            # Write out yaml file
+            yaml_path = copy_psfs_files(guiding_selections_file, 'all_selections_yaml', root, guider, out_dir)
 
         else:
             # If no .incat or reg file provided, create reg file with manual
