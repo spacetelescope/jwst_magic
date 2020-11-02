@@ -67,7 +67,7 @@ if matplotlib.get_backend() != 'Qt5Agg':
 from PyQt5 import QtCore, uic, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
-                             QDialog, QComboBox,)
+                             QDialog, QComboBox, QInputDialog)
 from PyQt5.QtGui import QStandardItemModel
 
 # Local Imports
@@ -529,8 +529,14 @@ class MasterGui(QMainWindow):
                 # Load selected guiding_selections*.txt
                 if len(self.comboBox_guidingcommands.checkedItems()) == 0:
                     raise ValueError('No guiding commands chosen from dropdown box.')
+
                 combobox_choices = [item.text() for item in self.comboBox_guidingcommands.checkedItems()]
                 combobox_filenames = [file.split(': ')[-1] for file in combobox_choices]
+
+                # Re-order the files via dialog box if checked
+                if self.checkBox_configorder.isChecked():
+                    combobox_filenames = self.change_config_order_dialog(combobox_filenames)
+
                 selected_segs_list = []
                 segment_infile_list = []
                 for file in combobox_filenames:
@@ -887,10 +893,12 @@ class MasterGui(QMainWindow):
             self.lineEdit_regfileSegmentGuiding.setEnabled(False)
             self.label_guidingcommands.setEnabled(False)
             self.comboBox_guidingcommands.setEnabled(False)
+            self.checkBox_configorder.setEnabled(False)
         elif self.sender() == self.radioButton_regfileSegmentGuiding:
             self.lineEdit_regfileSegmentGuiding.setEnabled(True)
             self.label_guidingcommands.setEnabled(True)
             self.comboBox_guidingcommands.setEnabled(True)
+            self.checkBox_configorder.setEnabled(True)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
@@ -976,6 +984,20 @@ class MasterGui(QMainWindow):
         SGT_dialog.exec()
 
         return SGT_dialog
+
+    def change_config_order_dialog(self, config_order):
+        """Dialog box to change the order of the selected guiding configurations.
+        Brought up only if self.checkBox_configorder is checked
+        """
+        self.change_config_order_dialog_box = QInputDialog()
+        text, ok = self.change_config_order_dialog_box.getMultiLineText(self, 'Input Dialog',
+                                                               'Enter new configuration order:' + ' ' * 100,
+                                                               '\n'.join(config_order))
+        if ok:
+            config_list = [x.strip() for x in text.replace('\n', ",").split(',') if len(x.strip()) != 0]
+            return config_list
+        else:
+            raise ValueError('Change Config Order Dialog Box Canceled.')
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # HELPER FUNCTIONS
