@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1561</width>
-    <height>1092</height>
+    <height>1105</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
          <x>0</x>
          <y>0</y>
          <width>1553</width>
-         <height>1068</height>
+         <height>1075</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -1007,8 +1007,7 @@ p, li { white-space: pre-wrap; }
               <bool>true</bool>
              </property>
              <property name="text">
-              <string>Read commands from root
-(assume segNum=0)</string>
+              <string>Read commands from root</string>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_segmentGuiding</string>
@@ -1086,6 +1085,16 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="text">
               <string>                Select commands to run:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QCheckBox" name="checkBox_configorder">
+             <property name="toolTip">
+              <string>Change the order of the guiding commands from the order in the drop down box above</string>
+             </property>
+             <property name="text">
+              <string>Change order of configurations</string>
              </property>
             </widget>
            </item>
