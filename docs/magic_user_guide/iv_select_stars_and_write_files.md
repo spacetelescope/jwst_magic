@@ -15,20 +15,21 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 1. Set star selection parameters:
 
    ![Star Selection section of the Main GUI](./figs/figure7_main_star_selection.png)
-
+   
    1. Ensure the **Star Selector** box is checked.
    2. Inspect the input image and determine if your PSF(s) meet one of the two scenarios that requires a change to the smoothing technique. If you are working with early commissioning PSFs, check the **High Smoothing (For Early Commissioning)** box (*A*). If you are working with MIMF PSFs, check the **Low Smoothing (For MIMF)** box (*B*). For high smoothing, this flag widens the smoothing filter for diffuse images in early commissioning stages when the telescope is unphased (If you are unsure if the PSFs are phased, consult the procedure’s information on your observation). For low smoothing, this flag applies very little smoothing to better find the bright knot on doughnut PSFs like in MIMF rather than finding the center of the PSF. 
-   3. If desired, load pre-selected guide and reference stars from a file by selecting the **Load from File** (*C*) option and selecting the desired input file (this should be an un-shifted guiding selections file). This file must include X/Y pixel coordinates and count rates in the form of a filepath to a regfile.txt or .incat file. Providing this will bypass using the Star Selection GUI to **Click-to-Select** the guide and reference stars.
+   3. If desired, load pre-selected guide and reference stars from one or more files by selecting the **Load from File** (*C*) option, clicking the "Open" button, and selecting the desired un-shifted guiding selections file(s). Use shift+click or command+click to select multiple files. These files must include X/Y pixel coordinates and count rates. Providing this will bypass using the Star Selection GUI to Click-to-Select the guide and reference stars. The files chosen will populate in the drop down list in the order they are clicked. **NOTE: The order these files are selected (and they order they are in the list) will be the order they go into the SOF.**
 
 2. Set file writer parameters:
-
-  ![Flight Software file writer section for the Main GUI](./figs/figure8_main_fsw_write.png)
-
+    
+   ![Flight Software file writer section for the Main GUI](./figs/figure8_main_fsw_write.png)
+  
    1. Ensure the **Flight Software (FSW) File Writer** box is checked.
-   2. Check that all of the *necessary FGS steps* are selected.
+   2. Enter in the threshold (i.e. count rate uncertainty factor) which is the degree of uncertainty in the count rate of each segment For example, an uncertainty factor of 0.9 for a star with a count rate of 1,000 writes an uncertainty of 900
+   3. Check that all of the *necessary FGS steps* are selected.
       1. For general guiding, this includes all of the operational steps: ID, ACQ, and TRK. (These are the default selections.)
       2. For calibration observations, add the CAL step.
-   3. If you want to shift your image so that the selected guide star is moved to the center of the image, ensure the **Place the guide star at the ID attitude** box is checked. Designate whether the guiding field is crowded enough that the alternate ID attitude at (Ideal X, Ideal Y) = (-45, 0) should be used (**Crowded field**). Otherwise, leave the **Nominal** button selected such that the star is placed at (Ideal X, Ideal Y) = (0, 0).
+   4. If you want to shift your image so that the selected guide star is moved to the center of the image, ensure the **Place the guide star at the ID attitude** box is checked. Designate whether the guiding field is crowded enough that the alternate ID attitude at (Ideal X, Ideal Y) = (-45, 0) should be used (**Crowded field**). Otherwise, leave the **Nominal** button selected such that the star is placed at (Ideal X, Ideal Y) = (0, 0).
 
 3. Run the tool
 
@@ -46,9 +47,14 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
    1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light.
    2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix D](appendix_d_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
-   3. If you want to change your selections while in the tool, use the **Make Guide Star** (*A*) button to change the guide star, use the **Delete** button (*B*) to remove individual selections, and use the **Clear Selections** button (*C*) to start over.
-   4. When you are happy with your selections, click **Done**  
-
+   3. Utilize the pop-up of the WSS mapping of segment names in the FGS Raw frame by checking the **Show WSS Numbers Guide** check box (*A*). Un-check the button to close the pop-up.
+   3. If you want to change your selections while in the tool, use the **Make Guide Star** (*B*) button to change the guide star, use the **Delete** button (*C*) to remove individual selections, and use the **Clear Selections** button (*D*) to start over.
+   4. When you are happy with your selections, click the **Save Command** button (*E*). You will see the IDs of the stars you selected appear in the **Override Commands** table (*F*).
+   5. To add another command, repeat steps 1-4 to select guide and reference stars, and again click the **Save Command** button (*E*).
+   6. To change the order of the commands, use the up and down arrow buttons (*G*). To view a saved command on the plot, click the **Load** button (*H*).  To remove a command from the list, click the **Delete** button (*I*).
+   7. Choose the center of override pointing (*J*) for all selections. This sets the origin of the ideal frame (i.e. the location of the guide star if the segments were stacked). It can either be set as the center of the segment array, using the **Use Center of Segment Array** checkbox, or the location of a specific segment using the dropdown box.
+   8. When you are happy with your selections, click **Done**  
+   
    The output files will be located in the specified out directory.
 
 ---------------------------------
