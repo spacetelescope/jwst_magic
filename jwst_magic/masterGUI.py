@@ -473,7 +473,7 @@ class MasterGui(QMainWindow):
             y = all_rows['y'].data
 
             # Run the select stars GUI to determine the new orientation
-            inds_list, segnum = run_SelectStars(data, x, y, 20,
+            inds_list, segnum = run_SelectStars(data, x, y, 20, guider,
                                                 out_dir=os.path.join(out_dir, 'out', self.lineEdit_root.text()),
                                                 print_output=False,
                                                 masterGUIapp=self.app)
