@@ -1236,12 +1236,16 @@ class MasterGui(QMainWindow):
 
                     # Clear and re-populate checkable combobox in segment guiding section
                     self.comboBox_guidingcommands.clear()
-                    for i, command_file in enumerate(guiding_selections):
-                        item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
-                        self.comboBox_guidingcommands.addItem(item)
-                        item = self.comboBox_guidingcommands.model().item(i, 0)
-                        item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-                        item.setCheckState(Qt.Unchecked)
+                    i = 0
+                    for command_file in guiding_selections:
+                        # If the wrong guider number is present in the name, don't list the file
+                        if '_G{}_'.format([2 if self.buttonGroup_guider.checkedButton().text() == '1' else 1][0]) not in command_file:
+                            item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                            self.comboBox_guidingcommands.addItem(item)
+                            item = self.comboBox_guidingcommands.model().item(i, 0)
+                            item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+                            item.setCheckState(Qt.Unchecked)
+                            i += 1
 
                 except IndexError:
                     LOGGER.warning(
