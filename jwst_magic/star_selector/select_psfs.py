@@ -707,7 +707,7 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, 
     LOGGER.info('Star Selection: Successfully wrote: {}'.format(final_file))
 
 
-def manual_star_selection(data, smoothing, out_dir, choose_center=False, testing=False, masterGUIapp=None):
+def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False, testing=False, masterGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
@@ -792,10 +792,10 @@ def manual_star_selection(data, smoothing, out_dir, choose_center=False, testing
     if not testing and not choose_center:
         gui_data = data.copy()
         gui_data[data == 0] = 1  # Alter null pixel values for LogNorm imshow
-        inds_list, segnum = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist,
-                                              out_dir=out_dir,
-                                              print_output=False,
-                                              masterGUIapp=masterGUIapp)
+        inds_list, segnum = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist, guider,
+                                                           out_dir=out_dir,
+                                                           print_output=False,
+                                                           masterGUIapp=masterGUIapp)
 
         # Print indices of each guiding configuration
         for i in range(len(inds_list)):
@@ -934,6 +934,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             # star selection using the SelectStarsGUI
             cols_list, all_coords, nref_list, all_cols, segnum = manual_star_selection(data,
                                                                  smoothing,
+                                                                 guider,
                                                                  out_dir,
                                                                  choose_center,
                                                                  testing,

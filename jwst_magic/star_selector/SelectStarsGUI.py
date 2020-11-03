@@ -90,7 +90,8 @@ matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.split(__location__)[0]
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
-WSS_NUMBERS = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_20200922.png')
+WSS_NUMBERS_G1 = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider1.png')
+WSS_NUMBERS_G2 = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider2.png')
 
 
 class StarClickerMatplotlibCanvas(FigureCanvas):
@@ -329,7 +330,7 @@ class StarSelectorWindow(QDialog):
     quit
         Closes the application
     """
-    def __init__(self, data, x, y, dist, out_dir, qApp, in_master_GUI,
+    def __init__(self, data, x, y, dist, guider, out_dir, qApp, in_master_GUI,
                  print_output=False):
         """Initializes class; sets up user interface.
 
@@ -344,6 +345,8 @@ class StarSelectorWindow(QDialog):
         dist : int
             Minimum distance between identified PSFs; maximum distance from a star the user
             can click to select that star
+        guider : int
+            Guider number; 1 or 2
         out_dir : str
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
@@ -369,6 +372,7 @@ class StarSelectorWindow(QDialog):
         self.x = x
         self.y = y
         self.epsilon = dist
+        self.guider = guider
         self.out_dir = out_dir
         self._ind = None
         self.inds = []
@@ -856,13 +860,17 @@ class StarSelectorWindow(QDialog):
                                           QtCore.Qt.WindowStaysOnTopHint | Qt.Tool)
             self.wss_popup.setWindowModality(Qt.NonModal)
 
-            self.wss_popup.resize(400, 400)
+            # Add image
             layout = QGridLayout()
             layout.setContentsMargins(0, 0, 0, 0)
-
-            # Add WSS image
             image_label = QLabel()
-            image_label.setPixmap(QPixmap(WSS_NUMBERS))
+            if self.guider == 1:
+                image_label.setPixmap(
+                    QPixmap(WSS_NUMBERS_G1).scaled(550, 550, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            else:
+                image_label.setPixmap(
+                    QPixmap(WSS_NUMBERS_G2).scaled(550, 550, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            image_label.setFixedSize(550, 550)
             layout.addWidget(image_label, 0, 0)
             self.wss_popup.setLayout(layout)
 
@@ -1368,7 +1376,7 @@ class StarSelectorWindow(QDialog):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=None):
+def run_SelectStars(data, x, y, dist, guider, out_dir, print_output=True, masterGUIapp=None):
     """Calls a PyQt GUI to allow interactive user selection of guide and
     reference stars.
 
@@ -1383,6 +1391,8 @@ def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=N
     dist : int
         Minimum distance between identified PSFs; maximum distance from a star the user
         can click to select that star
+    guider : int
+        Guider number; 1 or 2
     out_dir : str
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
@@ -1408,7 +1418,7 @@ def run_SelectStars(data, x, y, dist, out_dir, print_output=True, masterGUIapp=N
             qApp = QApplication(sys.argv)
         in_master_GUI = False
 
-    window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, out_dir=out_dir,
+    window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, guider=guider, out_dir=out_dir,
                                 qApp=qApp, in_master_GUI=in_master_GUI,
                                 print_output=print_output)
     try:
