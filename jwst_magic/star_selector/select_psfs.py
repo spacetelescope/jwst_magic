@@ -515,7 +515,8 @@ def parse_in_file(in_file):
 
 def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir):
     """By parsing the name of an input guiding_selections*.txt file,
-    identify a corresponding all_found_psfs*.txt or psf_center*.txt file.
+    identify a corresponding file. See "output_file" parameter for information
+    on what files are accepted.
 
     Parameters
     ----------
@@ -997,12 +998,12 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         if smoothing == 'low':
             LOGGER.info(
                 "Star Selection: No smoothing chosen so re-running star selection to also calculate PSF center")
-            cols_center, _, _, _, _ = manual_star_selection(data,
-                                                         smoothing='default',
-                                                         out_dir=None,
-                                                         choose_center=True,
-                                                         testing=testing,
-                                                         masterGUIapp=masterGUIapp)
+            cols_center = manual_star_selection(data,
+                                                smoothing='default',
+                                                out_dir=None,
+                                                choose_center=True,
+                                                testing=testing,
+                                                masterGUIapp=masterGUIapp)[0]
 
             LOGGER.info(
                 "Star Selection: PSF center information {} vs Guiding knot information {}".format(cols_center[0], cols))
