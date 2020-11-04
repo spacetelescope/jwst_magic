@@ -10,10 +10,14 @@ Use
     ::
         pytest test_select_psfs.py
 """
+from collections import OrderedDict
+import io
 import os
 import shutil
+import yaml
 
 from astropy.io import ascii as asc
+import numpy as np
 import pytest
 
 from .utils import parametrized_data
@@ -122,3 +126,68 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
         with open(psf_center_path) as f:
             no_smooth_contents = f.read()
         assert guiding_selections_contents != no_smooth_contents
+
+test_data = PARAMETRIZED_DATA['test_yaml_file']
+test_yaml_file_parameters = [(test_data['cols_order'], test_data['cols_list'], test_data['all_cols'])]
+@pytest.mark.parametrize('cols_order, cols_list, all_cols', test_yaml_file_parameters)
+def test_yaml_file(cols_order, cols_list, all_cols):
+    guider = 1
+    testing_num = 11
+    out_dir = os.path.join(__location__, 'out', ROOT)
+    new_config_numbers = np.arange(1, testing_num+1)
+
+    # Write guiding selections, all found_psfs, and all_selections_yaml files to fake a previous observation
+    guiding_selections_path_list = []
+    for (i, cols) in zip(new_config_numbers, cols_list):
+        guiding_selections_path = os.path.join(out_dir, 'guiding_config_{}'.format(i),
+                                            'unshifted_guiding_selections_{}_G{}_config{}.txt'.format(ROOT, guider, i))
+        utils.write_cols_to_file(guiding_selections_path, labels=['y', 'x', 'countrate'], cols=cols)
+        guiding_selections_path_list.append(guiding_selections_path)
+
+    all_found_psfs_path = os.path.join(out_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(ROOT, guider))
+    utils.write_cols_to_file(all_found_psfs_path, labels=['label', 'y', 'x', 'countrate'], cols=all_cols)
+
+    old_yaml_path = os.path.join(out_dir, 'all_guiding_selections.yaml')
+    utils.setup_yaml()
+    final_data = OrderedDict()
+    for i, file in enumerate(guiding_selections_path_list):
+        config_data = cols_order[i]
+        final_data['guiding_config_{}'.format(i+1)] = config_data
+    with io.open(old_yaml_path, 'w', encoding="utf-8") as f:
+        yaml.dump(final_data, f, default_flow_style=False, allow_unicode=True)
+
+    # Simulate loading these 11 configs via a file
+    guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
+        CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file=guiding_selections_path_list,
+        out_dir=__location__
+    )
+
+    # Check file exists
+    yaml_file = os.path.join(out_dir, 'all_guiding_selections.yaml')
+    assert os.path.exists(yaml_file), 'all_guiding_selections.yaml not generated.'
+
+    # Check contents of file -> 11 Configs in correct number order
+    with open(yaml_file, 'r') as stream:
+        data_loaded = yaml.safe_load(stream)
+    assert list(data_loaded.keys()) ==  ['guiding_config_{}'.format(num+1) for num in range(testing_num)]
+
+    # Simulate re-loading the same config again + 1 more new config
+    guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
+        CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file=[guiding_selections_path_list[0], SELECTED_SEGS],
+        out_dir=__location__
+    )
+
+    # Re-load contents of yaml file
+    with open(yaml_file, 'r') as stream:
+        data_loaded = yaml.safe_load(stream)
+
+    # Another config was added, but check they are still in number order
+    assert len(list(data_loaded.keys())) == testing_num+1
+    assert list(data_loaded.keys()) == ['guiding_config_{}'.format(num+1) for num in range(testing_num+1)]
+
+    # Check the contents of the yaml file matches what it should
+    for i, config in enumerate(cols_order):
+        assert data_loaded['guiding_config_{}'.format(i+1)] == config
+
+    # The new selections file added didn't have a yaml file, so an empty list was appended to this yaml
+    assert len(data_loaded['guiding_config_{}'.format(testing_num+1)]) == 0
