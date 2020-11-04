@@ -1504,7 +1504,7 @@ class MasterGui(QMainWindow):
 
     def update_filepreview(self, new_guiding_selections=False):
         """
-        If either:
+        If either: 
           1) manual naming is selected and the root, out_dir, and guider have been defined, or
           2) commissioning naming is selected and the practice, CAR, and observation have
               been selected
