@@ -907,10 +907,27 @@ class StarSelectorWindow(QDialog):
             if data_loaded is None:
                 return False
 
+            # Remove any unknown configs (no help anyway)
+            data_loaded = {key: val for key, val in data_loaded.items() if val != []}
+
+            # Pull chosen values
+            chosen_gs = self.inds[0] + 1
+            chosen_ref = [i+1 for i in self.inds[1:]]
+
+            # Pull keys where guide star matches
+            key_matching_gs = [key for key, value in data_loaded.items() if value[0] == chosen_gs]
+
+            # If there's no existing config with a matching guide star, it's a new config
+            if len(key_matching_gs) == 0:
+                return False
+
+            # Check these keys for matching ref stars (order doesn't matter)
+            l = [True if set(data_loaded[key][1:]) == set(chosen_ref) else False for key in key_matching_gs]
+
             # If the current selection has already been made, raise dialog box
-            if [i+1 for i in self.inds] in data_loaded.values():
+            if True in l:
                 # Pull corresponding key
-                key = list(data_loaded.keys())[list(data_loaded.values()).index([i+1 for i in self.inds])]
+                key = key_matching_gs[l.index(True)]
 
                 # Raise pop up
                 duplicate_selection_dialog = QMessageBox()
@@ -923,8 +940,8 @@ class StarSelectorWindow(QDialog):
 
                 return True
 
-        else:
-            return False
+            else:
+                return False
 
 
     def save_orientation_to_list(self):

@@ -383,6 +383,18 @@ class MasterGui(QMainWindow):
                                    )
         copy_original = True
 
+        # Check for mis-matched guider
+        list_of_files = [[os.path.join(dirpath, file) for file in filenames] for (dirpath, _, filenames) in
+                         os.walk(os.path.join(out_dir, 'out', root))]
+        list_of_files = [item for sublist in list_of_files for item in sublist]
+        opposite_guider = [2 if guider == 1 else 1][0]
+        if True in [True if ('_G{}_'.format(opposite_guider) in file  or '_G{}.'.format(opposite_guider) in
+                file) else False for file in list_of_files]:
+
+            raise ValueError('Data from GUIDER {} found in the root path: {}, which does not match the chosen '
+                             'GUIDER {}. Delete all contents from this directory before writing data with a new '
+                             'guider.'.format(opposite_guider, os.path.join(out_dir, 'out', root), guider))
+
         # Convert image
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         convert_im = True
@@ -990,8 +1002,8 @@ class MasterGui(QMainWindow):
         Brought up only if self.checkBox_configorder is checked
         """
         self.change_config_order_dialog_box = QInputDialog()
-        text, ok = self.change_config_order_dialog_box.getMultiLineText(self, 'Input Dialog',
-                                                               'Enter new configuration order:' + ' ' * 100,
+        text, ok = self.change_config_order_dialog_box.getMultiLineText(self, 'Update Config Order',
+                                                               'Re-order guiding selection files:' + ' ' * 100,
                                                                '\n'.join(config_order))
         if ok:
             config_list = [x.strip() for x in text.replace('\n', ",").split(',') if len(x.strip()) != 0]
@@ -1574,8 +1586,8 @@ class MasterGui(QMainWindow):
 
             # Update guiding_selections*.txt paths in GUI
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list] and len(self.guiding_selections_file_list) != 0:
-                self.update_regfile_starselector_combobox(self.guiding_selections_file_list)
-
+                #self.update_regfile_starselector_combobox(self.guiding_selections_file_list)
+                self.comboBox_regfileStarSelector.clear()
                 if new_guiding_selections:
                     new_selections = self.guiding_selections_file_list
                     self.update_guiding_selections(new_selections=new_selections)
