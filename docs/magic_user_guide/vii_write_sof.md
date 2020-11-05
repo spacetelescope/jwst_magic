@@ -22,7 +22,7 @@ Another very important part of MAGIC is creating the override file that can be u
 
    ![Figure 13: Segment Guiding Section of the Main GUI](./figs/figure13_segment_guiding.png)
 
-2. If the image has been shifted so the guide star is at the ID attitude, use the radio buttons (*A*) to designate whether to generate the override file using the original (unshifted) image (**Use original image**) or using the shifted image (**Use image shifted to ID attitude**).
+2. If the image has been shifted so the guide star is at the ID attitude, use the radio buttons (*A*) to designate whether to generate the override file using the original (unshifted) image (**Use original image**) or using the shifted image (**Use image shifted to ID attitude** which will be available when you have selected the "Place the guide star at the ID attitude" button in the FSW File Writer section).
 
 3. Determine what kind of override file to generate:
 
@@ -33,7 +33,7 @@ Another very important part of MAGIC is creating the override file that can be u
       
       2. Users can type in a new path and the drop down box will update with that path’s available guiding selection files.
     
-      3. If users want to change the order of the selections files that should go into the SOF from the order they are listed in the drop down box, they should check the **Change order of configurations** check box (*D*). This will bring up a pop up box that will list the files chosen. Users should copy/paste the file names to move them around, ending with 1 file per line. Then hit “OK” .
+      3. If users want to change the order of the selections files that should go into the SOF from the order they are listed in the drop down box, they should check the **Change order of configurations** check box (*D*). This will bring up a pop up box that will list the files chosen. Users should change the order of the list of guiding selections files, which can be as simple as changing the config numbers in the file names, or by copy/pasting the file names to move them around ()using keyboard shortcuts or right-clicking) ending with 1 file per line. Then hit “OK” .
         
 4. Before running the tool, obtain the following parameters with the following methods (skip to iii if you used the APT query):
 
@@ -73,7 +73,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
    8. **V3 boresight offset** – that will be applied before the observation this file is for
 
-   9. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. This will be auto-populated from the threshold entered in the main GUI, but can be changed here. 
+   9. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. This will be auto-populated from the threshold entered in the main GUI, but can be changed here based on DHAS testing results. 
 
    Note: If you used the APT query functionality in [Section III](iii_determining_and_loading_the_input_image.md), the Program ID, Observation Number, Visit Number, and RA and DEC of the guide star should be pre-populated.
 

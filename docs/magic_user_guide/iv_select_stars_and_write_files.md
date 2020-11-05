@@ -18,14 +18,14 @@ One of the main features of MAGIC is that it allows the user to determine the gu
    
    1. Ensure the **Star Selector** box is checked.
    2. Inspect the input image and determine if your PSF(s) meet one of the two scenarios that requires a change to the smoothing technique. If you are working with early commissioning PSFs, check the **High Smoothing (For Early Commissioning)** box (*A*). If you are working with MIMF PSFs, check the **Low Smoothing (For MIMF)** box (*B*). For high smoothing, this flag widens the smoothing filter for diffuse images in early commissioning stages when the telescope is un-phased (If you are unsure if the PSFs are phased, consult the procedure’s information on your observation). For low smoothing, this flag applies very little smoothing to better find the bright knot on doughnut PSFs like in MIMF rather than finding the center of the PSF. 
-   3. If desired, load pre-selected guide and reference stars from one or more files by selecting the **Load from File** (*C*) option, clicking the "Open" button, and selecting the desired un-shifted guiding selections file(s). Use shift+click or command+click to select multiple files. These files must include X/Y pixel coordinates and count rates. Providing this will bypass using the Star Selection GUI to Click-to-Select the guide and reference stars. The drop down list will be populated with all the files chosen. NOTE: The order these files are selected (and they order they are in the list) will be the order they are saved out in.
+   3. If desired, load pre-selected guide and reference stars from one or more files by selecting the **Load from File** (*C*) option. Clicking the dropdown menu will show which files are already selected. If you want to change this, click the the "Open" button, and select the desired un-shifted guiding selections file(s), using shift+click or command+click to select multiple files. These files must include X/Y pixel coordinates and count rates. Providing this will bypass using the Star Selection GUI to Click-to-Select the guide and reference stars. The drop down list will be populated with all the files chosen. NOTE: The order these files are selected (and they order they are in the list) will be the order they are saved out in.
 
 2. Set file writer parameters:
     
    ![Flight Software file writer section for the Main GUI](./figs/figure8_main_fsw_write.png)
   
    1. Ensure the **Flight Software (FSW) File Writer** box is checked.
-   2. Enter in the threshold (i.e. count rate uncertainty factor) which is the degree of uncertainty in the count rate of each segment For example, an uncertainty factor of 0.9 for a star with a count rate of 1,000 writes an uncertainty of 900
+   2. Enter in the threshold (i.e. count rate uncertainty factor) which is the degree of uncertainty in the count rate of each segment For example, an uncertainty factor of 0.9 for a star with a count rate of 1,000 writes an uncertainty of 900.
    3. Check that all of the *necessary FGS steps* are selected.
       1. For general guiding, this includes all of the operational steps: ID, ACQ, and TRK. (These are the default selections.)
       2. For calibration observations, add the CAL step.
