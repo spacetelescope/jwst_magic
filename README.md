@@ -58,6 +58,10 @@ This package is developed in a Python ≥3.6 environment. Python 2 is not suppor
     ```
     conda env create --name magic --file=environment.yml
     ```
+    And activate it:
+    ```
+    conda activate magic
+    ```
 
 4. You will need the `jwst-fgs-countrate` module in order to run MAGIC. Clone the repository to your local machine.
 
