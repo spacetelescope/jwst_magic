@@ -31,7 +31,8 @@ CONVERTED_NIRCAM_IM_GA = os.path.join(__location__, 'data', 'converted_nircam_da
 CONVERTED_NIRCAM_IM_MIMF = os.path.join(__location__, 'data', 'converted_nircam_data_1_mimf.fits')
 ROOT = "test_select_psfs"
 SEGMENT_INFILE = os.path.join(__location__, 'data', 'all_found_psfs_{}.txt'.format(ROOT))
-SELECTED_SEGS = os.path.join(__location__, 'data', 'guiding_selections_{}.txt'.format(ROOT))
+SELECTED_SEGS = os.path.join(__location__, 'data', 'guiding_selections_{}_config1.txt'.format(ROOT))
+SELECTED_SEGS_2 = os.path.join(__location__, 'data', 'guiding_selections_{}_config2.txt'.format(ROOT))
 VISIT_NUM = 1
 
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
@@ -60,7 +61,8 @@ def test_directory(test_dir=TEST_DIRECTORY):
     if os.path.isdir(test_dir):
         shutil.rmtree(test_dir)
 
-select_psfs_with_file_parameters = [([SELECTED_SEGS], [1]), ([SELECTED_SEGS, SELECTED_SEGS], [2,3])]
+
+select_psfs_with_file_parameters = [([SELECTED_SEGS], [1]), ([SELECTED_SEGS, SELECTED_SEGS_2], [2,3])]
 @pytest.mark.parametrize('guiding_selection_file, expected_configs', select_psfs_with_file_parameters)
 def test_select_psfs_with_file(test_directory, guiding_selection_file, expected_configs):
     # Run code
@@ -86,7 +88,6 @@ def test_select_psfs_with_file(test_directory, guiding_selection_file, expected_
         'unshifted_all_found_psfs_test_select_psfs_G2.txt not generated.'
 
     assert all_found_psfs_path == os.path.join(TEST_DIRECTORY, 'unshifted_all_found_psfs_test_select_psfs_G2.txt')
-
 
 
 test_data = PARAMETRIZED_DATA['test_select_psfs_without_file']
@@ -126,6 +127,7 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
         with open(psf_center_path) as f:
             no_smooth_contents = f.read()
         assert guiding_selections_contents != no_smooth_contents
+
 
 test_data = PARAMETRIZED_DATA['test_yaml_file']
 test_yaml_file_parameters = [(test_data['cols_order'], test_data['cols_list'], test_data['all_cols'])]
