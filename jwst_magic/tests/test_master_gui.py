@@ -452,9 +452,7 @@ def test_sg_commands(qtbot, master_gui):
     assert master_gui.lineEdit_regfileSegmentGuiding.text() == os.path.join(__location__, 'data', 'out', ROOT)
 
     # Check that the contents of the regfile star selector combobox are correct
-    assert master_gui.comboBox_regfileStarSelector.count() == 1
-    assert master_gui.comboBox_regfileStarSelector.currentText() == os.path.join(__location__, 'data', 'out', ROOT,
-                                        'guiding_config_1/unshifted_guiding_selections_test_master_G1_config1.txt')
+    assert master_gui.comboBox_regfileStarSelector.count() == 0
 
     # Check that the contents of the checkable combobox is shifted only
     cmds = [master_gui.comboBox_guidingcommands.itemText(i) for i in range(master_gui.comboBox_guidingcommands.count())]
