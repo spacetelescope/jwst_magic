@@ -480,13 +480,20 @@ class MasterGui(QMainWindow):
 
             # Open all_found_psfs*.txt (list of all identified segments)
             all_psfs = self.all_found_psfs_file
-            all_rows = asc.read(all_psfs)
-            x = all_rows['x'].data
-            y = all_rows['y'].data
+            out_path = os.path.join(out_dir, 'out', self.lineEdit_root.text())
+
+            if self.all_found_psfs_file != '':
+                all_rows = asc.read(all_psfs)
+                x = all_rows['x'].data
+                y = all_rows['y'].data
+            else:
+                raise FileNotFoundError('Cannot find an all found PSFs file in this directory {}. '
+                             'This file can be created by running the star selection section '
+                             'of the GUI.'.format(out_path))
 
             # Run the select stars GUI to determine the new orientation
             inds_list, segnum = run_SelectStars(data, x, y, 20, guider,
-                                                out_dir=os.path.join(out_dir, 'out', self.lineEdit_root.text()),
+                                                out_dir=out_path,
                                                 print_output=False,
                                                 masterGUIapp=self.app)
 
