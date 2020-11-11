@@ -513,14 +513,14 @@ def parse_in_file(in_file):
     return out_cols, coords, nref
 
 
-def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir):
+def copy_psfs_files(guiding_selections_file_list, output_file, root, guider, out_dir):
     """By parsing the name of an input guiding_selections*.txt file,
     identify a corresponding file. See "output_file" parameter for information
     on what files are accepted.
 
     Parameters
     ----------
-    guiding_selections_file : list of str
+    guiding_selections_file_list : list of str
         Path(s) to unshifted_guiding_selections*.txt file
     output_file : str
         The type of file to copy and return the path of.
@@ -540,7 +540,7 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
     """
     # Determine the root of the imported guiding selections file name
     filenames, roots= [], []
-    for file in guiding_selections_file:
+    for file in guiding_selections_file_list:
         filename = os.path.basename(file)
         if 'guiding_selections_' in filename:
             if 'unshifted' in filename:
@@ -564,17 +564,17 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
     for i, rt in enumerate(roots):
         if rt is None:
             roots.pop(i)
-            guiding_selections_file.pop(i)
+            guiding_selections_file_list.pop(i)
             filenames.pop(i)
 
     # If there are any guiding files with a known root left
     if len(roots) > 0:
-        dirs = [os.path.dirname(file) for file in guiding_selections_file]
+        dirs = [os.path.dirname(file) for file in guiding_selections_file_list]
         dirs = [dr.split('guiding_config')[0] if 'guiding_config_' in dr else dr for dr in dirs]
         rootdirs = ['{}_{}'.format(root, dir) for root, dir in zip(roots, dirs)]
 
         # If the roots or basepaths differ, choose the first one, but log it
-        if len(guiding_selections_file) > 1 and len(set(rootdirs)) != 1:
+        if len(guiding_selections_file_list) > 1 and len(set(rootdirs)) != 1:
             LOGGER.warning('Star Selection: The multiple guiding selections files chosen do not have matching roots '
                            'and/or basepaths. We will search for the all_found_psf*.txt file using the '
                            'root/basepath of the first guiding selections file. If this is not the '
@@ -623,8 +623,9 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
 
         if output_file == 'all_selections_yaml':
             copied_psfs_file = os.path.join(out_dir, 'all_guiding_selections.yaml')
-            copy_all_selections_yaml(file_to_copy, copied_psfs_file, guiding_selections_file, out_dir)
-            return file_to_copy
+            guiding_selections_file_list = copy_all_selections_yaml(file_to_copy, copied_psfs_file,
+                                                                    guiding_selections_file_list, out_dir)
+            return file_to_copy, guiding_selections_file_list
 
         if file_to_copy is not None:
             try:
@@ -649,63 +650,108 @@ def copy_psfs_files(guiding_selections_file, output_file, root, guider, out_dir)
                 )
                 return file_to_copy
             else:
-                LOGGER.warning(
-                    'Star Selection: Could not find a corresponding {}*.txt file for '
-                    'the provided guiding selections file ({}) in {}'.format(output_file, filename, dir_to_look)
-                )
+                if output_file == 'center_pointing':
+                    psf_file = os.path.join(out_dir, '{}_{}_G{}.txt'.format(output_file, root, guider))
+                elif output_file == 'all_found_psfs':
+                    psf_file = os.path.join(out_dir, 'unshifted_{}_{}_G{}.txt'.format(output_file, root, guider))
+
+                if os.path.isfile(psf_file):
+                    LOGGER.warning(
+                        'Star Selection: Could not find a corresponding {}*.txt file for '
+                        'the provided guiding selections file ({}) in {} to copy over. Instead '
+                        'MAGIC will use the file that is already present: {}'.format(output_file, filename,
+                                                                                     dir_to_look, psf_file)
+                    )
+                    return psf_file
+
+                else:
+                    raise ValueError('MAGIC cannot find a(n) {} file, either in the location of the '
+                                     'input guiding_selections file or in the root directory. This '
+                                     'file may be missing, or it may have an incompatible name. Fix '
+                                     'this file before continuing.'.format(output_file))
 
 
-def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file, out_dir):
+def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file_list, out_dir):
     """Handle copying the config information to the yaml file"""
     utils.setup_yaml()
 
-    # Open file to copy
+    # Open yaml file to pull config info from
     try:
         with open(file_to_copy, 'r') as stream:
             data_loaded = yaml.safe_load(stream)
     except TypeError:
         data_loaded = None
 
-    # Open file to copy to if it exists, if not start from scratch
+    # Open or create a yaml file to copy to
     if os.path.exists(final_file):
-        with open(final_file, 'r') as stream:
-            final_data = OrderedDict(yaml.safe_load(stream))
-        config = int(sorted(final_data.keys(), key=utils.natural_keys)[-1].split('_')[-1]) + 1
+        try:
+            with open(final_file, 'r') as stream:
+                final_data = OrderedDict(yaml.safe_load(stream))
+            config = int(sorted(final_data.keys(), key=utils.natural_keys)[-1].split('_')[-1]) + 1
+        except TypeError:
+            final_data = OrderedDict()
+            config = 1
     else:
         final_data = OrderedDict()
         config = 1
+
     # For each guiding selections file passed in
-    for file in guiding_selections_file:
+    for i, file in enumerate(guiding_selections_file_list):
+        # If we can pull the config number and have a yaml file to check the config number against
         if '/guiding_config_' in file and data_loaded is not None:
+
             # Pull the config number
             old_config = file.split('/guiding_config_')[-1].split('/')[0]
 
             # Pull the corresponding config from the yaml file
             config_data = data_loaded['guiding_config_{}'.format(old_config)]
 
-            if config_data not in final_data.values():
-                # Add that config to the new yaml
+            # Check if the data matches an existing config (rs order doesn't matter)
+            chosen_gs = config_data[0]
+            chosen_ref = config_data[1:]
+
+            # Pull keys where guide star matches
+            key_matching_gs = [key for key, value in final_data.items() if len(value) != 0 and value[0] == chosen_gs]
+
+            # If there's no existing config with a matching guide star, it's a new config
+            if len(key_matching_gs) == 0:
                 final_data['guiding_config_{}'.format(config)] = config_data
                 config += 1
-            elif out_dir in file:
-                LOGGER.info('Guiding selections file {} is already from this root. This '
-                            'configuration will not be re-added to all_guiding_selections.yaml file'.format(file))
+                continue
+
+            # Check these keys for matching ref stars (order doesn't matter)
+            l = [True if set(final_data[key][1:]) == set(chosen_ref) else False for key in key_matching_gs]
+
+            # If the current selection has not already been made
+            if True not in l:
+                final_data['guiding_config_{}'.format(config)] = config_data
+                config += 1
+            else:
+                # Pull key that matches where the config is already saved
+                key = key_matching_gs[l.index(True)]
+
+                # Overwrite the guiding_selections_file_list with the path to the matching config
+                repeated_file = glob.glob(os.path.join(out_dir, key, "unshifted_guiding_selections*.txt"))[0]
+                guiding_selections_file_list[i] = repeated_file
+                LOGGER.info('Guiding selections from file {} match the selections already made and stored in in {}/. '
+                            'This file will not be used.'.format(file, key))
                 pass
 
-            else:
-                final_data['guiding_config_{}'.format(config)] = []
-                config += 1
         else:
             final_data['guiding_config_{}'.format(config)] = []
             config += 1
             LOGGER.info('Cannot parse {} for a config number. This configuration will not be '
-                        'added to all_guiding_selections.yaml file'.format(file))
+                        'added to all_guiding_selections.yaml file.'.format(file))
+
     # Write to file
     with io.open(final_file, 'w', encoding="utf-8") as f:
         yaml.dump(final_data, f, default_flow_style=False, allow_unicode=True)
 
     LOGGER.info('Star Selection: Copying over {}'.format(file_to_copy))
     LOGGER.info('Star Selection: Successfully wrote: {}'.format(final_file))
+
+    # Return new list with any duplicate files deleted
+    return guiding_selections_file_list
 
 
 def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False, testing=False, masterGUIapp=None):
@@ -838,7 +884,7 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def select_psfs(data, root, guider, guiding_selections_file=None,
+def select_psfs(data, root, guider, guiding_selections_file_list=None,
                 smoothing='default', choose_center=False,
                 testing=False, out_dir=None, masterGUIapp=None, logger_passed=False):
     """Select guide and reference segments.
@@ -861,7 +907,7 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         Name used to generate output folder and output filenames.
     guider : int
         Guider number (1 or 2)
-    guiding_selections_file : list of  str, optional
+    guiding_selections_file_list : list of str, optional
         List of files containing locations and count rates of selected segments
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
@@ -900,35 +946,51 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
         if isinstance(data, str):
             data = fits.getdata(data)
 
-        if guiding_selections_file:  # will be a list of strings
+        # Pull current config numbers in root
+        current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_dir)
+                               if os.path.isdir(os.path.join(out_dir, d)) if 'guiding_config' in d])
+
+        if guiding_selections_file_list:  # will be a list of strings
             # Determine if the guiding file loaded already exists in the right dir - no need for a new config #
             old_configs = [True if os.path.join(out_dir, 'guiding_config_') in path else False for path in
-                           guiding_selections_file]
+                           guiding_selections_file_list]
 
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
             LOGGER.info(
                 "Star Selection: Reading guide and reference star positions from {}"
-                    .format(', '.join(guiding_selections_file))
+                    .format(', '.join(guiding_selections_file_list))
             )
+            # Check for duplicate configs and write out yaml file
+            yaml_path, new_guiding_selections = copy_psfs_files(guiding_selections_file_list, 'all_selections_yaml',
+                                                                 root, guider, out_dir)
+
+            # Remove duplicate files before saving data
+            guiding_selections_file_list = [f for f in new_guiding_selections
+                    if len([g for g in current_dirs if os.path.join(out_dir, 'guiding_config_{}/'.format(g))
+                    in f]) == 0]
+
+            # Return early if all loaded files are duplicates of existing files
+            if len(guiding_selections_file_list) == 0:
+                all_found_psfs_path = os.path.join(out_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
+                psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
+                return new_guiding_selections, all_found_psfs_path, psf_center_path
+
             cols_list, nref_list = [], []  # coords will be overwritten, but they should include the same data each time
-            for file in guiding_selections_file:
+            for file in guiding_selections_file_list:
                 cols, coords, nref = parse_in_file(file)
                 cols_list.append(cols)
                 nref_list.append(nref)
 
             # Copy over corresponding all_found_psfs, psf_center, and center_pointing file, if possible.
             all_cols = None
-            all_found_psfs_path = copy_psfs_files(guiding_selections_file, 'all_found_psfs', root, guider, out_dir)
+            all_found_psfs_path = copy_psfs_files(guiding_selections_file_list, 'all_found_psfs', root, guider, out_dir)
             _, all_coords, _= parse_in_file(all_found_psfs_path)
 
-            psf_center_path = copy_psfs_files(guiding_selections_file, 'psf_center', root, guider, out_dir)
+            psf_center_path = copy_psfs_files(guiding_selections_file_list, 'psf_center', root, guider, out_dir)
 
             segnum = None
-            center_pointing_path = copy_psfs_files(guiding_selections_file, 'center_pointing', root, guider, out_dir)
-
-            # Write out yaml file
-            yaml_path = copy_psfs_files(guiding_selections_file, 'all_selections_yaml', root, guider, out_dir)
+            center_pointing_path = copy_psfs_files(guiding_selections_file_list, 'center_pointing', root, guider, out_dir)
 
         else:
             # If no .incat or reg file provided, create reg file with manual
@@ -961,13 +1023,11 @@ def select_psfs(data, root, guider, guiding_selections_file=None,
             utils.write_cols_to_file(center_pointing_path, labels=['segnum'], cols=[segnum], log=LOGGER)
 
         # Determine config numbers for selections (may re-use old config if loading a file from this out_dir/root)
-        current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_dir)
-                               if os.path.isdir(os.path.join(out_dir, d)) if 'guiding_config' in d])
         new_config_numbers = []
         j = 1
         for i, config in enumerate(old_configs):
            if config is True:
-               num = int(guiding_selections_file[i].split('guiding_config_')[-1].split('/')[0])
+               num = int(guiding_selections_file_list[i].split('guiding_config_')[-1].split('/')[0])
                new_config_numbers.append(num)
            else:
                num = len(current_dirs) + j

@@ -65,7 +65,7 @@ select_psfs_with_file_parameters = [([SELECTED_SEGS], [1]), ([SELECTED_SEGS, SEL
 def test_select_psfs_with_file(test_directory, guiding_selection_file, expected_configs):
     # Run code
     guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
-        CONVERTED_NIRCAM_IM_GA, ROOT, 2, guiding_selections_file=guiding_selection_file,
+        CONVERTED_NIRCAM_IM_GA, ROOT, 2, guiding_selections_file_list=guiding_selection_file,
         out_dir=__location__
     )
 
@@ -158,7 +158,7 @@ def test_yaml_file(cols_order, cols_list, all_cols):
 
     # Simulate loading these 11 configs via a file
     guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
-        CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file=guiding_selections_path_list,
+        CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file_list=guiding_selections_path_list,
         out_dir=__location__
     )
 
@@ -173,7 +173,7 @@ def test_yaml_file(cols_order, cols_list, all_cols):
 
     # Simulate re-loading the same config again + 1 more new config
     guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
-        CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file=[guiding_selections_path_list[0], SELECTED_SEGS],
+        CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file_list=[guiding_selections_path_list[0], SELECTED_SEGS],
         out_dir=__location__
     )
 
