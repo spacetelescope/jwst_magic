@@ -665,10 +665,11 @@ def copy_psfs_files(guiding_selections_file_list, output_file, root, guider, out
                     return psf_file
 
                 else:
-                    raise ValueError('MAGIC cannot find a(n) {} file, either in the location of the '
-                                     'input guiding_selections file or in the root directory. This '
-                                     'file may be missing, or it may have an incompatible name. Fix '
-                                     'this file before continuing.'.format(output_file))
+                    LOGGER.warning('MAGIC cannot find a(n) {} file, either in the location of the '
+                                 'input guiding_selections file or in the root directory. This '
+                                 'file may be missing, or it may have an incompatible name. '
+                                 'Looking for a file named {}. Fix '
+                                 'this file before continuing.'.format(output_file, psf_file))
 
 
 def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file_list, out_dir):
@@ -951,10 +952,6 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
                                if os.path.isdir(os.path.join(out_dir, d)) if 'guiding_config' in d])
 
         if guiding_selections_file_list:  # will be a list of strings
-            # Determine if the guiding file loaded already exists in the right dir - no need for a new config #
-            old_configs = [True if os.path.join(out_dir, 'guiding_config_') in path else False for path in
-                           guiding_selections_file_list]
-
             # Determine the kind of in_file and parse out the PSF locations and
             # countrates accordingly
             LOGGER.info(
@@ -973,7 +970,10 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
             # Return early if all loaded files are duplicates of existing files
             if len(guiding_selections_file_list) == 0:
                 all_found_psfs_path = os.path.join(out_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
-                psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
+                if smoothing == 'low':
+                    psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
+                else:
+                    psf_center_path = None
                 return new_guiding_selections, all_found_psfs_path, psf_center_path
 
             cols_list, nref_list = [], []  # coords will be overwritten, but they should include the same data each time
@@ -991,6 +991,10 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
 
             segnum = None
             center_pointing_path = copy_psfs_files(guiding_selections_file_list, 'center_pointing', root, guider, out_dir)
+
+            # Determine if the guiding file loaded already exists in the right dir - no need for a new config #
+            old_configs = [True if os.path.join(out_dir, 'guiding_config_') in path else False for path in
+                           guiding_selections_file_list]
 
         else:
             # If no .incat or reg file provided, create reg file with manual
