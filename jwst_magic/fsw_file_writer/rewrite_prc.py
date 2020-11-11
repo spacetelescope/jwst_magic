@@ -115,8 +115,11 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, cr
     all_psfs_old = os.path.join(out_path, 'all_found_psfs_{}.txt'.format(file_root))
     if os.path.exists(all_psfs_unshifted):
         unshifted_all_psfs = all_psfs_unshifted
-    else:
+    elif os.path.exists(all_psfs_old):
         unshifted_all_psfs = all_psfs_old
+    else:
+        LOGGER.warning('Rewrite PRC: Cannot find all found PSFs file in this directory: {}. '
+                       'Looked for {} and {}.'.format(out_path, all_psfs_unshifted, all_psfs_old))
     LOGGER.info("Rewrite PRC: Reading unshifted all psfs file: {}".format(all_psfs_unshifted.split('/')[-1]))
     unshifted_all_rows = asc.read(unshifted_all_psfs)
 
@@ -176,25 +179,6 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, cr
                 write_files.write_prc(fgs_files_obj)
             if step != 'ID':
                 write_files.write_image(fgs_files_obj)
+        LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i + 1))
 
-    # Add config to yaml file
-    if len(inds_list) != 0:
-        utils.setup_yaml()
-        out_yaml = os.path.join(out_dir, 'out', root, 'all_guiding_selections.yaml')
-
-        if os.path.exists(out_yaml):
-            append_write = 'a'  # append if already exists
-            with open(out_yaml, 'r') as stream:
-                data_loaded = OrderedDict(yaml.safe_load(stream))
-
-            last_config = int(sorted(data_loaded.keys(), key=utils.natural_keys)[-1].split('_')[-1])
-            data_yaml = OrderedDict(
-                ('guiding_config_{}'.format(i + 1 + last_config), [i + 1 for i in ind]) for i, ind in
-                enumerate(inds_list))
-        else:
-            append_write = 'w'  # make a new file if not
-            data_yaml = OrderedDict(
-                ('guiding_config_{}'.format(i + 1), [i + 1 for i in ind]) for i, ind in enumerate(inds_list))
-
-        with io.open(out_yaml, append_write, encoding="utf-8") as f:
-            yaml.dump(data_yaml, f, default_flow_style=False, allow_unicode=True)
+    LOGGER.info("*** FSW File Writing: COMPLETE ***")
