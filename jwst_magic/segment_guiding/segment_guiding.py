@@ -1075,9 +1075,10 @@ def generate_segment_override_file(segment_infile_list, guider,
                     in_table = asc.read(seg_num_path, format='commented_header')
                     guide_star_params_dict['seg_num'] = int(in_table['segnum'])
                 else:
+                    utils.write_cols_to_file(seg_num_path, labels=['segnum'], cols=[0], log=log)
                     log.warning(
                         "Segment Guiding: Couldn't find center of pointing file center_pointing_{}_G{}.txt. "
-                        "Assuming seg_num = 0".format(root, guider))
+                        "Assuming seg_num = 0 and writing out the file.".format(root, guider))
 
             else:
                 log.warning('Segment Guiding: SOF creation cancelled.')
