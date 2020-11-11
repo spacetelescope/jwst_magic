@@ -863,7 +863,6 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     fgsout_path : str
         Filepath for the output FGS image
     """
-    # Any value above 65535 or below 0 will wrap when converted to uint16
     data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
 
     # Define output path
@@ -878,6 +877,6 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     hdr = fits.getheader(header_file, ext=0)
 
     # Write FITS file
-    utils.write_fits(fgsout_file, np.uint16(data), header=hdr, log=LOGGER)
+    utils.write_fits(fgsout_file, data, header=hdr, log=LOGGER)
 
     return fgsout_path
