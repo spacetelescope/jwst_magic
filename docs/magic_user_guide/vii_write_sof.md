@@ -29,7 +29,7 @@ Another very important part of MAGIC is creating the override file that can be u
    1. If creating a photometry override file, click the **Create photometry override file** radio button (*B*) and see [Section VIII](viii_write_pof.md).
 
    2. If creating a segment override file, load guiding selections files by clicking the **Read in commands from files** radio button (*C*). By default, the path will point to the directory where all the files have been saved for this root, and the drop down box below will be populated with all the available guiding selections files in that path. 
-      1. Toggle between the **Use image shifted** radio button and the **Use Original Image** radio buttons to show the shifted and unshifted selections files available in that path respectively. 
+      1. Toggle between the **Use image shifted to ID attitude** radio button and the **Use Original Image** radio buttons to show the shifted and unshifted selections files available in that path respectively. 
       
       2. Users can type in a new path and the drop down box will update with that path’s available guiding selection files.
     
