@@ -1014,7 +1014,12 @@ class MasterGui(QMainWindow):
                                                                '\n'.join(config_order))
         if ok:
             config_list = [x.strip() for x in text.replace('\n', ",").split(',') if len(x.strip()) != 0]
-            return config_list
+            if len(config_list) != len(set(config_list)):
+                raise ValueError('One or more guiding selections files were repeated in the "Change Config '
+                                 'Order Dialog Box." Re-run the Segment Guiding section of this GUI and carefully '
+                                 're-order the files.')
+            else:
+                return config_list
         else:
             raise ValueError('Change Config Order Dialog Box Canceled.')
 
