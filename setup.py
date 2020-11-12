@@ -5,6 +5,7 @@ Script to build the jwst_magic package
 Authors
 -------
     Lauren Chambers
+    Shannon Osborne
 
 Use
 ---
@@ -21,7 +22,7 @@ from __future__ import (absolute_import, division,
 from setuptools import setup, find_packages
 import socket
 
-VERSION = '1.0.0'
+VERSION = '2.0.0'
 
 INSTALL_REQUIRES = [
     'numpy',
