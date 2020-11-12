@@ -30,7 +30,8 @@ NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
 CONVERTED_NIRCAM_IM_MIMF = os.path.join(__location__, 'data', 'converted_nircam_data_1_mimf.fits')
 ROOT = "test_buildfgssteps"
 SEGMENT_INFILE_CMIMF = os.path.join(__location__, 'data', '{}_ALLpsfs.txt'.format(ROOT))
-SELECTED_SEGS_CMIMF = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
+SELECTED_SEGS_CMIMF_OLD = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
+SELECTED_SEGS_CMIMF = os.path.join(__location__, 'data', 'unshifted_guiding_selections_{}_G1_config1.txt'.format(ROOT))
 SELECTED_SEGS_MIMF = os.path.join(__location__, 'data/guiding_selections_nircam_data_1_mimf.txt')
 PSF_CENTER_MIMF = os.path.join(__location__, 'data/psf_center_test_buildfgssteps_G1.txt')
 ALL_PSFS_MIMF = os.path.join(__location__, 'data/all_found_psfs_buildfgssteps_G1.txt')
@@ -88,24 +89,33 @@ def open_image(image=FGS_CMIMF_IM):
 
 test_data = PARAMETRIZED_DATA['test_shift_to_id_attitude']
 shift_to_id_attitude_parameters = [
-    (False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0]),
-    (True, 1, test_data['guiding_selections_coords'][1], test_data['all_found_psfs_coords'][1]),
-    (True, 2, test_data['guiding_selections_coords'][2], test_data['all_found_psfs_coords'][2])
+    (SELECTED_SEGS_CMIMF_OLD, False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0]),
+    (SELECTED_SEGS_CMIMF, False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0]),
+    (SELECTED_SEGS_CMIMF, True, 1, test_data['guiding_selections_coords'][1], test_data['all_found_psfs_coords'][1]),
+    (SELECTED_SEGS_CMIMF, True, 2, test_data['guiding_selections_coords'][2], test_data['all_found_psfs_coords'][2])
 ]
-@pytest.mark.parametrize('crowded_field, guider, guiding_selections_coords, all_found_psfs_coords',
+@pytest.mark.parametrize('guiding_selections, crowded_field, guider, guiding_selections_coords, all_found_psfs_coords',
                          shift_to_id_attitude_parameters)
-def test_shift_to_id_attitude(open_image, test_directory, crowded_field, guider,
+def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, crowded_field, guider,
                               guiding_selections_coords, all_found_psfs_coords):
-    # Run the code
+
+    #Run the prep code that's in run_magic.py
+    if 'guiding_config' in guiding_selections:
+        out_dir_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_{}'.format(
+            guiding_selections.split('guiding_config_')[1].split('/')[0]))
+    else:
+        out_dir_fsw = TEST_DIRECTORY
+
+    # Run main function to test
     fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
-        open_image, ROOT, guider, __location__, guiding_selections_file=SELECTED_SEGS_CMIMF,
+        open_image, ROOT, guider, out_dir_fsw, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
 
     # Define filenames
     file_root = '{}_G{}'.format(ROOT, guider)
-    guiding_selections_file = os.path.join(test_directory, 'shifted_guiding_selections_{}.txt'.format(file_root))
-    all_found_psfs_file = os.path.join(test_directory, 'shifted_all_found_psfs_{}.txt'.format(file_root))
-    FGS_img = os.path.join(test_directory, 'FGS_imgs', 'shifted_'+file_root + '.fits')
+    guiding_selections_file = os.path.join(out_dir_fsw, 'shifted_guiding_selections_{}.txt'.format(file_root))
+    all_found_psfs_file = os.path.join(out_dir_fsw, 'shifted_all_found_psfs_{}.txt'.format(file_root))
+    FGS_img = os.path.join(out_dir_fsw,  'FGS_imgs', 'shifted_' + file_root + '.fits')
 
     # Check that the right files were put in the right place
     assert os.path.exists(FGS_img)
@@ -153,10 +163,10 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
 
     # Run the code
     fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
-        open_image, ROOT, guider, __location__, guiding_selections_file=SELECTED_SEGS_CMIMF,
+        open_image, ROOT, guider, TEST_DIRECTORY, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, psf_center_file=None, crowded_field=False, logger_passed=True)
     BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
-                        out_dir=__location__, shift_id_attitude=True)
+                        out_dir=TEST_DIRECTORY, shift_id_attitude=True)
 
     # Assert ~exactly for time-normalized data (before detector effects are added)
     assert np.isclose(correct_data_dict['time_normed_im'][0], np.min(BFS.time_normed_im)), \
@@ -218,16 +228,16 @@ def test_psf_center_file():
     # Run the code
     fileobj_id = BuildFGSSteps(
         image, guider, ROOT, step='ID', guiding_selections_file=SELECTED_SEGS_MIMF,
-        out_dir=__location__, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
+        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
     )
     fileobj_acq1 = BuildFGSSteps(
         image, guider, ROOT, step='ACQ1', guiding_selections_file=SELECTED_SEGS_MIMF,
-        out_dir=__location__, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
+        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
     )
 
     fileobj_trk = BuildFGSSteps(
         image, guider, ROOT, step='TRK', guiding_selections_file=SELECTED_SEGS_MIMF,
-        out_dir=__location__, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
+        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=shift_id_attitude
     )
 
     assert (fileobj_id.xarr, fileobj_id.yarr) == (fileobj_acq1.xarr, fileobj_acq1.yarr)

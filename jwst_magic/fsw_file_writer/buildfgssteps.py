@@ -72,7 +72,7 @@ class BuildFGSSteps(object):
     to be used with DHAS.
     """
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
-                 out_dir=None, logger_passed=False, psf_center_file=None,
+                 out_dir=None, threshold=0.6, logger_passed=False, psf_center_file=None,
                  shift_id_attitude=True):
         """Initialize the class and call build_fgs_steps().
         """
@@ -87,9 +87,8 @@ class BuildFGSSteps(object):
             self.root = root
             self.step = step
             self.yoffset = 12
-
-            # Define out directory
-            self.out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+            self.out_dir = out_dir
+            self.threshold = threshold
 
             # READ IN IMAGE
             if isinstance(im, str):
@@ -543,9 +542,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     guider : int
         Guider number (1 or 2)
     out_dir : str
-        Where output files will be saved. If not provided, the
-        image(s) will be saved within the repository at
-        jwst_magic/
+        Where output files will be saved.
     guiding_selections_file : str
         Path to existing unshifted_guiding_selections_{root}_G{guider}.txt
     all_found_psfs_file : str
@@ -574,21 +571,23 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     if not logger_passed:
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
-
     if isinstance(image, str):
         image = fits.getdata(image)
 
     # 0) Fetch existing information and determine ID attitude
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Define input filenames
-    file_root = '{}_G{}'.format(root, guider)
-    guiding_selections_file = guiding_selections_file or os.path.join(
-        out_dir, 'unshifted_guiding_selections_{}.txt'.format(file_root)
-    )
-    all_found_psfs_file = all_found_psfs_file or os.path.join(
-        out_dir, 'unshifted_all_found_psfs_{}.txt'.format(file_root)
-    )
+    # Define input file info
+    if 'guiding_selections_' in guiding_selections_file:
+        file_root = guiding_selections_file.split('guiding_selections_')[-1].split('.txt')[0]
+    elif 'regfile' in guiding_selections_file:
+        file_root = guiding_selections_file.split('/')[-1].split('_regfile.txt')[0]
+    else:
+        raise ValueError('Guiding selections file {} has a naming structure that cannot be '
+                         'parsed.'.format(guiding_selections_file))
+
+    # Add guider number to file root if not present - common for old regfiles
+    if 'G{}'.format(guider) not in file_root:
+        file_root += '_G{}'.format(guider)
 
     # Load the catalogs with the unshifted data
     guiding_selections_cat = asc.read(guiding_selections_file)
