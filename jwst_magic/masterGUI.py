@@ -45,6 +45,7 @@ calling the QApplication instance to run a window/dialog/GUI.
 """
 
 # Standard Library Imports
+import fnmatch
 import glob
 import io
 import logging
@@ -66,8 +67,8 @@ if matplotlib.get_backend() != 'Qt5Agg':
 from PyQt5 import QtCore, uic, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, QFileDialog,
-                             QDialog)
-import yaml
+                             QDialog, QComboBox, QInputDialog)
+from PyQt5.QtGui import QStandardItemModel
 
 # Local Imports
 from jwst_magic import run_magic
@@ -115,6 +116,10 @@ class EmittingStream(QtCore.QObject):
         """
         self.stdout.write(text)
         try:
+            if 'warning' in text.lower():
+                text = "<span style=\" font-size:13pt; font-weight:600; color:#B8AE17;\" >" + text + "</span>"
+            if 'error' in text.lower():
+                text = "<span style=\" font-size:13pt; font-weight:600; color:#B84317;\" >" + text + "</span>"
             self.write_output(text)
         except RuntimeError:
             pass
@@ -131,11 +136,10 @@ class EmittingStream(QtCore.QObject):
         text_noANSI = re.sub(r'(\[.+?m)', '', text).replace('\n', '<br>')
         self.textEdit_log.setHtml(current_text + text_noANSI)
 
-        # Move the cursor to the end so that the most recent  text is visible
+        # Move the cursor to the end so that the most recent text is visible
         cursor = self.textEdit_log.textCursor()
         cursor.movePosition(QtGui.QTextCursor.End)
         self.textEdit_log.setTextCursor(cursor)
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GUI CLASS DEFINITION
@@ -260,15 +264,20 @@ class MasterGui(QMainWindow):
 
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
+        self.comboBox_regfileStarSelector.activated.connect(self.on_combobox_change)
 
         # Segment guiding widgets
-        self.pushButton_regfileSegmentGuiding.clicked.connect(self.on_click_infile)
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
         self.groupBox_segmentGuiding.toggled.connect(self.update_segment_guiding_shift)
+        self.radioButton_regfileSegmentGuiding.toggled.connect(self.enable_segment_guiding)
+        self.radioButton_photometryOverride.toggled.connect(self.enable_segment_guiding)
+        self.lineEdit_regfileSegmentGuiding.editingFinished.connect(self.update_checkable_combobox)
 
         # Image preview widgets
         self.checkBox_showStars.toggled.connect(self.on_click_showstars)
         self.checkBox_showStars_shifted.toggled.connect(self.on_click_showstars)
+        self.comboBox_showcommandsconverted.currentIndexChanged.connect(self.update_converted_image_preview)
+        self.comboBox_showcommandsshifted.currentIndexChanged.connect(self.update_shifted_image_preview)
 
     def setup_commissioning_naming(self):
         # If not on SOGS:
@@ -333,7 +342,7 @@ class MasterGui(QMainWindow):
                     if not os.path.exists(dirname):
                         raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
 
-                self.update_filepreview()
+                self.update_filepreview(new_guiding_selections=True)
 
         return False
 
@@ -374,6 +383,18 @@ class MasterGui(QMainWindow):
                                    )
         copy_original = True
 
+        # Check for mis-matched guider
+        list_of_files = [[os.path.join(dirpath, file) for file in filenames] for (dirpath, _, filenames) in
+                         os.walk(os.path.join(out_dir, 'out', root))]
+        list_of_files = [item for sublist in list_of_files for item in sublist]
+        opposite_guider = [2 if guider == 1 else 1][0]
+        if True in [True if ('_G{}_'.format(opposite_guider) in file  or '_G{}.'.format(opposite_guider) in
+                file) else False for file in list_of_files]:
+
+            raise ValueError('Data from GUIDER {} found in the root path: {}, which does not match the chosen '
+                             'GUIDER {}. Delete all contents from this directory before writing data with a new '
+                             'guider.'.format(opposite_guider, os.path.join(out_dir, 'out', root), guider))
+
         # Convert image
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         convert_im = True
@@ -413,11 +434,18 @@ class MasterGui(QMainWindow):
         if not self.radioButton_regfileStarSelector.isChecked():
             in_file = None
         else:
-            in_file = self.lineEdit_regfileStarSelector.text()
+            in_file = [self.comboBox_regfileStarSelector.itemText(i) for i in
+                       range(self.comboBox_regfileStarSelector.count())]
 
         # File writer
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         file_writer = self.groupBox_fileWriter.isChecked()
+
+        if file_writer and not star_selection and not self.groupBox_segmentGuiding.isChecked():
+            raise ValueError('Cannot run FSW File Writer section on its own. Need to define the input guiding '
+                             'selections files in the Star Selector section either through the GUI or loading '
+                             'files.')
+
         steps = []
         if self.checkBox_CAL.isChecked():
             steps.append('CAL')
@@ -431,6 +459,12 @@ class MasterGui(QMainWindow):
             steps.append('TRK')
         if self.checkBox_LOSTRK.isChecked():
             steps.append('LOSTRK')
+
+        # Check threshold type can be a float
+        try:
+            threshold = float(self.lineEdit_threshold.text())
+        except ValueError:
+            raise ValueError('Threshold value must be a float')
 
         # Shift image to ID attitude:
         shift_id_attitude = self.checkBox_id_attitude.isChecked()
@@ -446,19 +480,36 @@ class MasterGui(QMainWindow):
 
             # Open all_found_psfs*.txt (list of all identified segments)
             all_psfs = self.all_found_psfs_file
-            all_rows = asc.read(all_psfs)
-            x = all_rows['x'].data
-            y = all_rows['y'].data
+            out_path = os.path.join(out_dir, 'out', self.lineEdit_root.text())
+
+            if self.all_found_psfs_file != '':
+                all_rows = asc.read(all_psfs)
+                x = all_rows['x'].data
+                y = all_rows['y'].data
+            else:
+                raise FileNotFoundError('Cannot find an all found PSFs file in this directory {}. '
+                             'This file can be created by running the star selection section '
+                             'of the GUI.'.format(out_path))
 
             # Run the select stars GUI to determine the new orientation
-            inds = run_SelectStars(data, x, y, 20, masterGUIapp=self.app)
+            inds_list, segnum = run_SelectStars(data, x, y, 20, guider,
+                                                out_dir=out_path,
+                                                print_output=False,
+                                                masterGUIapp=self.app)
+
+            # Print indices of each guiding configuration
+            for i in range(len(inds_list)):
+                ind = inds_list[i]
+                LOGGER.info('Master GUI: Guiding Configuration {} - GS = {}, RS = {}'.format(i, ind[0],
+                                                                                 ', '.join([str(c) for c in ind[1:]])))
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds, guider, root, out_dir, shifted=shift_id_attitude,
+            rewrite_prc.rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold=threshold,
+                                    shifted=shift_id_attitude,
                                     crowded_field=crowded_field)
 
             # Update converted image preview
-            self.update_filepreview()
+            self.update_filepreview(new_guiding_selections=True)
             return
 
         # Segment guiding
@@ -486,47 +537,50 @@ class MasterGui(QMainWindow):
                 # Get APT program information from parsed header
                 self.parse_header(input_image)
 
-                # Define location of all_found_psfs catalog file
-                if self.lineEdit_regfileSegmentGuiding.text() is '':
-                    if self.radioButton_shifted.isChecked():
-                        segment_infile = self.shifted_all_found_psfs_file
-                    else:
-                        segment_infile = self.all_found_psfs_file
-                else:
-                    segment_infile = self.lineEdit_regfileSegmentGuiding.text()
-
-                # Verify that the all_found_psfs*.txt file exists
-                if not os.path.exists(segment_infile):
-                    raise OSError('Provided segment infile {} not found.'.format(segment_infile))
-
-                # Determine which image to use for the click-to-select GUI in generate_segment_override_file and load it
+                # Define location of all_found_psfs catalog file(s)
                 if self.radioButton_shifted.isChecked():
-                    fgs_filename = self.shifted_im_file
-                elif self.radioButton_unshifted.isChecked() and hasattr(self, 'converted_im_file') and \
-                        os.path.exists(self.converted_im_file):
-                    fgs_filename = self.converted_im_file
-                elif self.radioButton_unshifted.isChecked():
-                    fgs_filename = input_image
-                data, _ = utils.get_data_and_header(fgs_filename)
+                    guiding_files = self.shifted_guiding_selections_file_list
+                    all_psf_files = self.shifted_all_found_psfs_file_list
+                else:
+                    guiding_files = self.guiding_selections_file_list
+                    all_psf_files = [self.all_found_psfs_file] * len(guiding_files)
 
-                # Determine whether to load guiding_selections*.txt or run GUI
-                GUI = not self.radioButton_regfileSegmentGuiding.isChecked()
-                selected_segs = self.lineEdit_regfileSegmentGuiding.text()
+                # Load selected guiding_selections*.txt
+                if len(self.comboBox_guidingcommands.checkedItems()) == 0:
+                    raise ValueError('No guiding commands chosen from dropdown box.')
+
+                combobox_choices = [item.text() for item in self.comboBox_guidingcommands.checkedItems()]
+                combobox_filenames = [file.split(': ')[-1] for file in combobox_choices]
+
+                # Re-order the files via dialog box if checked
+                if self.checkBox_configorder.isChecked():
+                    combobox_filenames = self.change_config_order_dialog(combobox_filenames)
+
+                selected_segs_list = []
+                segment_infile_list = []
+                for file in combobox_filenames:
+                    ind = np.where([file in filepath for filepath in guiding_files])[0][0]
+                    selected_segs_list.append(guiding_files[ind])
+                    segment_infile_list.append(all_psf_files[ind])
+
+                # Verify that the all_found_psfs*.txt file(s) exist
+                if False in [os.path.exists(path) for path in segment_infile_list]:
+                    raise OSError('Missing all founds psfs file(s) {}.'.format(segment_infile_list))
 
                 # Run the tool and generate the file
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
                     "SOF", guider, self.program_id, self.observation_num, self.visit_num,
-                    ra=self.gs_ra, dec=self.gs_dec,log=None
+                    ra=self.gs_ra, dec=self.gs_dec, threshold=float(self.lineEdit_threshold.text()), log=None
                 )
 
                 # Generate the file
                 segment_guiding.generate_segment_override_file(
-                    segment_infile, guider, self.program_id, self.observation_num,
+                    segment_infile_list, guider, self.program_id, self.observation_num,
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
-                    root=root, out_dir=out_dir, selected_segs=selected_segs,
-                    click_to_select_gui=GUI, data=data, master_gui_app=self.app,
-                    parameter_dialog=True, dialog_obj=self._test_sg_dialog, log=LOGGER
+                    root=root, out_dir=out_dir, selected_segs_list=selected_segs_list,
+                    master_gui_app=self.app, parameter_dialog=True,
+                    dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
 
             # Update converted image preview
@@ -557,11 +611,12 @@ class MasterGui(QMainWindow):
                               jitter_rate_arcsec=jitter_rate_arcsec,
                               itm=itm,
                               shift_id_attitude=shift_id_attitude,
-                              crowded_field=crowded_field
+                              crowded_field=crowded_field,
+                              threshold = threshold,
                               )
 
             # Update converted image preview
-            self.update_filepreview()
+            self.update_filepreview(new_guiding_selections=True)
 
     def on_change_jitter(self):
         """If the coarse pointing slider or text box controlling the
@@ -624,8 +679,9 @@ class MasterGui(QMainWindow):
         # Show input image preview
         self.load_input_image_data(filename)
 
-        # Show converted image preview, if possible
+        # Show converted and shifted image preview, if possible
         self.update_converted_image_preview()
+        self.update_shifted_image_preview()
 
         return filename
 
@@ -644,19 +700,19 @@ class MasterGui(QMainWindow):
             if not os.path.exists(dirname):
                 raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
 
-            self.update_filepreview()
+            self.update_filepreview(new_guiding_selections=True)
 
     def on_click_infile(self):
         """ Using the Infile Open button (open file) """
         # Determine which infile is being edited
         if self.sender() == self.pushButton_regfileStarSelector:
-            to_text = self.lineEdit_regfileStarSelector
-        elif self.sender() == self.pushButton_regfileSegmentGuiding:
-            to_text = self.lineEdit_regfileSegmentGuiding
+            filename_list = self.open_filename_dialog('In/Reg file(s)', multiple_files=True,
+                                                 file_type="Input file (*.txt *.incat);;All files (*.*)")
 
-        filename = self.open_filename_dialog('In/Reg file', file_type="Input file (*.txt *.incat);;All files (*.*)")
-        to_text.setText(filename)
-        return filename
+            self.update_regfile_starselector_combobox(filename_list)
+            self.update_guiding_selections(new_selections=filename_list)
+
+        return filename_list
 
     def on_click_root(self):
         """ Using the Set Default Root button"""
@@ -723,6 +779,13 @@ class MasterGui(QMainWindow):
 
             self.canvas_shifted.draw()
 
+    def on_combobox_change(self):
+        """
+        Clicking comboBox_regfileStarSelector doesn't do anything
+        """
+        if self.sender() == self.comboBox_regfileStarSelector:
+            self.comboBox_regfileStarSelector.setCurrentIndex(0)
+
     def toggle_convert_im(self):
         # TODO: it's unclear why I (KJB) set this to false. but we want to be able
         # to normalize ITM images so I have commented this out until I better understand it
@@ -731,17 +794,23 @@ class MasterGui(QMainWindow):
         pass
 
     def update_segment_guiding_shift(self):
-        if self.sender() == self.groupBox_segmentGuiding:
-            if self.groupBox_segmentGuiding.isChecked():
-                self.radioButton_shifted.setEnabled(os.path.exists(self.shifted_im_file))
+        """This gets triggered when you select the segment guiding
+        box or when you click one of the id attitude radio buttons"""
+        if self.groupBox_segmentGuiding.isChecked():
+            if len(self.shifted_im_file_list) != 0:
+                self.radioButton_shifted.setEnabled(False not in
+                                                    [os.path.exists(path) for path in self.shifted_im_file_list])
             else:
                 self.radioButton_shifted.setEnabled(False)
 
-        else:
-            if self.radioButton_shifted.isChecked():
-                self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
-            elif self.radioButton_unshifted.isChecked():
-                self.lineEdit_regfileSegmentGuiding.setText(self.guiding_selections_file)
+            if self.radioButton_name_manual.isChecked():
+                root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
+            else:
+                root_dir = self.textEdit_name_preview.toPlainText()
+
+            self.lineEdit_regfileSegmentGuiding.setText(root_dir)
+
+            self.update_checkable_combobox()
 
     def update_naming_method(self):
         if self.radioButton_name_manual.isChecked():
@@ -770,20 +839,24 @@ class MasterGui(QMainWindow):
                 self.program_id = int(self.lineEdit_manualid.text())
                 self.observation_num = int(self.lineEdit_manualobs.text())
                 self.visit_num = 1  # Will we ever have a visit that's not 1?
-                self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
+                self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id,
+                                                                                             self.observation_num)
             else:
                 raise ValueError('Must set both program ID and observation number to use APT')
         elif self.radioButton_name_commissioning.isChecked():
             self.program_id = int(self.lineEdit_commid.text())
             self.observation_num = int(self.comboBox_obs.currentText())
             self.visit_num = 1  # Will we ever have a visit that's not 1?
-            self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id, self.observation_num)
+            self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id,
+                                                                                         self.observation_num)
 
         # Check the guider in the APT file matches what's chosen in the GUI
         self.check_guider_against_apt()
 
         # Update GSID in image normalization
         self.lineEdit_normalize.setText(str(self.gs_id))
+        index = self.comboBox_normalize.findText('Guide Star ID', Qt.MatchFixedString)
+        self.comboBox_normalize.setCurrentIndex(index)
 
     def update_commissioning_name(self):
         # Check which values have been selected already
@@ -833,6 +906,18 @@ class MasterGui(QMainWindow):
                               self.sender() == self.pushButton_commid]):
             self.update_apt_gs_values()
 
+    def enable_segment_guiding(self):
+        """Set up connection to enable/disable segment guiding options between photometry and regfile radio buttons"""
+        if self.sender() == self.radioButton_photometryOverride:
+            self.lineEdit_regfileSegmentGuiding.setEnabled(False)
+            self.label_guidingcommands.setEnabled(False)
+            self.comboBox_guidingcommands.setEnabled(False)
+            self.checkBox_configorder.setEnabled(False)
+        elif self.sender() == self.radioButton_regfileSegmentGuiding:
+            self.lineEdit_regfileSegmentGuiding.setEnabled(True)
+            self.label_guidingcommands.setEnabled(True)
+            self.comboBox_guidingcommands.setEnabled(True)
+            self.checkBox_configorder.setEnabled(True)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
@@ -872,14 +957,21 @@ class MasterGui(QMainWindow):
         self.no_root_dialog_box.setStandardButtons(QMessageBox.Ok)
         self.no_root_dialog_box.exec()
 
-    def open_filename_dialog(self, title, file_type="All Files (*)"):
+    def open_filename_dialog(self, title, multiple_files=False, file_type="All Files (*)"):
         """ Dialog box for opening a NIRCam of FGS image"""
         # options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open {}".format(title),
-                                                  "", file_type)
-        # options=options)
-        if fileName:
-            return fileName
+        if multiple_files==False:
+            fileName, _ = QFileDialog.getOpenFileName(self, "Open {}".format(title),
+                                                      "", file_type)
+            # options=options)
+            if fileName:
+                return fileName
+        else:
+            fileName_list, _ = QFileDialog.getOpenFileNames(self, "Open {}".format(title),
+                                                      "", file_type)
+            # options=options)
+            if fileName_list:
+                return fileName_list
 
     def open_dirname_dialog(self):
         """ Dialog box for opening a directory"""
@@ -911,6 +1003,25 @@ class MasterGui(QMainWindow):
         SGT_dialog.exec()
 
         return SGT_dialog
+
+    def change_config_order_dialog(self, config_order):
+        """Dialog box to change the order of the selected guiding configurations.
+        Brought up only if self.checkBox_configorder is checked
+        """
+        self.change_config_order_dialog_box = QInputDialog()
+        text, ok = self.change_config_order_dialog_box.getMultiLineText(self, 'Update Config Order',
+                                                               'Re-order guiding selection files:' + ' ' * 100,
+                                                               '\n'.join(config_order))
+        if ok:
+            config_list = [x.strip() for x in text.replace('\n', ",").split(',') if len(x.strip()) != 0]
+            if len(config_list) != len(set(config_list)):
+                raise ValueError('One or more guiding selections files were repeated in the "Change Config '
+                                 'Order Dialog Box." Re-run the Segment Guiding section of this GUI and carefully '
+                                 're-order the files.')
+            else:
+                return config_list
+        else:
+            raise ValueError('Change Config Order Dialog Box Canceled.')
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # HELPER FUNCTIONS
@@ -1030,6 +1141,160 @@ class MasterGui(QMainWindow):
             else:
                 return True
 
+
+    def update_guiding_selections(self, new_selections=None):
+        """
+        Update guiding selections in the converted preview combobox, the shifted preview combobox,
+        and the guiding selections combobox in segment guiding section of the GUI
+
+        Parameters
+        ----------
+        new_selections : list of str
+            List of new unshifted guiding selection file paths that will be loaded into the GUI
+            and need to show up as options in the above locations
+        """
+        # Update combobox in converted preview section if file(s) are loaded
+        if isinstance(new_selections, list):
+            self.guiding_selections_file_list = new_selections  # re-define to update chosen selections
+
+            # Clear and reset 0th index in converted combo box
+            self.comboBox_showcommandsconverted.blockSignals(True)
+            self.comboBox_showcommandsconverted.clear()
+            self.comboBox_showcommandsconverted.addItem('- Guiding Command -')
+            self.comboBox_showcommandsconverted.blockSignals(False)
+
+            # Remove circles on converted canvas
+            try:
+                for line in self.converted_im_circles:
+                    line[0].set_visible(False)
+                self.canvas_converted.peaks.set_visible(False)
+                self.canvas_converted.draw()
+            except AttributeError:
+                pass
+
+            # Clear and reset 0th index in shifted combo box
+            self.comboBox_showcommandsshifted.blockSignals(True)
+            self.comboBox_showcommandsshifted.clear()
+            self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
+            self.comboBox_showcommandsshifted.blockSignals(False)
+
+            # Remove circles on shifted canvas
+            try:
+                for line in self.shifted_im_circles:
+                    line[0].set_visible(False)
+                self.canvas_shifted.peaks.set_visible(False)
+                self.canvas_shifted.draw()
+            except AttributeError:
+                pass
+
+        # Add chosen files to converted image combobox to choose from
+        if len(self.comboBox_showcommandsconverted) == 1 and "Guiding Command" in \
+                self.comboBox_showcommandsconverted.currentText():
+            for i, command_file in enumerate(self.guiding_selections_file_list):
+                item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                self.comboBox_showcommandsconverted.addItem(item)
+
+        # Add chosen files to shifted image combobox to choose from
+        if len(self.comboBox_showcommandsshifted) == 1 and "Guiding Command" in \
+                self.comboBox_showcommandsshifted.currentText():
+            for i, command_file in enumerate(self.shifted_guiding_selections_file_list):
+                item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                self.comboBox_showcommandsshifted.addItem(item)
+
+        self.update_checkable_combobox()
+
+
+    def update_checkable_combobox(self):
+        if self.groupBox_segmentGuiding.isChecked():
+            # Define path to look for files based on contents of lineEdit_regfileSegmentGuiding
+            if self.sender() == self.lineEdit_regfileSegmentGuiding:
+                path = self.lineEdit_regfileSegmentGuiding.text()
+                root = path.split('/out/')[-1].split('/')[0]
+                if root == '':
+                    root = '*'
+            else:
+                if self.radioButton_name_manual.isChecked():
+                    root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
+                    path = root_dir
+                    root = self.lineEdit_root.text()
+                else:
+                    root_dir = self.textEdit_name_preview.toPlainText()
+                    path = root_dir
+                    root = root_dir.split('out/')[-1].split('/')[0]
+
+                self.lineEdit_regfileSegmentGuiding.setText(root_dir)
+
+            # Re-define files based on path found above
+            txt_files = glob.glob(os.path.join(path, "**/*.txt"), recursive=True)
+            acceptable_guiding_files_list, acceptable_all_psf_files_list = \
+                self.search_acceptable_files(path, root, '*', shifted=self.radioButton_shifted.isChecked())
+
+            # This would occur in the case of a POF
+            if len(txt_files) == 0:
+                LOGGER.warning('Master GUI: No guiding_selections and/or all_found_psf files found. This may be okay '
+                               'depending on the situation (e.g. when making a POF).')
+
+                # Clear and reset 0th index in shifted combo box
+                self.comboBox_showcommandsshifted.blockSignals(True)
+                self.comboBox_showcommandsshifted.clear()
+                self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
+                self.comboBox_showcommandsshifted.blockSignals(False)
+
+                pass
+
+            else:
+                try:
+                    if not self.radioButton_shifted.isChecked():
+                        self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list for
+                                                                    file in fnmatch.filter(txt_files, f)],
+                                                                   key=utils.natural_keys)
+                        self.all_found_psfs_file = sorted([file for f in acceptable_all_psf_files_list for file in
+                                                           fnmatch.filter(txt_files, f)], key=utils.natural_keys)[0]
+                        guiding_selections = self.guiding_selections_file_list
+                    else:
+                        self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(
+                            txt_files, acceptable_guiding_files_list[0]), key=utils.natural_keys)
+                        self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(
+                            txt_files, acceptable_all_psf_files_list[0]), key=utils.natural_keys)
+                        guiding_selections = self.shifted_guiding_selections_file_list
+
+                    # Clear and re-populate checkable combobox in segment guiding section
+                    self.comboBox_guidingcommands.clear()
+                    i = 0
+                    for command_file in guiding_selections:
+                        # If the wrong guider number is present in the name, don't list the file
+                        if '_G{}_'.format([2 if self.buttonGroup_guider.checkedButton().text() == '1' else 1][0]) not in command_file:
+                            item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                            self.comboBox_guidingcommands.addItem(item)
+                            item = self.comboBox_guidingcommands.model().item(i, 0)
+                            item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+                            item.setCheckState(Qt.Unchecked)
+                            i += 1
+
+                except IndexError:
+                    LOGGER.warning(
+                        'Master GUI: Missing guiding_selections and/or all_found_psf files. This may be okay depending '
+                        'on the situation (e.g. when making a POF).')
+
+                    # Clear and reset 0th index in shifted combo box
+                    self.comboBox_showcommandsshifted.blockSignals(True)
+                    self.comboBox_showcommandsshifted.clear()
+                    self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
+                    self.comboBox_showcommandsshifted.blockSignals(False)
+
+    def update_regfile_starselector_combobox(self, files):
+        if len(files) != 0:
+            # Clear and populate
+            self.comboBox_regfileStarSelector.clear()
+            for item in files:
+                self.comboBox_regfileStarSelector.addItem(item)
+
+            self.comboBox_regfileStarSelector.lineEdit().setReadOnly(True)
+
+            # Set width to match the longest entry name
+            w = self.comboBox_regfileStarSelector.fontMetrics().boundingRect(max(files, key=len)).width()
+            self.comboBox_regfileStarSelector.view().setFixedWidth(w + 10)
+
     def update_converted_image_preview(self):
         # Are all the necessary fields filled in? If not, don't even try.
         if not self.is_valid_path_defined():
@@ -1052,6 +1317,9 @@ class MasterGui(QMainWindow):
             # Enable the "show stars" button
             self.checkBox_showStars.setEnabled(True)
 
+            # Enable guiding commands button
+            self.comboBox_showcommandsconverted.setEnabled(True)
+
             # Load data
             data, _ = utils.get_data_and_header(self.converted_im_file)
             data[data <= 0] = 1
@@ -1067,24 +1335,33 @@ class MasterGui(QMainWindow):
             self.canvas_converted.compute_initial_figure(self.canvas_converted.fig, data, x, y)
 
             # If possible, plot the selected stars in the guiding_selections*.txt
-            if os.path.exists(self.guiding_selections_file):
-                selected_psf_list = asc.read(self.guiding_selections_file)
-                x_selected = selected_psf_list['x']
-                y_selected = selected_psf_list['y']
+            if self.comboBox_showcommandsconverted.currentIndex() != 0:
+                guiding_selections_file = self.guiding_selections_file_list[
+                    self.comboBox_showcommandsconverted.currentIndex()-1]
+                if os.path.exists(guiding_selections_file):
+                    selected_psf_list = asc.read(guiding_selections_file)
+                    x_selected = selected_psf_list['x']
+                    y_selected = selected_psf_list['y']
 
-                # Remove old circles
+                    # Remove old circles
+                    for line in self.converted_im_circles:
+                        self.canvas_converted.axes.lines.remove(line[0])
+                    self.converted_im_circles = [
+                        self.canvas_converted.axes.plot(x_selected[0], y_selected[0],
+                                                        'o', ms=25, mfc='none',
+                                                        mec='yellow', mew=2, lw=0)
+                    ]
+                    self.converted_im_circles.append(
+                        self.canvas_converted.axes.plot(x_selected[1:], y_selected[1:],
+                                                        'o', ms=25, mfc='none',
+                                                        mec='darkorange', mew=2, lw=0)
+                    )
+            else:
                 for line in self.converted_im_circles:
-                    self.canvas_converted.axes.lines.remove(line[0])
-                self.converted_im_circles = [
-                    self.canvas_converted.axes.plot(x_selected[0], y_selected[0],
-                                                    'o', ms=25, mfc='none',
-                                                    mec='yellow', mew=2, lw=0)
-                ]
-                self.converted_im_circles.append(
-                    self.canvas_converted.axes.plot(x_selected[1:], y_selected[1:],
-                                                    'o', ms=25, mfc='none',
-                                                    mec='darkorange', mew=2, lw=0)
-                )
+                    line[0].set_visible(False)
+                self.canvas_converted.peaks.set_visible(False)
+
+                self.canvas_converted.draw()
 
         # If not, show nothing.
         else:
@@ -1100,6 +1377,7 @@ class MasterGui(QMainWindow):
 
             # Disable the "show stars" button
             self.checkBox_showStars.setEnabled(False)
+            self.comboBox_showcommandsconverted.setEnabled(False)
 
             # Update plot to not show anything
             dummy_img = self.canvas_converted.axes.imshow(
@@ -1113,63 +1391,90 @@ class MasterGui(QMainWindow):
         if not self.is_valid_path_defined():
             return
 
-        # Does a shift image exist? If so, show it!
-        if os.path.exists(self.shifted_im_file):
+        # Is the self.shifted_im_file_list variable defined yet?
+        noshow = False
+        try:
+            if len(self.shifted_im_file_list) == 0:
+                noshow = True
+        except AttributeError:
+            noshow = True
+
+        # Do all the shifted images exist? If so, show them!
+        if noshow is False and False not in [os.path.exists(shifted_im_file) for
+                                             shifted_im_file in self.shifted_im_file_list]:
             # Prepare to show shifted image
             self.canvas_shifted.axes.set_visible(True)
             self.tabWidget.setCurrentIndex(2)
             self.textEdit_showingShifted.setEnabled(True)
 
-            # Update filepath
-            self.textEdit_showingShifted.setText(self.shifted_im_file)
-
             # Toggle the "use shifted image" buttons
             self.radioButton_shifted.setChecked(True)
-            self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
 
             # Enable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(True)
 
-            # Load data
-            data, _ = utils.get_data_and_header(self.shifted_im_file)
-            data[data <= 0] = 1
+            # Enable and populate guiding commands button
+            self.comboBox_showcommandsshifted.setEnabled(True)
+            if self.comboBox_showcommandsshifted.currentIndex() != 0:
+                i = self.comboBox_showcommandsshifted.currentIndex() - 1
 
-            # Load all_found_psfs*.text
-            x, y = [None, None]
-            if os.path.exists(self.shifted_all_found_psfs_file):
-                psf_list = asc.read(self.shifted_all_found_psfs_file)
-                x = psf_list['x']
-                y = psf_list['y']
+                # Update filepath
+                self.textEdit_showingShifted.setText(self.shifted_im_file_list[i])
 
-            # Plot data image and peak locations from all_found_psfs*.txt
-            self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
+                # Load data
+                data, _ = utils.get_data_and_header(self.shifted_im_file_list[i])
+                data[data <= 0] = 1
 
-            # If possible, plot the selected stars in the guiding_selections*.txt
-            if os.path.exists(self.shifted_guiding_selections_file):
-                selected_psf_list = asc.read(self.shifted_guiding_selections_file)
-                x_selected = selected_psf_list['x']
-                y_selected = selected_psf_list['y']
+                # Load all_found_psfs*.text
+                x, y = [None, None]
+                if os.path.exists(self.shifted_all_found_psfs_file_list[i]):
+                    psf_list = asc.read(self.shifted_all_found_psfs_file_list[i])
+                    x = psf_list['x']
+                    y = psf_list['y']
 
-                # Remove old circles
+                # Plot data image and peak locations from all_found_psfs*.txt
+                self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
+
+                # If possible, plot the selected stars in the guiding_selections*.txt
+                shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[i]
+
+                if os.path.exists(shifted_guiding_selections_file):
+                    selected_psf_list = asc.read(shifted_guiding_selections_file)
+                    x_selected = selected_psf_list['x']
+                    y_selected = selected_psf_list['y']
+
+                    # Remove old circles
+                    for line in self.shifted_im_circles:
+                        self.canvas_shifted.axes.lines.remove(line[0])
+
+                    self.shifted_im_circles = [
+                        self.canvas_shifted.axes.plot(x_selected[0], y_selected[0],
+                                                      'o', ms=25, mfc='none',
+                                                      mec='yellow', mew=2, lw=0)
+                    ]
+                    self.shifted_im_circles.append(
+                        self.canvas_shifted.axes.plot(x_selected[1:], y_selected[1:],
+                                                      'o', ms=25, mfc='none',
+                                                      mec='darkorange', mew=2, lw=0)
+                   )
+            else:
                 for line in self.shifted_im_circles:
-                    self.canvas_shifted.axes.lines.remove(line[0])
-                self.shifted_im_circles = [
-                    self.canvas_shifted.axes.plot(x_selected[0], y_selected[0],
-                                                    'o', ms=25, mfc='none',
-                                                    mec='yellow', mew=2, lw=0)
-                ]
-                self.shifted_im_circles.append(
-                    self.canvas_shifted.axes.plot(x_selected[1:], y_selected[1:],
-                                                    'o', ms=25, mfc='none',
-                                                    mec='darkorange', mew=2, lw=0)
-                )
+                    line[0].set_visible(False)
+                try:
+                    self.canvas_shifted.peaks.set_visible(False) # won't be defined until after first pass
+                except AttributeError:
+                    pass
+                self.canvas_shifted.draw()
 
         # If not, show nothing.
         else:
             # Update textbox showing filepath
-            self.textEdit_showingShifted.setText(
-                'No shifted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
-                                                                   self.shifted_im_file))
+            if len(self.shifted_im_file_list) != 0:
+                self.textEdit_showingShifted.setText(
+                    'No shifted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
+                        '/'.join(self.shifted_im_file_list[0].split('/')[:-3] + \
+                                 ['guiding_config_*/FGS_imgs/shifted_*_config*.fits'])))
+
             self.textEdit_showingShifted.setEnabled(False)
 
             # Disable the "use shifted image" buttons
@@ -1178,21 +1483,62 @@ class MasterGui(QMainWindow):
 
             # Disable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(False)
+            self.comboBox_showcommandsshifted.setEnabled(False)
 
             # Update plot to not show anything
             dummy_img = self.canvas_shifted.axes.imshow(
                 np.array([[1e4, 1e4], [1e4, 1e4]]), cmap='bone', clim=(1e-1, 1e2)
             )
-
         return self.canvas_shifted.draw()
 
-    def update_filepreview(self):
-        # If either:
-        #   1) manual naming is selected and the root, out_dir, and guider have been defined, or
-        #   2) commissioning naming is selected and the practice, CAR, and observation have
-        #       been selected
-        # show an example filepath to a simulated image, and auto-populate the guiding_selections*.txt.text
-        # filepath. Also, auto-generate important filenames as class attributes.
+    @staticmethod
+    def search_acceptable_files(root_dir, root, guider, shifted):
+        if shifted is False:
+            acceptable_guiding_files_list = [
+                os.path.join(root_dir, 'guiding_config_*',
+                             'unshifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider)),  # newest
+                os.path.join(root_dir, 'guiding_config_*', 'guiding_selections_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, 'guiding_config_*', '{}_G{}_regfile.txt'.format(root, guider)),
+                os.path.join(root_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, '{}_G{}_regfile.txt'.format(root, guider))]  # oldest
+
+            acceptable_all_psf_files_list = [
+                os.path.join(root_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)),
+                os.path.join(root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))]
+
+        else:
+            acceptable_guiding_files_list = [
+                os.path.join(root_dir, 'guiding_config_*', 'shifted_guiding_selections_{}_G{}_config*.txt'.format(
+                    root, guider)),
+                os.path.join(root_dir,'shifted_guiding_selections_{}_G{}_config*.txt'.format(root, guider)),
+                os.path.join(root_dir,'shifted_guiding_selections_{}_G{}.txt'.format(root, guider)),
+            ]
+
+            acceptable_all_psf_files_list = [
+                os.path.join(root_dir, 'guiding_config_*', 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(
+                    root, guider)),
+                os.path.join(root_dir, 'shifted_all_found_psfs_{}_G{}_config*.txt'.format(root, guider)),
+                os.path.join(root_dir, 'shifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
+            ]
+
+        return acceptable_guiding_files_list, acceptable_all_psf_files_list
+
+
+    def update_filepreview(self, new_guiding_selections=False):
+        """
+        If either: 
+          1) manual naming is selected and the root, out_dir, and guider have been defined, or
+          2) commissioning naming is selected and the practice, CAR, and observation have
+              been selected
+        show an example filepath to a simulated image, and auto-populate the guiding_selections*.txt.text
+        filepath. Also, auto-generate important filenames as class attributes.
+        """
+        # If you change the main path, update the guiding selections based on that information
+        if self.sender() in [self.pushButton_inputImage, self.lineEdit_inputImage, self.buttonGroup_guider,
+                             self.lineEdit_root, self.textEdit_out]:
+            new_guiding_selections = True
 
         if self.is_valid_path_defined():
             manual_naming = self.radioButton_name_manual.isChecked()
@@ -1214,50 +1560,53 @@ class MasterGui(QMainWindow):
             if root != self.log_filename.split('/')[-1].split('masterGUI_')[-1].split('.log')[0]:
                 self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-            # Note: maintaining if statements and "old" file names for backwards compatibility.
+            # Note: maintaining if statements and "old" file names for backwards compatibility
+            txt_files = glob.glob(os.path.join(root_dir, "**/*.txt"), recursive=True)
+            fits_files = glob.glob(os.path.join(root_dir, "**/*.fits"), recursive=True)
+            acceptable_guiding_files_list, acceptable_all_psf_files_list = \
+                self.search_acceptable_files(root_dir, root, guider, shifted=False)
 
-
-            txt_files = glob.glob(os.path.join(root_dir, "*.txt"))
-            acceptable_guiding_files_list = [
-                os.path.join(root_dir, 'unshifted_guiding_selections_{}_G{}.txt'.format(root, guider)), # newest
-                os.path.join(root_dir, 'guiding_selections_{}_G{}.txt'.format(root, guider)),
-                os.path.join(root_dir, '{}_G{}_regfile.txt'.format(root, guider))] # oldest
-
-            acceptable_all_psf_files_list = [
-                os.path.join(root_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider)),
-                os.path.join(root_dir, 'all_found_psfs_{}_G{}.txt'.format(root, guider)),
-                os.path.join(root_dir, '{}_G{}_ALLpsfs.txt'.format(root, guider))]
-
+            # Pull every possible guiding selections file and 1 all found psfs file
             try:
-                self.guiding_selections_file = [f for f in acceptable_guiding_files_list if f in txt_files][0]
-                self.all_found_psfs_file = [f for f in acceptable_all_psf_files_list if f in txt_files][0]
+                self.guiding_selections_file_list = sorted([file for f in acceptable_guiding_files_list
+                                                     for file in fnmatch.filter(txt_files, f)], key=utils.natural_keys)
+                self.all_found_psfs_file = sorted([f for f in acceptable_all_psf_files_list if f in txt_files],
+                                                  key=utils.natural_keys)[0]
             except IndexError:
-                self.guiding_selections_file = ''
+                self.guiding_selections_file_list = []
                 self.all_found_psfs_file = ''
 
+            self.guiding_selections_file_list_default = self.guiding_selections_file_list  # to go back to default found
 
-                # Update converted FGS image filepath
+            # Update converted FGS image filepath
             self.converted_im_file = os.path.join(root_dir, 'FGS_imgs', 'unshifted_{}_G{}.fits'.format(root, guider))
 
             # Update shifted FGS image & catalog filepaths
-            self.shifted_im_file = os.path.join(root_dir, 'FGS_imgs', 'shifted_{}_G{}.fits'.format(root, guider))
-            self.shifted_all_found_psfs_file = os.path.join(
-                root_dir, 'shifted_all_found_psfs_{}_G{}.txt'.format(root, guider)
-            )
-            self.shifted_guiding_selections_file = os.path.join(
-                root_dir, 'shifted_guiding_selections_{}_G{}.txt'.format(root, guider)
-            )
+            shifted_acceptable_guiding_files_list, shifted_acceptable_all_psf_files_list = \
+                self.search_acceptable_files(root_dir, root, guider, shifted=True)
 
-            # Update default guiding_selections*.txt paths in GUI
-            if os.path.exists(self.guiding_selections_file):
-                self.lineEdit_regfileStarSelector.setText(self.guiding_selections_file)
-                if not self.radioButton_shifted.isChecked():
-                    self.lineEdit_regfileSegmentGuiding.setText(self.guiding_selections_file)
-                else:
-                    self.lineEdit_regfileSegmentGuiding.setText(self.shifted_guiding_selections_file)
+            self.shifted_all_found_psfs_file_list = sorted(fnmatch.filter(
+                txt_files, shifted_acceptable_all_psf_files_list[0]), key=utils.natural_keys)
+
+            self.shifted_guiding_selections_file_list = sorted(fnmatch.filter(
+                txt_files, shifted_acceptable_guiding_files_list[0]), key=utils.natural_keys)
+
+            # Update shifted FGS image(s) filepath
+            self.shifted_im_file_list = sorted(fnmatch.filter(
+                fits_files, os.path.join(root_dir, 'guiding_config_*', 'FGS_imgs',
+                                         'shifted_{}_G{}_config*.fits'.format(root, guider))), key=utils.natural_keys)
+
+            # Update guiding_selections*.txt paths in GUI
+            if False not in [os.path.exists(file) for file in self.guiding_selections_file_list] and len(self.guiding_selections_file_list) != 0:
+                #self.update_regfile_starselector_combobox(self.guiding_selections_file_list)
+                self.comboBox_regfileStarSelector.clear()
+                if new_guiding_selections:
+                    new_selections = self.guiding_selections_file_list
+                    self.update_guiding_selections(new_selections=new_selections)
             else:
-                self.lineEdit_regfileStarSelector.setText("")
+                self.comboBox_regfileStarSelector.clear()
                 self.lineEdit_regfileSegmentGuiding.setText("")
+                self.comboBox_guidingcommands.clear()
 
             # If possible, show converted and shifted image previews, too
             self.update_converted_image_preview()
@@ -1300,6 +1649,8 @@ class MasterGui(QMainWindow):
         if not isinstance(obs_number, int):
             obs_number = int(obs_number)
 
+        LOGGER.info("Master GUI: Checking Program ID {} and Obs #{}".format(program_id, obs_number))
+
         # Build temporary directory
         apt_file_path = os.path.join(__location__, 'data', 'temp_apt')
         if os.path.exists(apt_file_path):
@@ -1320,7 +1671,11 @@ class MasterGui(QMainWindow):
         # Pull: List of Observations for the CAR > Specific Obs > Special Requirements Info (sr)
         namespace_tag = '{http://www.stsci.edu/JWST/APT}'
         observation_list = tree.find(namespace_tag + 'DataRequests').findall('.//' + namespace_tag + 'Observation')
-        observation = observation_list[obs_number - 1]  # indexes from 1
+        try:
+            observation = observation_list[obs_number - 1]  # indexes from 1
+        except IndexError:
+            shutil.rmtree(apt_file_path)
+            raise ValueError("This program doesn't have any observations")
         sr = [x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "SpecialRequirements"][0]
 
         # Try to pull the Guide Star information
@@ -1328,7 +1683,7 @@ class MasterGui(QMainWindow):
             gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
         except IndexError:
             self.lineEdit_normalize.setText('')
-            LOGGER.error("Master GUI: This observation doesn't have a Guide Star Special Requirement")
+            shutil.rmtree(apt_file_path)
             raise ValueError("This observation doesn't have a Guide Star Special Requirement")
 
         # Pull out the guide star ID and the guider number
@@ -1352,14 +1707,14 @@ class MasterGui(QMainWindow):
             gsc_series = data_frame.iloc[0]
         else:
             self.lineEdit_normalize.setText('')
-            LOGGER.error("Master GUI: This Guide Star ID points to multiple lines in catalog")
             raise ValueError("This Guide Star ID points to multiple lines in catalog")
 
         # Pull RA and DEC
         ra = gsc_series['ra']
         dec = gsc_series['dec']
 
-        LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra, dec))
+        LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra,
+                                                                                                                dec))
 
         return gs_id, guider, ra, dec
 

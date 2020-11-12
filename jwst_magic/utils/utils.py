@@ -13,10 +13,13 @@ Use
         utils.ensure_dir_exists(dir)
 """
 # STDLIB
+from collections import OrderedDict
 import csv
 import itertools
+import logging
 import logging.config
 import os
+import re
 import requests
 import socket
 import sys
@@ -30,6 +33,30 @@ import pandas as pd
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
+
+
+class CustomFormatter(logging.Formatter):
+    """Logging Formatter to add colors and count warning / errors"""
+
+    grey = "\x1b[38;21m"
+    yellow = "\x1b[33;21m"
+    red = "\x1b[31;21m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format = "%(asctime)s - %(levelname)s - %(message)s"
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: grey + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
 
 
 def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
@@ -471,3 +498,25 @@ def get_car_data():
                           for car, apt in zip(df_set['Activity ID'].values, df_set['Program'].values)}
 
     return commissioning_dict
+
+
+def natural_keys(text):
+    """
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (from stack overflow:
+    https://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside)
+    """
+
+    # For sorting strings by numbers
+    def atoi(text):
+        return int(text) if text.isdigit() else text
+
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
+
+def setup_yaml():
+    """
+    Set up a yaml file that will have an OrderedDict written to it
+    """
+    represent_dict_order = lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
+    yaml.add_representer(OrderedDict, represent_dict_order)

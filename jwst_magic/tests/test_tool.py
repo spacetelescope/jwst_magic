@@ -85,6 +85,8 @@ class RunningTheTool():
         # (Only need the coords but reading out the whole thing anyway)
         strips_params = select_psfs.manual_star_selection(self.strips_data_cds,
                                                           self.smoothing,
+                                                          guider=self.guider,
+                                                          out_dir=OUT_PATH,
                                                           testing=True)
         strips_coords = strips_params[1]
 

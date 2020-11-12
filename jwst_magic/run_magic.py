@@ -66,7 +66,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
             coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, crowded_field=False):
+            shift_id_attitude=True, crowded_field=False, threshold=0.6):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -95,7 +95,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         smoothing (e.g. GA), or "default" for medium smoothing for other cases
     steps: list of strings, optional
         List of the steps to be completed
-    guiding_selections_file: str, optional
+    guiding_selections_file: list of str, optional
         If this image comes with an incat or reg file, the file path
     bkgd_stars : boolean, optional
         Add background stars to the image?
@@ -122,8 +122,11 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     jitter_rate_arcsec : float, optional
         If coarse_pointing is true, the rate of jitter in arcseconds
         per second to apply in the form of a Gaussian filter.
-    itm: bool, Optional
+    itm : bool, Optional
         If this image come from the ITM simulator (important for normalization).
+    threshold : float
+        The threshold (aka count rate uncertainty factor) to use when writing
+        FSW files.
     """
 
     # Determine filename root
@@ -137,8 +140,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     utils.ensure_dir_exists(out_dir_root)
 
     LOGGER.info("Package directory: {}".format(PACKAGE_PATH))
-    LOGGER.info("Processing request for {}. \nAll data will be saved in: {}".format(root,
-                                                                                    out_dir_root))
+    LOGGER.info("Processing request for {}.".format(root))
+    LOGGER.info("All data will be saved in: {}".format(out_dir_root))
     LOGGER.info("Input image: {}".format(os.path.abspath(image)))
 
     # Copy input image into out directory
@@ -179,31 +182,50 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Select guide & reference PSFs
     if star_selection:
-        guiding_selections_file, all_found_psfs, psf_center_file = select_psfs.select_psfs(
+        guiding_selections_path_list, all_found_psfs, psf_center_file = select_psfs.select_psfs(
             fgs_im, root, guider,
             smoothing=smoothing,
-            guiding_selections_file=guiding_selections_file,
+            guiding_selections_file_list=guiding_selections_file,
             out_dir=out_dir,
             logger_passed=True, masterGUIapp=masterGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
 
     # Create all files for FSW/DHAS/FGSES/etc.
     if file_writer:
+        out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
-        if shift_id_attitude:
-            fgs_im, guiding_selections_file, psf_center_file = buildfgssteps.shift_to_id_attitude(
-                fgs_im, root, guider, out_dir, guiding_selections_file=guiding_selections_file,
-                all_found_psfs_file=all_found_psfs, psf_center_file=psf_center_file,
-                crowded_field=crowded_field, logger_passed=True)
-        if steps is None:
-            steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
-        for step in steps:
-            fgs_files_obj= buildfgssteps.BuildFGSSteps(
-                fgs_im, guider, root, step, out_dir=out_dir,
-                logger_passed=True, guiding_selections_file=guiding_selections_file,
-                psf_center_file=psf_center_file, shift_id_attitude=shift_id_attitude,
-            )
-            write_files.write_all(fgs_files_obj)
+        for i, guiding_selections_file in enumerate(guiding_selections_path_list):
+
+            # Change out_dir to write data to guiding_config_#/ sub-directory next to the selections file
+            if 'guiding_config' in guiding_selections_file:
+                out_dir_fsw = os.path.join(out_dir, 'guiding_config_{}'.format(
+                    guiding_selections_file.split('guiding_config_')[1].split('/')[0]))
+            else:
+                out_dir_fsw = out_dir
+
+            if shift_id_attitude:
+                fgs_im_fsw, guiding_selections_file_fsw, psf_center_file_fsw = buildfgssteps.shift_to_id_attitude(
+                    fgs_im, root, guider, out_dir_fsw, guiding_selections_file=guiding_selections_file,
+                    all_found_psfs_file=all_found_psfs, psf_center_file=psf_center_file,
+                    crowded_field=crowded_field, logger_passed=True)
+            else:
+                fgs_im_fsw = fgs_im
+                guiding_selections_file_fsw = guiding_selections_file
+                psf_center_file_fsw = psf_center_file
+
+            if steps is None:
+                steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
+
+            for step in steps:
+                fgs_files_obj= buildfgssteps.BuildFGSSteps(
+                    fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
+                    logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
+                    psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
+                )
+                write_files.write_all(fgs_files_obj)
+            LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i+1))
+
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
 
     LOGGER.info("*** Run COMPLETE ***")
