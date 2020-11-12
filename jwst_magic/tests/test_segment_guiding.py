@@ -76,7 +76,7 @@ if not JENKINS:
     from ..segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
     from ..masterGUI import MasterGui
 
-SOGS = utils.on_sogs_network()SOGS = True
+SOGS = utils.on_sogs_network()
 if not SOGS:
     from pytestqt import qtbot
 
