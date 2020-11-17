@@ -514,6 +514,9 @@ class StarSelectorWindow(QDialog):
 
         # Override center widgets
         self.checkBox_meanCenter.toggled.connect(self.update_center_mean)
+        self.checkBox_pixelCenter.toggled.connect(self.update_center_pixel)
+        self.lineEdit_xcoord.editingFinished.connect(self.update_center_pixel)
+        self.lineEdit_ycoord.editingFinished.connect(self.update_center_pixel)
         self.comboBox_segmentCenter.activated.connect(self.update_center_seg)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1083,6 +1086,7 @@ class StarSelectorWindow(QDialog):
         """
         # Uncheck "use segment center" box
         self.checkBox_meanCenter.setChecked(False)
+        self.checkBox_pixelCenter.setChecked(False)
 
         # Remove old center
         if self.center:
@@ -1112,7 +1116,11 @@ class StarSelectorWindow(QDialog):
         self.segNum = None
 
         if use_mean_as_center:
+            # Reset other options
             self.comboBox_segmentCenter.setCurrentIndex(0)
+            self.checkBox_pixelCenter.setChecked(False)
+            self.lineEdit_xcoord.setEnabled(False)
+            self.lineEdit_ycoord.setEnabled(False)
 
             # Calculate center of array
             x_mean = np.average(self.x)
@@ -1123,6 +1131,43 @@ class StarSelectorWindow(QDialog):
                                                 mfc='red', mec='red', mew=5, lw=0)
 
             self.segNum = 0
+
+        self.canvas.draw()
+
+    def update_center_pixel(self):
+        """Use the provided pixel location as the pointing center
+        """
+        # Enable line edits
+        if self.checkBox_pixelCenter.isChecked():
+            self.lineEdit_xcoord.setEnabled(True)
+            self.lineEdit_ycoord.setEnabled(True)
+        else:
+            self.lineEdit_xcoord.setEnabled(False)
+            self.lineEdit_ycoord.setEnabled(False)
+            return
+
+        # Remove old center
+        if self.center:
+            self.canvas.axes.lines.remove(self.center[0])
+            self.center = None
+        self.segNum = None
+
+        # Reset other options
+        self.comboBox_segmentCenter.setCurrentIndex(0)
+        self.checkBox_meanCenter.setChecked(False)
+
+        # Read in coordinates
+        x_coord = self.lineEdit_xcoord.text()
+        y_coord = self.lineEdit_ycoord.text()
+
+        if y_coord != '' and x_coord != '':
+            x_coord = float(x_coord)
+            y_coord = float(y_coord)
+
+            # Plot mean location of array on canvas
+            self.center = self.canvas.axes.plot(x_coord, y_coord, 'x', ms=20, alpha=0.8,
+                                                mfc='red', mec='red', mew=5, lw=0)
+            self.segNum = [x_coord, y_coord]
 
         self.canvas.draw()
 
