@@ -644,3 +644,59 @@ def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_
     with open(photometry_override_file) as f:
         photometry_override_command = f.read()
     assert photometry_override_command == correct_command
+
+
+def test_center_of_pointing(test_directory):
+    """Test that center of pointing can be passed a list and passing a list
+    that matches the location of a segment should return the same result
+    and choosing that segment
+    """
+    guider = 1
+    prog = 1141
+
+    # Pass 1: using seg_num = 1 for pointing at one segment
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': guider,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'seg_num': 1}
+
+    generate_segment_override_file(
+        [SEGMENT_INFILE], guider, prog, 1, 1, root=ROOT,
+        out_dir=__location__, selected_segs_list=[SELECTED_SEGS2],
+        guide_star_params_dict=guide_star_params_dict, parameter_dialog=False)
+
+    file1 = 'gs_override_1141_1_1.txt'
+    segment_override_file_mean = os.path.join(
+        test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'), file1))
+    assert os.path.isfile(segment_override_file_mean)
+
+    # Pass 2: using a list for the seg_num, where that list location should match what the segment pointing was
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': guider,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'seg_num': [1345.0, 840.0]}
+
+    generate_segment_override_file(
+        [SEGMENT_INFILE], guider, prog, 2, 1, root=ROOT,
+        out_dir=__location__, selected_segs_list=[SELECTED_SEGS2],
+        guide_star_params_dict=guide_star_params_dict, parameter_dialog=False)
+
+    file2 = 'gs_override_1141_2_1.txt'
+    segment_override_file_pixel = os.path.join(
+        test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'), file2))
+    assert os.path.isfile(segment_override_file_pixel)
+
+    # Open files
+    with open(segment_override_file_mean) as f:
+        segment_override_command_mean = f.read()
+    with open(segment_override_file_pixel) as f:
+        segment_override_file_pixel = f.read()
+
+    # Compare commands (skipping program id, obs num, and visit nun information)
+    assert segment_override_command_mean[27:] == segment_override_file_pixel[27:]
