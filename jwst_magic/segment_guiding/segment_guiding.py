@@ -173,9 +173,13 @@ class SegmentGuidingCalculator:
         # Ensure the provided segment ID is valid
         flat_v2_array = [val for l in self.v2_seg_array for val in l]
         segment_max = int(len(flat_v2_array) / self._num_infiles) # same number of founds psfs for each config
-        if (self.seg_num < 0) or (self.seg_num > segment_max):
-            msg = 'Segment number {} out of range (0, {})'.format(self.seg_num, segment_max)
-            raise ValueError(msg)
+        if isinstance(self.seg_num, int):
+            if (self.seg_num < 0) or (self.seg_num > segment_max):
+                msg = 'Segment number {} out of range (0, {})'.format(self.seg_num, segment_max)
+                raise ValueError(msg)
+        elif not isinstance(self.seg_num, list):
+            raise TypeError('Center of pointing {} but either be of type int or list, not {}'.format(self.seg_num,
+                                                                                                    type(self.seg_num)))
 
         # Determine the central V2/V3 point from the given segment ID
 
@@ -188,7 +192,9 @@ class SegmentGuidingCalculator:
         self.x_idl_aim, self.y_idl_aim = [], []
 
         for i, (v2_seg_array, v3_seg_array) in enumerate(zip(self.v2_seg_array, self.v3_seg_array)):
-            if self.seg_num > 0:
+            if isinstance(self.seg_num, list):
+                v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(self.seg_num[0], self.seg_num[1], self.fgs_num)
+            elif self.seg_num > 0:
                 v2_seg_n = v2_seg_array[self.seg_num - 1]
                 v3_seg_n = v3_seg_array[self.seg_num - 1]
             # Otherwise, if the input segment ID was 0, set the V2/V3 ref point to
@@ -581,7 +587,7 @@ class SegmentGuidingCalculator:
         self.dec = gs_coord.dec.degree
 
         self.pa = float(guide_star_params_dict['pa'])
-        self.seg_num = int(guide_star_params_dict['seg_num'])
+        self.seg_num = guide_star_params_dict['seg_num']
 
     def parse_infile(self, segment_infile_list):
         """Get the segment positions and count rates from a file.
@@ -782,9 +788,6 @@ class SegmentGuidingCalculator:
             ra_mean = seg_ra.mean()
             dec_mean = seg_dec.mean()
             plt.plot(ra_mean, dec_mean, 'ro')
-            seg_n = int(self.seg_num)
-            if seg_n > 0:
-                plt.plot(seg_ra[seg_n - 1], seg_dec[seg_n - 1], 'mx', markersize=12)
             for i in range(len(v2_seg_array)):
                 plt.text(seg_ra[i], seg_dec[i], str(i + 1))
             plt.grid(True)
@@ -1072,8 +1075,11 @@ def generate_segment_override_file(segment_infile_list, guider,
                 if os.path.exists(seg_num_path):
                     log.info(
                         'Segment Guiding: Pulling center of pointing information from {}'.format(seg_num_path))
-                    in_table = asc.read(seg_num_path, format='commented_header')
-                    guide_star_params_dict['seg_num'] = int(in_table['segnum'])
+                    in_table = asc.read(seg_num_path, format='commented_header', delimiter=',')
+                    try:
+                        guide_star_params_dict['seg_num'] = int(in_table['segnum'][0])
+                    except ValueError:
+                        guide_star_params_dict['seg_num'] = [float(i) for i in in_table['segnum'][0].split(' ')]
                 else:
                     utils.write_cols_to_file(seg_num_path, labels=['segnum'], cols=[0], log=log)
                     log.warning(
