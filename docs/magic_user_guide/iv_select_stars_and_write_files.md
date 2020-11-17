@@ -55,7 +55,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
    4. When you are happy with your selections, click the **Save Command** button (*E*). You will see the IDs of the stars you selected appear in the **Override Commands** table (*F*).
    5. To add another command, repeat steps 1-4 to select guide and reference stars, and again click the **Save Command** button (*E*).
    6. To change the order of the commands, use the up and down arrow buttons (*G*). To view a saved command on the plot, click the **Load** button (*H*).  To remove a command from the list, click the **Delete** button (*I*).
-   7. Choose the center of override pointing (*J*) for all selections. This sets the origin of the ideal frame (i.e. the location of the guide star if the segments were stacked). It can either be set as the center of the segment array, using the **Use Center of Segment Array** checkbox, or the location of a specific segment using the dropdown box. You can only choose one center of pointing for each root. 
+   7. Choose the center of override pointing (*J*) for all selections. This sets the origin of the ideal frame (i.e. the location of the guide star if the segments were stacked). It can either be set as the average of the segment array, using the **Use Center of Segment Array** checkbox, the location of a specific segment using the dropdown box, or a specific location on the detector in (X,Y) detector coordinates using the **Pixel Location (X,Y)** checkbox. You can only choose one center of pointing for each root, and the information will be saved out in the center_pointing*.txt file. 
    8. When you are happy with your selections, click **Done**  
    
    The output files will be located in the specified out directory.
