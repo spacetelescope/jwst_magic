@@ -159,7 +159,7 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': seg_num}
+                              'center_of_pointing': seg_num}
 
     generate_segment_override_file(
         segment_infile, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
@@ -192,7 +192,7 @@ def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider,
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': seg_num}
+                              'center_of_pointing': seg_num}
 
     with pytest.raises(ValueError) as excinfo:
         generate_segment_override_file(
@@ -213,7 +213,7 @@ def test_generate_override_file_valueerrors(test_directory):
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': 0}
+                              'center_of_pointing': 0}
 
     # Test error if parameter_dialog=False and guide_star_params_dict=None
     with pytest.raises(ValueError) as excinfo:
@@ -241,7 +241,7 @@ def test_segment_override_command_out_of_fov(test_directory):
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': 0}
+                              'center_of_pointing': 0}
 
     sg = SegmentGuidingCalculator(
         "SOF", PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, ROOT, __location__,
@@ -342,7 +342,7 @@ def test_SOF_parameters_dialog():
     params = segment_guiding_dialog.get_dialog_parameters()
 
     assert params == (
-        {'v3_boff': 0.0, 'seg_num': 0, 'v2_boff': 0.0, 'ra': 90.9708, 'fgs_num': 1, 'dec': -67.3578, 'pa': 157.1234},
+        {'v3_boff': 0.0, 'center_of_pointing': 0, 'v2_boff': 0.0, 'ra': 90.9708, 'fgs_num': 1, 'dec': -67.3578, 'pa': 157.1234},
         '1141', '7', '1', 0.6, None, None
     )
 
@@ -427,7 +427,7 @@ def test_write_override_report(test_directory):
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': 0}
+                              'center_of_pointing': 0}
 
     # Multiple commands - so multiple segment infiles
     selected_segs = np.array([[1, 2, 3], [4, 1, 18, 12, 2]])
@@ -487,7 +487,7 @@ def test_segment_override_file_wo_obs_visit(obsnum, visitnum):
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': 0}
+                              'center_of_pointing': 0}
 
     with pytest.raises(ValueError) as excinfo:
         generate_segment_override_file(
@@ -543,7 +543,7 @@ def test_split_obs_num(obs_num, correct_list, correct_string):
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': 0}
+                              'center_of_pointing': 0}
 
     sg = SegmentGuidingCalculator(
         "POF", PROGRAM_ID, obs_num, VISIT_NUM, ROOT, __location__,
@@ -568,7 +568,7 @@ def test_segment_override_file_single_obs(test_directory, obs_num, correct_file_
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': 0}
+                              'center_of_pointing': 0}
 
     generate_segment_override_file(
         [SEGMENT_INFILE], guider, PROGRAM_ID, obs_num, 1, root=ROOT,
@@ -608,7 +608,7 @@ def test_segment_override_file_multiple_obs(test_directory, obs_num):
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': 0}
+                              'center_of_pointing': 0}
 
     with pytest.raises(ValueError)as excinfo:
         generate_segment_override_file(
@@ -654,14 +654,14 @@ def test_center_of_pointing(test_directory):
     guider = 1
     prog = 1141
 
-    # Pass 1: using seg_num = 1 for pointing at one segment
+    # Pass 1: using center_of_pointing = 1 for pointing at one segment
     guide_star_params_dict = {'v2_boff': 0.1,
                               'v3_boff': 0.2,
                               'fgs_num': guider,
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': 1}
+                              'center_of_pointing': 1}
 
     generate_segment_override_file(
         [SEGMENT_INFILE], guider, prog, 1, 1, root=ROOT,
@@ -673,14 +673,15 @@ def test_center_of_pointing(test_directory):
         test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'), file1))
     assert os.path.isfile(segment_override_file_mean)
 
-    # Pass 2: using a list for the seg_num, where that list location should match what the segment pointing was
+    # Pass 2: using a list for the center_of_pointing, where that list location
+    # should match what the segment pointing was
     guide_star_params_dict = {'v2_boff': 0.1,
                               'v3_boff': 0.2,
                               'fgs_num': guider,
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'seg_num': [1345.0, 840.0]}
+                              'center_of_pointing': [1345.0, 840.0]}
 
     generate_segment_override_file(
         [SEGMENT_INFILE], guider, prog, 2, 1, root=ROOT,

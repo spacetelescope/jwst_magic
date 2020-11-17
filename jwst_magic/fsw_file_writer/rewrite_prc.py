@@ -131,7 +131,7 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, cr
     if segnum is not None:
         # Write out center of pointing information
         center_pointing_path = os.path.join(out_path, 'center_pointing_{}_G{}.txt'.format(root, guider))
-        utils.write_cols_to_file(center_pointing_path, labels=['segnum'], cols=[segnum], log=LOGGER)
+        utils.write_cols_to_file(center_pointing_path, labels=['center_of_pointing'], cols=[segnum], log=LOGGER)
 
     # Write guiding selections file(s)
     current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_path)

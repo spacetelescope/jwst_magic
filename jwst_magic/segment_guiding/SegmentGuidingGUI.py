@@ -165,7 +165,7 @@ class SegmentGuidingDialog(QDialog):
                 'ra': ra,
                 'dec': dec,
                 'pa': pa,
-                'seg_num': 0
+                'center_of_pointing': 0
             }
 
             # Countrate factors

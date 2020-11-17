@@ -1024,7 +1024,7 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
         if segnum is not None:
             # Write out center of pointing information
             center_pointing_path = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
-            utils.write_cols_to_file(center_pointing_path, labels=['segnum'], cols=[segnum], log=LOGGER)
+            utils.write_cols_to_file(center_pointing_path, labels=['center_of_pointing'], cols=[segnum], log=LOGGER)
 
         # Determine config numbers for selections (may re-use old config if loading a file from this out_dir/root)
         new_config_numbers = []
