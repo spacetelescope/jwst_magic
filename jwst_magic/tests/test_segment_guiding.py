@@ -181,7 +181,7 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
 
 
 sof_valueerror_parameters = [(20, 1, 'out of range'),
-                             ('zero', 2, 'invalid literal for int()'),
+                             ('zero', 2, 'either be of type int or list'),
                              (0, 3, 'Invalid guider number')]
 @pytest.mark.parametrize('seg_num, guider, error_text', sof_valueerror_parameters)
 def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider, error_text):

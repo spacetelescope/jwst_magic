@@ -178,7 +178,7 @@ class SegmentGuidingCalculator:
                 msg = 'Segment number {} out of range (0, {})'.format(self.seg_num, segment_max)
                 raise ValueError(msg)
         elif not isinstance(self.seg_num, list):
-            raise TypeError('Center of pointing {} but either be of type int or list, not {}'.format(self.seg_num,
+            raise ValueError('Center of pointing {} but either be of type int or list, not {}'.format(self.seg_num,
                                                                                                     type(self.seg_num)))
 
         # Determine the central V2/V3 point from the given segment ID
