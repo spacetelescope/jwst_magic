@@ -653,8 +653,6 @@ def test_center_of_pointing(test_directory):
     """
     guider = 1
     prog = 1141
-
-    # Pass 1: using center_of_pointing = 1 for pointing at one segment
     guide_star_params_dict = {'v2_boff': 0.1,
                               'v3_boff': 0.2,
                               'fgs_num': guider,
@@ -663,6 +661,8 @@ def test_center_of_pointing(test_directory):
                               'pa': 157.1234,
                               'center_of_pointing': 1}
 
+
+    # Pass 1: using center_of_pointing = 1 for pointing at one segment
     generate_segment_override_file(
         [SEGMENT_INFILE], guider, prog, 1, 1, root=ROOT,
         out_dir=__location__, selected_segs_list=[SELECTED_SEGS2],
@@ -675,13 +675,7 @@ def test_center_of_pointing(test_directory):
 
     # Pass 2: using a list for the center_of_pointing, where that list location
     # should match what the segment pointing was
-    guide_star_params_dict = {'v2_boff': 0.1,
-                              'v3_boff': 0.2,
-                              'fgs_num': guider,
-                              'ra': 90.9708,
-                              'dec': -67.3578,
-                              'pa': 157.1234,
-                              'center_of_pointing': [1345.0, 840.0]}
+    guide_star_params_dict['center_of_pointing'] = [1345.0, 840.0]
 
     generate_segment_override_file(
         [SEGMENT_INFILE], guider, prog, 2, 1, root=ROOT,
