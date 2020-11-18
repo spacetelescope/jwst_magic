@@ -182,7 +182,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Select guide & reference PSFs
     if star_selection:
-        guiding_selections_path_list, all_found_psfs, psf_center_file = select_psfs.select_psfs(
+        guiding_selections_path_list, all_found_psfs, center_pointing_file, psf_center_file = select_psfs.select_psfs(
             fgs_im, root, guider,
             smoothing=smoothing,
             guiding_selections_file_list=guiding_selections_file,
@@ -207,8 +207,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             if shift_id_attitude:
                 fgs_im_fsw, guiding_selections_file_fsw, psf_center_file_fsw = buildfgssteps.shift_to_id_attitude(
                     fgs_im, root, guider, out_dir_fsw, guiding_selections_file=guiding_selections_file,
-                    all_found_psfs_file=all_found_psfs, psf_center_file=psf_center_file,
-                    crowded_field=crowded_field, logger_passed=True)
+                    all_found_psfs_file=all_found_psfs, center_pointing_file=center_pointing_file,
+                    psf_center_file=psf_center_file, crowded_field=crowded_field, logger_passed=True)
             else:
                 fgs_im_fsw = fgs_im
                 guiding_selections_file_fsw = guiding_selections_file

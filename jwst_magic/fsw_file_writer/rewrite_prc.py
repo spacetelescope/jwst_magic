@@ -158,8 +158,8 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, cr
         if shifted:
             fgs_im_fsw, guiding_selections_file_fsw, psf_center_file_fsw = buildfgssteps.shift_to_id_attitude(
                 fgs_im, root, guider, out_dir_fsw, guiding_selections_file=guiding_selections_file,
-                all_found_psfs_file=unshifted_all_psfs, psf_center_file=psf_center_file,
-                crowded_field=crowded_field, logger_passed=True)
+                all_found_psfs_file=unshifted_all_psfs, center_pointing_file=center_pointing_path,
+                psf_center_file=psf_center_file, crowded_field=crowded_field, logger_passed=True)
         else:
             fgs_im_fsw = fgs_im
             guiding_selections_file_fsw = guiding_selections_file

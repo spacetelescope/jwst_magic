@@ -970,11 +970,12 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
             # Return early if all loaded files are duplicates of existing files
             if len(guiding_selections_file_list) == 0:
                 all_found_psfs_path = os.path.join(out_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
+                center_pointing_path = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
                 if smoothing == 'low':
                     psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
                 else:
                     psf_center_path = None
-                return new_guiding_selections, all_found_psfs_path, psf_center_path
+                return new_guiding_selections, all_found_psfs_path, center_pointing_path, psf_center_path
 
             cols_list, nref_list = [], []  # coords will be overwritten, but they should include the same data each time
             for file in guiding_selections_file_list:
@@ -1081,5 +1082,5 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
         LOGGER.exception(e)
         raise
 
-    return guiding_selections_path_list, all_found_psfs_path, psf_center_path
+    return guiding_selections_path_list, all_found_psfs_path, center_pointing_path, psf_center_path
 
