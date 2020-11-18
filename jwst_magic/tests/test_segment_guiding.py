@@ -645,8 +645,10 @@ def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_
         photometry_override_command = f.read()
     assert photometry_override_command == correct_command
 
-
-def test_center_of_pointing(test_directory):
+test_center_of_pointing_parameters = [([SEGMENT_INFILE], [SELECTED_SEGS2], [840.0, 1345.0]),
+                                      ([SHIFTED_INFILE], [SHIFTED_SEGS2], [976.0, 801.0])]
+@pytest.mark.parametrize('infile, selected_segs_list, center_pointing', test_center_of_pointing_parameters)
+def test_center_of_pointing(test_directory, infile, selected_segs_list, center_pointing):
     """Test that center of pointing can be passed a list and passing a list
     that matches the location of a segment should return the same result
     and choosing that segment
@@ -664,8 +666,8 @@ def test_center_of_pointing(test_directory):
 
     # Pass 1: using center_of_pointing = 1 for pointing at one segment
     generate_segment_override_file(
-        [SEGMENT_INFILE], guider, prog, 1, 1, root=ROOT,
-        out_dir=__location__, selected_segs_list=[SELECTED_SEGS2],
+        infile, guider, prog, 1, 1, root=ROOT,
+        out_dir=__location__, selected_segs_list=selected_segs_list,
         guide_star_params_dict=guide_star_params_dict, parameter_dialog=False)
 
     file1 = 'gs_override_1141_1_1.txt'
@@ -675,11 +677,11 @@ def test_center_of_pointing(test_directory):
 
     # Pass 2: using a list for the center_of_pointing, where that list location
     # should match what the segment pointing was
-    guide_star_params_dict['center_of_pointing'] = [840.0, 1345.0]
+    guide_star_params_dict['center_of_pointing'] = center_pointing
 
     generate_segment_override_file(
-        [SEGMENT_INFILE], guider, prog, 2, 1, root=ROOT,
-        out_dir=__location__, selected_segs_list=[SELECTED_SEGS2],
+        infile, guider, prog, 2, 1, root=ROOT,
+        out_dir=__location__, selected_segs_list=selected_segs_list,
         guide_star_params_dict=guide_star_params_dict, parameter_dialog=False)
 
     file2 = 'gs_override_1141_2_1.txt'
