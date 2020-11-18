@@ -193,7 +193,7 @@ class SegmentGuidingCalculator:
 
         for i, (v2_seg_array, v3_seg_array) in enumerate(zip(self.v2_seg_array, self.v3_seg_array)):
             if isinstance(self.seg_num, list):
-                v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(self.seg_num[0], self.seg_num[1], self.fgs_num)
+                v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(self.seg_num[1], self.seg_num[0], self.fgs_num)
             elif self.seg_num > 0:
                 v2_seg_n = v2_seg_array[self.seg_num - 1]
                 v3_seg_n = v3_seg_array[self.seg_num - 1]

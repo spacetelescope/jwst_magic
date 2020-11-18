@@ -675,7 +675,7 @@ def test_center_of_pointing(test_directory):
 
     # Pass 2: using a list for the center_of_pointing, where that list location
     # should match what the segment pointing was
-    guide_star_params_dict['center_of_pointing'] = [1345.0, 840.0]
+    guide_star_params_dict['center_of_pointing'] = [840.0, 1345.0]
 
     generate_segment_override_file(
         [SEGMENT_INFILE], guider, prog, 2, 1, root=ROOT,
