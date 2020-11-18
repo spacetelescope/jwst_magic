@@ -986,6 +986,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                                    program_id, observation_num, visit_num,
                                    ra=None, dec=None,
                                    root=None, out_dir=None, selected_segs_list=None,
+                                   center_pointing_file=None,
                                    guide_star_params_dict=None, threshold_factor=0.9,
                                    parameter_dialog=True, dialog_obj=None,
                                    master_gui_app=None, log=None):
@@ -1022,6 +1023,11 @@ def generate_segment_override_file(segment_infile_list, guider,
         Reminder that the length of selected_segs_list should match the length
         of segment_infile_list, both are the length of the number of commands.
         If
+    center_pointing_file : str, optional
+        Path to the center_pointing*.txt for shfited_center_pointing*.txt file
+        (depending on if the user passed in the unshifted or shifted guiding
+        selections file). The file contains the segment number of (y,x) location
+        of the center of pointing.
     guide_star_params_dict : dict, optional
         Dictionary containing guide star parameters, for example:
             {'v2_boff': 0.1,  # boresight offset in V2 (arcsec)
@@ -1071,11 +1077,12 @@ def generate_segment_override_file(segment_infile_list, guider,
                     threshold_factor, _, _ = params
 
                 # Overwrite default seg_num information
-                seg_num_path = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
-                if os.path.exists(seg_num_path):
+                if center_pointing_file is None:
+                    center_pointing_file = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
+                if os.path.exists(center_pointing_file):
                     log.info(
-                        'Segment Guiding: Pulling center of pointing information from {}'.format(seg_num_path))
-                    in_table = asc.read(seg_num_path, format='commented_header', delimiter=',')
+                        'Segment Guiding: Pulling center of pointing information from {}'.format(center_pointing_file))
+                    in_table = asc.read(center_pointing_file, format='commented_header', delimiter=',')
                     if 'center_of_pointing' in in_table.colnames:
                         col = 'center_of_pointing'
                     else:
@@ -1085,7 +1092,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                     except ValueError:
                         guide_star_params_dict['center_of_pointing'] = [float(i) for i in in_table[col][0].split(' ')]
                 else:
-                    utils.write_cols_to_file(seg_num_path, labels=['center_of_pointing'], cols=[0], log=log)
+                    utils.write_cols_to_file(center_pointing_file, labels=['center_of_pointing'], cols=[0], log=log)
                     log.warning(
                         "Segment Guiding: Couldn't find center of pointing file center_pointing_{}_G{}.txt. "
                         "Assuming the center of pointing is the mean of all segments (seg_num = 0) and writing "
