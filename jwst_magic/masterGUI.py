@@ -1238,6 +1238,9 @@ class MasterGui(QMainWindow):
                 LOGGER.warning('Master GUI: No guiding_selections and/or all_found_psf files found. This may be okay '
                                'depending on the situation (e.g. when making a POF).')
 
+                # Clear the guiding selections combo box
+                self.comboBox_guidingcommands.clear()
+
                 # Clear and reset 0th index in shifted combo box
                 self.comboBox_showcommandsshifted.blockSignals(True)
                 self.comboBox_showcommandsshifted.clear()
@@ -1279,6 +1282,9 @@ class MasterGui(QMainWindow):
                     LOGGER.warning(
                         'Master GUI: Missing guiding_selections and/or all_found_psf files. This may be okay depending '
                         'on the situation (e.g. when making a POF).')
+
+                    # Clear the guiding selections combo box
+                    self.comboBox_guidingcommands.clear()
 
                     # Clear and reset 0th index in shifted combo box
                     self.comboBox_showcommandsshifted.blockSignals(True)
