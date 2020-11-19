@@ -120,7 +120,7 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
     guiding_selections_file = os.path.join(out_dir_fsw, 'shifted_guiding_selections_{}.txt'.format(file_root))
     all_found_psfs_file = os.path.join(out_dir_fsw, 'shifted_all_found_psfs_{}.txt'.format(file_root))
     FGS_img = os.path.join(out_dir_fsw,  'FGS_imgs', 'shifted_' + file_root + '.fits')
-    center_pointing_file = os.path.join(TEST_DIRECTORY, 'shifted_center_pointing_{}.txt'.format(file_root))
+    center_pointing_file = os.path.join(out_dir_fsw, 'shifted_center_pointing_{}.txt'.format(file_root))
 
     # Check that the right files were put in the right place
     assert os.path.exists(FGS_img)

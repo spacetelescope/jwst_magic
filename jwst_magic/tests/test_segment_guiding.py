@@ -139,9 +139,9 @@ def master_gui():
 
 test_data = PARAMETRIZED_DATA['test_generate_segment_override_file']
 sof_parameters = [
-                  (0, [SELECTED_SEGS], [SEGMENT_INFILE], test_data[0]),
-                  (4, [SELECTED_SEGS], [SEGMENT_INFILE], test_data[1]),
-                  (0, [SELECTED_SEGS, SELECTED_SEGS2], [SEGMENT_INFILE, SEGMENT_INFILE], test_data[2]), # no matching segs
+                  ([0,0], [SELECTED_SEGS], [SEGMENT_INFILE], test_data[0]),
+                  ([4], [SELECTED_SEGS], [SEGMENT_INFILE], test_data[1]),
+                  ([0,0], [SELECTED_SEGS, SELECTED_SEGS2], [SEGMENT_INFILE, SEGMENT_INFILE], test_data[2]), # no matching segs
                   (0, [SELECTED_SEGS, SELECTED_SEGS3], [SEGMENT_INFILE, SEGMENT_INFILE], test_data[3]), # 2 matching segs
                   (0, np.array([[1, 12, 6]]), [SEGMENT_INFILE], test_data[4]),
                   (0, np.array([[1, 2, 3], [4, 1, 18, 12, 2]]), [SEGMENT_INFILE, SEGMENT_INFILE], test_data[5]),
@@ -181,7 +181,7 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
 
 
 sof_valueerror_parameters = [(20, 1, 'out of range'),
-                             ('zero', 2, 'either be of type int or list'),
+                             ('zero', 2, 'must be a list of ints or lists'),
                              (0, 3, 'Invalid guider number')]
 @pytest.mark.parametrize('seg_num, guider, error_text', sof_valueerror_parameters)
 def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider, error_text):
@@ -645,8 +645,8 @@ def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_
         photometry_override_command = f.read()
     assert photometry_override_command == correct_command
 
-test_center_of_pointing_parameters = [([SEGMENT_INFILE], [SELECTED_SEGS2], [840.0, 1345.0]),
-                                      ([SHIFTED_INFILE], [SHIFTED_SEGS2], [976.0, 801.0])]
+test_center_of_pointing_parameters = [([SEGMENT_INFILE], [SELECTED_SEGS2], [[840.0, 1345.0]]),
+                                      ([SHIFTED_INFILE], [SHIFTED_SEGS2], [[976.0, 801.0]])]
 @pytest.mark.parametrize('infile, selected_segs_list, center_pointing', test_center_of_pointing_parameters)
 def test_center_of_pointing(test_directory, infile, selected_segs_list, center_pointing):
     """Test that center of pointing can be passed a list and passing a list
