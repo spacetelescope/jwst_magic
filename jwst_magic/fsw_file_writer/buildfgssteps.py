@@ -676,15 +676,15 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     shifted_center_pointing_cat = center_pointing_cat.copy()
     label = center_pointing_cat.colnames[0]
     if isinstance(shifted_center_pointing_cat[label][0], str):
-        x, y = [float(i) for i in shifted_center_pointing_cat[label][0].split(' ')]
+        y, x = [float(i) for i in shifted_center_pointing_cat[label][0].split(' ')]
         shifted_center_pointing_cat = [y+dy, x+dx]
     else:
         shifted_center_pointing_cat = shifted_center_pointing_cat[label][0]
 
-    shifted_psf_center = os.path.join(out_dir, 'shifted_center_pointing_{}.txt'.format(file_root))
+    shifted_center_pointing = os.path.join(out_dir, 'shifted_center_pointing_{}.txt'.format(file_root))
 
     # Write new center_pointing*.txt
-    utils.write_cols_to_file(shifted_psf_center,
+    utils.write_cols_to_file(shifted_center_pointing,
                              labels=[label],
                              cols=[shifted_center_pointing_cat],
                              log=LOGGER)
