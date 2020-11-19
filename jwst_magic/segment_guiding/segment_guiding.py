@@ -108,7 +108,7 @@ class SegmentGuidingCalculator:
              'ra': '271d 05m 14.85s',  # RA of guide star (Allowed range: 0 - 360 degrees; flexible format)
              'dec': '-29:31:08.9',  # Dec of guide star (Allowed range: 0 - 360 degrees; flexible format)
              'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
-             'center_of_pointing': 0}  # selected segment to guide on
+             'center_of_pointing': [0,0,0]}  # selected segment to guide on for each selection
              Used for SOF Generation
         selected_segs_list : list of str, optional
             List of filepath(s) to guiding_selections*.txt files with list of
@@ -157,7 +157,7 @@ class SegmentGuidingCalculator:
 
         # Set up to do segment override calculations
         if self.override_type == "SOF":
-            self.get_gs_params(guide_star_params_dict)
+            self.get_gs_params(guide_star_params_dict, selected_segs_list)
             self.get_guider_aperture()
             self.parse_infile(segment_infile_list)
             self.get_selected_segs(selected_segs_list)
@@ -173,13 +173,14 @@ class SegmentGuidingCalculator:
         # Ensure the provided segment ID is valid
         flat_v2_array = [val for l in self.v2_seg_array for val in l]
         segment_max = int(len(flat_v2_array) / self._num_infiles) # same number of founds psfs for each config
-        if isinstance(self.seg_num, int):
-            if (self.seg_num < 0) or (self.seg_num > segment_max):
-                msg = 'Segment number {} out of range (0, {})'.format(self.seg_num, segment_max)
-                raise ValueError(msg)
-        elif not isinstance(self.seg_num, list):
-            raise ValueError('Center of pointing {} must either be of type int or list, not {}'.format(self.seg_num,
-                                                                                                    type(self.seg_num)))
+        for seg_num in self.seg_num:
+            if isinstance(seg_num, int):
+                if (seg_num < 0) or (seg_num > segment_max):
+                    msg = 'Segment number {} out of range (0, {})'.format(seg_num, segment_max)
+                    raise ValueError(msg)
+            elif not isinstance(seg_num, list):
+                raise ValueError('Center of pointing {} must be a list of ints or lists; '
+                                 'cannot include {}'.format(self.seg_num, type(seg_num)))
 
         # Determine the central V2/V3 point from the given segment ID
 
@@ -191,12 +192,12 @@ class SegmentGuidingCalculator:
         self.v2_aim, self.v3_aim = [], []
         self.x_idl_aim, self.y_idl_aim = [], []
 
-        for i, (v2_seg_array, v3_seg_array) in enumerate(zip(self.v2_seg_array, self.v3_seg_array)):
-            if isinstance(self.seg_num, list):
-                v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(self.seg_num[1], self.seg_num[0], self.fgs_num)
-            elif self.seg_num > 0:
-                v2_seg_n = v2_seg_array[self.seg_num - 1]
-                v3_seg_n = v3_seg_array[self.seg_num - 1]
+        for i, (seg_num, v2_seg_array, v3_seg_array) in enumerate(zip(self.seg_num, self.v2_seg_array, self.v3_seg_array)):
+            if isinstance(seg_num, list):
+                v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(seg_num[1], seg_num[0], self.fgs_num)
+            elif seg_num > 0:
+                v2_seg_n = v2_seg_array[seg_num - 1]
+                v3_seg_n = v3_seg_array[seg_num - 1]
             # Otherwise, if the input segment ID was 0, set the V2/V3 ref point to
             # be the mean of all segments' locations
             else:
@@ -556,7 +557,8 @@ class SegmentGuidingCalculator:
         if not segs_in_fov.all():
             segments_outside = np.where(segs_in_fov is False)[0]
             raise ValueError(
-                'Incorrect segment guiding calculations. Segment(s) {} is outside of the FGS{} FOV. Cannot generate segment override file that will not fail.'
+                'Incorrect segment guiding calculations. Segment(s) {} is outside of the FGS{} FOV. '
+                'Cannot generate segment override file that will not fail.'
                 .format(segments_outside, self.fgs_num)
             )
 
@@ -569,10 +571,11 @@ class SegmentGuidingCalculator:
             p = SkyCoord(ra=p[0] * u.degree, dec=p[1] * u.degree)
             sep = p.separation(gs_pointing)
             if sep > fgs_radius:
-                raise ValueError('Segment {} at RA, Dec = ({}, {}) is outside the FGS{} FOV. Cannot generate segment override file that will not fail.'
+                raise ValueError('Segment {} at RA, Dec = ({}, {}) is outside the FGS{} FOV. '
+                                 'Cannot generate segment override file that will not fail.'
                                  .format(i + 1, p.ra, p.dec, self.fgs_num))
 
-    def get_gs_params(self, guide_star_params_dict):
+    def get_gs_params(self, guide_star_params_dict, selected_segs_list):
         """Map guide_star_params_dict values and keys to attributes
         """
 
@@ -588,6 +591,18 @@ class SegmentGuidingCalculator:
 
         self.pa = float(guide_star_params_dict['pa'])
         self.seg_num = guide_star_params_dict['center_of_pointing']
+
+        # Seg_num information must match length of guiding selections list
+        if isinstance(self.seg_num, list):
+            if len(self.seg_num) != len(selected_segs_list):
+                if len(self.seg_num) == 1 and len(selected_segs_list) != 1:
+                    self.seg_num *= len(selected_segs_list)
+                else:
+                    self.log.warning('Segment Guiding: Center of pointing information is of '
+                                     'mismatched length to guiding selections length.')
+        elif isinstance(self.seg_num, int):
+            self.seg_num = [self.seg_num]
+            self.seg_num *= len(selected_segs_list)
 
     def parse_infile(self, segment_infile_list):
         """Get the segment positions and count rates from a file.
@@ -986,7 +1001,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                                    program_id, observation_num, visit_num,
                                    ra=None, dec=None,
                                    root=None, out_dir=None, selected_segs_list=None,
-                                   center_pointing_file=None,
+                                   center_pointing_list=None,
                                    guide_star_params_dict=None, threshold_factor=0.9,
                                    parameter_dialog=True, dialog_obj=None,
                                    master_gui_app=None, log=None):
@@ -1023,10 +1038,10 @@ def generate_segment_override_file(segment_infile_list, guider,
         Reminder that the length of selected_segs_list should match the length
         of segment_infile_list, both are the length of the number of commands.
         If
-    center_pointing_file : str, optional
-        Path to the center_pointing*.txt for shfited_center_pointing*.txt file
-        (depending on if the user passed in the unshifted or shifted guiding
-        selections file). The file contains the segment number of (y,x) location
+    center_pointing_list : list, optional
+        List of file path(s) to the center_pointing*.txt or shfited_center_pointing*.txt
+        file (depending on if the user passed in the unshifted or shifted guiding
+        selections file). The file contains the segment number or the (y,x) location
         of the center of pointing.
     guide_star_params_dict : dict, optional
         Dictionary containing guide star parameters, for example:
@@ -1036,7 +1051,7 @@ def generate_segment_override_file(segment_infile_list, guider,
              'ra': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
              'dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
              'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
-             'center_of_pointing': 0}  # selected segment to guide on
+             'center_of_pointing': [0,0,0]}  # selected segment to guide on
         Required if parameter_dialog=False
     threshold_factor : float, optional
         The factor by which countrates are multiplied to determine
@@ -1076,27 +1091,42 @@ def generate_segment_override_file(segment_infile_list, guider,
                 guide_star_params_dict, program_id, observation_num, visit_num, \
                     threshold_factor, _, _ = params
 
-                # Overwrite default seg_num information
-                if center_pointing_file is None:
-                    center_pointing_file = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
-                if os.path.exists(center_pointing_file):
-                    log.info(
-                        'Segment Guiding: Pulling center of pointing information from {}'.format(center_pointing_file))
-                    in_table = asc.read(center_pointing_file, format='commented_header', delimiter=',')
-                    if 'center_of_pointing' in in_table.colnames:
-                        col = 'center_of_pointing'
+                if center_pointing_list is None:
+                    center_pointing_list = [os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))]
+
+                cp_list = []
+                # Will have multiple files for shifted case, 1 file for unshifted case
+                for center_pointing_file in center_pointing_list:
+                    if os.path.exists(center_pointing_file):
+                        log.info(
+                            'Segment Guiding: Pulling center of pointing information from {}'.format(center_pointing_file))
+                        in_table = asc.read(center_pointing_file, format='commented_header', delimiter=',')
+                        if 'center_of_pointing' in in_table.colnames:
+                            col = 'center_of_pointing'
+                        else:
+                            col = 'segnum'
+                        try:
+                            cp_list.append(int(in_table[col][0]))
+                        except ValueError:
+                            cp_list.append([float(i) for i in in_table[col][0].split(' ')])
                     else:
-                        col = 'segnum'
-                    try:
-                        guide_star_params_dict['center_of_pointing'] = int(in_table[col][0])
-                    except ValueError:
-                        guide_star_params_dict['center_of_pointing'] = [float(i) for i in in_table[col][0].split(' ')]
-                else:
+                        log.warning(
+                            "Segment Guiding: Couldn't find center of pointing file {}. Assuming the center of pointing "
+                            "is the mean of all segments (seg_num = 0)".format(center_pointing_file))
+                if len(cp_list) == 0:
+                    # If none of the paths passed are valid
                     utils.write_cols_to_file(center_pointing_file, labels=['center_of_pointing'], cols=[0], log=log)
                     log.warning(
-                        "Segment Guiding: Couldn't find center of pointing file center_pointing_{}_G{}.txt. "
+                        "Segment Guiding: Couldn't find center of pointing file {}. "
                         "Assuming the center of pointing is the mean of all segments (seg_num = 0) and writing "
-                        "out the file.".format(root, guider))
+                        "out the file.".format(center_pointing_file, root, guider))
+                    cp_list == [0] * len(selected_segs_list)
+
+                if len(cp_list) == 1:
+                    # For the unshifted case where only 1 file is used for all data
+                    cp_list *= len(selected_segs_list)
+
+                guide_star_params_dict['center_of_pointing'] = cp_list
 
             else:
                 log.warning('Segment Guiding: SOF creation cancelled.')

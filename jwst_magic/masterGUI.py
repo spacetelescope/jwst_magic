@@ -541,12 +541,16 @@ class MasterGui(QMainWindow):
                 if self.radioButton_shifted.isChecked():
                     guiding_files = self.shifted_guiding_selections_file_list
                     all_psf_files = self.shifted_all_found_psfs_file_list
-                    center_pointing_file = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
+                    center_pointing_list = [os.path.join(out_dir, 'out/', root, 'guiding_config_' + \
+                                                         i.split('/guiding_config_')[-1].split('/')[0],
+                                                         'shifted_center_pointing_{}_G{}_config{}.txt'.format(root,
+                                                         guider, i.split('/guiding_config_')[-1].split('/')[0]))
+                                            for i in self.shifted_guiding_selections_file_list]
                 else:
                     guiding_files = self.guiding_selections_file_list
                     all_psf_files = [self.all_found_psfs_file] * len(guiding_files)
-                    center_pointing_file = os.path.join(out_dir, 'shifted_center_pointing_{}_G{}.txt'.format(root,
-                                                                                                                guider))
+                    center_pointing_list = [os.path.join(out_dir, 'out/', root,
+                                                        'center_pointing_{}_G{}.txt'.format(root, guider))]
 
                 # Load selected guiding_selections*.txt
                 if len(self.comboBox_guidingcommands.checkedItems()) == 0:
@@ -582,7 +586,7 @@ class MasterGui(QMainWindow):
                     segment_infile_list, guider, self.program_id, self.observation_num,
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
                     root=root, out_dir=out_dir, selected_segs_list=selected_segs_list,
-                    center_pointing_file=center_pointing_file,
+                    center_pointing_list=center_pointing_list,
                     master_gui_app=self.app, parameter_dialog=True,
                     dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
