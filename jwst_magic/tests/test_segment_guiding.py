@@ -646,7 +646,9 @@ def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_
     assert photometry_override_command == correct_command
 
 test_center_of_pointing_parameters = [([SEGMENT_INFILE], [SELECTED_SEGS2], [[840.0, 1345.0]]),
-                                      ([SHIFTED_INFILE], [SHIFTED_SEGS2], [[976.0, 801.0]])]
+                                      ([SHIFTED_INFILE], [SHIFTED_SEGS], [[976.0, 801.0]]),
+                                      ([SHIFTED_INFILE, SHIFTED_INFILE2], [SHIFTED_SEGS, SHIFTED_SEGS2],
+                                       [[976.0, 801.0], [973.0, 939.0]])]
 @pytest.mark.parametrize('infile, selected_segs_list, center_pointing', test_center_of_pointing_parameters)
 def test_center_of_pointing(test_directory, infile, selected_segs_list, center_pointing):
     """Test that center of pointing can be passed a list and passing a list
