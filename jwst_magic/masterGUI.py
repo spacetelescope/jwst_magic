@@ -541,7 +541,7 @@ class MasterGui(QMainWindow):
                 if self.radioButton_shifted.isChecked():
                     guiding_files = self.shifted_guiding_selections_file_list
                     all_psf_files = self.shifted_all_found_psfs_file_list
-                    center_pointing_list = [os.path.join(out_dir, 'out/', root, 'guiding_config_' + \
+                    center_pointing_files = [os.path.join(out_dir, 'out/', root, 'guiding_config_' + \
                                                          i.split('/guiding_config_')[-1].split('/')[0],
                                                          'shifted_center_pointing_{}_G{}_config{}.txt'.format(root,
                                                          guider, i.split('/guiding_config_')[-1].split('/')[0]))
@@ -549,8 +549,9 @@ class MasterGui(QMainWindow):
                 else:
                     guiding_files = self.guiding_selections_file_list
                     all_psf_files = [self.all_found_psfs_file] * len(guiding_files)
-                    center_pointing_list = [os.path.join(out_dir, 'out/', root,
-                                                        'center_pointing_{}_G{}.txt'.format(root, guider))]
+                    center_pointing_files = [os.path.join(out_dir, 'out/', root,
+                                             'center_pointing_{}_G{}.txt'.format(root, guider))] * \
+                                             len(guiding_files)
 
                 # Load selected guiding_selections*.txt
                 if len(self.comboBox_guidingcommands.checkedItems()) == 0:
@@ -565,10 +566,12 @@ class MasterGui(QMainWindow):
 
                 selected_segs_list = []
                 segment_infile_list = []
+                center_pointing_list = []
                 for file in combobox_filenames:
                     ind = np.where([file in filepath for filepath in guiding_files])[0][0]
                     selected_segs_list.append(guiding_files[ind])
                     segment_infile_list.append(all_psf_files[ind])
+                    center_pointing_list.append(center_pointing_files[ind])
 
                 # Verify that the all_found_psfs*.txt file(s) exist
                 if False in [os.path.exists(path) for path in segment_infile_list]:
