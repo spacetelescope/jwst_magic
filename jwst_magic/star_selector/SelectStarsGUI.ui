@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1498</width>
-    <height>980</height>
+    <width>1505</width>
+    <height>995</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1307,10 +1307,10 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
-             <item row="1" column="0" colspan="2">
+             <item row="1" column="0" colspan="3">
               <widget class="QTableWidget" name="tableWidget_selectedStars">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -1341,6 +1341,9 @@ p, li { white-space: pre-wrap; }
                </property>
                <attribute name="horizontalHeaderDefaultSectionSize">
                 <number>77</number>
+               </attribute>
+               <attribute name="horizontalHeaderStretchLastSection">
+                <bool>true</bool>
                </attribute>
                <row/>
                <column>
