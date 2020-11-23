@@ -108,8 +108,12 @@ class SegmentGuidingCalculator:
              'ra': '271d 05m 14.85s',  # RA of guide star (Allowed range: 0 - 360 degrees; flexible format)
              'dec': '-29:31:08.9',  # Dec of guide star (Allowed range: 0 - 360 degrees; flexible format)
              'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
-             'center_of_pointing': [0,0,0]}  # selected segment to guide on for each selection
-             Used for SOF Generation
+             'center_of_pointing': [0,0,0]}  # selected segment/[y,x] location to guide on for each selection
+            Note: The center_of_pointing parameter can be an int/[y,x] which will be applied to all
+            configs, or a list with a length matching the number of configs, made up of all the same
+            ints or [y,x] positions (unless its shifted data in which case the [y,x] positions may
+            differ based on the shift from the guide segment selection).
+            Used for SOF Generation
         selected_segs_list : list of str, optional
             List of filepath(s) to guiding_selections*.txt files with list of
             locations and countrates for the selected segments (guide and
@@ -1041,7 +1045,7 @@ def generate_segment_override_file(segment_infile_list, guider,
         of segment_infile_list, both are the length of the number of commands.
         If
     center_pointing_list : list, optional
-        List of file path(s) to the center_pointing*.txt or shfited_center_pointing*.txt
+        List of file path(s) to the center_pointing*.txt or shifted_center_pointing*.txt
         file (depending on if the user passed in the unshifted or shifted guiding
         selections file). The file contains the segment number or the (y,x) location
         of the center of pointing.
@@ -1053,7 +1057,11 @@ def generate_segment_override_file(segment_infile_list, guider,
              'ra': 30.,  # RA of guide star (Allowed range: 0 - 360 degrees)
              'dec': 50.,  # Dec of guide star (Allowed range: 0 - 360 degrees)
              'pa': 2.,  # position angle of guide star (Allowed range: 0 - 360 degrees)
-             'center_of_pointing': [0,0,0]}  # selected segment to guide on
+             'center_of_pointing': [0,0,0]}  # selected segment/[y,x] location to guide on
+        Note: The center_of_pointing parameter can be an int/[y,x] which will be applied to all
+        configs, or a list with a length matching the number of configs, made up of all the same
+        ints or [y,x] positions (unless its shifted data in which case the [y,x] positions may
+        differ based on the shift from the guide segment selection).
         Required if parameter_dialog=False
     threshold_factor : float, optional
         The factor by which countrates are multiplied to determine
