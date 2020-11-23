@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1488</width>
+    <width>1498</width>
     <height>980</height>
    </rect>
   </property>
@@ -804,7 +804,8 @@ colorbar limits</string>
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The table below shows the guiding commands in the order they were created. The order in which the orientations will be commanded can be altered using the up and down arrows next to the table. &lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;The center of the segment override pointing (i.e. the location that will match the guide star RA and Dec) can be either the center of the segment array or a single segment. It is set for all the guiding commands using the &amp;quot;Center of Override Pointing&amp;quot; parameters.&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The center of the segment override pointing (i.e. the location that will match the guide star RA and Dec) can be either the center of the segment array, a single segment, or an (X,Y) coordinate location and is set for all the guiding commands at once.&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="wordWrap">
@@ -1003,8 +1004,28 @@ p, li { white-space: pre-wrap; }
             <property name="title">
              <string>Center of Override Pointing</string>
             </property>
-            <layout class="QVBoxLayout" name="verticalLayout_19">
-             <item>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <item row="4" column="1">
+              <widget class="QLineEdit" name="lineEdit_xcoord">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="4">
+              <widget class="QLabel" name="label_2">
+               <property name="toolTip">
+                <string>Use the location of a designated segment as the pointing</string>
+               </property>
+               <property name="text">
+                <string>Use specific segment as center:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0" colspan="3">
               <widget class="QCheckBox" name="checkBox_meanCenter">
                <property name="minimumSize">
                 <size>
@@ -1016,25 +1037,14 @@ p, li { white-space: pre-wrap; }
                 <string>Use the mean position of all segments as the pointing</string>
                </property>
                <property name="text">
-                <string>Use Center of Segment Array
-(segNum = 0)</string>
+                <string>Use Center of Segment Array</string>
                </property>
                <property name="checked">
                 <bool>false</bool>
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QLabel" name="label_2">
-               <property name="toolTip">
-                <string>Use the location of a designated segment as the pointing</string>
-               </property>
-               <property name="text">
-                <string>Use specific segment as center:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
+             <item row="3" column="0" colspan="4">
               <widget class="QComboBox" name="comboBox_segmentCenter">
                <property name="toolTip">
                 <string>Use the location of a designated segment as the pointing</string>
@@ -1044,6 +1054,33 @@ p, li { white-space: pre-wrap; }
                  <string>-Select Segment-</string>
                 </property>
                </item>
+              </widget>
+             </item>
+             <item row="4" column="2">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>,</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QCheckBox" name="checkBox_pixelCenter">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the center of override pointing to be based on a location on the detector relative to the array. Mouse over the image and copy the cusor position over to the blank boxes next to this checkbox&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Pixel Location (X,Y)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="3">
+              <widget class="QLineEdit" name="lineEdit_ycoord">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>0</height>
+                </size>
+               </property>
               </widget>
              </item>
             </layout>
@@ -1263,7 +1300,7 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
-             <item row="1" column="0" alignment="Qt::AlignHCenter">
+             <item row="1" column="0" colspan="2">
               <widget class="QTableWidget" name="tableWidget_selectedStars">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1296,12 +1333,17 @@ p, li { white-space: pre-wrap; }
                 <number>5</number>
                </property>
                <attribute name="horizontalHeaderDefaultSectionSize">
-                <number>80</number>
+                <number>77</number>
                </attribute>
                <row/>
                <column>
                 <property name="text">
-                 <string>GS?</string>
+                 <string>GS</string>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>13</pointsize>
+                 </font>
                 </property>
                </column>
                <column>

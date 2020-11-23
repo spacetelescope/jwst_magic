@@ -54,7 +54,7 @@ from jwst_magic.utils import utils
 LOGGER = logging.getLogger(__name__)
 
 
-def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, crowded_field):
+def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold, shifted, crowded_field):
     """For a given dataset, rewrite the PRC and guiding_selections*.txt to select a
     new commanded guide star and reference stars
 
@@ -63,8 +63,8 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, cr
     inds_list : list
         List of configurations of segment indices indicating which
         segments to re-write as the guide and reference stars
-    segnum : int
-        Segment number for the chosen center of pointing
+    center_of_pointing : int
+        Segment number for the chosen center of pointing or [y,x] position
     guider : int
         Guider number (1 or 2)
     root : str
@@ -128,10 +128,11 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, cr
                                                      unshifted_all_rows['countrate'], 0,
                                                      inds=inds) for inds in inds_list]
 
-    if segnum is not None:
+    if center_of_pointing is not None:
         # Write out center of pointing information
         center_pointing_path = os.path.join(out_path, 'center_pointing_{}_G{}.txt'.format(root, guider))
-        utils.write_cols_to_file(center_pointing_path, labels=['segnum'], cols=[segnum], log=LOGGER)
+        utils.write_cols_to_file(center_pointing_path, labels=['center_of_pointing'], cols=[center_of_pointing],
+                                 log=LOGGER)
 
     # Write guiding selections file(s)
     current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_path)
@@ -158,8 +159,8 @@ def rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold, shifted, cr
         if shifted:
             fgs_im_fsw, guiding_selections_file_fsw, psf_center_file_fsw = buildfgssteps.shift_to_id_attitude(
                 fgs_im, root, guider, out_dir_fsw, guiding_selections_file=guiding_selections_file,
-                all_found_psfs_file=unshifted_all_psfs, psf_center_file=psf_center_file,
-                crowded_field=crowded_field, logger_passed=True)
+                all_found_psfs_file=unshifted_all_psfs, center_pointing_file=center_pointing_path,
+                psf_center_file=psf_center_file, crowded_field=crowded_field, logger_passed=True)
         else:
             fgs_im_fsw = fgs_im
             guiding_selections_file_fsw = guiding_selections_file

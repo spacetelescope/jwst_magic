@@ -4,6 +4,7 @@ buildfgssteps module.
 Authors
 -------
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -32,9 +33,11 @@ ROOT = "test_buildfgssteps"
 SEGMENT_INFILE_CMIMF = os.path.join(__location__, 'data', '{}_ALLpsfs.txt'.format(ROOT))
 SELECTED_SEGS_CMIMF_OLD = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
 SELECTED_SEGS_CMIMF = os.path.join(__location__, 'data', 'unshifted_guiding_selections_{}_G1_config1.txt'.format(ROOT))
-SELECTED_SEGS_MIMF = os.path.join(__location__, 'data/guiding_selections_nircam_data_1_mimf.txt')
-PSF_CENTER_MIMF = os.path.join(__location__, 'data/psf_center_test_buildfgssteps_G1.txt')
-ALL_PSFS_MIMF = os.path.join(__location__, 'data/all_found_psfs_buildfgssteps_G1.txt')
+SELECTED_SEGS_MIMF = os.path.join(__location__, 'data', 'guiding_selections_nircam_data_1_mimf.txt')
+PSF_CENTER_MIMF = os.path.join(__location__, 'data', 'psf_center_test_buildfgssteps_G1.txt')
+ALL_PSFS_MIMF = os.path.join(__location__, 'data', 'all_found_psfs_buildfgssteps_G1.txt')
+CENTER_POINTING_1 = os.path.join(__location__, 'data', 'center_pointing_{}_G1.txt'.format(ROOT))
+CENTER_POINTING_2 = os.path.join(__location__, 'data', 'center_pointing_{}_2_G1.txt'.format(ROOT))
 
 # PROGRAM_ID = 1141
 # OBSERVATION_NUM = 7
@@ -89,15 +92,15 @@ def open_image(image=FGS_CMIMF_IM):
 
 test_data = PARAMETRIZED_DATA['test_shift_to_id_attitude']
 shift_to_id_attitude_parameters = [
-    (SELECTED_SEGS_CMIMF_OLD, False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0]),
-    (SELECTED_SEGS_CMIMF, False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0]),
-    (SELECTED_SEGS_CMIMF, True, 1, test_data['guiding_selections_coords'][1], test_data['all_found_psfs_coords'][1]),
-    (SELECTED_SEGS_CMIMF, True, 2, test_data['guiding_selections_coords'][2], test_data['all_found_psfs_coords'][2])
+    (SELECTED_SEGS_CMIMF_OLD, False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0], CENTER_POINTING_1),
+    (SELECTED_SEGS_CMIMF, False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0], CENTER_POINTING_1),
+    (SELECTED_SEGS_CMIMF, True, 1, test_data['guiding_selections_coords'][1], test_data['all_found_psfs_coords'][1], CENTER_POINTING_2),
+    (SELECTED_SEGS_CMIMF, True, 2, test_data['guiding_selections_coords'][2], test_data['all_found_psfs_coords'][2], CENTER_POINTING_2)
 ]
-@pytest.mark.parametrize('guiding_selections, crowded_field, guider, guiding_selections_coords, all_found_psfs_coords',
-                         shift_to_id_attitude_parameters)
+@pytest.mark.parametrize('guiding_selections, crowded_field, guider, guiding_selections_coords, all_found_psfs_coords,'
+                         'center_pointing', shift_to_id_attitude_parameters)
 def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, crowded_field, guider,
-                              guiding_selections_coords, all_found_psfs_coords):
+                              guiding_selections_coords, all_found_psfs_coords, center_pointing):
 
     #Run the prep code that's in run_magic.py
     if 'guiding_config' in guiding_selections:
@@ -109,18 +112,21 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
     # Run main function to test
     fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
         open_image, ROOT, guider, out_dir_fsw, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
-        all_found_psfs_file=SEGMENT_INFILE_CMIMF, psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
+        all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=center_pointing,
+        psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
 
     # Define filenames
     file_root = '{}_G{}'.format(ROOT, guider)
     guiding_selections_file = os.path.join(out_dir_fsw, 'shifted_guiding_selections_{}.txt'.format(file_root))
     all_found_psfs_file = os.path.join(out_dir_fsw, 'shifted_all_found_psfs_{}.txt'.format(file_root))
     FGS_img = os.path.join(out_dir_fsw,  'FGS_imgs', 'shifted_' + file_root + '.fits')
+    center_pointing_file = os.path.join(out_dir_fsw, 'shifted_center_pointing_{}.txt'.format(file_root))
 
     # Check that the right files were put in the right place
     assert os.path.exists(FGS_img)
     assert os.path.exists(guiding_selections_file)
     assert os.path.exists(all_found_psfs_file)
+    assert os.path.exists(center_pointing_file)
 
     # Make sure the shifted guiding_selections*.txt is correct
     guiding_selections_cat = asc.read(guiding_selections_file)
@@ -131,6 +137,15 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
     all_found_psfs_cat = asc.read(all_found_psfs_file)
     coords = np.array([(x, y) for (x, y) in all_found_psfs_cat['x', 'y']])
     assert np.array_equal(coords, all_found_psfs_coords)
+
+    # Make sure the shifted center_pointing file is correct (if its a list, it's shifted, if it's not, its unchanged)
+    center_pointing_cat = asc.read(center_pointing_file, format='commented_header', delimiter=',')
+    label = center_pointing_cat.colnames[0]
+    center_pointing_cat_original = asc.read(center_pointing, format='commented_header', delimiter=',')
+    if isinstance(center_pointing_cat[label][0], str):
+        assert center_pointing_cat[label][0] != center_pointing_cat_original[label][0]
+    else:
+        assert center_pointing_cat[label][0] == center_pointing_cat_original[label][0]
 
     # Make sure the location of the PSFs in the image matches the all_found_psfs*.txt
     with fits.open(FGS_img) as hdulist:
@@ -164,7 +179,8 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
     # Run the code
     fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
         open_image, ROOT, guider, TEST_DIRECTORY, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
-        all_found_psfs_file=SEGMENT_INFILE_CMIMF, psf_center_file=None, crowded_field=False, logger_passed=True)
+        all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=CENTER_POINTING_1,
+        psf_center_file=None, crowded_field=False, logger_passed=True)
     BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
                         out_dir=TEST_DIRECTORY, shift_id_attitude=True)
 
