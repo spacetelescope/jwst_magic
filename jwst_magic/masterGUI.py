@@ -492,7 +492,7 @@ class MasterGui(QMainWindow):
                              'of the GUI.'.format(out_path))
 
             # Run the select stars GUI to determine the new orientation
-            inds_list, segnum = run_SelectStars(data, x, y, 20, guider,
+            inds_list, center_of_pointing = run_SelectStars(data, x, y, 20, guider,
                                                 out_dir=out_path,
                                                 print_output=False,
                                                 masterGUIapp=self.app)
@@ -504,7 +504,7 @@ class MasterGui(QMainWindow):
                                                                                  ', '.join([str(c) for c in ind[1:]])))
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold=threshold,
+            rewrite_prc.rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold=threshold,
                                     shifted=shift_id_attitude,
                                     crowded_field=crowded_field)
 

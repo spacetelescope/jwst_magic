@@ -148,8 +148,9 @@ sof_parameters = [
                   (0, [SHIFTED_SEGS, SHIFTED_SEGS2], [SHIFTED_INFILE, SHIFTED_INFILE2], test_data[6]), # no matching segs
                   (0, [SHIFTED_SEGS, SHIFTED_SEGS3], [SHIFTED_INFILE, SHIFTED_INFILE3], test_data[7]), # matching guide star
                  ]
-@pytest.mark.parametrize('seg_num, selected_segs, segment_infile, correct_command', sof_parameters)
-def test_generate_segment_override_file(test_directory, seg_num, selected_segs, segment_infile, correct_command):
+@pytest.mark.parametrize('center_of_pointing, selected_segs, segment_infile, correct_command', sof_parameters)
+def test_generate_segment_override_file(test_directory, center_of_pointing, selected_segs,
+                                        segment_infile, correct_command):
 
     guider = 1
 
@@ -159,7 +160,7 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'center_of_pointing': seg_num}
+                              'center_of_pointing': center_of_pointing}
 
     generate_segment_override_file(
         segment_infile, guider, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, root=ROOT,
@@ -168,7 +169,8 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
     )
 
     # Check to make sure the override file was created, and in the right place
-    segment_override_file = os.path.join(test_directory, '{}_gs_override_1141_7_1.txt'.format(datetime.now().strftime('%Y%m%d')))
+    segment_override_file = os.path.join(test_directory, '{}_gs_override_1141_7_1.txt'.format(
+        datetime.now().strftime('%Y%m%d')))
     assert os.path.isfile(segment_override_file)
 
     # # Check to make sure the command was written correctly
@@ -183,8 +185,8 @@ def test_generate_segment_override_file(test_directory, seg_num, selected_segs, 
 sof_valueerror_parameters = [(20, 1, 'out of range'),
                              ('zero', 2, 'must be a list of ints or lists'),
                              (0, 3, 'Invalid guider number')]
-@pytest.mark.parametrize('seg_num, guider, error_text', sof_valueerror_parameters)
-def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider, error_text):
+@pytest.mark.parametrize('center_of_pointing, guider, error_text', sof_valueerror_parameters)
+def test_segment_guiding_calculator_valueerrors(test_directory, center_of_pointing, guider, error_text):
     # Define the input file locations and parameters
     guide_star_params_dict = {'v2_boff': 0.1,
                               'v3_boff': 0.2,
@@ -192,7 +194,7 @@ def test_segment_guiding_calculator_valueerrors(test_directory, seg_num, guider,
                               'ra': 90.9708,
                               'dec': -67.3578,
                               'pa': 157.1234,
-                              'center_of_pointing': seg_num}
+                              'center_of_pointing': center_of_pointing}
 
     with pytest.raises(ValueError) as excinfo:
         generate_segment_override_file(

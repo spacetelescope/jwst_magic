@@ -173,14 +173,14 @@ class SegmentGuidingCalculator:
         # Ensure the provided segment ID is valid
         flat_v2_array = [val for l in self.v2_seg_array for val in l]
         segment_max = int(len(flat_v2_array) / self._num_infiles) # same number of founds psfs for each config
-        for seg_num in self.seg_num:
-            if isinstance(seg_num, int):
-                if (seg_num < 0) or (seg_num > segment_max):
-                    msg = 'Segment number {} out of range (0, {})'.format(seg_num, segment_max)
+        for center_of_pointing in self.center_of_pointing:
+            if isinstance(center_of_pointing, int):
+                if (center_of_pointing < 0) or (center_of_pointing > segment_max):
+                    msg = 'Segment number {} out of range (0, {})'.format(center_of_pointing, segment_max)
                     raise ValueError(msg)
-            elif not isinstance(seg_num, list):
+            elif not isinstance(center_of_pointing, list):
                 raise ValueError('Center of pointing {} must be a list of ints or lists; '
-                                 'cannot include {}'.format(self.seg_num, type(seg_num)))
+                                 'cannot include {}'.format(self.center_of_pointing, type(center_of_pointing)))
 
         # Determine the central V2/V3 point from the given segment ID
 
@@ -192,12 +192,14 @@ class SegmentGuidingCalculator:
         self.v2_aim, self.v3_aim = [], []
         self.x_idl_aim, self.y_idl_aim = [], []
 
-        for i, (seg_num, v2_seg_array, v3_seg_array) in enumerate(zip(self.seg_num, self.v2_seg_array, self.v3_seg_array)):
-            if isinstance(seg_num, list):
-                v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(seg_num[1], seg_num[0], self.fgs_num)
-            elif seg_num > 0:
-                v2_seg_n = v2_seg_array[seg_num - 1]
-                v3_seg_n = v3_seg_array[seg_num - 1]
+        for i, (center_of_pointing, v2_seg_array, v3_seg_array) in enumerate(zip(self.center_of_pointing,
+                                                                                 self.v2_seg_array, self.v3_seg_array)):
+            if isinstance(center_of_pointing, list):
+                v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(center_of_pointing[1], center_of_pointing[0],
+                                                                   self.fgs_num)
+            elif center_of_pointing > 0:
+                v2_seg_n = v2_seg_array[center_of_pointing - 1]
+                v3_seg_n = v3_seg_array[center_of_pointing - 1]
             # Otherwise, if the input segment ID was 0, set the V2/V3 ref point to
             # be the mean of all segments' locations
             else:
@@ -360,7 +362,7 @@ class SegmentGuidingCalculator:
                     V2/V3 Boresight offset: ({4}, {5}) arc-sec
                     Guide star RA & Dec: ({6}, {7}) degrees
                     Position angle: {8} degrees""".\
-                    format(self.fgs_num, self.v2_ref, self.v3_ref, self.seg_num,
+                    format(self.fgs_num, self.v2_ref, self.v3_ref, self.center_of_pointing,
                            self.v2_boff, self.v3_boff, self.ra, self.dec, self.pa)
                 self.log.info('Segment Guiding: ' + summary_output)
 
@@ -590,19 +592,19 @@ class SegmentGuidingCalculator:
         self.dec = gs_coord.dec.degree
 
         self.pa = float(guide_star_params_dict['pa'])
-        self.seg_num = guide_star_params_dict['center_of_pointing']
+        self.center_of_pointing = guide_star_params_dict['center_of_pointing']
 
-        # Seg_num information must match length of guiding selections list
-        if isinstance(self.seg_num, list):
-            if len(self.seg_num) != len(selected_segs_list):
-                if len(self.seg_num) == 1 and len(selected_segs_list) != 1:
-                    self.seg_num *= len(selected_segs_list)
+        # center_of_pointing information must match length of guiding selections list
+        if isinstance(self.center_of_pointing, list):
+            if len(self.center_of_pointing) != len(selected_segs_list):
+                if len(self.center_of_pointing) == 1 and len(selected_segs_list) != 1:
+                    self.center_of_pointing *= len(selected_segs_list)
                 else:
                     self.log.warning('Segment Guiding: Center of pointing information is of '
                                      'mismatched length to guiding selections length.')
-        elif isinstance(self.seg_num, int):
-            self.seg_num = [self.seg_num]
-            self.seg_num *= len(selected_segs_list)
+        elif isinstance(self.center_of_pointing, int):
+            self.center_of_pointing = [self.center_of_pointing]
+            self.center_of_pointing *= len(selected_segs_list)
 
     def parse_infile(self, segment_infile_list):
         """Get the segment positions and count rates from a file.
@@ -1101,10 +1103,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                         log.info(
                             'Segment Guiding: Pulling center of pointing information from {}'.format(center_pointing_file))
                         in_table = asc.read(center_pointing_file, format='commented_header', delimiter=',')
-                        if 'center_of_pointing' in in_table.colnames:
-                            col = 'center_of_pointing'
-                        else:
-                            col = 'segnum'
+                        col = 'center_of_pointing' if 'center_of_pointing' in in_table.colnames else 'segnum'
                         try:
                             cp_list.append(int(in_table[col][0]))
                         except ValueError:
@@ -1112,14 +1111,14 @@ def generate_segment_override_file(segment_infile_list, guider,
                     else:
                         log.warning(
                             "Segment Guiding: Couldn't find center of pointing file {}. Assuming the center of pointing "
-                            "is the mean of all segments (seg_num = 0)".format(center_pointing_file))
+                            "is the mean of all segments (center_of_pointing = 0)".format(center_pointing_file))
                 if len(cp_list) == 0:
                     # If none of the paths passed are valid
                     utils.write_cols_to_file(center_pointing_file, labels=['center_of_pointing'], cols=[0], log=log)
                     log.warning(
                         "Segment Guiding: Couldn't find center of pointing file {}. "
-                        "Assuming the center of pointing is the mean of all segments (seg_num = 0) and writing "
-                        "out the file.".format(center_pointing_file, root, guider))
+                        "Assuming the center of pointing is the mean of all segments (center_of_pointing = 0) and "
+                        "writing out the file.".format(center_pointing_file, root, guider))
                     cp_list == [0] * len(selected_segs_list)
 
                 if len(cp_list) == 1:

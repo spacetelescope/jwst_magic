@@ -1037,8 +1037,7 @@ p, li { white-space: pre-wrap; }
                 <string>Use the mean position of all segments as the pointing</string>
                </property>
                <property name="text">
-                <string>Use Center of Segment Array
-(segNum = 0)</string>
+                <string>Use Center of Segment Array</string>
                </property>
                <property name="checked">
                 <bool>false</bool>
