@@ -492,7 +492,7 @@ class MasterGui(QMainWindow):
                              'of the GUI.'.format(out_path))
 
             # Run the select stars GUI to determine the new orientation
-            inds_list, segnum = run_SelectStars(data, x, y, 20, guider,
+            inds_list, center_of_pointing = run_SelectStars(data, x, y, 20, guider,
                                                 out_dir=out_path,
                                                 print_output=False,
                                                 masterGUIapp=self.app)
@@ -504,7 +504,7 @@ class MasterGui(QMainWindow):
                                                                                  ', '.join([str(c) for c in ind[1:]])))
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds_list, segnum, guider, root, out_dir, threshold=threshold,
+            rewrite_prc.rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold=threshold,
                                     shifted=shift_id_attitude,
                                     crowded_field=crowded_field)
 
@@ -541,9 +541,17 @@ class MasterGui(QMainWindow):
                 if self.radioButton_shifted.isChecked():
                     guiding_files = self.shifted_guiding_selections_file_list
                     all_psf_files = self.shifted_all_found_psfs_file_list
+                    center_pointing_files = [os.path.join(out_dir, 'out/', root, 'guiding_config_' + \
+                                                         i.split('/guiding_config_')[-1].split('/')[0],
+                                                         'shifted_center_pointing_{}_G{}_config{}.txt'.format(root,
+                                                         guider, i.split('/guiding_config_')[-1].split('/')[0]))
+                                            for i in self.shifted_guiding_selections_file_list]
                 else:
                     guiding_files = self.guiding_selections_file_list
                     all_psf_files = [self.all_found_psfs_file] * len(guiding_files)
+                    center_pointing_files = [os.path.join(out_dir, 'out/', root,
+                                             'center_pointing_{}_G{}.txt'.format(root, guider))] * \
+                                             len(guiding_files)
 
                 # Load selected guiding_selections*.txt
                 if len(self.comboBox_guidingcommands.checkedItems()) == 0:
@@ -558,10 +566,12 @@ class MasterGui(QMainWindow):
 
                 selected_segs_list = []
                 segment_infile_list = []
+                center_pointing_list = []
                 for file in combobox_filenames:
                     ind = np.where([file in filepath for filepath in guiding_files])[0][0]
                     selected_segs_list.append(guiding_files[ind])
                     segment_infile_list.append(all_psf_files[ind])
+                    center_pointing_list.append(center_pointing_files[ind])
 
                 # Verify that the all_found_psfs*.txt file(s) exist
                 if False in [os.path.exists(path) for path in segment_infile_list]:
@@ -579,6 +589,7 @@ class MasterGui(QMainWindow):
                     segment_infile_list, guider, self.program_id, self.observation_num,
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
                     root=root, out_dir=out_dir, selected_segs_list=selected_segs_list,
+                    center_pointing_list=center_pointing_list,
                     master_gui_app=self.app, parameter_dialog=True,
                     dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
@@ -1234,6 +1245,9 @@ class MasterGui(QMainWindow):
                 LOGGER.warning('Master GUI: No guiding_selections and/or all_found_psf files found. This may be okay '
                                'depending on the situation (e.g. when making a POF).')
 
+                # Clear the guiding selections combo box
+                self.comboBox_guidingcommands.clear()
+
                 # Clear and reset 0th index in shifted combo box
                 self.comboBox_showcommandsshifted.blockSignals(True)
                 self.comboBox_showcommandsshifted.clear()
@@ -1275,6 +1289,9 @@ class MasterGui(QMainWindow):
                     LOGGER.warning(
                         'Master GUI: Missing guiding_selections and/or all_found_psf files. This may be okay depending '
                         'on the situation (e.g. when making a POF).')
+
+                    # Clear the guiding selections combo box
+                    self.comboBox_guidingcommands.clear()
 
                     # Clear and reset 0th index in shifted combo box
                     self.comboBox_showcommandsshifted.blockSignals(True)

@@ -4,6 +4,7 @@ select_psfs module.
 Authors
 -------
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -66,7 +67,7 @@ select_psfs_with_file_parameters = [([SELECTED_SEGS], [1]), ([SELECTED_SEGS, SEL
 @pytest.mark.parametrize('guiding_selection_file, expected_configs', select_psfs_with_file_parameters)
 def test_select_psfs_with_file(test_directory, guiding_selection_file, expected_configs):
     # Run code
-    guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
+    guiding_selections_path_list, all_found_psfs_path, _, _ = select_psfs(
         CONVERTED_NIRCAM_IM_GA, ROOT, 2, guiding_selections_file_list=guiding_selection_file,
         out_dir=__location__
     )
@@ -97,7 +98,7 @@ select_psfs_without_file_parameters = [(CONVERTED_NIRCAM_IM_GA, 'default', 21, t
                                        ]
 @pytest.mark.parametrize('in_data, smooth, n_psfs, correct_all_found_psfs_txt', select_psfs_without_file_parameters)
 def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, correct_all_found_psfs_txt):
-    guiding_selections_path_list, all_found_psfs_path, psf_center_path = select_psfs(
+    guiding_selections_path_list, all_found_psfs_path, center_pointing_path, psf_center_path = select_psfs(
         in_data, ROOT, 2, smoothing=smooth, testing=True,
         out_dir=__location__
     )
@@ -106,6 +107,7 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
     assert len(guiding_selections_path_list) == 1
     assert os.path.exists(guiding_selections_path_list[0]), 'unshifted_guiding_selections_test_select_psfs_G2.txt not generated.'
     assert os.path.exists(all_found_psfs_path), 'unshifted_all_found_psfs_test_select_psfs_G2.txt not generated.'
+    assert os.path.exists(center_pointing_path), 'center_pointing_test_select_psfs_G2.txt not generated.'
     if smooth is 'low':
         assert os.path.exists(psf_center_path), 'unshifted_psf_center_test_select_psfs_G2.txt not generated.'
 
@@ -159,7 +161,7 @@ def test_yaml_file(cols_order, cols_list, all_cols):
         yaml.dump(final_data, f, default_flow_style=False, allow_unicode=True)
 
     # Simulate loading these 11 configs via a file
-    guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
+    guiding_selections_path_list, all_found_psfs_path, _, _ = select_psfs(
         CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file_list=guiding_selections_path_list,
         out_dir=__location__
     )
@@ -174,7 +176,7 @@ def test_yaml_file(cols_order, cols_list, all_cols):
     assert list(data_loaded.keys()) ==  ['guiding_config_{}'.format(num+1) for num in range(testing_num)]
 
     # Simulate re-loading the same config again + 1 more new config
-    guiding_selections_path_list, all_found_psfs_path, _ = select_psfs(
+    guiding_selections_path_list, all_found_psfs_path, _, _ = select_psfs(
         CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file_list=[guiding_selections_path_list[0], SELECTED_SEGS],
         out_dir=__location__
     )

@@ -384,7 +384,7 @@ class StarSelectorWindow(QDialog):
 
         # Initialize multiple guiding selections attributes
         self.n_orientations = 0
-        self.segNum = None
+        self.center_of_pointing = None
         self.center = None
 
         # Initialize dialog object
@@ -514,6 +514,9 @@ class StarSelectorWindow(QDialog):
 
         # Override center widgets
         self.checkBox_meanCenter.toggled.connect(self.update_center_mean)
+        self.checkBox_pixelCenter.toggled.connect(self.update_center_pixel)
+        self.lineEdit_xcoord.editingFinished.connect(self.update_center_pixel)
+        self.lineEdit_ycoord.editingFinished.connect(self.update_center_pixel)
         self.comboBox_segmentCenter.activated.connect(self.update_center_seg)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1083,12 +1086,13 @@ class StarSelectorWindow(QDialog):
         """
         # Uncheck "use segment center" box
         self.checkBox_meanCenter.setChecked(False)
+        self.checkBox_pixelCenter.setChecked(False)
 
         # Remove old center
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
             self.center = None
-        self.segNum = None
+        self.center_of_pointing = None
 
         if self.comboBox_segmentCenter.currentText() != "-Select Segment-":
             # Replace with new center
@@ -1098,7 +1102,7 @@ class StarSelectorWindow(QDialog):
                                                 alpha=0.8, mfc='red',
                                                 mec='red', mew=5, lw=0)
 
-            self.segNum = int(self.comboBox_segmentCenter.currentText())
+            self.center_of_pointing = int(self.comboBox_segmentCenter.currentText())
 
         self.canvas.draw()
 
@@ -1109,10 +1113,14 @@ class StarSelectorWindow(QDialog):
         if self.center:
             self.canvas.axes.lines.remove(self.center[0])
             self.center = None
-        self.segNum = None
+        self.center_of_pointing = None
 
         if use_mean_as_center:
+            # Reset other options
             self.comboBox_segmentCenter.setCurrentIndex(0)
+            self.checkBox_pixelCenter.setChecked(False)
+            self.lineEdit_xcoord.setEnabled(False)
+            self.lineEdit_ycoord.setEnabled(False)
 
             # Calculate center of array
             x_mean = np.average(self.x)
@@ -1122,7 +1130,44 @@ class StarSelectorWindow(QDialog):
             self.center = self.canvas.axes.plot(x_mean, y_mean, 'x', ms=20, alpha=0.8,
                                                 mfc='red', mec='red', mew=5, lw=0)
 
-            self.segNum = 0
+            self.center_of_pointing = 0
+
+        self.canvas.draw()
+
+    def update_center_pixel(self):
+        """Use the provided pixel location as the pointing center
+        """
+        # Enable line edits
+        if self.checkBox_pixelCenter.isChecked():
+            self.lineEdit_xcoord.setEnabled(True)
+            self.lineEdit_ycoord.setEnabled(True)
+        else:
+            self.lineEdit_xcoord.setEnabled(False)
+            self.lineEdit_ycoord.setEnabled(False)
+            return
+
+        # Remove old center
+        if self.center:
+            self.canvas.axes.lines.remove(self.center[0])
+            self.center = None
+        self.center_of_pointing = None
+
+        # Reset other options
+        self.comboBox_segmentCenter.setCurrentIndex(0)
+        self.checkBox_meanCenter.setChecked(False)
+
+        # Read in coordinates
+        x_coord = self.lineEdit_xcoord.text()
+        y_coord = self.lineEdit_ycoord.text()
+
+        if y_coord != '' and x_coord != '':
+            x_coord = float(x_coord)
+            y_coord = float(y_coord)
+
+            # Plot mean location of array on canvas
+            self.center = self.canvas.axes.plot(x_coord, y_coord, 'x', ms=20, alpha=0.8,
+                                                mfc='red', mec='red', mew=5, lw=0)
+            self.center_of_pointing = [y_coord, x_coord]
 
         self.canvas.draw()
 
@@ -1133,15 +1178,15 @@ class StarSelectorWindow(QDialog):
         self.answer = True
 
         # If the center segment number hasn't been set, don't quit.
-        if self.segNum is None:
-            no_segNum_selected_dialog = QMessageBox()
-            no_segNum_selected_dialog.setText('No center segment number' + ' ' * 50)
-            no_segNum_selected_dialog.setInformativeText(
-                'The center of override pointing (segNum) has not been defined.'
+        if self.center_of_pointing is None:
+            no_cp_selected_dialog = QMessageBox()
+            no_cp_selected_dialog.setText('No center segment number' + ' ' * 50)
+            no_cp_selected_dialog.setInformativeText(
+                'The center of override pointing (center_of_pointing) has not been defined.'
                 ' Please define before quitting.'
             )
-            no_segNum_selected_dialog.setStandardButtons(QMessageBox.Ok)
-            no_segNum_selected_dialog.exec()
+            no_cp_selected_dialog.setStandardButtons(QMessageBox.Ok)
+            no_cp_selected_dialog.exec()
             return
 
         # If the user selected stars but didn't explicitly save them as a
@@ -1183,7 +1228,7 @@ class StarSelectorWindow(QDialog):
         self.inds = []
         self.n_orientations = 0
         self.tableWidget_commands.clear()
-        self.segNum = None
+        self.center_of_pointing = None
 
         # Close the wss dialog window if it's still open
         try:
@@ -1455,7 +1500,7 @@ def run_SelectStars(data, x, y, dist, guider, out_dir, print_output=True, master
         selected_indices = [int(s)-1 for s in orientation.split(', ')]
         inds.append(selected_indices)
     # Save index of center segment (pointing)
-    segNum = window.segNum
+    center_of_pointing = window.center_of_pointing
 
     # Save inds to file for checking on future star selections
     # ind numbers in yaml will match what is seen in the GUI, not what's in inds variable
@@ -1475,4 +1520,4 @@ def run_SelectStars(data, x, y, dist, guider, out_dir, print_output=True, master
         with io.open(out_yaml, append_write, encoding="utf-8") as f:
             yaml.dump(data_yaml, f, default_flow_style=False, allow_unicode=True)
 
-    return inds, segNum
+    return inds, center_of_pointing

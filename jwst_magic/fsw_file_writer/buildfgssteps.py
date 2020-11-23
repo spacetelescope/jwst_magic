@@ -526,8 +526,8 @@ def create_im_subarray(image, xcoord, ycoord, imgsize, show_fig=False):
 
 
 def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
-                         all_found_psfs_file, psf_center_file=None, crowded_field=False,
-                         logger_passed=False):
+                         all_found_psfs_file, center_pointing_file, psf_center_file=None,
+                         crowded_field=False, logger_passed=False):
     """Shift the FGS image such that the guide star is at the ID
     attitude. Rewrite the FGS FITS file, guiding_selections, and all_found_psfs
     catalog files for this shifted case. (Rename old versions of those files
@@ -547,6 +547,8 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
         Path to existing unshifted_guiding_selections_{root}_G{guider}.txt
     all_found_psfs_file : str
         Path to existing unshifted_gall_found_psfs_{root}_G{guider}.txt
+    center_pointing_file : str
+        Path to existing center_pointing_{root}_G{guider}.txt
     psf_center_file : str, optional
         Path to existing unshifted_psf_center_{root}_G{guider}.txt
         center psf file
@@ -667,8 +669,28 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
                              cols=all_cols,
                              log=LOGGER)
 
+    # 4) Write new shifted center_pointing*.txt
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    center_pointing_cat = asc.read(center_pointing_file, format='commented_header', delimiter=',')
 
-    # 4) Write new shifted psf_center*.txt
+    shifted_center_pointing_cat = center_pointing_cat.copy()
+    label = center_pointing_cat.colnames[0]
+    if isinstance(shifted_center_pointing_cat[label][0], str):
+        y, x = [float(i) for i in shifted_center_pointing_cat[label][0].split(' ')]
+        shifted_center_pointing_cat = [y+dy, x+dx]
+    else:
+        shifted_center_pointing_cat = shifted_center_pointing_cat[label][0]
+
+    shifted_center_pointing = os.path.join(out_dir, 'shifted_center_pointing_{}.txt'.format(file_root))
+
+    # Write new center_pointing*.txt
+    utils.write_cols_to_file(shifted_center_pointing,
+                             labels=[label],
+                             cols=[shifted_center_pointing_cat],
+                             log=LOGGER)
+
+
+    # 5) Write new shifted psf_center*.txt
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if psf_center_file is not None:
         psf_center_cat = asc.read(psf_center_file)
@@ -687,7 +709,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
                                  log=LOGGER)
 
 
-    # 5) Rewrite the shifted FGS image and save old file as _unshifted.fits
+    # 6) Rewrite the shifted FGS image and save old file as _unshifted.fits
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Load header file
     header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
