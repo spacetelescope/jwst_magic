@@ -257,7 +257,7 @@ class MasterGui(QMainWindow):
         self.textEdit_out.installEventFilter(self)
         self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
-        # Image convertor widgets
+        # Image converter widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
         self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
         self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
@@ -265,6 +265,9 @@ class MasterGui(QMainWindow):
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
         self.comboBox_regfileStarSelector.activated.connect(self.on_combobox_change)
+
+        # FSW File writer widgets
+        self.groupBox_fileWriter.toggled.connect(self.update_groupBox_fileWriter)
 
         # Segment guiding widgets
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
@@ -628,6 +631,16 @@ class MasterGui(QMainWindow):
 
             # Update converted image preview
             self.update_filepreview(new_guiding_selections=True)
+
+    def update_groupBox_fileWriter(self):
+        """Enable/disable items in FSW group box"""
+        if self.sender() == self.groupBox_fileWriter:
+            if self.checkBox_id_attitude.isChecked() and self.groupBox_fileWriter.isChecked():
+                self.radioButton_nominal_id_attitude.setEnabled(True)
+                self.radioButton_crowded_id_attitude.setEnabled(True)
+            else:
+                self.radioButton_nominal_id_attitude.setEnabled(False)
+                self.radioButton_crowded_id_attitude.setEnabled(False)
 
     def on_change_jitter(self):
         """If the coarse pointing slider or text box controlling the
