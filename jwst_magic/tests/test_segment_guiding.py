@@ -143,8 +143,8 @@ sof_parameters = [
                   ([4], [SELECTED_SEGS], [SEGMENT_INFILE], test_data[1]),
                   ([0,0], [SELECTED_SEGS, SELECTED_SEGS2], [SEGMENT_INFILE, SEGMENT_INFILE], test_data[2]), # no matching segs
                   (0, [SELECTED_SEGS, SELECTED_SEGS3], [SEGMENT_INFILE, SEGMENT_INFILE], test_data[3]), # 2 matching segs
-                  (0, np.array([[1, 12, 6]]), [SEGMENT_INFILE], test_data[4]),
-                  (0, np.array([[1, 2, 3], [4, 1, 18, 12, 2]]), [SEGMENT_INFILE, SEGMENT_INFILE], test_data[5]),
+                  (0, np.array([[1, 12, 6]], dtype=object), [SEGMENT_INFILE], test_data[4]),
+                  (0, np.array([[1, 2, 3], [4, 1, 18, 12, 2]], dtype=object), [SEGMENT_INFILE, SEGMENT_INFILE], test_data[5]),
                   (0, [SHIFTED_SEGS, SHIFTED_SEGS2], [SHIFTED_INFILE, SHIFTED_INFILE2], test_data[6]), # no matching segs
                   (0, [SHIFTED_SEGS, SHIFTED_SEGS3], [SHIFTED_INFILE, SHIFTED_INFILE3], test_data[7]), # matching guide star
                  ]
@@ -263,7 +263,8 @@ def test_segment_override_command_out_of_fov(test_directory):
 
     # Check with phony attitude matrix
     with pytest.raises(ValueError) as excinfo:
-        sg.check_segments_inside_fov(attitude, sg.x_det_segs[0], sg.y_det_segs[0], sg.seg_id_array[0], sg.seg_ra[0], sg.seg_dec[0])
+        sg.check_segments_inside_fov(attitude, sg.x_det_segs[0], sg.y_det_segs[0],
+                                     sg.seg_id_array[0], sg.seg_ra[0], sg.seg_dec[0])
     assert 'Incorrect segment guiding calculations' in str(excinfo.value)
 
     # # Check with phony X/Y locations between -5000 and 5000
@@ -367,7 +368,6 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     if countrate_uncertainty_factor is not None:
         segment_guiding_dialog.doubleSpinBox_countrateUncertaintyFactor.setValue(countrate_uncertainty_factor)
 
-
     # Schedule press of "Ok" button
     ok_button = segment_guiding_dialog.buttonBox.button(QDialogButtonBox.Ok)
     QtCore.QTimer.singleShot(0, ok_button.clicked)
@@ -432,7 +432,7 @@ def test_write_override_report(test_directory):
                               'center_of_pointing': 0}
 
     # Multiple commands - so multiple segment infiles
-    selected_segs = np.array([[1, 2, 3], [4, 1, 18, 12, 2]])
+    selected_segs = np.array([[1, 2, 3], [4, 1, 18, 12, 2]], dtype=object)
     segment_infile = [SEGMENT_INFILE, SEGMENT_INFILE]
 
     generate_segment_override_file(

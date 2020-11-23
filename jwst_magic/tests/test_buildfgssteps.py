@@ -216,7 +216,7 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
                 '{} CDS counts out of expected range.'.format(step)
 
         # Strips
-        if step is 'ID':
+        if step == 'ID':
             assert abs(correct_data_dict['strips'][0] - np.min(BFS.strips)) < assertion_range, \
                 'ID strips counts out of expected range.'
             assert abs(correct_data_dict['strips'][1] - np.max(BFS.strips)) < assertion_range, \
