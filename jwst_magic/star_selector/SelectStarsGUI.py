@@ -92,6 +92,8 @@ PACKAGE_PATH = os.path.split(__location__)[0]
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 WSS_NUMBERS_G1 = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider1.png')
 WSS_NUMBERS_G2 = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider2.png')
+WSS_NUMBERS_G1_INVERTED = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider1_inverted.png')
+WSS_NUMBERS_G2_INVERTED = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider2_inverted.png')
 
 
 class StarClickerMatplotlibCanvas(FigureCanvas):
@@ -493,7 +495,8 @@ class StarSelectorWindow(QDialog):
         self.pushButton_cropToData.clicked.connect(self.update_textboxes)
 
         # WSS naming widget
-        self.checkBox_wss_numbers.toggled.connect(self.show_wss_dialog)
+        self.checkBox_wss_numbers.clicked.connect(self.show_wss_dialog)
+        self.checkBox_wss_numbers_inverted.clicked.connect(self.show_wss_dialog)
 
         # Star selection widgets
         self.pushButton_makeGuideStar.clicked.connect(self.set_guidestar)
@@ -855,10 +858,37 @@ class StarSelectorWindow(QDialog):
 
     def show_wss_dialog(self):
         """ Show/Close pop up of image that details WSS naming method """
-        if self.checkBox_wss_numbers.isChecked():
+        # Define values and uncheck/close an existing pop-up
+        if self.sender() == self.checkBox_wss_numbers_inverted and self.checkBox_wss_numbers_inverted.isChecked():
+            title = 'WSS Naming Schema in FGS Raw Frame - Inverted Array'
+            if self.guider == 1:
+                image = WSS_NUMBERS_G1_INVERTED
+            else:
+                image = WSS_NUMBERS_G2_INVERTED
+
+            if self.checkBox_wss_numbers.isChecked():
+                self.checkBox_wss_numbers.setChecked(False)
+                try:
+                    self.wss_popup.close()
+                except AttributeError:
+                    pass
+        elif self.sender() == self.checkBox_wss_numbers and self.checkBox_wss_numbers.isChecked():
+            title = 'WSS Naming Schema in FGS Raw Frame'
+            if self.guider == 1:
+                image = WSS_NUMBERS_G1
+            else:
+                image = WSS_NUMBERS_G2
+            if self.checkBox_wss_numbers_inverted.isChecked():
+                self.checkBox_wss_numbers_inverted.setChecked(False)
+                try:
+                    self.wss_popup.close()
+                except AttributeError:
+                    pass
+
+        if self.checkBox_wss_numbers.isChecked() or self.checkBox_wss_numbers_inverted.isChecked():
             # Create dialog object
             self.wss_popup = QDialog()
-            self.wss_popup.setWindowTitle('WSS Naming Schema in FGS Raw Frame')
+            self.wss_popup.setWindowTitle(title)
             self.wss_popup.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint |
                                           QtCore.Qt.WindowStaysOnTopHint | Qt.Tool)
             self.wss_popup.setWindowModality(Qt.NonModal)
@@ -867,12 +897,7 @@ class StarSelectorWindow(QDialog):
             layout = QGridLayout()
             layout.setContentsMargins(0, 0, 0, 0)
             image_label = QLabel()
-            if self.guider == 1:
-                image_label.setPixmap(
-                    QPixmap(WSS_NUMBERS_G1).scaled(550, 550, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            else:
-                image_label.setPixmap(
-                    QPixmap(WSS_NUMBERS_G2).scaled(550, 550, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            image_label.setPixmap(QPixmap(image).scaled(550, 550, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             image_label.setFixedSize(550, 550)
             layout.addWidget(image_label, 0, 0)
             self.wss_popup.setLayout(layout)
