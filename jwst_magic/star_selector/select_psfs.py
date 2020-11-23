@@ -840,7 +840,7 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
     if not testing and not choose_center:
         gui_data = data.copy()
         gui_data[data == 0] = 1  # Alter null pixel values for LogNorm imshow
-        inds_list, segnum = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist, guider,
+        inds_list, center_of_pointing = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist, guider,
                                                            out_dir=out_dir,
                                                            print_output=False,
                                                            masterGUIapp=masterGUIapp)
@@ -854,13 +854,13 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
     # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF, e.g. MIMF)
     elif choose_center:
         inds_list = [[0]]
-        segnum = 0
+        center_of_pointing = 0
 
     # If in testing mode, just make a random list of indices
     else:
         # Make random list of inds
         n_select = min(11, num_psfs)
-        segnum = 0
+        center_of_pointing = 0
         LOGGER.info('Star Selection: Testing mode; selecting {} PSFs at random.'.format(n_select))
         inds_list = [random.sample(range(num_psfs), n_select)] # a single guiding config
 
@@ -877,7 +877,7 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
                                              inds=range(len(x)))
     cols_list = [create_cols_for_coords_counts(x, y, countrate, val, inds=inds) for inds in inds_list]
 
-    return cols_list, coords, nref_list, all_cols, segnum
+    return cols_list, coords, nref_list, all_cols, center_of_pointing
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -990,7 +990,7 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
 
             psf_center_path = copy_psfs_files(guiding_selections_file_list, 'psf_center', root, guider, out_dir)
 
-            segnum = None
+            center_of_pointing = None
             center_pointing_path = copy_psfs_files(guiding_selections_file_list, 'center_pointing', root, guider, out_dir)
 
             # Determine if the guiding file loaded already exists in the right dir - no need for a new config #
@@ -1000,13 +1000,13 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
         else:
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
-            cols_list, all_coords, nref_list, all_cols, segnum = manual_star_selection(data,
-                                                                 smoothing,
-                                                                 guider,
-                                                                 out_dir,
-                                                                 choose_center,
-                                                                 testing,
-                                                                 masterGUIapp)
+            cols_list, all_coords, nref_list, all_cols, center_of_pointing = manual_star_selection(data,
+                                                                                                   smoothing,
+                                                                                                   guider,
+                                                                                                   out_dir,
+                                                                                                   choose_center,
+                                                                                                   testing,
+                                                                                                   masterGUIapp)
             all_found_psfs_path = None
             psf_center_path = None
             old_configs = [False] * len(cols_list)
@@ -1022,10 +1022,11 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
                                      labels=['label', 'y', 'x', 'countrate'],
                                      cols=all_cols, log=LOGGER)
 
-        if segnum is not None:
+        if center_of_pointing is not None:
             # Write out center of pointing information
             center_pointing_path = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
-            utils.write_cols_to_file(center_pointing_path, labels=['center_of_pointing'], cols=[segnum], log=LOGGER)
+            utils.write_cols_to_file(center_pointing_path, labels=['center_of_pointing'], cols=[center_of_pointing],
+                                     log=LOGGER)
 
         # Determine config numbers for selections (may re-use old config if loading a file from this out_dir/root)
         new_config_numbers = []
