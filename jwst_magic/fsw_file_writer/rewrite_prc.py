@@ -64,7 +64,7 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
         List of configurations of segment indices indicating which
         segments to re-write as the guide and reference stars
     center_of_pointing : int
-        Segment number for the chosen center of pointing  or (x,y) position
+        Segment number for the chosen center of pointing or [y,x] position
     guider : int
         Guider number (1 or 2)
     root : str
