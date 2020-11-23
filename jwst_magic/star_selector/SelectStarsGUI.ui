@@ -107,7 +107,14 @@
              <item>
               <widget class="QCheckBox" name="checkBox_wss_numbers">
                <property name="text">
-                <string>Show WSS Numbers Guide</string>
+                <string>Show WSS Numbers</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="checkBox_wss_numbers_inverted">
+               <property name="text">
+                <string>Show WSS Numbers - Inverted Array</string>
                </property>
               </widget>
              </item>
