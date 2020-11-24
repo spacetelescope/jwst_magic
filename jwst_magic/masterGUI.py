@@ -414,6 +414,9 @@ class MasterGui(QMainWindow):
         bkgd_stars = self.bkgd_stars
         itm = self.itm
 
+        if normalize and norm_value == '':
+            raise ValueError('Image Normalization box checked, but no value given.')
+
         # Handle the case where we want to use a pre-existing converted image
         pre_existing_im = self.checkBox_useConvertedImage.isChecked() and \
                           convert_im and \
