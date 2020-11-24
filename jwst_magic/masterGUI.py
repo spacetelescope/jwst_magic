@@ -1633,8 +1633,6 @@ class MasterGui(QMainWindow):
 
             # Update guiding_selections*.txt paths in GUI
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list] and len(self.guiding_selections_file_list) != 0:
-                #self.update_regfile_starselector_combobox(self.guiding_selections_file_list)
-                self.comboBox_regfileStarSelector.clear()
                 if new_guiding_selections:
                     new_selections = self.guiding_selections_file_list
                     self.update_guiding_selections(new_selections=new_selections)
