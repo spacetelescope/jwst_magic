@@ -699,7 +699,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
         shifted_psf_center_cat['x'] += dx
         shifted_psf_center_cat['y'] += dy
 
-        shifted_psf_center = os.path.join(out_dir, 'shifted_psf_center_{}_G{}.txt'.format(file_root, guider))
+        shifted_psf_center = os.path.join(out_dir, 'shifted_psf_center_{}.txt'.format(file_root))
         psf_center_file = shifted_psf_center
 
         # Write new psf_center*.txts
