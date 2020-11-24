@@ -734,7 +734,7 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file_l
                 # Overwrite the guiding_selections_file_list with the path to the matching config
                 repeated_file = glob.glob(os.path.join(out_dir, key, "unshifted_guiding_selections*.txt"))[0]
                 guiding_selections_file_list[i] = repeated_file
-                LOGGER.info('Guiding selections from file {} match the selections already made and stored in in {}/. '
+                LOGGER.warning('Guiding selections from file {} match the selections already made and stored in {}/. '
                             'This file will not be used.'.format(file, key))
                 pass
 

@@ -921,7 +921,7 @@ class StarSelectorWindow(QDialog):
     # MULTIPLE GUIDING SELECTIONS WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def check_for_duplicate_orientations(self):
+    def check_for_duplicate_orientations(self, inds):
         """Check if star command has already been saved out
         in a previous guiding selections file
         """
@@ -939,8 +939,8 @@ class StarSelectorWindow(QDialog):
             data_loaded = {key: val for key, val in data_loaded.items() if val != []}
 
             # Pull chosen values
-            chosen_gs = self.inds[0] + 1
-            chosen_ref = [i+1 for i in self.inds[1:]]
+            chosen_gs = inds[0]
+            chosen_ref = inds[1:]
 
             # Pull keys where guide star matches
             key_matching_gs = [key for key, value in data_loaded.items() if value[0] == chosen_gs]
@@ -986,7 +986,7 @@ class StarSelectorWindow(QDialog):
             no_stars_selected_dialog.exec()
             return
 
-        if self.check_for_duplicate_orientations():
+        if self.check_for_duplicate_orientations([i+1 for i in self.inds]):
             return
 
         if not self.tableWidget_commands.isEnabled():
@@ -1036,6 +1036,10 @@ class StarSelectorWindow(QDialog):
         # If the guiding_selections*.txt doesn't match the all_found_psfs*.txt locations,
         # don't try to load anything.
         if not selected_indices:
+            return
+
+        # Check if indices already exist in root dir
+        if self.check_for_duplicate_orientations(selected_indices):
             return
 
         # Enable table if not already done
