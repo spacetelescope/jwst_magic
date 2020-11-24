@@ -1073,7 +1073,7 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
                                                 masterGUIapp=masterGUIapp)[0]
 
             LOGGER.info(
-                "Star Selection: PSF center information {} vs Guiding knot information {}".format(cols_center[0], cols))
+                "Star Selection: PSF center y,x,cr = {} vs Guiding knot y,x,cr = {}".format(cols_center[0], cols[0]))
             psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
             utils.write_cols_to_file(psf_center_path,
                                      labels=['y', 'x', 'countrate'],
