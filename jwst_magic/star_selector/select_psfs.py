@@ -164,7 +164,7 @@ def choose_threshold(smoothed_data, gauss_sigma):
     ax1.imshow(smoothed_data, cmap='bone', interpolation='nearest',
                clim=(0.1, 100), norm=LogNorm())
     ax1.scatter(sources_std['x_peak'], sources_std['y_peak'], c='r', marker='+')
-    ax1.set_title('Threshold = 3$\sigma$ ({} sources found)'.format(len(sources_std)))
+    ax1.set_title('Threshold = 3 sigma ({} sources found)'.format(len(sources_std)))
 
     ax2.imshow(smoothed_data, cmap='bone', interpolation='nearest',
                clim=(0.1, 100), norm=LogNorm())
@@ -734,7 +734,7 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file_l
                 # Overwrite the guiding_selections_file_list with the path to the matching config
                 repeated_file = glob.glob(os.path.join(out_dir, key, "unshifted_guiding_selections*.txt"))[0]
                 guiding_selections_file_list[i] = repeated_file
-                LOGGER.info('Guiding selections from file {} match the selections already made and stored in in {}/. '
+                LOGGER.warning('Guiding selections from file {} match the selections already made and stored in {}/. '
                             'This file will not be used.'.format(file, key))
                 pass
 
@@ -1073,7 +1073,7 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
                                                 masterGUIapp=masterGUIapp)[0]
 
             LOGGER.info(
-                "Star Selection: PSF center information {} vs Guiding knot information {}".format(cols_center[0], cols))
+                "Star Selection: PSF center y,x,cr = {} vs Guiding knot y,x,cr = {}".format(cols_center[0], cols[0]))
             psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
             utils.write_cols_to_file(psf_center_path,
                                      labels=['y', 'x', 'countrate'],

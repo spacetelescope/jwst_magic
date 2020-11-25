@@ -561,7 +561,7 @@ class SegmentGuidingCalculator:
         seg_pointings = [(seg_ra, seg_dec) for seg_ra, seg_dec in zip(seg_ra, seg_dec)]
         segs_in_fov = fov_path.contains_points(seg_pointings)
         if not segs_in_fov.all():
-            segments_outside = np.where(segs_in_fov is False)[0]
+            segments_outside = [i for i, x in enumerate(segs_in_fov) if not x]
             raise ValueError(
                 'Incorrect segment guiding calculations. Segment(s) {} is outside of the FGS{} FOV. '
                 'Cannot generate segment override file that will not fail.'
@@ -1203,11 +1203,11 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
     root : str
         Name used to generate output folder and output filenames. If not
         specified, will be derived from the segment_infile name
-    program_id : int
+    program_id : str
         APT program number
-    observation_num : int
+    observation_num : str
         Observation number
-    visit_num : int
+    visit_num : str
         Visit number
     countrate_factor : float, optional
         The factor by which countrates are multiplied by to simulate

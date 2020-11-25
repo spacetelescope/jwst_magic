@@ -257,7 +257,7 @@ class MasterGui(QMainWindow):
         self.textEdit_out.installEventFilter(self)
         self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
-        # Image convertor widgets
+        # Image converter widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
         self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
         self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
@@ -265,6 +265,9 @@ class MasterGui(QMainWindow):
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
         self.comboBox_regfileStarSelector.activated.connect(self.on_combobox_change)
+
+        # FSW File writer widgets
+        self.groupBox_fileWriter.toggled.connect(self.update_groupBox_fileWriter)
 
         # Segment guiding widgets
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
@@ -419,6 +422,13 @@ class MasterGui(QMainWindow):
             convert_im = False
             input_image = self.converted_im_file
             copy_original = False
+        if self.groupBox_segmentGuiding.isChecked() and self.radioButton_photometryOverride.isChecked():
+            convert_im = False
+
+        if convert_im:
+            # Check normalization information is defined
+            if normalize and norm_value == '':
+                raise ValueError('Image Normalization box checked, but no value given.')
 
         # Star selection
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -436,6 +446,11 @@ class MasterGui(QMainWindow):
         else:
             in_file = [self.comboBox_regfileStarSelector.itemText(i) for i in
                        range(self.comboBox_regfileStarSelector.count())]
+
+            if len(in_file) == 0:
+                raise ValueError('"Load Unshifted Data from File" option chosen for Star Selector section, '
+                                 'but no files were chosen. Either choose files to be loaded or switch to the '
+                                 'Click-to-Select GUI option.')
 
         # File writer
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -628,6 +643,16 @@ class MasterGui(QMainWindow):
 
             # Update converted image preview
             self.update_filepreview(new_guiding_selections=True)
+
+    def update_groupBox_fileWriter(self):
+        """Enable/disable items in FSW group box"""
+        if self.sender() == self.groupBox_fileWriter:
+            if self.checkBox_id_attitude.isChecked() and self.groupBox_fileWriter.isChecked():
+                self.radioButton_nominal_id_attitude.setEnabled(True)
+                self.radioButton_crowded_id_attitude.setEnabled(True)
+            else:
+                self.radioButton_nominal_id_attitude.setEnabled(False)
+                self.radioButton_crowded_id_attitude.setEnabled(False)
 
     def on_change_jitter(self):
         """If the coarse pointing slider or text box controlling the
@@ -1615,8 +1640,6 @@ class MasterGui(QMainWindow):
 
             # Update guiding_selections*.txt paths in GUI
             if False not in [os.path.exists(file) for file in self.guiding_selections_file_list] and len(self.guiding_selections_file_list) != 0:
-                #self.update_regfile_starselector_combobox(self.guiding_selections_file_list)
-                self.comboBox_regfileStarSelector.clear()
                 if new_guiding_selections:
                     new_selections = self.guiding_selections_file_list
                     self.update_guiding_selections(new_selections=new_selections)
