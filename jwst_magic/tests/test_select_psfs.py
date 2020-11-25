@@ -108,7 +108,7 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
     assert os.path.exists(guiding_selections_path_list[0]), 'unshifted_guiding_selections_test_select_psfs_G2.txt not generated.'
     assert os.path.exists(all_found_psfs_path), 'unshifted_all_found_psfs_test_select_psfs_G2.txt not generated.'
     assert os.path.exists(center_pointing_path), 'center_pointing_test_select_psfs_G2.txt not generated.'
-    if smooth is 'low':
+    if smooth == 'low':
         assert os.path.exists(psf_center_path), 'unshifted_psf_center_test_select_psfs_G2.txt not generated.'
 
     # Test that the contents of all_found_psfs_test_select_psfs_G2.txt is correct
@@ -123,7 +123,7 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
 
     # Check PSF location in guiding selections doesn't match psf center
     # guiding selections should have found a knot in the PSF not at the center
-    if smooth is 'low':
+    if smooth == 'low':
         with open(guiding_selections_path_list[0]) as f:
             guiding_selections_contents = f.read()
         with open(psf_center_path) as f:

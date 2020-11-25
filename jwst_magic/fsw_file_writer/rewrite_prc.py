@@ -63,7 +63,7 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
     inds_list : list
         List of configurations of segment indices indicating which
         segments to re-write as the guide and reference stars
-    center_of_pointing : int
+    center_of_pointing : int or list
         Segment number for the chosen center of pointing or [y,x] position
     guider : int
         Guider number (1 or 2)
@@ -137,6 +137,8 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
     # Write guiding selections file(s)
     current_dirs = sorted([int(d.split('guiding_config_')[-1]) for d in os.listdir(out_path)
                            if os.path.isdir(os.path.join(out_path, d)) if 'guiding_config' in d])
+    if len(current_dirs) == 0:
+        current_dirs = [0]
     new_config_numbers = np.arange(max(current_dirs)+1, max(current_dirs)+1+len(inds_list))
     guiding_selections_path_list = []
     for (i, cols) in zip(new_config_numbers, cols_list):
@@ -147,7 +149,6 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
                                  labels=['y', 'x', 'countrate'],
                                  cols=cols, log=LOGGER)
         guiding_selections_path_list.append(guiding_selections_path)
-
 
     # Shift and write out FSW files
     for i, guiding_selections_file in enumerate(guiding_selections_path_list):

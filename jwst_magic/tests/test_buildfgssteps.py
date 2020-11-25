@@ -23,6 +23,7 @@ import pytest
 from .utils import parametrized_data
 from ..fsw_file_writer import write_files
 from ..fsw_file_writer.buildfgssteps import BuildFGSSteps, shift_to_id_attitude
+from ..fsw_file_writer.rewrite_prc import rewrite_prc
 from ..utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -30,7 +31,7 @@ FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
 CONVERTED_NIRCAM_IM_MIMF = os.path.join(__location__, 'data', 'converted_nircam_data_1_mimf.fits')
 ROOT = "test_buildfgssteps"
-SEGMENT_INFILE_CMIMF = os.path.join(__location__, 'data', '{}_ALLpsfs.txt'.format(ROOT))
+SEGMENT_INFILE_CMIMF = os.path.join(__location__, 'data', 'unshifted_all_found_psfs_{}_G1.txt'.format(ROOT))
 SELECTED_SEGS_CMIMF_OLD = os.path.join(__location__, 'data', '{}_regfile.txt'.format(ROOT))
 SELECTED_SEGS_CMIMF = os.path.join(__location__, 'data', 'unshifted_guiding_selections_{}_G1_config1.txt'.format(ROOT))
 SELECTED_SEGS_MIMF = os.path.join(__location__, 'data', 'guiding_selections_nircam_data_1_mimf.txt')
@@ -111,12 +112,19 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
 
     # Run main function to test
     fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
-        open_image, ROOT, guider, out_dir_fsw, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
+        open_image, ROOT, guider, out_dir_fsw, guiding_selections_file=guiding_selections,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=center_pointing,
         psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
 
     # Define filenames
-    file_root = '{}_G{}'.format(ROOT, guider)
+    file_root = guiding_selections.split('/')[-1]
+    if 'regfile' in file_root:
+        file_root = file_root.split('.txt')[0].split('_regfile')[0]
+    elif 'unshifted_guiding_selections' in file_root:
+        file_root = file_root.split('guiding_selections_')[-1].split('.txt')[0]
+    if 'G{}'.format(guider) not in file_root:
+        file_root += '_G{}'.format(guider)
+
     guiding_selections_file = os.path.join(out_dir_fsw, 'shifted_guiding_selections_{}.txt'.format(file_root))
     all_found_psfs_file = os.path.join(out_dir_fsw, 'shifted_all_found_psfs_{}.txt'.format(file_root))
     FGS_img = os.path.join(out_dir_fsw,  'FGS_imgs', 'shifted_' + file_root + '.fits')
@@ -167,7 +175,7 @@ for guider in [1, 2]:
             correct_count_rate_parameters.append(pytest.param(guider, step,test_data[g][step],
                                                  marks=pytest.mark.xfail(reason="bias issue: see JWSTFGS-213")))
 @pytest.mark.parametrize('guider, step, correct_data_dict', correct_count_rate_parameters)
-def test_correct_count_rate(open_image, guider, step, correct_data_dict):
+def test_correct_count_rate(open_image, test_directory, guider, step, correct_data_dict):
     """Check that image data is being generated with counts and count
     rates as expected. Test for all guider steps and both guiders.
     """
@@ -216,7 +224,7 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
                 '{} CDS counts out of expected range.'.format(step)
 
         # Strips
-        if step is 'ID':
+        if step == 'ID':
             assert abs(correct_data_dict['strips'][0] - np.min(BFS.strips)) < assertion_range, \
                 'ID strips counts out of expected range.'
             assert abs(correct_data_dict['strips'][1] - np.max(BFS.strips)) < assertion_range, \
@@ -232,7 +240,7 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
     assert (BFS.countrate == correct_data_dict['countrates']).all(), \
         'Incorrect {} count rate.'.format(step)
 
-def test_psf_center_file():
+def test_psf_center_file(test_directory):
     """Test that when psf_center_file is set, the array position for TRK
     is pulled from the psf_center file rather than the guiding selections file
     which is used for all other steps.
@@ -259,3 +267,66 @@ def test_psf_center_file():
     assert (fileobj_id.xarr, fileobj_id.yarr) == (fileobj_acq1.xarr, fileobj_acq1.yarr)
     assert (fileobj_acq1.xarr, fileobj_acq1.yarr) != (fileobj_trk.xarr, fileobj_trk.yarr)
     assert fileobj_acq1.countrate == fileobj_trk.countrate
+
+def test_rewrite_prc(open_image, test_directory):
+    """Compare the results from reqrite_prc and buildfgsteps -
+    check shifted guiding selections and ID prc file"""
+
+    # Delete path if it exists
+    if os.path.isdir(TEST_DIRECTORY):
+        shutil.rmtree(TEST_DIRECTORY)
+
+    # Define inputs
+    inds_list = [[0, 2, 3, 11, 14]] # inds that match the guiding_selections_file
+    guiding_selections_file = os.path.join(TEST_DIRECTORY, 'guiding_config_1', SELECTED_SEGS_CMIMF.split('/')[-1])
+    all_found_psfs_file = os.path.join(TEST_DIRECTORY, SEGMENT_INFILE_CMIMF.split('/')[-1])
+    center_of_pointing = 0
+    center_of_pointing_file = CENTER_POINTING_1
+    guider = 1
+    threshold = 0.5
+    shifted = True
+    crowded_field = False
+    step = 'ID'
+
+    # Copy file for testing
+    os.makedirs(os.path.join(TEST_DIRECTORY, 'FGS_imgs'))
+    os.makedirs(os.path.join(TEST_DIRECTORY, 'guiding_config_1'))
+    shutil.copyfile(FGS_CMIMF_IM, os.path.join(TEST_DIRECTORY, 'FGS_imgs', 'unshifted_test_buildfgssteps_G1.fits'))
+    shutil.copyfile(SEGMENT_INFILE_CMIMF, all_found_psfs_file)
+    shutil.copyfile(SELECTED_SEGS_CMIMF, guiding_selections_file)
+
+    # Run buildfgssteps
+    out_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_1')
+    fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
+        open_image, ROOT, guider, out_fsw, guiding_selections_file=guiding_selections_file,
+        all_found_psfs_file=all_found_psfs_file, center_pointing_file=center_of_pointing_file,
+        psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
+    BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
+                        out_dir=out_fsw, threshold=threshold, shift_id_attitude=shifted)
+    write_files.write_prc(BFS)
+
+    # Check for output files
+    shifted_guiding_selections = os.path.join(out_fsw,  'shifted_guiding_selections_{}_config1.txt'.format(ROOT+'_G1'))
+    shifted_id_prc = os.path.join(out_fsw, 'dhas_shifted', ROOT+'_G1_ID.prc')
+    assert os.path.exists(shifted_guiding_selections)
+    assert os.path.exists(shifted_id_prc)
+    buildsteps_selections = asc.read(shifted_guiding_selections)
+    with open(shifted_id_prc, 'r') as file:
+        buildsteps_prc = file.read()
+
+    # Run rewrite_prc
+    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, threshold, shifted, crowded_field)
+
+    # Check for output files
+    shifted_guiding_selections2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2',
+                                               'shifted_guiding_selections_{}_config2.txt'.format(ROOT+'_G1'))
+    shifted_id_prc2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2', 'dhas_shifted', ROOT+'_G1_ID.prc')
+    assert os.path.exists(shifted_guiding_selections2)
+    assert os.path.exists(shifted_id_prc2)
+    rewrite_prc_selections = asc.read(shifted_guiding_selections2)
+    with open(shifted_id_prc2, 'r') as file:
+        rewrite_prc_prc = file.read()
+
+    # Confirm outputs match
+    assert str(rewrite_prc_selections) == str(buildsteps_selections)
+    assert rewrite_prc_prc == buildsteps_prc
