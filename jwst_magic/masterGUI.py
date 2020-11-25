@@ -414,9 +414,6 @@ class MasterGui(QMainWindow):
         bkgd_stars = self.bkgd_stars
         itm = self.itm
 
-        if normalize and norm_value == '':
-            raise ValueError('Image Normalization box checked, but no value given.')
-
         # Handle the case where we want to use a pre-existing converted image
         pre_existing_im = self.checkBox_useConvertedImage.isChecked() and \
                           convert_im and \
@@ -425,6 +422,13 @@ class MasterGui(QMainWindow):
             convert_im = False
             input_image = self.converted_im_file
             copy_original = False
+        if self.groupBox_segmentGuiding.isChecked() and self.radioButton_photometryOverride.isChecked():
+            convert_im = False
+
+        if convert_im:
+            # Check normalization information is defined
+            if normalize and norm_value == '':
+                raise ValueError('Image Normalization box checked, but no value given.')
 
         # Star selection
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
