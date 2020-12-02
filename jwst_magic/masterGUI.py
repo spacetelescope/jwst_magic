@@ -1636,7 +1636,7 @@ class MasterGui(QMainWindow):
                     self.update_guiding_selections(new_selections=new_selections)
             else:
                 self.comboBox_regfileStarSelector.clear()
-                self.lineEdit_regfileSegmentGuiding.setText("")
+                self.lineEdit_regfileSegmentGuiding.setText(root_dir)
                 self.comboBox_guidingcommands.clear()
 
             # If possible, show converted and shifted image previews, too
