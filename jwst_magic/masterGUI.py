@@ -833,12 +833,6 @@ class MasterGui(QMainWindow):
         """This gets triggered when you select the segment guiding
         box or when you click one of the id attitude radio buttons"""
         if self.groupBox_segmentGuiding.isChecked():
-            if len(self.shifted_im_file_list) != 0:
-                self.radioButton_shifted.setEnabled(False not in
-                                                    [os.path.exists(path) for path in self.shifted_im_file_list])
-            else:
-                self.radioButton_shifted.setEnabled(False)
-
             if self.radioButton_name_manual.isChecked():
                 root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out', self.lineEdit_root.text())
             else:
@@ -1519,9 +1513,8 @@ class MasterGui(QMainWindow):
 
             self.textEdit_showingShifted.setEnabled(False)
 
-            # Disable the "use shifted image" buttons
+            # Uncheck the "use shifted image" button
             self.radioButton_unshifted.setChecked(True)
-            self.radioButton_shifted.setEnabled(False)
 
             # Disable the "show stars" button
             self.checkBox_showStars_shifted.setEnabled(False)
