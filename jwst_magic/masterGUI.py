@@ -447,7 +447,7 @@ class MasterGui(QMainWindow):
             in_file = [self.comboBox_regfileStarSelector.itemText(i) for i in
                        range(self.comboBox_regfileStarSelector.count())]
 
-            if len(in_file) == 0:
+            if len(in_file) == 0 and not self.groupBox_segmentGuiding.isChecked():
                 raise ValueError('"Load Unshifted Data from File" option chosen for Star Selector section, '
                                  'but no files were chosen. Either choose files to be loaded or switch to the '
                                  'Click-to-Select GUI option.')
