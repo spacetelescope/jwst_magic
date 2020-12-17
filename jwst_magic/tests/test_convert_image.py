@@ -71,6 +71,7 @@ def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, 
                                                nircam_det=None, normalize=True,
                                                norm_value=norm_value,
                                                norm_unit=norm_unit,
+                                               gs_catalog='GSC242',
                                                coarse_pointing=False,
                                                jitter_rate_arcsec=None,
                                                logger_passed=False, itm=itm)
