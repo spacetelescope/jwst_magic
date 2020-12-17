@@ -559,7 +559,7 @@ def remove_pedestal(data, nircam, itm):
 
 def convert_im(input_im, guider, root, nircam=True,
                nircam_det=None, normalize=True, norm_value=12.0,
-               norm_unit="FGS Magnitude", coarse_pointing=False,
+               norm_unit="FGS Magnitude", gs_catalog=None, coarse_pointing=False,
                jitter_rate_arcsec=None, logger_passed=False, itm=False):
     """Takes NIRCam or FGS image and converts it into an FGS-like image.
 
@@ -584,9 +584,14 @@ def convert_im(input_im, guider, root, nircam=True,
         Denotes if the image will be normalized. If True, norm_value
         and norm_unit will be used to determine the normalization value
     norm_value : str or float, optional
-        Specifies the Guide Star ID or the count rate/magnitude to which to normalize.
+        Specifies the Guide Star ID or the count rate/magnitude to which
+        to normalize.
     norm_unit : str, optional
-        Specifies the unit of norm_value ("FGS Magnitude", "FGS countrate", or "Guide Star ID")
+        Specifies the unit of norm_value ("FGS Magnitude", "FGS countrate",
+        or "Guide Star ID")
+    gs_catalog : str, optional
+        Guide star catalog version to query. E.g. 'GSC242'. None will use
+        the default catalog as defined in teh FGS Count Rate Module.
     coarse_pointing : bool, optional
         Denotes if the image will have a Gaussian filter applied to
         simulate the effects of jitter when the observatory is in
@@ -755,7 +760,7 @@ def convert_im(input_im, guider, root, nircam=True,
                 gsid = check_norm_value_unit(norm_value, norm_unit)
                 LOGGER.info("Image Conversion: Using GSID {} to normalize image.".format(gsid))
                 fgs = fgscountrate.FGSCountrate(guide_star_id=gsid, guider=guider)
-                fgs_countrate, _, fgs_mag, _ = fgs.query_fgs_countrate_magnitude()
+                fgs_countrate, _, fgs_mag, _ = fgs.query_fgs_countrate_magnitude(catalog=gs_catalog)
 
             # Normalize the data
             data = normalize_data(data, fgs_countrate)
