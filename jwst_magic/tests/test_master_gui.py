@@ -141,8 +141,8 @@ def test_change_car_and_obs_commissioning(master_gui):
 
     assert master_gui.lineEdit_normalize.text() == 'N13I018276'
     assert master_gui.gs_id == 'N13I018276'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14572081885797)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.5301991668692)
+    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14571855223096, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 65.53019715082439, decimal=4)
 
     # Re-set CAR & OBS
     master_gui.comboBox_car.setCurrentText('OTE-13')
@@ -153,10 +153,10 @@ def test_change_car_and_obs_commissioning(master_gui):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'N13I000018'
-    assert master_gui.gs_id == 'N13I000018'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.206729760604)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.5335149359777)
+    assert master_gui.lineEdit_normalize.text() == 'N1HL000080'
+    assert master_gui.gs_id == 'N1HL000080'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 281.754679175766, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 70.3265788750301, decimal=4)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -186,8 +186,8 @@ def test_update_apt_button_commissioning(master_gui):
 
     assert master_gui.lineEdit_normalize.text() == 'N13I018276'
     assert master_gui.gs_id == 'N13I018276'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14572081885797)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.5301991668692)
+    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14571855223096, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 65.53019715082439, decimal=4)
 
     # Re-set APT number and press button
     master_gui.lineEdit_commid.setText('1148')
@@ -199,10 +199,10 @@ def test_update_apt_button_commissioning(master_gui):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'N13I000018'
-    assert master_gui.gs_id == 'N13I000018'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.206729760604)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.5335149359777)
+    assert master_gui.lineEdit_normalize.text() == 'N1HL000080'
+    assert master_gui.gs_id == 'N1HL000080'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 281.754679175766, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 70.3265788750301, decimal=4)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -228,8 +228,8 @@ def test_use_apt_button_manual(master_gui, test_directory):
 
     assert master_gui.lineEdit_normalize.text() == 'N13I018276'
     assert master_gui.gs_id == 'N13I018276'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14572081885797)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.5301991668692)
+    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14571855223096, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 65.53019715082439, decimal=4)
 
     # Reset to blank
     master_gui.lineEdit_manualid.setText('')
