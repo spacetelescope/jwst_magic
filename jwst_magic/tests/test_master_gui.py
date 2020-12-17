@@ -228,8 +228,8 @@ def test_use_apt_button_manual(master_gui, test_directory):
 
     assert master_gui.lineEdit_normalize.text() == 'N13I018276'
     assert master_gui.gs_id == 'N13I018276'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14572081885797)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.5301991668692)
+    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14571855223096)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 65.53019715082439)
 
     # Reset to blank
     master_gui.lineEdit_manualid.setText('')

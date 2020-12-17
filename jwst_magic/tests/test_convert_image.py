@@ -54,12 +54,12 @@ PARAMETRIZED_DATA = parametrized_data()['test_convert_image']
 
 norm_parameters = [
     (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 1992.7434250045358),
-    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 5563.853153791558),
-    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1770.7861951935322),
-    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 171.37823193763356),
-    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 5563.853153791558),
-    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 2994.680894443115), # NRC contains TEST keyword - tests ped
-    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 136580.37527457761) # non-ITM FGS image - tests ped
+    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 5889.796832102382),
+    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1755.3508876147885),
+    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 181.41797413717228),
+    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 5889.796832102382),
+    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 3187.752824771157), # NRC contains TEST keyword - tests ped
+    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 145385.93340536967) # non-ITM FGS image - tests ped
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
 def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, itm, data_max):
