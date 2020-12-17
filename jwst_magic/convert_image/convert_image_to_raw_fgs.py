@@ -749,7 +749,7 @@ def convert_im(input_im, guider, root, nircam=True,
                 if norm_value < 1000:
                     LOGGER.warning("Image Conversion: Small count rate has been requested. This may be an error.")
                 fgs_countrate = norm_value
-                fgs_mag = ''
+                fgs_mag = fgscountrate.convert_cr_to_fgs_mag(fgs_countrate, guider)
             elif norm_unit == 'FGS countrate' and isinstance(norm_value, str):
                 LOGGER.error("Image Conversion: Value type does not match expectation for unit type.")
                 raise TypeError("Mismatched normalization value ({}) and expected type ({}) for unit of {}".format(
