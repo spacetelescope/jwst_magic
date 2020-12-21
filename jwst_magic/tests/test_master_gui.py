@@ -105,7 +105,7 @@ def test_change_practice_commissioning(master_gui):
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
     master_gui.comboBox_practice.setCurrentIndex(0)
     master_gui.comboBox_car.setCurrentText('OTE-07')
-    master_gui.comboBox_obs.setCurrentText('01')
+    master_gui.lineEdit_obs.setText('01')
 
     # Re-set practice
     with patch.object(master_gui, 'update_apt_gs_values') as mock:
@@ -132,7 +132,8 @@ def test_change_car_and_obs_commissioning(master_gui):
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
     master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
     master_gui.comboBox_car.setCurrentText('OTE-07')
-    master_gui.comboBox_obs.setCurrentText('01')
+    master_gui.lineEdit_obs.setText('01')
+    master_gui.pushButton_commid.click() # handle editingfinished not being called in code
 
     # Check Attributes
     assert master_gui.program_id == 1141
@@ -146,7 +147,8 @@ def test_change_car_and_obs_commissioning(master_gui):
 
     # Re-set CAR & OBS
     master_gui.comboBox_car.setCurrentText('OTE-13')
-    master_gui.comboBox_obs.setCurrentText('01')
+    master_gui.lineEdit_obs.setText('01')
+    master_gui.pushButton_commid.click()
 
     # Re-Check Attributes
     assert master_gui.program_id == 1148
@@ -177,7 +179,8 @@ def test_update_apt_button_commissioning(master_gui):
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
     master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
     master_gui.comboBox_car.setCurrentText('OTE-07')
-    master_gui.comboBox_obs.setCurrentText('01')
+    master_gui.lineEdit_obs.setText('01')
+    master_gui.pushButton_commid.click()
 
     # Check Attributes
     assert master_gui.program_id == 1141
@@ -270,10 +273,11 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
     if type == 'commissioning':
         master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
         master_gui.comboBox_car.setCurrentText('OTE-13')
-        master_gui.comboBox_obs.setCurrentText('01')
+        master_gui.lineEdit_obs.setText('01')
+        master_gui.pushButton_commid.click()
 
         assert master_gui.buttonGroup_name.buttons()[0].isChecked()
-        assert master_gui.comboBox_obs.currentText() == '01'
+        assert master_gui.lineEdit_obs.text() == '01'
         assert master_gui.lineEdit_commid.text() == '1148'
 
         # Delete contents of directory to avoid auto-populating with old data
@@ -381,7 +385,8 @@ def test_apt_guider_disagree_commissioning(mock_dialog, master_gui):
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
     master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
     master_gui.comboBox_car.setCurrentText('OTE-07')
-    master_gui.comboBox_obs.setCurrentText('01')
+    master_gui.lineEdit_obs.setText('01')
+    master_gui.pushButton_commid.click()
 
     # Check setting to the matching guider is fine
     master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
@@ -392,7 +397,7 @@ def test_apt_guider_disagree_commissioning(mock_dialog, master_gui):
     assert mock_dialog.called  # Check dialog box pops up
 
     # Check it works setting the guider before choosing CAR/Obs
-    master_gui.comboBox_obs.setCurrentText('02')
+    master_gui.lineEdit_obs.setText('02')
     assert mock_dialog.called  # Check dialog box pops up
 
 
