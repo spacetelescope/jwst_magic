@@ -1216,6 +1216,7 @@ class MasterGui(QMainWindow):
         # Add chosen files to shifted image combobox to choose from
         if len(self.comboBox_showcommandsshifted) == 1 and "Guiding Command" in \
                 self.comboBox_showcommandsshifted.currentText():
+            self.comboBox_showcommandsshifted.clear()
             for i, command_file in enumerate(self.shifted_guiding_selections_file_list):
                 item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
                 self.comboBox_showcommandsshifted.addItem(item)
@@ -1396,6 +1397,12 @@ class MasterGui(QMainWindow):
                                                                    self.converted_im_file))
             self.textEdit_showingConverted.setEnabled(False)
 
+            # Clear and reset 0th index in shifted combo box
+            self.comboBox_showcommandsconverted.blockSignals(True)
+            self.comboBox_showcommandsconverted.clear()
+            self.comboBox_showcommandsconverted.addItem('- Guiding Command -')
+            self.comboBox_showcommandsconverted.blockSignals(False)
+
             # Disable the "use converted image" buttons
             self.checkBox_useConvertedImage.setChecked(False)
             self.checkBox_useConvertedImage.setEnabled(False)
@@ -1440,48 +1447,47 @@ class MasterGui(QMainWindow):
 
             # Enable and populate guiding commands button
             self.comboBox_showcommandsshifted.setEnabled(True)
-            if self.comboBox_showcommandsshifted.currentIndex() != 0:
-                i = self.comboBox_showcommandsshifted.currentIndex() - 1
+            i = self.comboBox_showcommandsshifted.currentIndex()
 
-                # Update filepath
-                self.textEdit_showingShifted.setText(self.shifted_im_file_list[i])
+            # Update filepath
+            self.textEdit_showingShifted.setText(self.shifted_im_file_list[i])
 
-                # Load data
-                data, _ = utils.get_data_and_header(self.shifted_im_file_list[i])
-                data[data <= 0] = 1
+            # Load data
+            data, _ = utils.get_data_and_header(self.shifted_im_file_list[i])
+            data[data <= 0] = 1
 
-                # Load all_found_psfs*.text
-                x, y = [None, None]
-                if os.path.exists(self.shifted_all_found_psfs_file_list[i]):
-                    psf_list = asc.read(self.shifted_all_found_psfs_file_list[i])
-                    x = psf_list['x']
-                    y = psf_list['y']
+            # Load all_found_psfs*.text
+            x, y = [None, None]
+            if os.path.exists(self.shifted_all_found_psfs_file_list[i]):
+                psf_list = asc.read(self.shifted_all_found_psfs_file_list[i])
+                x = psf_list['x']
+                y = psf_list['y']
 
-                # Plot data image and peak locations from all_found_psfs*.txt
-                self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
+            # Plot data image and peak locations from all_found_psfs*.txt
+            self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
 
-                # If possible, plot the selected stars in the guiding_selections*.txt
-                shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[i]
+            # If possible, plot the selected stars in the guiding_selections*.txt
+            shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[i]
 
-                if os.path.exists(shifted_guiding_selections_file):
-                    selected_psf_list = asc.read(shifted_guiding_selections_file)
-                    x_selected = selected_psf_list['x']
-                    y_selected = selected_psf_list['y']
+            if os.path.exists(shifted_guiding_selections_file):
+                selected_psf_list = asc.read(shifted_guiding_selections_file)
+                x_selected = selected_psf_list['x']
+                y_selected = selected_psf_list['y']
 
-                    # Remove old circles
-                    for line in self.shifted_im_circles:
-                        self.canvas_shifted.axes.lines.remove(line[0])
+                # Remove old circles
+                for line in self.shifted_im_circles:
+                    self.canvas_shifted.axes.lines.remove(line[0])
 
-                    self.shifted_im_circles = [
-                        self.canvas_shifted.axes.plot(x_selected[0], y_selected[0],
-                                                      'o', ms=25, mfc='none',
-                                                      mec='yellow', mew=2, lw=0)
-                    ]
-                    self.shifted_im_circles.append(
-                        self.canvas_shifted.axes.plot(x_selected[1:], y_selected[1:],
-                                                      'o', ms=25, mfc='none',
-                                                      mec='darkorange', mew=2, lw=0)
-                   )
+                self.shifted_im_circles = [
+                    self.canvas_shifted.axes.plot(x_selected[0], y_selected[0],
+                                                  'o', ms=25, mfc='none',
+                                                  mec='yellow', mew=2, lw=0)
+                ]
+                self.shifted_im_circles.append(
+                    self.canvas_shifted.axes.plot(x_selected[1:], y_selected[1:],
+                                                  'o', ms=25, mfc='none',
+                                                  mec='darkorange', mew=2, lw=0)
+               )
             else:
                 for line in self.shifted_im_circles:
                     line[0].set_visible(False)
@@ -1494,13 +1500,19 @@ class MasterGui(QMainWindow):
         # If not, show nothing.
         else:
             # Update textbox showing filepath
-            if len(self.shifted_im_file_list) != 0:
+            if len(self.shifted_im_file_list) == 0:
                 self.textEdit_showingShifted.setText(
                     'No shifted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
-                        '/'.join(self.shifted_im_file_list[0].split('/')[:-3] + \
-                                 ['guiding_config_*/FGS_imgs/shifted_*_config*.fits'])))
+                        '/'.join(self.converted_im_file.split('/')[:-2] + \
+                                 ['guiding_config_*/FGS_imgs/shifted_*.fits'])))
 
             self.textEdit_showingShifted.setEnabled(False)
+
+            # Clear and reset 0th index in shifted combo box
+            self.comboBox_showcommandsshifted.blockSignals(True)
+            self.comboBox_showcommandsshifted.clear()
+            self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
+            self.comboBox_showcommandsshifted.blockSignals(False)
 
             # Uncheck the "use shifted image" button
             self.radioButton_unshifted.setChecked(True)
