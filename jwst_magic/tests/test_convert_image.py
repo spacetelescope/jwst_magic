@@ -150,18 +150,3 @@ def test_transform_nircam_raw_to_fgs_raw():
     coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
     assert np.array_equal(np.array(coords), test_data[3]), \
         'Incorrect transformation from raw NRCB1 (thus also A2, A4, B3, B5) frame to raw FGS2 frame'
-
-
-gsid_parameters = [
-    (12, 'FGS Magnitude', 'N13A000158'),
-    ('N13I000018', 'Guide Star ID', 'N13I000018')
-]
-@pytest.mark.parametrize('norm_value, norm_unit, correct_gsid', gsid_parameters)
-def test_check_gsid(norm_value, norm_unit, correct_gsid):
-    """
-    Test how the normalization is done with  in terms of the interface with the
-    fgscountrate module
-    """
-    gsid = convert_image_to_raw_fgs.check_norm_value_unit(norm_value, norm_unit)
-
-    assert gsid == correct_gsid
