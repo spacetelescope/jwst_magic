@@ -547,6 +547,5 @@ def test_shifted_data(master_gui):
     # Check 1 option is available in shifted image preview
     shift_cmds = [master_gui.comboBox_showcommandsshifted.itemText(i) for i in
                   range(master_gui.comboBox_showcommandsshifted.count())]
-    assert len(shift_cmds) == 2
-    assert shift_cmds[0] == '- Guiding Command -'
-    assert shift_cmds[1] == 'Command 1: ' + shifted_file
+    assert len(shift_cmds) == 1
+    assert shift_cmds[0] == 'Command 1: ' + shifted_file
