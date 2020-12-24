@@ -154,6 +154,7 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setCursor(Qt.CrossCursor)
 
     def compute_initial_figure(self, fig, data, x, y,
                                xlabel='Raw FGS X (–V3) [pixels]',
@@ -482,6 +483,7 @@ class StarSelectorWindow(QDialog):
         self.canvas.mpl_connect('motion_notify_event', self.update_cursor_position)
         self.canvas.mpl_connect('motion_notify_event', self.update_profile)
         self.canvas.mpl_connect('motion_notify_event', self.show_segment_id)
+        self.canvas.mpl_connect('motion_notify_event', self.mouse_move)
         self.canvas.mpl_connect('button_press_event', self.button_press_callback)
 
         # Colorbar widgets
@@ -712,6 +714,43 @@ class StarSelectorWindow(QDialog):
             )
 
             self.canvas_profile.draw()
+
+    def mouse_move(self, event):
+        """
+        Create lines that move with the cursor position
+        Perhaps make this happen when a box is checked for center of pointing, Otherwise
+        we probably don't want it all the time
+        """
+        def y_intercept(x, y):
+            """ return y intercept for a slope=1 line that goes through the cursor location"""
+            return y-1*x
+
+        color = 'chartreuse'
+        alpha = 0.5
+
+        ax = self.canvas.axes
+        # Plot vertical and horizontal lines
+        self.ly = ax.axvline(color=color, alpha=alpha)
+        self.lx = ax.axhline(color=color, alpha=alpha)
+        # Plot diagonal lines
+        self.lpos, = ax.plot([], [], color=color, alpha=alpha) #will be able to use axline in matplotlib 3.0.0
+        self.lneg, = ax.plot([], [], color=color, alpha=alpha)
+
+        if event.inaxes:
+            # TODO: There is an offset in the x and cross, need to track that down
+            # TODO: Need to determine how to delete lines.
+            # According to SO, the below should be working as the line locations should
+            # be updating, but I just get a plot full of lines
+            self.ly.set_xdata(event.xdata)
+            self.lx.set_ydata(event.ydata)
+            xs = np.array(ax.get_xlim())
+            ys = 1.*xs + y_intercept(event.xdata, event.ydata) # slope=1
+            self.lpos.set_data([xs], [ys])
+            self.lneg.set_data([xs], [ys[::-1]])
+
+            self.canvas.draw_idle()
+        else:
+            pass
 
     def show_segment_id(self, event):
         """Show the segment ID of a segment when the cursor mouses over
