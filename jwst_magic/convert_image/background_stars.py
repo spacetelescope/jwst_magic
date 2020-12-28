@@ -13,7 +13,7 @@ Use
 
     Required arguments:
         ``guider`` - guider number (1 or 2)
-        ``jmag`` - brightness of the guide star in J Magnitude
+        ``fgs_mag`` - brightness of the guide star in FGS Magnitude
 
     Optional arguments:
         ``masterGUIapp`` - qApplication instance of parent GUI
@@ -41,6 +41,7 @@ import random
 import sys
 
 # Third Party Imports
+import fgscountrate
 import numpy as np
 JENKINS = 'jenkins' in os.getcwd()
 if not JENKINS:
@@ -58,7 +59,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 LOGGER = logging.getLogger(__name__)
 
 
-def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
+def run_background_stars_GUI(guider, fgs_mag, masterGUIapp=None):
     """Open the BackgroundStarsWindow and prompt user to specify how to
     add background stars.
 
@@ -66,8 +67,8 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
     ----------
     guider : int
         Guider number (1 or 2)
-    jmag : float
-        Brightness of the guide star in J Magnitude
+    fgs_mag : float
+        Brightness of the guide star in FGS Magnitude
     masterGUIapp : qApplication, optional
         qApplication instance of parent GUI
 
@@ -90,7 +91,7 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
         if qApp is None:
             qApp = QApplication(sys.argv)
 
-    window = BackgroundStarsWindow(guider, jmag, qApp=qApp, in_master_GUI=in_master_GUI)
+    window = BackgroundStarsWindow(guider, fgs_mag, qApp=qApp, in_master_GUI=in_master_GUI)
 
     if masterGUIapp:
         window.exec_()  # Begin interactive session; pauses until window.exit() is called
@@ -98,8 +99,8 @@ def run_background_stars_GUI(guider, jmag, masterGUIapp=None):
         qApp.exec_()
 
     # Create dictionary to pass to ``add_background_stars``
-    if window.x != [] and window.y != [] and list(window.jmags) != []:
-        stars = {'x': window.x, 'y': window.y, 'jmag': window.jmags}
+    if window.x != [] and window.y != [] and list(window.fgs_mags) != []:
+        stars = {'x': window.x, 'y': window.y, 'fgs_mag': window.fgs_mags}
     else:
         stars = None
 
@@ -144,17 +145,15 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     size = 2048
     nstars_random = 5
 
-    # Determine jmag and fgs_countrate of guide star
-    norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
-    fgs_countrate = norm_obj.to_countrate()
-    jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider)
+    # Determine fgs_mag and fgs_countrate of guide star
+    fgs_countrate, fgs_mag = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider)
 
     # If the flag is simply set to "True", randomly place 5 stars on the image
     if stars is True:
         x_back = random.sample(range(size), nstars_random)
         y_back = random.sample(range(size), nstars_random)
         # Create the new stars 5 mags or more dimmer
-        jmags_back = random.sample(set(np.linspace(jmag + 7, jmag + 4, 100)), nstars_random)
+        fgs_mags_back = random.sample(set(np.linspace(fgs_mag + 7, fgs_mag + 4, 100)), nstars_random)
 
     # If users passed a dictionary to the bkgd_stars argument, add stars
     # according the dictionary
@@ -167,12 +166,12 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
 
         x_back = stars['x']
         y_back = stars['y']
-        jmags_back = stars['jmag']
+        fgs_mags_back = stars['fgs_mag']
 
     else:
         raise TypeError(
-            'Unfamiliar value passed to bkgd_stars: {} Please pass boolean or dictionary of background star x, y, jmag.'.
-            format(stars)
+            'Unfamiliar value passed to bkgd_stars: {} Please pass boolean or dictionary of background '
+            'star x, y, fgs_mag.'.format(stars)
         )
 
     # Add stars to image
@@ -182,9 +181,9 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     # (Try to) only use the data for added stars, not the noise
     mean = np.mean(image)
     image[image < mean] = 0
-    for x, y, jmag_back in zip(x_back, y_back, jmags_back):
-        if not isinstance(jmag_back, np.ma.core.MaskedConstant):
-            star_fgs_countrate = renormalize.j_mag_to_fgs_countrate(jmag_back, guider)
+    for x, y, fgs_mag_back in zip(x_back, y_back, fgs_mags_back):
+        if not isinstance(fgs_mag_back, np.ma.core.MaskedConstant):
+            star_fgs_countrate = fgscountrate.convert_fgs_mag_to_cr(fgs_mag_back, guider)
             scale_factor = star_fgs_countrate / fgs_countrate
 
             star_data = image * scale_factor
@@ -206,7 +205,7 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
 
             LOGGER.info(
                 'Background Stars: Adding background star with magnitude {:.1f} at location ({}, {}).'.
-                format(jmag_back, x, y))
+                format(fgs_mag_back, x, y))
             add_data[x1:x2, y1:y2] += star_data
 
     return add_data

@@ -311,7 +311,7 @@ stars</string>
         </column>
         <column>
          <property name="text">
-          <string>Jmag</string>
+          <string>FGS mag</string>
          </property>
         </column>
        </widget>
@@ -368,7 +368,7 @@ stars</string>
       <string notr="true">QGroupBox { font-size: 16px; font-weight: bold; margin-top: 20px; margin-top: 18px } QGroupBox::title { top: -18px }</string>
      </property>
      <property name="title">
-      <string>Query Stars from Guide Star Catalog 2.4.1</string>
+      <string>Query Stars from Guide Star Catalog</string>
      </property>
      <property name="checkable">
       <bool>true</bool>

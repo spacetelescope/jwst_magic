@@ -14,12 +14,12 @@ Use
     This module can be used as such:
     ::
         from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsWindow
-        window = BackgroundStarsWindow(guider, jmag, qApp=qApp,
+        window = BackgroundStarsWindow(guider, fgs_mag, qApp=qApp,
                                        in_master_GUI=in_master_GUI)
 
     Required arguments:
         ``guider`` - guider number (1 or 2)
-        ``jmag`` - brightness of the guide star in J Magnitude
+        ``fgs_mag`` - brightness of the guide star in FGS Magnitude
 
     Optional arguments:
         ``aApp`` - qApplication instance of parent GUI
@@ -55,6 +55,7 @@ import requests
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
+import fgscountrate
 import matplotlib as mpl
 import numpy as np
 from PyQt5 import uic
@@ -71,20 +72,20 @@ LOGGER = logging.getLogger(__name__)
 
 
 class BackgroundStarsWindow(QDialog):
-    def __init__(self, guider, jmag, qApp, in_master_GUI):
+    def __init__(self, guider, fgs_mag, qApp, in_master_GUI):
         """Defines attributes; calls initUI() method to set up user interface.
         """
         # Initialize general attributes
         self.qApp = qApp
         self.guider = guider
-        self.jmag = jmag
+        self.fgs_mag = fgs_mag
         self.image_dim = 400
         self.in_master_GUI = in_master_GUI
         self.method = None
         self.extended = None
         self.x = []
         self.y = []
-        self.jmags = []
+        self.fgs_mags = []
 
         # Initialize matplotlib plotting attributes
         self.cbar_vmin_line = None
@@ -127,8 +128,8 @@ class BackgroundStarsWindow(QDialog):
         self.canvas.axes.set_ylabel('Y [pixels]')
 
         # Plot guide star
-        self.vmin, self.vmax = (self.jmag + 8, self.jmag - 1)
         cmap = mpl.colors.Colormap('viridis_r')
+        self.vmin, self.vmax = (self.fgs_mag + 8, self.fgs_mag - 1)
         self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*',
                                                    s=500, cmap=cmap,
                                                    vmin=self.vmax,
@@ -141,7 +142,7 @@ class BackgroundStarsWindow(QDialog):
                                                      norm=norm, cmap=cmap,
                                                      orientation='horizontal')
         self.canvas.cbar.ax.invert_xaxis()
-        self.canvas.cbar.set_label('J Magnitude')
+        self.canvas.cbar.set_label('FGS Magnitude')
 
     def define_GUI_connections(self):
         # Main dialog widgets
@@ -211,15 +212,15 @@ class BackgroundStarsWindow(QDialog):
                         self.lineEdit_nStars.text() == '':
             return
 
-        # Randomly generate x, y, and jmags
-        jmag = self.jmag
+        # Randomly generate x, y, and fgs_mags
+        fgs_mag = self.fgs_mag
         size = 2048
         nstars_random = int(self.lineEdit_nStars.text())
-        vmin = jmag + float(self.lineEdit_magMin.text())
-        vmax = jmag + float(self.lineEdit_magMax.text())
+        vmin = fgs_mag + float(self.lineEdit_magMin.text())
+        vmax = fgs_mag + float(self.lineEdit_magMax.text())
         self.x = random.sample(range(size), nstars_random)
         self.y = random.sample(range(size), nstars_random)
-        self.jmags = random.sample(
+        self.fgs_mags = random.sample(
             set(np.linspace(vmin, vmax, 100)),
             nstars_random
         )
@@ -239,7 +240,7 @@ class BackgroundStarsWindow(QDialog):
 
         # Plot every star
         self.random_stars = self.canvas.axes.scatter(
-            self.x, self.y, c=self.jmags, marker='*', s=500, cmap='viridis_r',
+            self.x, self.y, c=self.fgs_mags, marker='*', s=500, cmap='viridis_r',
             vmin=self.vmax, vmax=self.vmin
         )
 
@@ -280,19 +281,19 @@ class BackgroundStarsWindow(QDialog):
         # Read values from table
         self.x = []
         self.y = []
-        self.jmags = []
+        self.fgs_mags = []
         for i_row in range(self.tableWidget.rowCount()):
             x = float(self.tableWidget.item(i_row, 0).text())
             y = float(self.tableWidget.item(i_row, 1).text())
-            jmag = float(self.tableWidget.item(i_row, 2).text())
+            fgs_mag = float(self.tableWidget.item(i_row, 2).text())
             self.x.append(x)
             self.y.append(y)
-            self.jmags.append(jmag)
-            self.check_colorbar_limits(jmag)
+            self.fgs_mags.append(fgs_mag)
+            self.check_colorbar_limits(fgs_mag)
 
         # Plot every star
         self.defined_stars = self.canvas.axes.scatter(
-            self.x, self.y, c=self.jmags, marker='*', s=500, cmap='viridis_r',
+            self.x, self.y, c=self.fgs_mags, marker='*', s=500, cmap='viridis_r',
             vmin=self.vmax, vmax=self.vmin
         )
 
@@ -337,25 +338,25 @@ class BackgroundStarsWindow(QDialog):
         queried_catalog = self.query_gsc(coordinates, self.guider, position_angle)
 
         # Plot every star
-        mask = np.array([j is np.ma.masked for j in self.jmags])
+        mask = np.array([j is np.ma.masked for j in self.fgs_mags])
         LOGGER.info('Background Stars: Plotting {} stars onto GUIDER{} FOV.'
                     .format(len(self.x[~mask]), self.guider))
 
         # Check if the star magnitudes are outside the colorbar limits
-        for jmag in self.jmags[~mask]:
-            self.check_colorbar_limits(jmag)
+        for fgs_mag in self.fgs_mags[~mask]:
+            self.check_colorbar_limits(fgs_mag)
 
-        # Plot stars with known jmags
+        # Plot stars with known fgs_mags
         self.catalog_stars = self.canvas.axes.scatter(
-            self.x[~mask], self.y[~mask], c=self.jmags[~mask], marker='*',
+            self.x[~mask], self.y[~mask], c=self.fgs_mags[~mask], marker='*',
             s=500, cmap='viridis_r', vmin=self.vmax, vmax=self.vmin,
             label=None
         )
-        # Plot stars with unknown jmags
+        # Plot stars with unknown fgs_mags
         if len(self.x[mask]) > 0:
             self.masked_catalog_stars = self.canvas.axes.scatter(
                 self.x[mask], self.y[mask], c='white', marker='*', s=500,
-                edgecolors='red', label='Unknown J Magnitude'
+                edgecolors='red', label='Unknown FGS Magnitude'
             )
             self.legend = self.canvas.axes.legend()
 
@@ -384,12 +385,12 @@ class BackgroundStarsWindow(QDialog):
         # Determine which row is highlighted
         i_row = self.tableWidget.currentRow()
 
-        # If the row is not empty, remove that row's x, y, jmag from
+        # If the row is not empty, remove that row's x, y, fgs_mag from
         # list of parameters
         try:
             self.x.remove(float(self.tableWidget.item(i_row, 0).text()))
             self.y.remove(float(self.tableWidget.item(i_row, 1).text()))
-            self.jmags.remove(float(self.tableWidget.item(i_row, 2).text()))
+            self.fgs_mags.remove(float(self.tableWidget.item(i_row, 2).text()))
         except (ValueError, AttributeError) as e:
             pass
 
@@ -448,62 +449,64 @@ class BackgroundStarsWindow(QDialog):
                 https://outerspace.stsci.edu/display/GC
         """
         # Parse RA and Dec
-        RA = coordinates.ra.degree
-        Dec = coordinates.dec.degree
-
-        # Query MAST to get GSC 2.4.1 results in CSV form
+        ra_gs = coordinates.ra.degree
+        dec_gs = coordinates.dec.degree
+        
+        # Set radius around ra and dec and query default (newest) GSC 
         radius = 1.6 / 60  # 1.6 arcmin in degrees
-        web_query = "http://gsss.stsci.edu/webservices/vo/CatalogSearch.aspx?RA=" \
-                    "{:f}&DEC={:f}&DSN=+&FORMAT=CSV&CAT=GSC241&SR={:f}&".format(RA, Dec, radius)
-        LOGGER.info('Background Stars: Querying GSC 2.4.1 at ' + web_query)
-        page = requests.get(web_query)
-        csv_data = page.text
-        table = asc.read(csv_data)
+        df = fgscountrate.query_gsc(ra=ra_gs, dec=dec_gs, cone_radius=radius)
+        LOGGER.info('Background Stars: Querying Newest Guide Star Catalog')
 
         # Only take the necessary columns
-        queried_catalog = table['ra', 'dec', 'classification', 'tmassJmag']
-        RAs = table['ra']
-        Decs = table['dec']
-        jmag = table['tmassJmag']
+        queried_catalog = df[['ra', 'dec', 'classification', 'tmassJMag']]
+        ra_list = df['ra'].values
+        dec_list = df['dec'].values
+        fgs_mag_list = []
+        for i in range(len(df)):
+            row = df.iloc[[i]]
+            fgs = fgscountrate.FGSCountrate('', guider)
+            try:
+                _, _, fgs_magnitude, _ = fgs.query_fgs_countrate_magnitude(data_frame=row)
+                fgs_mag_list.append(fgs_magnitude)
+            except ValueError:
+                fgs_mag_list.append(0)
+        fgs_mag_list = np.array(fgs_mag_list)
 
-        LOGGER.info('Background Stars: Finished query; found {} sources.'.format(len(RAs)))
+        LOGGER.info('Background Stars: Finished query; found {} sources.'.format(len(ra_list)))
 
         # Only select sources that are stars
-        mask_pointSources = [c == 0 for c in queried_catalog['classification']]
-        RAs = RAs[mask_pointSources]
-        Decs = Decs[mask_pointSources]
-        jmag = jmag[mask_pointSources]
+        mask_point_sources = [c == 0 for c in queried_catalog['classification']]
+        ra_list = ra_list[mask_point_sources]
+        dec_list = dec_list[mask_point_sources]
+        fgs_mag_list = fgs_mag_list[mask_point_sources]
 
         # self.extended = queried_catalog[~mask_pointSources]
 
         # Remove the guide star!
         # (Assume that is the star closest to the center, if there is a star
         # within 1" of the pointing)
-        distances = [np.sqrt((ra - RA) ** 2 + (dec - Dec) ** 2) for (ra, dec) in zip(RAs, Decs)]
+        distances = [np.sqrt((ra - ra_gs) ** 2 + (dec - dec_gs) ** 2) for (ra, dec) in zip(ra_list, dec_list)]
         i_mindist = np.where(min(distances) == distances)[0][0]  # Probably 0
         if distances[i_mindist] < 1 / 60 / 60:
             LOGGER.info(
                 'Background Stars: Removing assumed guide star at {}, {}'.
-                format(RAs[i_mindist], Decs[i_mindist]))
-            mask_guidestar = [i != i_mindist for i in range(len(RAs))]
-            RAs = RAs[mask_guidestar]
-            Decs = Decs[mask_guidestar]
-            jmag = jmag[mask_guidestar]
+                format(ra_list[i_mindist], dec_list[i_mindist]))
+            mask_guidestar = [i != i_mindist for i in range(len(ra_list))]
+            ra_list = ra_list[mask_guidestar]
+            dec_list = dec_list[mask_guidestar]
+            fgs_mag_list = fgs_mag_list[mask_guidestar]
         else:
             LOGGER.warning('Background Stars: No guide star found within 1 arcsec of the pointing.')
 
         # Convert RA/Dec (sky frame) to X/Y pixels (raw frame)
         siaf = pysiaf.Siaf('FGS')
         guider = siaf['FGS{}_FULL'.format(guider)]
-        V2ref_arcsec = guider.V2Ref
-        V3ref_arcsec = guider.V3Ref
+        v2ref_arcsec = guider.V2Ref
+        v3ref_arcsec = guider.V3Ref
 
-        attitude_ref = pysiaf.utils.rotations.attitude(
-            V2ref_arcsec, V3ref_arcsec, RA, Dec, position_angle
-        )
-        V2, V3 = pysiaf.utils.rotations.getv2v3(attitude_ref, RAs, Decs)
-        x_det, y_det = guider.tel_to_det(V2, V3)
-        x_raw, y_raw = y_det, x_det
+        attitude_ref = pysiaf.utils.rotations.attitude(v2ref_arcsec, v3ref_arcsec, ra_gs, dec_gs, position_angle)
+        v2, v3 = pysiaf.utils.rotations.getv2v3(attitude_ref, ra_list, dec_list)
+        x_raw, y_raw = guider.tel_to_raw(v2, v3)
 
         # Only select the sources within the detector frame
         in_detector_frame = []
@@ -515,7 +518,7 @@ class BackgroundStarsWindow(QDialog):
 
         self.x = x_raw[in_detector_frame]
         self.y = y_raw[in_detector_frame]
-        self.jmags = jmag[in_detector_frame]
+        self.fgs_mags = fgs_mag_list[in_detector_frame]
 
         LOGGER.info('Background Stars: Found {} sources in GUIDER{} FOV.'
                     .format(len(self.x), self.guider))
@@ -527,7 +530,7 @@ class BackgroundStarsWindow(QDialog):
         if self.sender() == self.pushButton_cancel:
             self.x = []
             self.y = []
-            self.jmags = []
+            self.fgs_mags = []
             self.method = None
 
         # If not being called from the master GUI, exit the whole application
