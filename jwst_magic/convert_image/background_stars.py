@@ -59,7 +59,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 LOGGER = logging.getLogger(__name__)
 
 
-def run_background_stars_GUI(guider, fgs_mag, masterGUIapp=None):
+def run_background_stars_GUI(guider, fgs_mag, ra=None, dec=None, masterGUIapp=None):
     """Open the BackgroundStarsWindow and prompt user to specify how to
     add background stars.
 
@@ -69,6 +69,11 @@ def run_background_stars_GUI(guider, fgs_mag, masterGUIapp=None):
         Guider number (1 or 2)
     fgs_mag : float
         Brightness of the guide star in FGS Magnitude
+    ra : float
+        RA of star to auto-populate GSC query section
+        in degrees
+    dec : float
+        Dec of star to auto-populate GSC query section
     masterGUIapp : qApplication, optional
         qApplication instance of parent GUI
 
@@ -91,7 +96,8 @@ def run_background_stars_GUI(guider, fgs_mag, masterGUIapp=None):
         if qApp is None:
             qApp = QApplication(sys.argv)
 
-    window = BackgroundStarsWindow(guider, fgs_mag, qApp=qApp, in_master_GUI=in_master_GUI)
+    window = BackgroundStarsWindow(guider, fgs_mag, ra=ra, dec=dec,
+                                   qApp=qApp, in_master_GUI=in_master_GUI)
 
     if masterGUIapp:
         window.exec_()  # Begin interactive session; pauses until window.exit() is called
