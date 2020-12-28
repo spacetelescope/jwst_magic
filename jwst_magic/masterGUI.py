@@ -770,11 +770,15 @@ class MasterGui(QMainWindow):
         guider = int(self.buttonGroup_guider.checkedButton().text())
 
         # If normalization is turned on, read the normalization value & unit
-        # and calculate JMag of the guidestar
+        # and calculate FGS Mag of the guide star
         if self.checkBox_normalize.isChecked():
-            norm_value = float(self.lineEdit_normalize.text())
+            try:
+                norm_value = float(self.lineEdit_normalize.text())
+            except ValueError:
+                norm_value = self.lineEdit_normalize.text()
             norm_unit = self.comboBox_normalize.currentText()
             fgs_countrate, fgs_mag = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider)
+
         # If not, determine the FGS counts of the input image
         else:
             input_image = self.lineEdit_inputImage.text()
@@ -783,7 +787,9 @@ class MasterGui(QMainWindow):
             fgs_mag = fgscountrate.convert_cr_to_fgs_mag(fgs_countrate, guider)
 
         # Eventually, we will want to this to be done with FGS mag
-        self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, fgs_mag, masterGUIapp=self.app)
+        self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, fgs_mag,
+                                                                            ra=self.gs_ra, dec=self.gs_dec,
+                                                                            masterGUIapp=self.app)
 
         method_adverb = {'random': 'randomly',
                          'user-defined': 'as defined by the user',

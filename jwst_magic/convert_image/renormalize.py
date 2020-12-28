@@ -106,7 +106,7 @@ def check_norm_value_unit(norm_value, norm_unit):
     else:
         LOGGER.error("Normalize Calculation: Value type does not match expectation for unit type.")
         raise TypeError("Mismatched normalization value ({}) and expected type ({}) for unit of {}".format(
-            norm_value, ["float or int" if norm_unit == 'FGS Magnitude' else 'str'], norm_unit))
+            norm_value, ["float or int" if norm_unit.lower() == 'fgs magnitude' else 'str'][0], norm_unit))
     return gsid
 
 def query_jmag_mini_library(fgsmag):

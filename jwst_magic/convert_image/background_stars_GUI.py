@@ -72,7 +72,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class BackgroundStarsWindow(QDialog):
-    def __init__(self, guider, fgs_mag, qApp, in_master_GUI):
+    def __init__(self, guider, fgs_mag, ra, dec, qApp, in_master_GUI):
         """Defines attributes; calls initUI() method to set up user interface.
         """
         # Initialize general attributes
@@ -101,6 +101,10 @@ class BackgroundStarsWindow(QDialog):
 
         # Import .ui file
         uic.loadUi(os.path.join(__location__, 'background_stars.ui'), self)
+
+        # Populate ra and dec if present
+        self.lineEdit_RA.setText(str(ra if ra is not None else ''))
+        self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
 
         # Create and load background stars dialog GUI session
         self.setWindowTitle("Add Background Stars")
