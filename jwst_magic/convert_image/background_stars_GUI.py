@@ -133,18 +133,17 @@ class BackgroundStarsWindow(QDialog):
 
         # Plot guide star
         self.vmin, self.vmax = (self.fgs_mag + 8, self.fgs_mag - 1)
-        self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*',
-                                                   s=500, cmap='viridis_r',
-                                                   vmin=self.vmax,
-                                                   vmax=self.vmin)
+        cmap = mpl.cm.viridis_r
+        norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
+        self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*', c=[self.fgs_mag],
+                                                   s=500, cmap=cmap,
+                                                   norm=norm)
 
         # Add colorbar
         self.canvas.cbar_ax = self.canvas.fig.add_axes([0.05, 0.1, 0.9, 0.03])
-        norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
-        self.canvas.cbar = mpl.colorbar.ColorbarBase(self.canvas.cbar_ax,
-                                                     norm=norm,
-                                                     cmap=mpl.cm.viridis_r,
-                                                     orientation='horizontal')
+        self.canvas.cbar = self.canvas.fig.colorbar(self.guide_star, cax=self.canvas.cbar_ax,
+                                                    orientation='horizontal')
+
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.cbar.set_label('FGS Magnitude')
 
@@ -421,9 +420,8 @@ class BackgroundStarsWindow(QDialog):
             self.vmax = j_magnitude - 1
 
         norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
-        self.canvas.cbar.set_clim(self.vmax, self.vmin)
-        self.canvas.cbar.set_norm(norm)
         self.guide_star.set_clim(self.vmax, self.vmin)
+        self.guide_star.set_norm(norm)
 
         # Redraw the colorbar
         self.canvas.cbar.draw_all()
