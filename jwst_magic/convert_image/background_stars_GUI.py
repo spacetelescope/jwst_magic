@@ -515,11 +515,14 @@ class BackgroundStarsWindow(QDialog):
         v2, v3 = pysiaf.utils.rotations.getv2v3(attitude_ref, ra_list, dec_list)
         x_raw, y_raw = guider.tel_to_raw(v2, v3)
 
-        # Only select the sources within the detector frame
+        # Only select the sources within the detector frame and mag != 0 (un-calculable from above)
         in_detector_frame = []
-        for x, y in zip(x_raw, y_raw):
+        for x, y, mag in zip(x_raw, y_raw, fgs_mag_list):
             if (0 < x < 2048) and (0 < y < 2048):
-                in_detector_frame.append(True)
+                if mag != 0:
+                    in_detector_frame.append(True)
+                else:
+                    in_detector_frame.append(False)
             else:
                 in_detector_frame.append(False)
 
