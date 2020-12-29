@@ -72,7 +72,7 @@ from PyQt5.QtGui import QStandardItemModel
 
 # Local Imports
 from jwst_magic import run_magic
-from jwst_magic.convert_image import renormalize, background_stars
+from jwst_magic.convert_image import renormalize, background_stars_GUI
 from jwst_magic.fsw_file_writer import rewrite_prc
 from jwst_magic.segment_guiding import segment_guiding
 from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
@@ -160,6 +160,7 @@ class MasterGui(QMainWindow):
         self.converted_im_circles = []
         self.shifted_im_circles = []
         self.bkgd_stars = None
+        self._bkgdstars_window = None
         self.itm = itm
         self.program_id = ''
         self.observation_num = ''
@@ -786,11 +787,22 @@ class MasterGui(QMainWindow):
             fgs_countrate = np.sum(data[data > np.median(data)])
             fgs_mag = fgscountrate.convert_cr_to_fgs_mag(fgs_countrate, guider)
 
-        # Eventually, we will want to this to be done with FGS mag
-        self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, fgs_mag,
+        # Run background stars window
+        self._bkgdstars_window = background_stars_GUI.BackgroundStarsWindow(guider, fgs_mag,
                                                                             ra=self.gs_ra, dec=self.gs_dec,
-                                                                            masterGUIapp=self.app)
+                                                                            qApp=self.app, in_master_GUI=True)
+        self._bkgdstars_window.exec_()
 
+        # Create dictionary to pass to ``add_background_stars``
+        if self._bkgdstars_window.x != [] and self._bkgdstars_window.y != [] and list(self._bkgdstars_window.fgs_mags) != []:
+            self.bkgd_stars = {'x': self._bkgdstars_window.x, 'y': self._bkgdstars_window.y,
+                               'fgs_mag': self._bkgdstars_window.fgs_mags}
+        else:
+            self.bkgd_stars = None
+            raise ValueError('No background stars selected')
+
+        # Record the method used to generate the background stars and populate the main GUI with that
+        method = self._bkgdstars_window.method
         method_adverb = {'random': 'randomly',
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}

@@ -72,7 +72,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class BackgroundStarsWindow(QDialog):
-    def __init__(self, guider, fgs_mag, ra, dec, qApp, in_master_GUI):
+    def __init__(self, guider, fgs_mag, qApp, in_master_GUI, ra=None, dec=None):
         """Defines attributes; calls initUI() method to set up user interface.
         """
         # Initialize general attributes

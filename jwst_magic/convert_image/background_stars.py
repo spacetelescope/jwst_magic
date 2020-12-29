@@ -4,116 +4,24 @@ Authors
 -------
     - Lauren Chambers
 
-Use
----
-    To run the GUI with this module:
-    ::
-        from jwst_magic import background_stars
-        background_stars.run_background_stars_GUI(guider, jmag)
-
-    Required arguments:
-        ``guider`` - guider number (1 or 2)
-        ``fgs_mag`` - brightness of the guide star in FGS Magnitude
-
-    Optional arguments:
-        ``masterGUIapp`` - qApplication instance of parent GUI
-
-
-    To add background stars to an image with this module:
-    ::
-        from jwst_magic import background_stars
-        background_stars.add_background_stars(image, stars, norm_value,
-            norm_unit, guider)
-
-    Required arguments:
-        ``image`` - the input data with the original star
-        ``stars`` - either a boolean or a dictionary that defines how
-            to add the additional stars to the image
-        ``norm_value`` - specifies the value to which to normalize.
-        ``norm_unit`` - specifies the unit of norm_value (FGS Magnitude or FGS Counts)
-        ``guider`` - the number of the guider used to take the data
 """
 
 # Standard Library Imports
 import logging
 import os
 import random
-import sys
 
 # Third Party Imports
 import fgscountrate
 import numpy as np
-JENKINS = 'jenkins' in os.getcwd()
-if not JENKINS:
-    from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QApplication
 
 # Local Imports
 from jwst_magic.convert_image import renormalize
-if not JENKINS:
-    from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsWindow
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
-
-
-def run_background_stars_GUI(guider, fgs_mag, ra=None, dec=None, masterGUIapp=None):
-    """Open the BackgroundStarsWindow and prompt user to specify how to
-    add background stars.
-
-    Parameters
-    ----------
-    guider : int
-        Guider number (1 or 2)
-    fgs_mag : float
-        Brightness of the guide star in FGS Magnitude
-    ra : float
-        RA of star to auto-populate GSC query section
-        in degrees
-    dec : float
-        Dec of star to auto-populate GSC query section
-    masterGUIapp : qApplication, optional
-        qApplication instance of parent GUI
-
-    Returns
-    -------
-    stars : dict
-        Dictionary that contains positions and brightnesses of
-        background stars
-    method : str
-        How the background stars were calculated ('random',
-        'user-defined', or 'catalog')
-    """
-
-    in_master_GUI = masterGUIapp is not None
-
-    if in_master_GUI:
-        qApp = masterGUIapp
-    else:
-        qApp = QtCore.QCoreApplication.instance()
-        if qApp is None:
-            qApp = QApplication(sys.argv)
-
-    window = BackgroundStarsWindow(guider, fgs_mag, ra=ra, dec=dec,
-                                   qApp=qApp, in_master_GUI=in_master_GUI)
-
-    if masterGUIapp:
-        window.exec_()  # Begin interactive session; pauses until window.exit() is called
-    else:
-        qApp.exec_()
-
-    # Create dictionary to pass to ``add_background_stars``
-    if window.x != [] and window.y != [] and list(window.fgs_mags) != []:
-        stars = {'x': window.x, 'y': window.y, 'fgs_mag': window.fgs_mags}
-    else:
-        stars = None
-
-    # Record the method used to generate the background stars
-    method = window.method
-
-    return stars, method
 
 
 def add_background_stars(image, stars, norm_value, norm_unit, guider):
