@@ -132,10 +132,9 @@ class BackgroundStarsWindow(QDialog):
         self.canvas.axes.set_ylabel('Y [pixels]')
 
         # Plot guide star
-        cmap = mpl.colors.Colormap('viridis_r')
         self.vmin, self.vmax = (self.fgs_mag + 8, self.fgs_mag - 1)
         self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*',
-                                                   s=500, cmap=cmap,
+                                                   s=500, cmap='viridis_r',
                                                    vmin=self.vmax,
                                                    vmax=self.vmin)
 
@@ -143,7 +142,8 @@ class BackgroundStarsWindow(QDialog):
         self.canvas.cbar_ax = self.canvas.fig.add_axes([0.05, 0.1, 0.9, 0.03])
         norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
         self.canvas.cbar = mpl.colorbar.ColorbarBase(self.canvas.cbar_ax,
-                                                     norm=norm, cmap=cmap,
+                                                     norm=norm,
+                                                     cmap=mpl.cm.viridis_r,
                                                      orientation='horizontal')
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.cbar.set_label('FGS Magnitude')
