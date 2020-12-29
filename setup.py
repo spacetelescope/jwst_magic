@@ -29,7 +29,7 @@ INSTALL_REQUIRES = [
     'astropy',
     'ipython',
     'fgscountrate',
-    'matplotlib',
+    'matplotlib>=3.3',
     'notebook',
     'pysiaf>=0.7.1',
     'pyyaml',
