@@ -184,6 +184,11 @@ class BackgroundStarsWindow(QDialog):
         background star positions and magnitudes; auto-populate the
         table and plot each star.
 
+
+        File should contain 3 columns with x, y, and fgs_mag. File may
+        or may not have a header. If it does, header should look like
+        # x y fgs_mag
+
         Returns
         -------
         filename : str
@@ -334,7 +339,7 @@ class BackgroundStarsWindow(QDialog):
         # Query guide star catalog (GSC) to find stars around given pointing
         # Convert from RA & Dec to pixel coordinates
         RAunit_index = int(self.comboBox_RAUnits.currentIndex())
-        unit_RA = [None, u.hourangle, u.deg][RAunit_index]
+        unit_RA = [u.deg, u.hourangle][RAunit_index]
         unit_Dec = u.deg
         coordinates = SkyCoord(self.lineEdit_RA.text(), self.lineEdit_Dec.text(),
                                unit=(unit_RA, unit_Dec))
