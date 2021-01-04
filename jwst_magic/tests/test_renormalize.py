@@ -1,10 +1,11 @@
-""" THE MODULE THIS TEST SUITE TESTS HAS BEEN DEPRECATED AS OF 03 JULY, 2019
+"""
 
 Collection of unit tests to verify the correct function of the
 convert_image.renormalize module.
 
 Authors
 -------
+    - Shannon Osborne
     - Lauren Chambers
 
 Use
@@ -16,7 +17,23 @@ Use
 import numpy as np
 import pytest
 
-from ..convert_image.renormalize import check_norm_value_unit
+from ..convert_image.renormalize import check_norm_value_unit, convert_to_countrate_fgsmag
+
+gsid_parameters = [
+    (11, 'FGS Magnitude', 1, 14292991.482979316, 11.047518323503994),
+    (1000000, 'FGS Countrate', 2, 1000000, 13.98190894951814),
+    ('N1HL000080', 'Guide Star ID', 2, 13010864.64607799, 11.19577024436347)
+]
+@pytest.mark.parametrize('norm_value, norm_unit, guider, correct_countrate, correct_magnitude', gsid_parameters)
+def test_convert_to_count_rate_mag(norm_value, norm_unit, guider, correct_countrate, correct_magnitude):
+    """
+    Test how the FGS count rate and magnitude are calculated based on input norm unit and value
+    """
+
+    fgs_countrate, fgs_mag = convert_to_countrate_fgsmag(norm_value, norm_unit, guider)
+
+    assert np.isclose(fgs_countrate, correct_countrate, 1e-5)
+    assert np.isclose(fgs_mag, correct_magnitude, 1e-5)
 
 gsid_parameters = [
     (12, 'FGS Magnitude', 'N13A000158'),
@@ -32,37 +49,3 @@ def test_check_gsid(norm_value, norm_unit, correct_gsid):
 
     assert gsid == correct_gsid
 
-#
-# from ..convert_image.renormalize import NormalizeToCountrate
-#
-# norm_parameters = [
-#     (12.5, 'FGS Magnitude', 1, 7575858.324193505, 12.5),
-#     (2000000, 'FGS countrate', 1, 2000000, 13.94600462171104),
-#     (12.5, 'FGS Magnitude', 2, 8396174.193692164, 12.5),
-#     (2000000, 'FGS countrate', 2, 2000000, 14.057628611394456)
-# ]
-# @pytest.mark.parametrize('value, unit, guider, correct_countrate, correct_mag', norm_parameters)
-# def test_NormalizeToCountrate(value, unit, guider, correct_countrate, correct_mag):
-#     """Test that the NormalizeToCountrate class can be instantiated,
-#     and that the conversion methods between count rate and magnitude
-#     is working as expected.
-#     """
-#     ntc = NormalizeToCountrate(value, unit, guider)
-#
-#     assert np.isclose(ntc.to_countrate(), correct_countrate), 'Incorrect FGS countrate.'
-#     assert np.isclose(ntc.to_fgs_mag(), correct_mag), 'Incorrect FGS magnitude.'
-#
-#
-# def test_NormalizeToCountrate_unit_error():
-#     """Test that the NormalizeToCountrate class raises the desired
-#     errors when an invalid unit is specified.
-#     """
-#     ntc = NormalizeToCountrate(12.0, "banana", 1)
-#
-#     with pytest.raises(ValueError) as excinfo:
-#         ntc.to_countrate()
-#     assert 'Unknown unit' in str(excinfo.value)
-#
-#     with pytest.raises(ValueError) as excinfo:
-#         ntc.to_fgs_mag()
-#     assert 'Unknown unit' in str(excinfo.value)
