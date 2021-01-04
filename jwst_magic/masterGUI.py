@@ -160,7 +160,7 @@ class MasterGui(QMainWindow):
         self.converted_im_circles = []
         self.shifted_im_circles = []
         self.bkgd_stars = None
-        self._bkgdstars_window = None
+        self._bkgdstars_dialog = None
         self.itm = itm
         self.program_id = ''
         self.observation_num = ''
@@ -788,21 +788,18 @@ class MasterGui(QMainWindow):
             fgs_mag = fgscountrate.convert_cr_to_fgs_mag(fgs_countrate, guider)
 
         # Run background stars window
-        self._bkgdstars_window = background_stars_GUI.BackgroundStarsWindow(guider, fgs_mag,
+        self._bkgdstars_dialog = background_stars_GUI.BackgroundStarsDialog(guider, fgs_mag,
                                                                             ra=self.gs_ra, dec=self.gs_dec,
-                                                                            qApp=self.app, in_master_GUI=True)
-        self._bkgdstars_window.exec_()
+                                                                            in_master_GUI=True)
+        accepted = self._bkgdstars_dialog.exec()
 
-        # Create dictionary to pass to ``add_background_stars``
-        if self._bkgdstars_window.x != [] and self._bkgdstars_window.y != [] and list(self._bkgdstars_window.fgs_mags) != []:
-            self.bkgd_stars = {'x': self._bkgdstars_window.x, 'y': self._bkgdstars_window.y,
-                               'fgs_mag': self._bkgdstars_window.fgs_mags}
-        else:
-            self.bkgd_stars = None
+        # Pull dict
+        self.bkgd_stars = self._bkgdstars_dialog.return_dict() if accepted else None
+        if self.bkgd_stars is None:
             raise ValueError('No background stars selected')
 
         # Record the method used to generate the background stars and populate the main GUI with that
-        method = self._bkgdstars_window.method
+        method = self._bkgdstars_dialog.method
         method_adverb = {'random': 'randomly',
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}

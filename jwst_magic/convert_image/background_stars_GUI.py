@@ -13,16 +13,14 @@ Use
 ---
     This module can be used as such:
     ::
-        from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsWindow
-        window = BackgroundStarsWindow(guider, fgs_mag, qApp=qApp,
-                                       in_master_GUI=in_master_GUI)
+        from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsDialog
+        window = BackgroundStarsDialog(guider, fgs_mag, in_master_GUI=in_master_GUI)
 
     Required arguments:
         ``guider`` - guider number (1 or 2)
         ``fgs_mag`` - brightness of the guide star in FGS Magnitude
 
     Optional arguments:
-        ``aApp`` - qApplication instance of parent GUI
         ``in_master_GUI`` - is this module being called as part of the master GUI?
 
 Notes
@@ -49,7 +47,6 @@ calling the QApplication instance to run a window/dialog/GUI.
 import logging
 import os
 import random
-import requests
 
 # Third Party Imports
 from astropy import units as u
@@ -63,7 +60,7 @@ from PyQt5.QtWidgets import QDialog, QFileDialog, QTableWidgetItem, QMessageBox
 import pysiaf
 
 # Local Imports
-from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
+from ..star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
@@ -71,12 +68,11 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 LOGGER = logging.getLogger(__name__)
 
 
-class BackgroundStarsWindow(QDialog):
-    def __init__(self, guider, fgs_mag, qApp, in_master_GUI, ra=None, dec=None):
+class BackgroundStarsDialog(QDialog):
+    def __init__(self, guider, fgs_mag, in_master_GUI, ra=None, dec=None):
         """Defines attributes; calls initUI() method to set up user interface.
         """
         # Initialize general attributes
-        self.qApp = qApp
         self.guider = guider
         self.fgs_mag = fgs_mag
         self.image_dim = 400
@@ -149,8 +145,8 @@ class BackgroundStarsWindow(QDialog):
 
     def define_GUI_connections(self):
         # Main dialog widgets
-        self.pushButton_done.clicked.connect(self.quit)
-        self.pushButton_cancel.clicked.connect(self.quit)
+        # self.pushButton_done.clicked.connect(self.quit)
+        # self.pushButton_cancel.clicked.connect(self.quit)
 
         # Randomly added stars widgets
         self.groupBox_random.toggled.connect(self.on_check_section)
@@ -458,8 +454,8 @@ class BackgroundStarsWindow(QDialog):
         # Parse RA and Dec
         ra_gs = coordinates.ra.degree
         dec_gs = coordinates.dec.degree
-        
-        # Set radius around ra and dec and query default (newest) GSC 
+
+        # Set radius around ra and dec and query default (newest) GSC
         radius = 1.6 / 60  # 1.6 arcmin in degrees
         df = fgscountrate.query_gsc(ra=ra_gs, dec=dec_gs, cone_radius=radius)
         LOGGER.info('Background Stars: Querying Newest Guide Star Catalog')
@@ -535,17 +531,14 @@ class BackgroundStarsWindow(QDialog):
 
         return queried_catalog
 
-    def quit(self):
-        # If "cancel" was selected, don't save the data
-        if self.sender() == self.pushButton_cancel:
-            self.x = []
-            self.y = []
-            self.fgs_mags = []
-            self.method = None
+    def return_dict(self):
+        """Create dictionary to pass to ``add_background_stars``"""
+        if self.x != [] and self.y != [] and list(self.fgs_mags) != []:
+            bkgd_stars_dict = {'x': self.x,
+                               'y': self.y,
+                               'fgs_mag': self.fgs_mags}
 
-        # If not being called from the master GUI, exit the whole application
-        if not self.in_master_GUI:
-            self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
+        else:
+            bkgd_stars_dict = None
 
-        # Close the star selector dialog window
-        self.close()
+            return bkgd_stars_dict

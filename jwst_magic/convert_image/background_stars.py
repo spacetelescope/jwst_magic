@@ -16,7 +16,7 @@ import fgscountrate
 import numpy as np
 
 # Local Imports
-from jwst_magic.convert_image import renormalize
+from ..convert_image import renormalize
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
