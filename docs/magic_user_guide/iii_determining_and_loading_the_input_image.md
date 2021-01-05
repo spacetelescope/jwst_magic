@@ -73,7 +73,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
 
         ![Background stars dialog window](./figs/figure6_background_stars.png)
 
-      2. Select which method you wish to use to add stars to the image: randomly, with a user-defined table, or with a Guide Star Catalog (GSC) 2.4.1 query.
+      2. Select which method you wish to use to add stars to the image: with a Guide Star Catalog (GSC) query, randomly, or with a user-defined table.
 
           1. To add stars using a web query from the Guide Star Catalog:
 
@@ -81,6 +81,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
              2. Enter the RA and Dec of the guide star, being sure to specify if the RA units as either degrees or hours.
              3. Enter the position angle (roll angle) of the observatory.
              4. Click the **Query GSC** button to add the stars that are visible in the FOV of the selected guider.
+             - Note: The guide star catalog version that is queried will be the default catalog version called in the FGS Count Rate Module.
  
           2. To add stars randomly:
 
