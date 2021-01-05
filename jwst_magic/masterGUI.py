@@ -793,10 +793,13 @@ class MasterGui(QMainWindow):
                                                                             in_master_GUI=True)
         accepted = self._bkgdstars_dialog.exec()
 
-        # Pull dict
+        # Pull dict of (x,y) and mag values for each star
         self.bkgd_stars = self._bkgdstars_dialog.return_dict() if accepted else None
         if self.bkgd_stars is None:
-            raise ValueError('No background stars selected')
+            if accepted: # click ok without finishing the process of adding background stars
+                raise ValueError('Background Stars GUI missing information. No background stars selected')
+            else: # click cancel
+                raise ValueError('Background Stars GUI closed. No background stars selected')
 
         # Record the method used to generate the background stars and populate the main GUI with that
         method = self._bkgdstars_dialog.method

@@ -532,7 +532,7 @@ class BackgroundStarsDialog(QDialog):
         return queried_catalog
 
     def return_dict(self):
-        """Create dictionary to pass to ``add_background_stars``"""
+        """Create dictionary to pass back to master gui"""
         if self.x != [] and self.y != [] and list(self.fgs_mags) != []:
             bkgd_stars_dict = {'x': self.x,
                                'y': self.y,
@@ -541,4 +541,4 @@ class BackgroundStarsDialog(QDialog):
         else:
             bkgd_stars_dict = None
 
-            return bkgd_stars_dict
+        return bkgd_stars_dict
