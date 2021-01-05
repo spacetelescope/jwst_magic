@@ -125,7 +125,7 @@ def test_run_background_stars_gui_populated(qtbot, master_gui):
         qtbot.mouseClick(master_gui.pushButton_backgroundStars, QtCore.Qt.LeftButton, delay=1)
 
     # An incomplete entry pressing done will error
-    expected_err = 'No background stars selected'
+    expected_err = 'Background Stars GUI missing information. No background stars selected'
     assert expected_err in str(exceptions[0][1]), "Wrong error captured. Caught: '{}', Expected: '{}'".format(
         str(exceptions[0][1]), expected_err)
 
