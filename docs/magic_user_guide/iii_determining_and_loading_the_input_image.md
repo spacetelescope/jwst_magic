@@ -75,25 +75,27 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
 
       2. Select which method you wish to use to add stars to the image: randomly, with a user-defined table, or with a Guide Star Catalog (GSC) 2.4.1 query.
 
-          1. To add stars randomly:
+          1. To add stars using a web query from the Guide Star Catalog:
 
-             1. Select the **Add Stars Randomly** (*A*) checkbox.
-             2. Input the number of stars you want to add to the image
-             3. Specify the magnitude range that these additional stars will lie between (relative to the magnitude of the guide star)
-
-          2. To add stars individually:
-
-             1. Select the **Define Stars to Add** (*B*)  checkbox.
-             2. If you wish to load star locations and brightness from a file, indicate the location of that file.
-             3. Otherwise, enter into the table the X position in pixels, the Y position in pixels, and the count rate in J Magnitude of each star you wish to add. Click the **Add Another Star** button to add another row to the table, or the **Delete Star** button to remove a row.
-
-          3. To add stars using a web query from the Guide Star Catalog:
-
-             1. Select the **Query Stars from Guide Star Catalog 2.4.1** (*C*) checkbox.
-             2. Enter the RA and Dec of the guide star, being sure to specify if the RA units as either hours or degrees.
+             1. Select the **Query Stars from Guide Star Catalog** (*A*) checkbox.
+             2. Enter the RA and Dec of the guide star, being sure to specify if the RA units as either degrees or hours.
              3. Enter the position angle (roll angle) of the observatory.
              4. Click the **Query GSC** button to add the stars that are visible in the FOV of the selected guider.
-      3. Click **Done** to save and apply these selections, or click **Cancel** to close the window without updating the background star selections.
+ 
+          2. To add stars randomly:
+
+             1. Select the **Add Stars Randomly** (*B*) checkbox.
+             2. Input the number of stars you want to add to the image
+             3. Specify the magnitude range that these additional stars will lie between (relative to the magnitude of the guide star). 
+                - E.g. If you have a guide star of 12th FGS magnitude and you specify a range of 7-3, the background stars created will have FGS magnitudes between 19 and 15 magnitude, which is between 7 magnitudes dimmer than the guide star and 3 magnitudes dimmer than the guide star
+
+          3. To add stars individually:
+
+             1. Select the **Define Stars to Add** (*C*)  checkbox.
+             2. If you wish to load star locations and brightness from a file, indicate the location of that file.
+             3. Otherwise, enter into the table the X position in pixels, the Y position in pixels, and the count rate in FGS Magnitude of each star you wish to add. Click the **Add Another Star** button to add another row to the table, or the **Delete Star** button to remove a row.
+
+     3. Click **Done** to save and apply these selections, or click **Cancel** to close the window without updating the background star selections.
       4. Verify that the indicator shows that the correct number of background stars have been added.
 
 ---------------------------------
