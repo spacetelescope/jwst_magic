@@ -8,6 +8,7 @@ magnitudes of the stars to add, or (3) by querying the guide star catalog
 Authors
 -------
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -144,10 +145,6 @@ class BackgroundStarsDialog(QDialog):
         self.canvas.cbar.set_label('FGS Magnitude')
 
     def define_GUI_connections(self):
-        # Main dialog widgets
-        # self.pushButton_done.clicked.connect(self.quit)
-        # self.pushButton_cancel.clicked.connect(self.quit)
-
         # Randomly added stars widgets
         self.groupBox_random.toggled.connect(self.on_check_section)
         self.pushButton_random.clicked.connect(self.draw_random_stars)

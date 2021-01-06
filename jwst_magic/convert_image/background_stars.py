@@ -3,6 +3,7 @@
 Authors
 -------
     - Lauren Chambers
+    - Shannon Osborne
 
 """
 
