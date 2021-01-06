@@ -392,6 +392,11 @@ class BackgroundStarsDialog(QDialog):
             )
             self.legend = self.canvas.axes.legend()
 
+            # Remove stars with unknown fgs_mags
+            self.x = self.x[~mask]
+            self.y = self.y[~mask]
+            self.fgs_mags = self.fgs_mags[~mask]
+
         # # Plot extended sources
         # if self.extended:
         #     self.masked_catalog_stars = self.canvas.axes.scatter(
