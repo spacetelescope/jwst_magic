@@ -765,6 +765,16 @@ class MasterGui(QMainWindow):
             self.no_guider_dialog()
             return
 
+        if self.radioButton_name_manual.isChecked():
+            root = self.lineEdit_root.text()
+            out_dir = self.textEdit_out.toPlainText().rstrip()
+        elif self.radioButton_name_commissioning.isChecked():
+            root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
+            out_dir = os.path.join(SOGS_PATH,
+                                   self.comboBox_practice.currentText(),
+                                   self.comboBox_car.currentText().lower().replace('-', ''),
+                                   )
+
         # Enable the textbox
         self.textEdit_backgroundStars.setEnabled(True)
 
@@ -789,6 +799,7 @@ class MasterGui(QMainWindow):
 
         # Run background stars window
         self._bkgdstars_dialog = background_stars_GUI.BackgroundStarsDialog(guider, fgs_mag,
+                                                                            out_dir=out_dir, root=root,
                                                                             ra=self.gs_ra, dec=self.gs_dec,
                                                                             in_master_GUI=True)
         accepted = self._bkgdstars_dialog.exec()
@@ -796,9 +807,13 @@ class MasterGui(QMainWindow):
         # Pull dict of (x,y) and mag values for each star
         self.bkgd_stars = self._bkgdstars_dialog.return_dict() if accepted else None
         if self.bkgd_stars is None:
-            if accepted: # click ok without finishing the process of adding background stars
+            if accepted:  # click ok without finishing the process of adding background stars
                 raise ValueError('Background Stars GUI missing information. No background stars selected')
-            else: # click cancel
+            else:  # click cancel
+                # delete any file saved out
+                bkgrd_image = os.path.join(out_dir, 'out', root, 'background_stars_{}_G{}.png'.format(root, guider))
+                if os.path.exists(bkgrd_image):
+                    os.remove(bkgrd_image)
                 raise ValueError('Background Stars GUI closed. No background stars selected')
 
         # Record the method used to generate the background stars and populate the main GUI with that
