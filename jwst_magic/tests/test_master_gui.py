@@ -30,10 +30,10 @@ if not JENKINS:
 import pytest
 
 # Local Imports
-from ..utils import utils
+from jwst_magic.utils import utils
 
 if not JENKINS:
-    from ..masterGUI import MasterGui
+    from jwst_magic.masterGUI import MasterGui
 
 SOGS = utils.on_sogs_network()
 if not SOGS:

@@ -22,12 +22,12 @@ if not JENKINS:
 import pytest
 
 # Local Imports
-from ..utils import utils
-from ..convert_image.background_stars import add_background_stars
+from jwst_magic.utils import utils
+from jwst_magic.convert_image.background_stars import add_background_stars
 
 if not JENKINS:
-    from ..convert_image.background_stars_GUI import BackgroundStarsDialog
-    from ..masterGUI import MasterGui
+    from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsDialog
+    from jwst_magic.masterGUI import MasterGui
 
 SOGS = utils.on_sogs_network()
 if not SOGS:

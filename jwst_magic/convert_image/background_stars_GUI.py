@@ -61,7 +61,7 @@ from PyQt5.QtWidgets import QDialog, QFileDialog, QTableWidgetItem, QMessageBox
 import pysiaf
 
 # Local Imports
-from ..star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
+from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 

@@ -67,14 +67,14 @@ if not JENKINS:
 import pytest
 
 # Local Imports
-from .utils import parametrized_data
-from ..utils import utils
-from ..segment_guiding.segment_guiding import (generate_segment_override_file,
+from jwst_magic.tests.utils import parametrized_data
+from jwst_magic.utils import utils
+from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file,
                                                         SegmentGuidingCalculator,
                                                         generate_photometry_override_file)
 if not JENKINS:
-    from ..segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
-    from ..masterGUI import MasterGui
+    from jwst_magic.segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
+    from jwst_magic.masterGUI import MasterGui
 
 SOGS = utils.on_sogs_network()
 if not SOGS:

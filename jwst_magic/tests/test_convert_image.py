@@ -36,8 +36,8 @@ import numpy as np
 from photutils import find_peaks
 import pytest
 
-from .utils import parametrized_data
-from ..convert_image import convert_image_to_raw_fgs
+from jwst_magic.tests.utils import parametrized_data
+from jwst_magic.convert_image import convert_image_to_raw_fgs
 
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

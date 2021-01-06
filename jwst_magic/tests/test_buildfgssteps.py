@@ -20,11 +20,11 @@ import numpy as np
 from photutils import find_peaks
 import pytest
 
-from .utils import parametrized_data
-from ..fsw_file_writer import write_files
-from ..fsw_file_writer.buildfgssteps import BuildFGSSteps, shift_to_id_attitude
-from ..fsw_file_writer.rewrite_prc import rewrite_prc
-from ..utils import utils
+from jwst_magic.tests.utils import parametrized_data
+from jwst_magic.fsw_file_writer import write_files
+from jwst_magic.fsw_file_writer.buildfgssteps import BuildFGSSteps, shift_to_id_attitude
+from jwst_magic.fsw_file_writer.rewrite_prc import rewrite_prc
+from jwst_magic.utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
