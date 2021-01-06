@@ -6,8 +6,8 @@ import subprocess
 
 JENKINS = 'jenkins' in os.getcwd()
 if not JENKINS:
-    from .masterGUI import run_MasterGui as run_tool_GUI
-    from .run_magic import run_all as run_tool
+    from jwst_magic.masterGUI import run_MasterGui as run_tool_GUI
+    from jwst_magic.run_magic import run_all as run_tool
 
 module_path = pkg_resources.resource_filename('jwst_magic', '')
 setup_path = os.path.normpath(os.path.join(module_path, '../setup.py'))

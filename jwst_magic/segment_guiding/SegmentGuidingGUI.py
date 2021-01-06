@@ -35,7 +35,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import (QDialog, QMessageBox, QWidget)
 
 # Local Imports
-from ..utils.coordinate_transforms import nrca3pixel_offset_to_v2v3_offset
+from jwst_magic.utils.coordinate_transforms import nrca3pixel_offset_to_v2v3_offset
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

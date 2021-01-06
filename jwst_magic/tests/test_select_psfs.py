@@ -21,9 +21,9 @@ from astropy.io import ascii as asc
 import numpy as np
 import pytest
 
-from .utils import parametrized_data
-from ..star_selector.select_psfs import select_psfs
-from ..utils import utils
+from jwst_magic.tests.utils import parametrized_data
+from jwst_magic.star_selector.select_psfs import select_psfs
+from jwst_magic.utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')

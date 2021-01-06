@@ -77,8 +77,8 @@ from scipy import signal
 from scipy.ndimage.filters import gaussian_filter
 
 # Local Imports
-from . import renormalize
-from ..utils import utils
+from jwst_magic.convert_image import renormalize
+from jwst_magic.utils import utils
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

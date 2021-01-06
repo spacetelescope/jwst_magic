@@ -17,7 +17,7 @@ Use
 import numpy as np
 import pytest
 
-from ..convert_image.renormalize import check_norm_value_unit, convert_to_countrate_fgsmag
+from jwst_magic.convert_image.renormalize import check_norm_value_unit, convert_to_countrate_fgsmag
 
 gsid_parameters = [
     (11, 'FGS Magnitude', 1, 14292991.482979316, 11.047518323503994),
