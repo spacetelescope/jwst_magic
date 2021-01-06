@@ -102,24 +102,24 @@ def check_norm_value_unit(norm_value, norm_unit):
     if norm_unit.lower() == 'guide star id' and isinstance(norm_value, str):
         gsid = norm_value
     elif norm_unit.lower() == 'fgs magnitude' and isinstance(norm_value, (float,int)):
-        gsid = query_jmag_mini_library(norm_value)
+        gsid = query_fgsmag_mini_library(norm_value)
     else:
         LOGGER.error("Normalize Calculation: Value type does not match expectation for unit type.")
         raise TypeError("Mismatched normalization value ({}) and expected type ({}) for unit of {}".format(
             norm_value, ["float or int" if norm_unit.lower() == 'fgs magnitude' else 'str'][0], norm_unit))
     return gsid
 
-def query_jmag_mini_library(fgsmag):
+def query_fgsmag_mini_library(fgsmag):
     """
     Since the count rate module requires a Guide Star ID (GSID), we have
     pre-defined GSIDs for Guide Stars with magnitudes between (approximately)
     FGS Magnitude of 10 and 14.
     For a FGS Mag of 10, 11, 12, 13, or 14, return the following GSID:
-    10: N135000314 (FGS Mag (G1) = 10.09767, J Mag = 9.99699)
-    11: N13A000006 (FGS Mag (G1) = 11.16569, J Mag = 11.00100)
-    12: N13A000158 (FGS Mag (G1) = 12.16066, J Mag = 12.03899)
-    13: N13A000125 (FGS Mag (G1) = 13.07528, J Mag = 13.00800)
-    14: N13A002729 (FGS Mag (G1) = 13.95341, J Mag = 13.98499)
+    10: N135000314 (FGS Mag (G1) = 10.09767)
+    11: N13A000006 (FGS Mag (G1) = 11.16569)
+    12: N13A000158 (FGS Mag (G1) = 12.16066)
+    13: N13A000125 (FGS Mag (G1) = 13.07528)
+    14: N13A002729 (FGS Mag (G1) = 13.95341)
 
     Parameters
     ----------
