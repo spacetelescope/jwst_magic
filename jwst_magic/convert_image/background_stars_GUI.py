@@ -407,18 +407,18 @@ class BackgroundStarsDialog(QDialog):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # HELPER FUNCTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    def check_colorbar_limits(self, j_magnitude):
+    def check_colorbar_limits(self, fgs_magnitude):
         """Check if a certain magnitude is within the current colorbar
         limits. If not, extend the limits.
         """
 
-        # If the new jmag_min is less than the current colorbar, extend
-        if j_magnitude > self.vmin:
-            self.vmin = j_magnitude + 1
+        # If the new fgsmag_min is less than the current colorbar, extend
+        if fgs_magnitude > self.vmin:
+            self.vmin = fgs_magnitude + 1
 
-        # If the new jmag_max is more than the current colorbar, extend
-        if j_magnitude < self.vmax:
-            self.vmax = j_magnitude - 1
+        # If the new fgsmag_max is more than the current colorbar, extend
+        if fgs_magnitude < self.vmax:
+            self.vmax = fgs_magnitude - 1
 
         norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
         self.guide_star.set_clim(self.vmax, self.vmin)
