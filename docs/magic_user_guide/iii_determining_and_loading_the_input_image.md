@@ -96,7 +96,9 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
              2. If you wish to load star locations and brightness from a file, indicate the location of that file.
              3. Otherwise, enter into the table the X position in pixels, the Y position in pixels, and the count rate in FGS Magnitude of each star you wish to add. Click the **Add Another Star** button to add another row to the table, or the **Delete Star** button to remove a row.
 
-     3. Click **Done** to save and apply these selections, or click **Cancel** to close the window without updating the background star selections.
+          - Note: Stars that are marked with a red outline are stars that are present in the GSC query, but cannot have their FGS magnitudes calculated. Users should keep these stars in mind if any of them are close to the guide star. The background stars GUI will save out a map of these background stars in the top level of the directory name "background_stars_root_G#.png" which can be referred to when selecting stars.
+
+      3. Click **Done** to save and apply these selections, or click **Cancel** to close the window without updating the background star selections.
       4. Verify that the indicator shows that the correct number of background stars have been added.
 
 ---------------------------------

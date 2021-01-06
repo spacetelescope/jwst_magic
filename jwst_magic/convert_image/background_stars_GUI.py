@@ -12,17 +12,8 @@ Authors
 
 Use
 ---
-    This module can be used as such:
-    ::
-        from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsDialog
-        window = BackgroundStarsDialog(guider, fgs_mag, in_master_GUI=in_master_GUI)
-
-    Required arguments:
-        ``guider`` - guider number (1 or 2)
-        ``fgs_mag`` - brightness of the guide star in FGS Magnitude
-
-    Optional arguments:
-        ``in_master_GUI`` - is this module being called as part of the master GUI?
+    from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsDialog
+    dialog = BackgroundStarsDialog(guider, fgs_mag, in_master_GUI=in_master_GUI)
 
 Notes
 -----
@@ -62,16 +53,40 @@ import pysiaf
 
 # Local Imports
 from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas
+from jwst_magic.utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
 
 class BackgroundStarsDialog(QDialog):
-    def __init__(self, guider, fgs_mag, in_master_GUI, ra=None, dec=None):
+    def __init__(self, guider, fgs_mag, in_master_GUI, out_dir=None, root=None, ra=None, dec=None):
         """Defines attributes; calls initUI() method to set up user interface.
+
+        Parameters
+        ----------
+        guider : int
+            guider number (1 or 2)
+        fgs_mag : float
+            brightness of the guide star in FGS Magnitude
+        in_master_GUI : bool
+            is this module being called as part of the master GUI?
+        out_dir : str, optional
+            Where output files will be saved. If not provided, the
+            image(s) will be saved within the repository at
+            jwst_magic/. If not passed, no output file will be saved.
+        root : str, optional
+            Name used to create the output directory, {out_dir}/out/{root}
+            If not passed, no output file will be saved.
+        ra : float, optional
+            Used to populate the ra, dec of the query from GSC section
+        dec : float, optional
+            Used to populate the ra, dec of the query from GSC section
+
         """
         # Initialize general attributes
         self.guider = guider
@@ -83,6 +98,14 @@ class BackgroundStarsDialog(QDialog):
         self.x = []
         self.y = []
         self.fgs_mags = []
+
+        # Set out directory and image name if variables are present
+        if out_dir is not None and root is not None:
+            out_dir_root = utils.make_out_dir(out_dir, OUT_PATH, root)
+            utils.ensure_dir_exists(out_dir_root)
+            self.out_image = os.path.join(out_dir_root, 'background_stars_{}_G{}.png'.format(root, guider))
+        else:
+            self.out_image = None
 
         # Initialize matplotlib plotting attributes
         self.cbar_vmin_line = None
@@ -253,6 +276,10 @@ class BackgroundStarsDialog(QDialog):
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.draw()
 
+        # Save out image
+        if self.out_image:
+            self.canvas.fig.savefig(self.out_image, dpi=150, overwrite=True)
+
     def draw_defined_stars(self):
         # Only draw stars if the table is full and numeric
         for i_row in range(self.tableWidget.rowCount()):
@@ -306,6 +333,10 @@ class BackgroundStarsDialog(QDialog):
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.draw()
 
+        # Save out image
+        if self.out_image:
+            self.canvas.fig.savefig(self.out_image, dpi=150, overwrite=True)
+
     def draw_catalog_stars(self):
         # Only draw new stars if all the needed parameters exist
         if self.lineEdit_RA.text() == '' or \
@@ -339,7 +370,7 @@ class BackgroundStarsDialog(QDialog):
         queried_catalog = self.query_gsc(coordinates, self.guider, position_angle)
 
         # Plot every star
-        mask = np.array([j is np.ma.masked for j in self.fgs_mags])
+        mask = np.array([j == 0 for j in self.fgs_mags])
         LOGGER.info('Background Stars: Plotting {} stars onto GUIDER{} FOV.'
                     .format(len(self.x[~mask]), self.guider))
 
@@ -377,6 +408,10 @@ class BackgroundStarsDialog(QDialog):
         self.canvas.cbar.draw_all()
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.draw()
+
+        # Save out image
+        if self.out_image:
+            self.canvas.fig.savefig(self.out_image, dpi=150, overwrite=True)
 
     def add_star(self):
         n_rows = self.tableWidget.rowCount()
@@ -512,10 +547,7 @@ class BackgroundStarsDialog(QDialog):
         in_detector_frame = []
         for x, y, mag in zip(x_raw, y_raw, fgs_mag_list):
             if (0 < x < 2048) and (0 < y < 2048):
-                if mag != 0:
-                    in_detector_frame.append(True)
-                else:
-                    in_detector_frame.append(False)
+                in_detector_frame.append(True)
             else:
                 in_detector_frame.append(False)
 
