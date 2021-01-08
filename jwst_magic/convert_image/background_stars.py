@@ -97,7 +97,7 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     mean = np.mean(image)
     image[image < mean] = 0
     for x, y, fgs_mag_back in zip(x_back, y_back, fgs_mags_back):
-        if not isinstance(fgs_mag_back, np.ma.core.MaskedConstant):
+        if fgs_mag_back != 0:  # should have already removed all "bad" values marked with 0
             star_fgs_countrate = fgscountrate.convert_fgs_mag_to_cr(fgs_mag_back, guider)
             scale_factor = star_fgs_countrate / fgs_countrate
 
@@ -109,18 +109,18 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
             x2 = min(2048, int(x) + int(psfx / 2) + 1)
             y1 = max(0, int(y) - int(psfy / 2))
             y2 = min(2048, int(y) + int(psfy / 2) + 1)
-            if x > 1024:
-                star_data = star_data[:x2 - x1]
-            else:
-                star_data = star_data[2048 - (x2 - x1):]
             if y > 1024:
-                star_data = star_data[:, :y2 - y1]
+                star_data = star_data[:y2 - y1]
             else:
-                star_data = star_data[:, 2048 - (y2 - y1):]
+                star_data = star_data[2048 - (y2 - y1):]
+            if x > 1024:
+                star_data = star_data[:, :x2 - x1]
+            else:
+                star_data = star_data[:, 2048 - (x2 - x1):]
 
             LOGGER.info(
                 'Background Stars: Adding background star with magnitude {:.1f} at location ({}, {}).'.
                 format(fgs_mag_back, x, y))
-            add_data[x1:x2, y1:y2] += star_data
+            add_data[y1:y2, x1:x2] += star_data
 
     return add_data
