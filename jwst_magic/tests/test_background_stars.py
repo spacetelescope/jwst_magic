@@ -14,7 +14,7 @@ Use
 import os
 import sys
 
-from astropy.io import fits
+import numpy as np
 JENKINS = 'jenkins' in os.getcwd()
 if not JENKINS:
     from PyQt5 import QtCore
