@@ -72,12 +72,15 @@ def bkgdstars_dialog():
 def test_add_background_stars():
     """Basic test to make sure add_background_stars works
     """
-    with fits.open(NIRCAM_IM) as hdulist:
-        data = hdulist[1].data
+    data = np.ones(2048*2048).reshape(2048, 2048)
+    data[1000:1048, 1000:1048] = 12 # y, x
+    data[1080:1100, 1000:1048] = 15
+    assert data[200, 1500] == 1 # check no star here
 
     stars = {'x': [1500], 'y': [200], 'fgs_mag': [10.0]}
 
-    add_background_stars(data, stars, 11.0, 'FGS Magnitude', 1)
+    image = add_background_stars(data, stars, 11.0, 'FGS Magnitude', 1)
+    assert image[200, 1500] != 1 # check a star was added here
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
