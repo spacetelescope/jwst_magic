@@ -370,7 +370,7 @@ class BackgroundStarsDialog(QDialog):
         queried_catalog = self.query_gsc(coordinates, self.guider, position_angle)
 
         # Plot every star
-        mask = np.array([j == 0 for j in self.fgs_mags])
+        mask = np.array([m == 0 for m in self.fgs_mags])
         LOGGER.info('Background Stars: Plotting {} stars onto GUIDER{} FOV.'
                     .format(len(self.x[~mask]), self.guider))
 
@@ -480,7 +480,7 @@ class BackgroundStarsDialog(QDialog):
                     print('could not remove')
 
     def query_gsc(self, coordinates, guider, position_angle):
-        """Create and parse a web query to GSC 2.4.1 to determine the
+        """Create and parse a web query to newest GSC to determine the
         positions and magnitudes of objects around the guide star.
 
         References
@@ -498,7 +498,7 @@ class BackgroundStarsDialog(QDialog):
         LOGGER.info('Background Stars: Querying Newest Guide Star Catalog')
 
         # Only take the necessary columns
-        queried_catalog = df[['ra', 'dec', 'classification', 'tmassJMag']]
+        queried_catalog = df[['ra', 'dec', 'classification']]
         ra_list = df['ra'].values
         dec_list = df['dec'].values
         fgs_mag_list = []
