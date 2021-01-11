@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1561</width>
+    <width>1615</width>
     <height>1105</height>
    </rect>
   </property>
@@ -34,8 +34,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1553</width>
-         <height>1075</height>
+         <width>1595</width>
+         <height>1081</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -1911,8 +1911,8 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>819</y>
+     <x>888</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
      <x>282</x>
@@ -1927,8 +1927,8 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>819</y>
+     <x>888</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
      <x>332</x>
@@ -1943,8 +1943,8 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>819</y>
+     <x>888</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
      <x>290</x>
@@ -1959,12 +1959,12 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>819</y>
+     <x>888</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
-     <x>427</x>
-     <y>774</y>
+     <x>478</x>
+     <y>825</y>
     </hint>
    </hints>
   </connection>
@@ -1975,12 +1975,12 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>819</y>
+     <x>888</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
-     <x>558</x>
-     <y>774</y>
+     <x>619</x>
+     <y>825</y>
     </hint>
    </hints>
   </connection>
@@ -1991,12 +1991,12 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>819</y>
+     <x>888</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
-     <x>163</x>
-     <y>774</y>
+     <x>174</x>
+     <y>825</y>
     </hint>
    </hints>
   </connection>
@@ -2007,12 +2007,12 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>819</y>
+     <x>888</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
-     <x>296</x>
-     <y>774</y>
+     <x>336</x>
+     <y>825</y>
     </hint>
    </hints>
   </connection>
@@ -2023,12 +2023,12 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>819</y>
+     <x>888</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
-     <x>664</x>
-     <y>774</y>
+     <x>761</x>
+     <y>825</y>
     </hint>
    </hints>
   </connection>
@@ -2091,8 +2091,8 @@ QPushButton:pressed {
      <y>664</y>
     </hint>
     <hint type="destinationlabel">
-     <x>767</x>
-     <y>702</y>
+     <x>899</x>
+     <y>722</y>
     </hint>
    </hints>
   </connection>
@@ -2108,7 +2108,7 @@ QPushButton:pressed {
     </hint>
     <hint type="destinationlabel">
      <x>188</x>
-     <y>446</y>
+     <y>462</y>
     </hint>
    </hints>
   </connection>
@@ -2203,8 +2203,8 @@ QPushButton:pressed {
      <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>518</x>
-     <y>561</y>
+     <x>469</x>
+     <y>577</y>
     </hint>
    </hints>
   </connection>
@@ -2219,7 +2219,23 @@ QPushButton:pressed {
      <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>767</x>
+     <x>656</x>
+     <y>575</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pushButton_delbackgroundStars</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>347</x>
+     <y>378</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>779</x>
      <y>559</y>
     </hint>
    </hints>
@@ -2363,8 +2379,8 @@ QPushButton:pressed {
      <y>409</y>
     </hint>
     <hint type="destinationlabel">
-     <x>755</x>
-     <y>411</y>
+     <x>887</x>
+     <y>427</y>
     </hint>
    </hints>
   </connection>
@@ -2427,8 +2443,8 @@ QPushButton:pressed {
      <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>755</x>
-     <y>411</y>
+     <x>887</x>
+     <y>427</y>
     </hint>
    </hints>
   </connection>
@@ -2439,12 +2455,12 @@ QPushButton:pressed {
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>246</x>
-     <y>819</y>
+     <x>713</x>
+     <y>798</y>
     </hint>
     <hint type="destinationlabel">
-     <x>770</x>
-     <y>774</y>
+     <x>902</x>
+     <y>825</y>
     </hint>
    </hints>
   </connection>
@@ -2459,8 +2475,8 @@ QPushButton:pressed {
      <y>823</y>
     </hint>
     <hint type="destinationlabel">
-     <x>549</x>
-     <y>796</y>
+     <x>610</x>
+     <y>847</y>
     </hint>
    </hints>
   </connection>
@@ -2471,12 +2487,12 @@ QPushButton:pressed {
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>130</x>
-     <y>795</y>
+     <x>152</x>
+     <y>846</y>
     </hint>
     <hint type="destinationlabel">
-     <x>761</x>
-     <y>796</y>
+     <x>893</x>
+     <y>847</y>
     </hint>
    </hints>
   </connection>
@@ -2487,23 +2503,23 @@ QPushButton:pressed {
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>241</x>
-     <y>795</y>
+     <x>263</x>
+     <y>846</y>
     </hint>
     <hint type="destinationlabel">
-     <x>549</x>
-     <y>796</y>
+     <x>610</x>
+     <y>847</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <buttongroups>
   <buttongroup name="buttonGroup_starSelector"/>
+  <buttongroup name="buttonGroup_name"/>
   <buttongroup name="buttonGroup_idAttitude"/>
   <buttongroup name="buttonGroup_segmentGuiding"/>
-  <buttongroup name="buttonGroup_name"/>
-  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
-  <buttongroup name="buttonGroup_guider"/>
   <buttongroup name="buttonGroup_instrument"/>
+  <buttongroup name="buttonGroup_guider"/>
+  <buttongroup name="buttonGroup_segmentGuiding_idAttitude"/>
  </buttongroups>
 </ui>
