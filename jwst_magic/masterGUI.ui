@@ -408,7 +408,7 @@ Image:</string>
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="5" column="1" colspan="4">
+           <item row="5" column="1" colspan="3">
             <widget class="QTextEdit" name="textEdit_backgroundStars">
              <property name="enabled">
               <bool>false</bool>
@@ -623,13 +623,23 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="5" column="5">
+           <item row="5" column="4">
             <widget class="QPushButton" name="pushButton_backgroundStars">
              <property name="toolTip">
               <string>Launch a dialog window to specify how to incorporate background stars in the image</string>
              </property>
              <property name="text">
               <string>Add Background Stars</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="5">
+            <widget class="QPushButton" name="pushButton_delbackgroundStars">
+             <property name="toolTip">
+              <string>Delete all background stars previously added to the image</string>
+             </property>
+             <property name="text">
+              <string>Delete Background Stars</string>
              </property>
             </widget>
            </item>
