@@ -398,6 +398,8 @@ class BackgroundStarsDialog(QDialog):
             self.fgs_mags = self.fgs_mags[~mask]
 
         # # Plot extended sources
+        # mask_point_sources = [c == 0 for c in queried_catalog['classification']
+        # self.extended = queried_catalog[~mask_point_sources]
         # if self.extended:
         #     self.masked_catalog_stars = self.canvas.axes.scatter(
         #         self.extended['x'], self.y[mask], c='white',
@@ -513,14 +515,6 @@ class BackgroundStarsDialog(QDialog):
         fgs_mag_list = np.array(fgs_mag_list)
 
         LOGGER.info('Background Stars: Finished query; found {} sources.'.format(len(ra_list)))
-
-        # Only select sources that are stars
-        mask_point_sources = [c == 0 for c in queried_catalog['classification']]
-        ra_list = ra_list[mask_point_sources]
-        dec_list = dec_list[mask_point_sources]
-        fgs_mag_list = fgs_mag_list[mask_point_sources]
-
-        # self.extended = queried_catalog[~mask_pointSources]
 
         # Remove the guide star!
         # (Assume that is the star closest to the center, if there is a star
