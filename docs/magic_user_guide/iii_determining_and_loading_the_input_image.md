@@ -100,8 +100,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
 
       3. Click **Done** to save and apply these selections, or click **Cancel** to close the window without updating the background star selections.
       4. Verify that the indicator shows that the correct number of background stars have been added.
-      5. If users need to delete the background stars they had selected, click the **Delete Background Stars** button (*F*) in the main GUI.
----------------------------------
+      5. The background stars will remain loaded until the user clicks the **Delete Background Stars** button (*F*) in the main GUI. This means that these will stay as you move to the next observation which is helpful if the guide star or PA has not changed, however if either has changed, you will need to either delete the background stars or add new ones using the steps above.
 
 #### Next
 
