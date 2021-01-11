@@ -397,17 +397,6 @@ class BackgroundStarsDialog(QDialog):
             self.y = self.y[~mask]
             self.fgs_mags = self.fgs_mags[~mask]
 
-        # # Plot extended sources
-        # mask_point_sources = [c == 0 for c in queried_catalog['classification']
-        # self.extended = queried_catalog[~mask_point_sources]
-        # if self.extended:
-        #     self.masked_catalog_stars = self.canvas.axes.scatter(
-        #         self.extended['x'], self.y[mask], c='white',
-        #         marker='galaxy_icon.jpg', s=500,
-        #         edgecolors='red', label='Extended source'
-        #         )
-        #     self.legend = self.canvas.axes.legend()
-
         # Record what method was used
         self.method = "catalog"
 
