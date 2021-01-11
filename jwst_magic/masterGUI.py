@@ -260,6 +260,7 @@ class MasterGui(QMainWindow):
 
         # Image converter widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
+        self.pushButton_delbackgroundStars.clicked.connect(self.on_click_del_bkgrdstars)
         self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
         self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
 
@@ -825,6 +826,11 @@ class MasterGui(QMainWindow):
         if isinstance(self.bkgd_stars, dict) and method is not None:
             self.textEdit_backgroundStars.setText('{} background stars added {}'.
                                                   format(len(self.bkgd_stars['x']), method_adverb[method]))
+
+    def on_click_del_bkgrdstars(self):
+        """Reset background stars information"""
+        self.bkgd_stars = None
+        self.textEdit_backgroundStars.setText('No background stars added')
 
     def on_click_showstars(self, show):
         """Show or hide plots of star positions and selected stars.
