@@ -278,7 +278,9 @@ class BackgroundStarsDialog(QDialog):
 
         # Save out image
         if self.out_image:
-            self.canvas.fig.savefig(self.out_image, dpi=150, overwrite=True)
+            if os.path.isfile(self.out_image):
+                os.remove(self.out_image)
+            self.canvas.fig.savefig(self.out_image, dpi=150)
 
     def draw_defined_stars(self):
         # Only draw stars if the table is full and numeric
@@ -335,7 +337,9 @@ class BackgroundStarsDialog(QDialog):
 
         # Save out image
         if self.out_image:
-            self.canvas.fig.savefig(self.out_image, dpi=150, overwrite=True)
+            if os.path.isfile(self.out_image):
+                os.remove(self.out_image)
+            self.canvas.fig.savefig(self.out_image, dpi=150)
 
     def draw_catalog_stars(self):
         # Only draw new stars if all the needed parameters exist
@@ -407,7 +411,9 @@ class BackgroundStarsDialog(QDialog):
 
         # Save out image
         if self.out_image:
-            self.canvas.fig.savefig(self.out_image, dpi=150, overwrite=True)
+            if os.path.isfile(self.out_image):
+                os.remove(self.out_image)
+            self.canvas.fig.savefig(self.out_image, dpi=150)
 
     def add_star(self):
         n_rows = self.tableWidget.rowCount()
