@@ -72,7 +72,7 @@ from PyQt5.QtGui import QStandardItemModel
 
 # Local Imports
 from jwst_magic import run_magic
-from jwst_magic.convert_image import renormalize, background_stars
+from jwst_magic.convert_image import renormalize, background_stars_GUI
 from jwst_magic.fsw_file_writer import rewrite_prc
 from jwst_magic.segment_guiding import segment_guiding
 from jwst_magic.star_selector.SelectStarsGUI import StarClickerMatplotlibCanvas, run_SelectStars
@@ -160,6 +160,7 @@ class MasterGui(QMainWindow):
         self.converted_im_circles = []
         self.shifted_im_circles = []
         self.bkgd_stars = None
+        self._bkgdstars_dialog = None
         self.itm = itm
         self.program_id = ''
         self.observation_num = ''
@@ -259,6 +260,7 @@ class MasterGui(QMainWindow):
 
         # Image converter widgets
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
+        self.pushButton_delbackgroundStars.clicked.connect(self.on_click_del_bkgrdstars)
         self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
         self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
 
@@ -315,7 +317,7 @@ class MasterGui(QMainWindow):
         # Connect combo boxes to one another
         self.comboBox_practice.currentIndexChanged.connect(self.update_commissioning_name)
         self.comboBox_car.currentIndexChanged.connect(self.update_commissioning_name)
-        self.comboBox_obs.currentIndexChanged.connect(self.update_commissioning_name)
+        self.lineEdit_obs.editingFinished.connect(self.update_commissioning_name)
         self.pushButton_commid.clicked.connect(self.update_commissioning_name)
 
 
@@ -379,7 +381,7 @@ class MasterGui(QMainWindow):
             root = self.lineEdit_root.text()
             out_dir = self.textEdit_out.toPlainText().rstrip()
         elif self.radioButton_name_commissioning.isChecked():
-            root = 'for_obs{:02d}'.format(int(self.comboBox_obs.currentText()))
+            root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
             out_dir = os.path.join(SOGS_PATH,
                                    self.comboBox_practice.currentText(),
                                    self.comboBox_car.currentText().lower().replace('-', ''),
@@ -764,37 +766,71 @@ class MasterGui(QMainWindow):
             self.no_guider_dialog()
             return
 
+        if self.radioButton_name_manual.isChecked():
+            root = self.lineEdit_root.text()
+            out_dir = self.textEdit_out.toPlainText().rstrip()
+        elif self.radioButton_name_commissioning.isChecked():
+            root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
+            out_dir = os.path.join(SOGS_PATH,
+                                   self.comboBox_practice.currentText(),
+                                   self.comboBox_car.currentText().lower().replace('-', ''),
+                                   )
+
         # Enable the textbox
         self.textEdit_backgroundStars.setEnabled(True)
 
         guider = int(self.buttonGroup_guider.checkedButton().text())
 
         # If normalization is turned on, read the normalization value & unit
-        # and calculate JMag of the guidestar
+        # and calculate FGS Mag of the guide star
         if self.checkBox_normalize.isChecked():
-            norm_value = float(self.lineEdit_normalize.text())
+            try:
+                norm_value = float(self.lineEdit_normalize.text())
+            except ValueError:
+                norm_value = self.lineEdit_normalize.text()
             norm_unit = self.comboBox_normalize.currentText()
-            #TODO - this will have to be changed
-            norm_obj = renormalize.NormalizeToCountrate(norm_value, norm_unit, guider)
-            fgs_countrate = norm_obj.to_countrate()
-            jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider)
+            fgs_countrate, fgs_mag = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider)
+
         # If not, determine the FGS counts of the input image
         else:
             input_image = self.lineEdit_inputImage.text()
             data, _ = utils.get_data_and_header(input_image)
             fgs_countrate = np.sum(data[data > np.median(data)])
-            jmag = renormalize.fgs_countrate_to_j_mag(fgs_countrate, guider) #We still need this??
+            fgs_mag = fgscountrate.convert_cr_to_fgs_mag(fgs_countrate, guider)
 
-        # Eventually, we will want to this to be done with FGS mag
-        self.bkgd_stars, method = background_stars.run_background_stars_GUI(guider, jmag, masterGUIapp=self.app)
+        # Run background stars window
+        self._bkgdstars_dialog = background_stars_GUI.BackgroundStarsDialog(guider, fgs_mag,
+                                                                            out_dir=out_dir, root=root,
+                                                                            ra=self.gs_ra, dec=self.gs_dec,
+                                                                            in_master_GUI=True)
+        accepted = self._bkgdstars_dialog.exec()
 
+        # Pull dict of (x,y) and mag values for each star
+        self.bkgd_stars = self._bkgdstars_dialog.return_dict() if accepted else None
+        if self.bkgd_stars is None:
+            if accepted:  # click ok without finishing the process of adding background stars
+                raise ValueError('Background Stars GUI missing information. No background stars selected')
+            else:  # click cancel
+                # delete any file saved out
+                bkgrd_image = os.path.join(out_dir, 'out', root, 'background_stars_{}_G{}.png'.format(root, guider))
+                if os.path.exists(bkgrd_image):
+                    os.remove(bkgrd_image)
+                raise ValueError('Background Stars GUI closed. No background stars selected')
+
+        # Record the method used to generate the background stars and populate the main GUI with that
+        method = self._bkgdstars_dialog.method
         method_adverb = {'random': 'randomly',
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}
 
-        if isinstance(self.bkgd_stars, dict) and method is None:
+        if isinstance(self.bkgd_stars, dict) and method is not None:
             self.textEdit_backgroundStars.setText('{} background stars added {}'.
                                                   format(len(self.bkgd_stars['x']), method_adverb[method]))
+
+    def on_click_del_bkgrdstars(self):
+        """Reset background stars information"""
+        self.bkgd_stars = None
+        self.textEdit_backgroundStars.setText('No background stars added')
 
     def on_click_showstars(self, show):
         """Show or hide plots of star positions and selected stars.
@@ -873,7 +909,7 @@ class MasterGui(QMainWindow):
                 raise ValueError('Must set both program ID and observation number to use APT')
         elif self.radioButton_name_commissioning.isChecked():
             self.program_id = int(self.lineEdit_commid.text())
-            self.observation_num = int(self.comboBox_obs.currentText())
+            self.observation_num = int(self.lineEdit_obs.text())
             self.visit_num = 1  # Will we ever have a visit that's not 1?
             self.gs_id, self.apt_guider, self.gs_ra, self.gs_dec = self.query_apt_for_gs(self.program_id,
                                                                                          self.observation_num)
@@ -893,25 +929,16 @@ class MasterGui(QMainWindow):
 
         # When the CAR step is changed...
         if valid_car and self.sender() == self.comboBox_car:
-            # Update the observation dropdown box to include the possible observation numbers
-            n_obs = int(self.commissioning_dict[self.comboBox_car.currentText().lower()]['observations'])
-            self.comboBox_obs.clear()
-            self.comboBox_obs.addItem('- Select Obs -')
-            for i_obs in range(n_obs):
-                self.comboBox_obs.addItem('{:02d}'.format(i_obs + 1))
-            for i_obs in np.arange(n_obs, n_obs + 3):
-                self.comboBox_obs.addItem('+{:02d}'.format(i_obs + 1))
-
             # Add/Update the current APT program number
-            self.lineEdit_commid.setText(str(self.commissioning_dict[self.comboBox_car.currentText().lower()]['apt']))
+            self.lineEdit_commid.setText(str(self.commissioning_dict[self.comboBox_car.currentText().lower()]))
 
-        valid_obs = '- Select Obs -' not in self.comboBox_obs.currentText() and self.comboBox_obs.currentText() != ""
+        valid_obs = self.lineEdit_obs.text() != ""
         valid_all = valid_practice and valid_car and valid_obs
 
         # Update which boxes are enabled and disabled accordingly
         self.comboBox_car.setEnabled(valid_practice)
         self.lineEdit_commid.setEnabled(valid_practice)
-        self.comboBox_obs.setEnabled(valid_practice & valid_car)
+        self.lineEdit_obs.setEnabled(valid_practice & valid_car)
         self.pushButton_commid.setEnabled(valid_practice & valid_car)
 
         # Update the preview output path
@@ -920,7 +947,7 @@ class MasterGui(QMainWindow):
                                 self.comboBox_practice.currentText(),
                                 self.comboBox_car.currentText().lower().replace('-', ''),
                                 'out',
-                                'for_obs{:02d}'.format(int(self.comboBox_obs.currentText()))
+                                'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
                                 )
             self.textEdit_name_preview.setText(path)
         else:
@@ -930,7 +957,7 @@ class MasterGui(QMainWindow):
         self.update_filepreview()
 
         # Update population of guide star information
-        if valid_all and any([self.sender() == self.comboBox_car, self.sender() == self.comboBox_obs,
+        if valid_all and any([self.sender() == self.comboBox_car, self.sender() == self.lineEdit_obs,
                               self.sender() == self.pushButton_commid]):
             self.update_apt_gs_values()
 
@@ -1225,6 +1252,7 @@ class MasterGui(QMainWindow):
         # Add chosen files to shifted image combobox to choose from
         if len(self.comboBox_showcommandsshifted) == 1 and "Guiding Command" in \
                 self.comboBox_showcommandsshifted.currentText():
+            self.comboBox_showcommandsshifted.clear()
             for i, command_file in enumerate(self.shifted_guiding_selections_file_list):
                 item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
                 self.comboBox_showcommandsshifted.addItem(item)
@@ -1405,6 +1433,12 @@ class MasterGui(QMainWindow):
                                                                    self.converted_im_file))
             self.textEdit_showingConverted.setEnabled(False)
 
+            # Clear and reset 0th index in shifted combo box
+            self.comboBox_showcommandsconverted.blockSignals(True)
+            self.comboBox_showcommandsconverted.clear()
+            self.comboBox_showcommandsconverted.addItem('- Guiding Command -')
+            self.comboBox_showcommandsconverted.blockSignals(False)
+
             # Disable the "use converted image" buttons
             self.checkBox_useConvertedImage.setChecked(False)
             self.checkBox_useConvertedImage.setEnabled(False)
@@ -1449,48 +1483,47 @@ class MasterGui(QMainWindow):
 
             # Enable and populate guiding commands button
             self.comboBox_showcommandsshifted.setEnabled(True)
-            if self.comboBox_showcommandsshifted.currentIndex() != 0:
-                i = self.comboBox_showcommandsshifted.currentIndex() - 1
+            i = self.comboBox_showcommandsshifted.currentIndex()
 
-                # Update filepath
-                self.textEdit_showingShifted.setText(self.shifted_im_file_list[i])
+            # Update filepath
+            self.textEdit_showingShifted.setText(self.shifted_im_file_list[i])
 
-                # Load data
-                data, _ = utils.get_data_and_header(self.shifted_im_file_list[i])
-                data[data <= 0] = 1
+            # Load data
+            data, _ = utils.get_data_and_header(self.shifted_im_file_list[i])
+            data[data <= 0] = 1
 
-                # Load all_found_psfs*.text
-                x, y = [None, None]
-                if os.path.exists(self.shifted_all_found_psfs_file_list[i]):
-                    psf_list = asc.read(self.shifted_all_found_psfs_file_list[i])
-                    x = psf_list['x']
-                    y = psf_list['y']
+            # Load all_found_psfs*.text
+            x, y = [None, None]
+            if os.path.exists(self.shifted_all_found_psfs_file_list[i]):
+                psf_list = asc.read(self.shifted_all_found_psfs_file_list[i])
+                x = psf_list['x']
+                y = psf_list['y']
 
-                # Plot data image and peak locations from all_found_psfs*.txt
-                self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
+            # Plot data image and peak locations from all_found_psfs*.txt
+            self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
 
-                # If possible, plot the selected stars in the guiding_selections*.txt
-                shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[i]
+            # If possible, plot the selected stars in the guiding_selections*.txt
+            shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[i]
 
-                if os.path.exists(shifted_guiding_selections_file):
-                    selected_psf_list = asc.read(shifted_guiding_selections_file)
-                    x_selected = selected_psf_list['x']
-                    y_selected = selected_psf_list['y']
+            if os.path.exists(shifted_guiding_selections_file):
+                selected_psf_list = asc.read(shifted_guiding_selections_file)
+                x_selected = selected_psf_list['x']
+                y_selected = selected_psf_list['y']
 
-                    # Remove old circles
-                    for line in self.shifted_im_circles:
-                        self.canvas_shifted.axes.lines.remove(line[0])
+                # Remove old circles
+                for line in self.shifted_im_circles:
+                    self.canvas_shifted.axes.lines.remove(line[0])
 
-                    self.shifted_im_circles = [
-                        self.canvas_shifted.axes.plot(x_selected[0], y_selected[0],
-                                                      'o', ms=25, mfc='none',
-                                                      mec='yellow', mew=2, lw=0)
-                    ]
-                    self.shifted_im_circles.append(
-                        self.canvas_shifted.axes.plot(x_selected[1:], y_selected[1:],
-                                                      'o', ms=25, mfc='none',
-                                                      mec='darkorange', mew=2, lw=0)
-                   )
+                self.shifted_im_circles = [
+                    self.canvas_shifted.axes.plot(x_selected[0], y_selected[0],
+                                                  'o', ms=25, mfc='none',
+                                                  mec='yellow', mew=2, lw=0)
+                ]
+                self.shifted_im_circles.append(
+                    self.canvas_shifted.axes.plot(x_selected[1:], y_selected[1:],
+                                                  'o', ms=25, mfc='none',
+                                                  mec='darkorange', mew=2, lw=0)
+               )
             else:
                 for line in self.shifted_im_circles:
                     line[0].set_visible(False)
@@ -1503,13 +1536,19 @@ class MasterGui(QMainWindow):
         # If not, show nothing.
         else:
             # Update textbox showing filepath
-            if len(self.shifted_im_file_list) != 0:
+            if len(self.shifted_im_file_list) == 0:
                 self.textEdit_showingShifted.setText(
                     'No shifted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
-                        '/'.join(self.shifted_im_file_list[0].split('/')[:-3] + \
-                                 ['guiding_config_*/FGS_imgs/shifted_*_config*.fits'])))
+                        '/'.join(self.converted_im_file.split('/')[:-2] + \
+                                 ['guiding_config_*/FGS_imgs/shifted_*.fits'])))
 
             self.textEdit_showingShifted.setEnabled(False)
+
+            # Clear and reset 0th index in shifted combo box
+            self.comboBox_showcommandsshifted.blockSignals(True)
+            self.comboBox_showcommandsshifted.clear()
+            self.comboBox_showcommandsshifted.addItem('- Guiding Command -')
+            self.comboBox_showcommandsshifted.blockSignals(False)
 
             # Uncheck the "use shifted image" button
             self.radioButton_unshifted.setChecked(True)
@@ -1583,7 +1622,7 @@ class MasterGui(QMainWindow):
                 root_dir = os.path.join(self.textEdit_out.toPlainText(), 'out',
                                         self.lineEdit_root.text())
             else:
-                root = 'for_obs{:02d}'.format(int(self.comboBox_obs.currentText()))
+                root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
                 root_dir = self.textEdit_name_preview.toPlainText()
 
             # Set log if not already set (for first file created with MAGIC)
@@ -1706,7 +1745,7 @@ class MasterGui(QMainWindow):
             observation = observation_list[obs_number - 1]  # indexes from 1
         except IndexError:
             shutil.rmtree(apt_file_path)
-            raise ValueError("This program doesn't have any observations")
+            raise ValueError("This program doesn't have an observation {}".format(obs_number))
         sr = [x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "SpecialRequirements"][0]
 
         # Try to pull the Guide Star information

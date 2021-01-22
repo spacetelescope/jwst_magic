@@ -73,30 +73,34 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
 
         ![Background stars dialog window](./figs/figure6_background_stars.png)
 
-      2. Select which method you wish to use to add stars to the image: randomly, with a user-defined table, or with a Guide Star Catalog (GSC) 2.4.1 query.
+      2. Select which method you wish to use to add stars to the image: with a Guide Star Catalog (GSC) query, randomly, or with a user-defined table.
 
-          1. To add stars randomly:
+          1. To add stars using a web query from the Guide Star Catalog:
 
-             1. Select the **Add Stars Randomly** (*A*) checkbox.
-             2. Input the number of stars you want to add to the image
-             3. Specify the magnitude range that these additional stars will lie between (relative to the magnitude of the guide star)
-
-          2. To add stars individually:
-
-             1. Select the **Define Stars to Add** (*B*)  checkbox.
-             2. If you wish to load star locations and brightness from a file, indicate the location of that file.
-             3. Otherwise, enter into the table the X position in pixels, the Y position in pixels, and the count rate in J Magnitude of each star you wish to add. Click the **Add Another Star** button to add another row to the table, or the **Delete Star** button to remove a row.
-
-          3. To add stars using a web query from the Guide Star Catalog:
-
-             1. Select the **Query Stars from Guide Star Catalog 2.4.1** (*C*) checkbox.
-             2. Enter the RA and Dec of the guide star, being sure to specify if the RA units as either hours or degrees.
+             1. Select the **Query Stars from Guide Star Catalog** (*A*) checkbox.
+             2. Enter the RA and Dec of the guide star, being sure to specify if the RA units as either degrees or hours.
              3. Enter the position angle (roll angle) of the observatory.
-             4. Click the **Query GSC** button to add the stars that are visible in the FOV of the selected guider.
+             4. Click the **Query GSC** button to add the objects (stars and extended sources) that are visible in the FOV of the selected guider.
+             - Note: The guide star catalog version that is queried will be the default catalog version called in the FGS Count Rate Module.
+ 
+          2. To add stars randomly:
+
+             1. Select the **Add Stars Randomly** (*B*) checkbox.
+             2. Input the number of stars you want to add to the image
+             3. Specify the magnitude range that these additional stars will lie between (relative to the magnitude of the guide star). 
+                - E.g. If you have a guide star of 12th FGS magnitude and you specify a range of 7-3, the background stars created will have FGS magnitudes between 19 and 15 magnitude, which is between 7 magnitudes dimmer than the guide star and 3 magnitudes dimmer than the guide star
+
+          3. To add stars individually:
+
+             1. Select the **Define Stars to Add** (*C*)  checkbox.
+             2. If you wish to load star locations and brightness from a file, indicate the location of that file.
+             3. Otherwise, enter into the table the X position in pixels, the Y position in pixels, and the count rate in FGS Magnitude of each star you wish to add. Click the **Add Another Star** button to add another row to the table, or the **Delete Star** button to remove a row.
+
+          - Note: Stars that are marked with a red outline are stars that are present in the GSC query, but cannot have their FGS magnitudes calculated. Users should keep these stars in mind if any of them are close to the guide star. The background stars GUI will save out a map of these background stars in the top level of the directory name "background_stars_root_G#.png" which can be referred to when selecting stars.
+
       3. Click **Done** to save and apply these selections, or click **Cancel** to close the window without updating the background star selections.
       4. Verify that the indicator shows that the correct number of background stars have been added.
-
----------------------------------
+      5. The background stars will remain loaded until the user clicks the **Delete Background Stars** button (*F*) in the main GUI. This means that these will stay as you move to the next observation which is helpful if the guide star or PA has not changed, however if either has changed, you will need to either delete the background stars or add new ones using the steps above.
 
 #### Next
 

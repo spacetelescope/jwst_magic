@@ -474,27 +474,13 @@ def get_car_data():
     http://www.stsci.edu/ftp/presto/ops/public/jwst-pit-status.html and # of observations
     pulled from jwst_magic/jwst_magic/data/commissioning_activities.yaml
     """
-    commissioning_yaml = os.path.join(PACKAGE_PATH, 'data', 'commissioning_activities.yaml')
-    with open(commissioning_yaml, encoding="utf-8") as f:
-        yaml_dict = yaml.safe_load(f.read())
-
     url = 'http://www.stsci.edu/ftp/presto/ops/public/jwst-pit-status.html'
     html_page = requests.get(url).text
     l = pd.read_html(html_page)
     df = l[0]
     df_set = df[df['Activity ID'].str.contains("OTE|LOS", case=False)]  # only include OTE and LOS rows
 
-    def match_car_to_obs(car):
-        match = [i for i, s in enumerate(yaml_dict.keys()) if s in car.lower()]
-        if len(match) == 1:
-            name = list(yaml_dict)[match[0]]
-            num_obs = yaml_dict[name]['observations']
-        else:
-            raise SyntaxWarning('{} has a mis-match (either no match of multiple matches) '
-                                'with our CAR table'.format(car.lower()))
-        return num_obs
-
-    commissioning_dict = {car.lower(): {'apt':str(int(apt)), 'observations':match_car_to_obs(car)}
+    commissioning_dict = {car.lower(): str(int(apt))
                           for car, apt in zip(df_set['Activity ID'].values, df_set['Program'].values)}
 
     return commissioning_dict

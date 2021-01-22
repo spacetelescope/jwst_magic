@@ -1,7 +1,7 @@
 astropy
 ipython
 jupyter
-matplotlib
+matplotlib>=3.3
 notebook
 numpy
 pyqt<6.0
