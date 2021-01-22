@@ -154,6 +154,7 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setCursor(Qt.CrossCursor)
 
     def compute_initial_figure(self, fig, data, x, y,
                                xlabel='Raw FGS X (–V3) [pixels]',
