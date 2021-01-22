@@ -1,15 +1,15 @@
-'''Collection of unit tests to verify the correct function of the FGS
-Commissioning Tools'''
+"""Collection of unit tests to verify the correct function of the FGS
+Commissioning Tools"""
 import glob
 import os
 
 from astropy.io import fits
 import numpy as np
 
-from ..convert_image import convert_image_to_raw_fgs
-from ..fsw_file_writer import buildfgssteps, write_files
-from ..star_selector import select_psfs
-from ..utils import coordinate_transforms, utils
+from jwst_magic.convert_image import convert_image_to_raw_fgs
+from jwst_magic.fsw_file_writer import buildfgssteps, write_files
+from jwst_magic.star_selector import select_psfs
+from jwst_magic.utils import coordinate_transforms, utils
 
 FGS_DATA = glob.glob('fgs_data*.fits')
 NIRCAM_DATA = glob.glob('nircam_data*.fits')
