@@ -1037,6 +1037,15 @@ class StarSelectorWindow(QDialog):
         # If the guiding_selections*.txt doesn't match the all_found_psfs*.txt locations,
         # don't try to load anything.
         if not selected_indices:
+            no_matching_segments_dialog = QMessageBox()
+            no_matching_segments_dialog.setText("File loaded doesn't match found segments" + ' ' * 50)
+            no_matching_segments_dialog.setInformativeText(
+                'The unshifted guiding selections file chosen has segment locations listed that '
+                'are not found in the current image. \n\nCheck that the correct file was loaded: '
+                '{}'.format(self.selected_segs)
+            )
+            no_matching_segments_dialog.setStandardButtons(QMessageBox.Ok)
+            no_matching_segments_dialog.exec()
             return
 
         # Check if indices already exist in root dir
