@@ -432,8 +432,7 @@ class MasterGui(QMainWindow):
             if normalize and norm_value == '':
                 raise ValueError('Image Normalization box checked, but no value given.')
 
-        # Star selection
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       # Set smoothing
         if self.checkBox_globalAlignment.isChecked():
             smoothing = 'high'
         elif self.checkBox_noSmoothing.isChecked():
@@ -441,6 +440,8 @@ class MasterGui(QMainWindow):
         else:
             smoothing = 'default'
 
+        # Star selection
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         star_selection = self.groupBox_starSelector.isChecked()
         star_selectiongui = self.radioButton_starSelectorGUI.isChecked()
         if not self.radioButton_regfileStarSelector.isChecked():
