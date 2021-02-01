@@ -154,6 +154,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     # Either convert provided NIRCam image to an FGS image...
     if convert_im:
         fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
+                                                     out_dir=out_dir,
                                                      nircam=nircam,
                                                      nircam_det=nircam_det,
                                                      normalize=normalize,
