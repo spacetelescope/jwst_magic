@@ -559,8 +559,9 @@ def remove_pedestal(data, nircam, itm):
 
 def convert_im(input_im, guider, root, nircam=True,
                nircam_det=None, normalize=True, norm_value=12.0,
-               norm_unit="FGS Magnitude", gs_catalog=None, coarse_pointing=False,
-               jitter_rate_arcsec=None, logger_passed=False, itm=False):
+               norm_unit="FGS Magnitude", smoothing='default', gs_catalog=None,
+               coarse_pointing=False, jitter_rate_arcsec=None,
+               logger_passed=False, itm=False):
     """Takes NIRCam or FGS image and converts it into an FGS-like image.
 
     Parameters
@@ -589,6 +590,9 @@ def convert_im(input_im, guider, root, nircam=True,
     norm_unit : str, optional
         Specifies the unit of norm_value ("FGS Magnitude", "FGS countrate",
         or "Guide Star ID")
+    smoothing: str, optional
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
     gs_catalog : str, optional
         Guide star catalog version to query. E.g. 'GSC242'. None will use
         the default catalog as defined in teh FGS Count Rate Module.
