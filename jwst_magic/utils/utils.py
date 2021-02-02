@@ -514,7 +514,7 @@ def make_out_dir(out_dir, default_out_path, root):
     return out_dir
 
 
-def create_cols_for_coords_counts(x, y, countrate, val, labels=None, inds=None):
+def create_cols_for_coords_counts(x, y, countrate, val=None, labels=None, inds=None):
     """Format position and count rate data to be written to file.
 
     Create an array of columns of y, x, and countrate of each PSF to be
@@ -531,8 +531,9 @@ def create_cols_for_coords_counts(x, y, countrate, val, labels=None, inds=None):
         List of y-coordinates of identified PSFs
     countrate : list
         List of count rates of identified PSFs
-    val : list
-        List of the number of pixels in each PSF's segmentation object
+    val : list, optional
+        List of the number of pixels in each PSF's segmentation object.
+        Used to re-order PSFs by compact-ness
     labels : list, optional
         Denotes whether the PSF alphabetic labels should be included as
         a column to write out
@@ -554,7 +555,7 @@ def create_cols_for_coords_counts(x, y, countrate, val, labels=None, inds=None):
         # NOTE: these coordinates are y, x
         cols = [[yy, xx, co] for yy, xx, co in zip(y, x, countrate)]
 
-    if inds is None:
+    if inds is None and val is not None:
         min_ind = np.where(val == np.min(val))[0][0]  # Find most compact PSF
         cols.insert(0, cols.pop(min_ind))  # Move most compact PSF to top of the list
     else:
