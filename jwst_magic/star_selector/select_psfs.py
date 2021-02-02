@@ -168,7 +168,6 @@ def parse_in_file(in_file):
                                named {}. Please rename columns.'.format(in_file,
                                                                         fix_colnames)
                 raise TypeError(err_message)
-                LOGGER.error(err_message)
 
             for old_col, fix_col in zip(colnames, fix_colnames):
                 # Assign fixed column names to table
@@ -184,7 +183,6 @@ def parse_in_file(in_file):
                            named {}. Please rename columns.'.format(in_file,
                                                                     raw_columns.split())
             raise TypeError(err_message)
-            LOGGER.error(err_message)
 
     # Make sure all the necessary columns are present
     x_check = 'x' in colnames or 'xreal' in colnames
@@ -197,7 +195,6 @@ def parse_in_file(in_file):
                        "count rate"/"countrate"/"ctot". Found columns \
                        named {}. Please rename columns.'.format(in_file, colnames)
         raise TypeError(err_message)
-        LOGGER.error(err_message)
 
     # Passed all the checkpoints! Move on to process the file.
     LOGGER.info('Star Selection: Checking stars from input file {}'.format(in_file))
@@ -469,7 +466,8 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file_l
     return guiding_selections_file_list
 
 
-def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False, testing=False, masterGUIapp=None):
+def manual_star_selection(data, all_found_psfs_path, guider,
+                          out_dir, choose_center=False, testing=False, masterGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
@@ -481,9 +479,9 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
     ----------
     data : 2-D numpy array
         Image data
-    smoothing: str, optional
-        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
-        smoothing (e.g. GA), or "default" for medium smoothing for other cases
+    all_found_psfs_path : str
+        Path to the unshifted_all_found_psfs_{root}_G{guider}.txt file, which
+        the locations and count rates of all segments found in the data.
     out_dir : str
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
@@ -511,32 +509,12 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
     ValueError
         The user closed the GUI without selecting any stars.
     """
-    if smoothing == 'high':
-        gauss_sigma = 26
-        npeaks = np.inf
-    elif smoothing == 'low':
-        gauss_sigma = 1
-        npeaks = 1
-    elif choose_center:
-        gauss_sigma = 26
-        npeaks = 1
-    elif smoothing == 'default':
-        gauss_sigma = 5
-        npeaks = np.inf
-
-    data = data.astype(float)
-
-    smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
-
-    # Use photutils.find_peaks to locate all PSFs in image
-    num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, npeaks=npeaks,
-                                             choose=False)
-    x, y = map(list, zip(*coords))
-
-    # Use labeling to map locations of objects in array
-    # (Kept for possible alternate countrate calculations; see count_rate_total)
-    objects = ndimage.measurements.label(smoothed_data > threshold)[0]
-    # NOTE: num_objects might not equal num_psfs
+    read_table = asc.read(all_found_psfs_path)
+    x = read_table['x']
+    y = read_table['y']
+    countrate = read_table['countrate']
+    num_psfs = len(x)
+    coords = list(zip(x, y))
 
     # Find the minimum distance between PSFs
     if len(coords) < 2:
@@ -547,28 +525,20 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
     else:
         dist = np.floor(np.min(utils.find_dist_between_points(coords))) - 1.
 
-    # Calculate count rate
-    countrate, val = utils.count_rate_total(data, objects, num_psfs, x, y, countrate_3x3=True)
-
     # Call the GUI to pick PSF indices
     if not testing and not choose_center:
         gui_data = data.copy()
         gui_data[data == 0] = 1  # Alter null pixel values for LogNorm imshow
         inds_list, center_of_pointing = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist, guider,
-                                                           out_dir=out_dir,
-                                                           print_output=False,
-                                                           masterGUIapp=masterGUIapp)
+                                                                       out_dir=out_dir,
+                                                                       print_output=False,
+                                                                       masterGUIapp=masterGUIapp)
 
         # Print indices of each guiding configuration
         for i in range(len(inds_list)):
             ind = inds_list[i]
             LOGGER.info('Star Selection: Guiding Configuration {} - GS = {}, RS = {}'.format(i+1, ind[0],
                         ', '.join([str(c) for c in ind[1:]])))
-
-    # Skip the GUI and choose the 0th PSF found (should only use this case when you'll only find 1 PSF, e.g. MIMF)
-    elif choose_center:
-        inds_list = [[0]]
-        center_of_pointing = 0
 
     # If in testing mode, just make a random list of indices
     else:
@@ -585,13 +555,9 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
         for i, nref in enumerate(nref_list):
             LOGGER.info('Star Selection: Config {}: 1 guide star and {} reference stars selected'.format(i+1, nref))
 
-    segment_labels = utils.match_psfs_to_segments(x, y, smoothing)
-    all_cols = utils.create_cols_for_coords_counts(x, y, countrate, val,
-                                             labels=segment_labels,
-                                             inds=range(len(x)))
-    cols_list = [utils.create_cols_for_coords_counts(x, y, countrate, val, inds=inds) for inds in inds_list]
+    cols_list = [utils.create_cols_for_coords_counts(x, y, countrate, inds=inds) for inds in inds_list]
 
-    return cols_list, coords, nref_list, all_cols, center_of_pointing
+    return cols_list, coords, nref_list, center_of_pointing
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -599,17 +565,14 @@ def manual_star_selection(data, smoothing, guider, out_dir, choose_center=False,
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def select_psfs(data, root, guider, guiding_selections_file_list=None,
+def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file_list=None,
                 smoothing='default', choose_center=False,
                 testing=False, out_dir=None, masterGUIapp=None, logger_passed=False):
     """Select guide and reference segments.
 
     Locate all of the segments in the provided data, then either parse a
     catalog of sources or prompt the user with a GUI to select which
-    segments as the guide and reference segments. Generates two file:
-        unshifted_all_found_psfs_{root}_G{guider}.txt
-            Lists the locations and count rates of all segments found
-            in the data
+    segments as the guide and reference segments. Generates one file:
         unshifted__guiding_selections_{root}_G{guider}.txt
             Lists the locations and count rates of the selected
             guide and reference segments
@@ -622,6 +585,10 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
         Name used to generate output folder and output filenames.
     guider : int
         Guider number (1 or 2)
+    all_found_psfs_path : str
+        Path to the unshifted_all_found_psfs_{root}_G{guider}.txt file,
+        which the locations and count rates of all segments found in the
+        data. File was written out in the convert_image section of MAGIC
     guiding_selections_file_list : list of str, optional
         List of files containing locations and count rates of selected segments
     smoothing: str, optional
@@ -649,6 +616,12 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
     all_found_psfs_path : str
         Path to the unshifted_all_found_psfs_{root}_G{guider}.txt file, which
         the locations and count rates of all segments found in the data
+    center_pointing_path : str
+        Path to center_pointing_{root}_G{guider}.txt which contains the infomration on the
+        center of pointing, either an int (0=mean, #=seg number) or a (y,x) location
+    psf_center_path : str
+        Path to unshifted_psf_center_{root}_G{guider}.txt file, which is only written for
+        smoothing='low', MIMF case
     """
     if not logger_passed:
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
@@ -698,9 +671,8 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
                 nref_list.append(nref)
 
             # Copy over corresponding all_found_psfs, psf_center, and center_pointing file, if possible.
-            all_cols = None
             all_found_psfs_path = copy_psfs_files(guiding_selections_file_list, 'all_found_psfs', root, guider, out_dir)
-            _, all_coords, _= parse_in_file(all_found_psfs_path)
+            _, all_coords, _ = parse_in_file(all_found_psfs_path)
 
             psf_center_path = copy_psfs_files(guiding_selections_file_list, 'psf_center', root, guider, out_dir)
 
@@ -714,27 +686,19 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
         else:
             # If no .incat or reg file provided, create reg file with manual
             # star selection using the SelectStarsGUI
-            cols_list, all_coords, nref_list, all_cols, center_of_pointing = manual_star_selection(data,
-                                                                                                   smoothing,
-                                                                                                   guider,
-                                                                                                   out_dir,
-                                                                                                   choose_center,
-                                                                                                   testing,
-                                                                                                   masterGUIapp)
-            all_found_psfs_path = None
+            cols_list, all_coords, nref_list, center_of_pointing = manual_star_selection(data,
+                                                                                         all_found_psfs_path,
+                                                                                         guider,
+                                                                                         out_dir,
+                                                                                         choose_center,
+                                                                                         testing,
+                                                                                         masterGUIapp)
             psf_center_path = None
             old_configs = [False] * len(cols_list)
 
         # Save PNG of image and all PSF locations in out_dir
         if not JENKINS:
             plot_centroids(data, all_coords, root, guider, out_dir)  # coords are in (x,y)
-
-        if all_cols:
-            all_found_psfs_path = os.path.join(out_dir, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
-            # Write catalog of all identified PSFs
-            utils.write_cols_to_file(all_found_psfs_path,
-                                     labels=['label', 'y', 'x', 'countrate'],
-                                     cols=all_cols, log=LOGGER)
 
         if center_of_pointing is not None:
             # Write out center of pointing information
@@ -772,26 +736,6 @@ def select_psfs(data, root, guider, guiding_selections_file_list=None,
                                      labels=['y', 'x', 'countrate'],
                                      cols=cols, log=LOGGER)
             guiding_selections_path_list.append(guiding_selections_path)
-
-        # Calculate and write out center of PSF information for trk file if smoothing is low
-        # The image won't change, so only 1 file is needed (not 1 per guiding command) - pull the 0th index
-        if smoothing == 'low':
-            LOGGER.info(
-                "Star Selection: No smoothing chosen so re-running star selection to also calculate PSF center")
-            cols_center = manual_star_selection(data,
-                                                smoothing='default',
-                                                guider=guider,
-                                                out_dir=None,
-                                                choose_center=True,
-                                                testing=testing,
-                                                masterGUIapp=masterGUIapp)[0]
-
-            LOGGER.info(
-                "Star Selection: PSF center y,x,cr = {} vs Guiding knot y,x,cr = {}".format(cols_center[0], cols[0]))
-            psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
-            utils.write_cols_to_file(psf_center_path,
-                                     labels=['y', 'x', 'countrate'],
-                                     cols=cols_center[0], log=LOGGER)
 
     except Exception as e:
         LOGGER.exception(e)

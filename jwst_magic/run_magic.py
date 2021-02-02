@@ -184,10 +184,12 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Select guide & reference PSFs
     if star_selection:
+        all_found_psfs_path = os.path.join(out_dir_root, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
         guiding_selections_path_list, all_found_psfs, center_pointing_file, psf_center_file = select_psfs.select_psfs(
             fgs_im, root, guider,
-            smoothing=smoothing,
+            all_found_psfs_path=all_found_psfs_path,
             guiding_selections_file_list=guiding_selections_file,
+            smoothing=smoothing,
             out_dir=out_dir,
             logger_passed=True, masterGUIapp=masterGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
