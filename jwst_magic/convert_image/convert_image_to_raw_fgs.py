@@ -278,6 +278,7 @@ def transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector
 
     return image
 
+
 def transform_sci_to_fgs_raw(image, to_fgs_detector):
     """Rotate NIRCam or FGS image from DMS/science coordinate frame
     (the expected frame for output DMS images) to FGS raw. Note that
@@ -681,13 +682,13 @@ def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, choose=False):
         coords = sources['x_peak', 'y_peak']
         coords = [(x, y) for [x, y] in coords]
 
-        LOGGER.info('Image Conversion: {} PSFs detected in Gaussian-smoothed data \
-            (threshold = {}; sigma = {})'.format(num_psfs, threshold, gauss_sigma))
+        LOGGER.info('Image Conversion: {} PSFs detected in Gaussian-smoothed data '
+                    '(threshold = {}; sigma = {})'.format(num_psfs, threshold, gauss_sigma))
 
     return num_psfs, coords, threshold
 
 
-def create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=True):
+def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default', save=True):
     """Take input column information and save out the all_found_psfs_file
 
     Parameters
@@ -702,7 +703,8 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=True
         Where output files will be saved.
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
-        smoothing (e.g. GA), or "default" for medium smoothing for other cases
+        smoothing (e.g. GA), "default" for medium smoothing for other cases,
+        or "choose center" for finding the center of a MIMF PSF
     save : bool, optional
         Save out all found psfs file
 
@@ -723,6 +725,9 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=True
     elif smoothing == 'default':
         gauss_sigma = 5
         npeaks = np.inf
+    elif smoothing == 'choose center':
+        gauss_sigma = 26
+        npeaks = 1
 
     data = data.astype(float)
     smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
@@ -746,7 +751,7 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=True
     if save is True:
         save_all_found_psfs_file(all_cols, guider, root, out_dir)
 
-    return x_list, y_list
+    return x_list, y_list, countrate
 
 
 def save_all_found_psfs_file(all_cols, guider, root, out_dir):
@@ -773,6 +778,26 @@ def save_all_found_psfs_file(all_cols, guider, root, out_dir):
                              cols=all_cols, log=LOGGER)
 
 
+def save_psf_center_file(center_cols, guider, root, out_dir):
+    """Save out psf center file for low smoothing (MIMF) cases only
+
+    Parameters
+    ----------
+    center_cols :
+
+    guider : int
+        Guider number (1 or 2)
+    root : str
+        Name used to create the output directory, {out_dir}/out/{root}
+    out_dir : str
+        Where output files will be saved.
+    """
+    psf_center_path = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
+    utils.write_cols_to_file(psf_center_path,
+                             labels=['y', 'x', 'countrate'],
+                             cols=center_cols, log=LOGGER)
+
+
 def create_seed_image(data, guider, root, out_dir, smoothing='default'):
     """Create a seed image leaving only the foreground star by removing
     the background and any background stars, and setting the background
@@ -790,7 +815,8 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
         Where output files will be saved.
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
-        smoothing (e.g. GA), or "default" for medium smoothing for other cases
+        smoothing (e.g. GA), "default" for medium smoothing for other cases,
+        or "choose center" for finding the center of a MIMF PSF
 
     Returns
     -------
@@ -802,7 +828,8 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
     else:
         psf_size = 100
 
-    x_list, y_list = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=False)
+    # Generate PSF locations from original data; don't save out here
+    x_list, y_list, _ = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=False)
 
     # Cut out square postage stamps around the segments
     postage_stamps = []
@@ -883,7 +910,8 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         or "Guide Star ID")
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
-        smoothing (e.g. GA), or "default" for medium smoothing for other cases
+        smoothing (e.g. GA), "default" for medium smoothing for other cases,
+        or "choose center" for finding the center of a MIMF PSF
     gs_catalog : str, optional
         Guide star catalog version to query. E.g. 'GSC242'. None will use
         the default catalog as defined in teh FGS Count Rate Module.
@@ -1034,7 +1062,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         # normalized to one before anything else happens
         if itm:
             LOGGER.info("Image Conversion: This is an ITM image.")
-            data -= data.min() # set minimum at 0.
+            data -= data.min()  # set minimum at 0.
             data /= data.sum()  # set total countrate to 1.
             if not norm_value:
                 norm_value = 12
@@ -1056,7 +1084,19 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                                                                                                  fgs_mag))
 
         # Save out all found PSFs file once the data has been normalized
-        create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=True)
+        x_list, y_list, cr_list = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=True)
+
+        # Save out psf center file for no smoothing case
+        if smoothing == 'low':
+            LOGGER.info(
+                "Image Conversion: No smoothing chosen for MIMF case, so calculating PSF center")
+
+            x_center, y_center, cr_center = create_all_found_psfs_file(data, guider, root, out_dir,
+                                                                       smoothing='choose center', save=False)
+            save_psf_center_file([[y_center[0], x_center[0], cr_center[0]]], guider, root, out_dir)
+
+            LOGGER.info("Image Conversion: PSF center y,x,cr = {}, {}, {} vs Guiding knot y,x,cr = {}, {}, {}".format(
+                y_center[0], x_center[0], cr_center[0], y_list[0], x_list[0], cr_list[0]))
 
     except Exception as e:
         LOGGER.exception(e)
