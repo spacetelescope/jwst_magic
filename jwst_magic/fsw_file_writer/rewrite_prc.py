@@ -124,7 +124,7 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
     unshifted_all_rows = asc.read(unshifted_all_psfs)
 
    # Rewrite new unshifted guiding selections file, with new selections
-    cols_list = [select_psfs.create_cols_for_coords_counts(unshifted_all_rows['x'], unshifted_all_rows['y'],
+    cols_list = [utils.create_cols_for_coords_counts(unshifted_all_rows['x'], unshifted_all_rows['y'],
                                                      unshifted_all_rows['countrate'], 0,
                                                      inds=inds) for inds in inds_list]
 

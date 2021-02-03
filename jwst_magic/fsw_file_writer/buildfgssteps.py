@@ -656,7 +656,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
 
     shifted_all_psfs = os.path.join(out_dir, 'shifted_all_found_psfs_{}.txt'.format(file_root))
 
-    all_cols = select_psfs.create_cols_for_coords_counts(shifted_all_psfs_cat['x'],
+    all_cols = utils.create_cols_for_coords_counts(shifted_all_psfs_cat['x'],
                                                          shifted_all_psfs_cat['y'],
                                                          shifted_all_psfs_cat['countrate'],
                                                          None,
