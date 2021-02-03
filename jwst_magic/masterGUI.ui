@@ -1055,11 +1055,11 @@ p, li { white-space: pre-wrap; }
              <property name="toolTip">
               <string>Define one or more commands with guide and reference stars by loading their locations and brightness loaded from a file</string>
              </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
              <property name="text">
               <string>Read commands from root</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_segmentGuiding</string>
@@ -1790,11 +1790,11 @@ QPushButton:pressed {
              <property name="enabled">
               <bool>false</bool>
              </property>
-             <property name="editable">
-              <bool>true</bool>
-             </property>
              <property name="toolTip">
               <string>File containing guide and reference star locations and brightness</string>
+             </property>
+             <property name="editable">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -2506,6 +2506,54 @@ QPushButton:pressed {
     <hint type="destinationlabel">
      <x>610</x>
      <y>847</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_smoothing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>384</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>127</x>
+     <y>605</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox_globalAlignment</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>384</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>367</x>
+     <y>605</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox_noSmoothing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>384</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>606</x>
+     <y>605</y>
     </hint>
    </hints>
   </connection>
