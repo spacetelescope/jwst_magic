@@ -828,6 +828,10 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
     else:
         psf_size = 100
 
+    # If it's the MIMF case, we need to center the postage stamp on the PSF center
+    if smoothing == 'low':
+        smoothing = 'choose center'
+
     # Generate PSF locations from original data; don't save out here
     x_list, y_list, _ = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=False)
 
@@ -1072,7 +1076,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
 
         if normalize or itm:
             # Remove the background and background stars and output a seed image with just the foreground stars
-            data = create_seed_image(data, guider, root, out_dir, smoothing='default')
+            data = create_seed_image(data, guider, root, out_dir, smoothing)
 
             # Convert magnitude/countrate to FGS countrate using new count rate module
             # Take norm_value and norm_unit to pass to count rate module
