@@ -748,9 +748,11 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
                                                    inds=range(len(x_list)))
 
     if save is True:
-        save_all_found_psfs_file(all_cols, guider, root, out_dir)
+        all_found_psfs_path = save_all_found_psfs_file(all_cols, guider, root, out_dir)
+    else:
+        all_found_psfs_path = None
 
-    return x_list, y_list, countrate
+    return x_list, y_list, countrate, all_found_psfs_path
 
 
 def save_all_found_psfs_file(all_cols, guider, root, out_dir):
@@ -776,6 +778,8 @@ def save_all_found_psfs_file(all_cols, guider, root, out_dir):
                              labels=['label', 'y', 'x', 'countrate'],
                              cols=all_cols, log=LOGGER)
 
+    return all_found_psfs_path
+
 
 def save_psf_center_file(center_cols, guider, root, out_dir):
     """Save out psf center file for low smoothing (MIMF) cases only
@@ -795,6 +799,8 @@ def save_psf_center_file(center_cols, guider, root, out_dir):
     utils.write_cols_to_file(psf_center_path,
                              labels=['y', 'x', 'countrate'],
                              cols=center_cols, log=LOGGER)
+
+    return psf_center_path
 
 
 def create_seed_image(data, guider, root, out_dir, smoothing='default'):
@@ -832,7 +838,7 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
         smoothing = 'choose center'
 
     # Generate PSF locations from original data; don't save out here
-    x_list, y_list, _ = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=False)
+    x_list, y_list, _, _ = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=False)
 
     # Cut out square postage stamps around the segments
     postage_stamps = []
@@ -852,8 +858,7 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
     # Find the median of the background (without the postage stamps) and subtract it from the postage stamps
     old_bkgrd = data.copy()
     for stamp in clipped_stamps:
-        old_bkgrd[stamp.slices_original[0], stamp.slices_original[1]] += np.full_like(stamp.data, np.nan,
-                                                                                      dtype=np.double)
+        old_bkgrd[stamp.slices_original[0], stamp.slices_original[1]] = np.full_like(stamp.data, np.nan)
     med = np.nanmedian(old_bkgrd)
 
     final_stamps = []
@@ -864,7 +869,7 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
     # Set the entire background plus any background stars to 0 (May change later with thermal info)
     seed_image = np.zeros_like(data)
     for stamp in final_stamps:
-        seed_image[stamp.slices_original[0], stamp.slices_original[1]] += stamp.data
+        seed_image[stamp.slices_original[0], stamp.slices_original[1]] = stamp.data
 
     return seed_image
 
@@ -1087,25 +1092,28 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                                                                                                  fgs_mag))
 
         # Save out all found PSFs file once the data has been normalized
-        x_list, y_list, cr_list = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=True)
+        x_list, y_list, cr_list, all_found_psfs_path = create_all_found_psfs_file(data, guider, root, out_dir,
+                                                                                  smoothing, save=True)
 
         # Save out psf center file for no smoothing case
         if smoothing == 'low':
             LOGGER.info(
                 "Image Conversion: No smoothing chosen for MIMF case, so calculating PSF center")
 
-            x_center, y_center, cr_center = create_all_found_psfs_file(data, guider, root, out_dir,
-                                                                       smoothing='choose center', save=False)
-            save_psf_center_file([[y_center[0], x_center[0], cr_center[0]]], guider, root, out_dir)
+            x_center, y_center, cr_center, _ = create_all_found_psfs_file(data, guider, root, out_dir,
+                                                                          smoothing='choose center', save=False)
+            psf_center_path = save_psf_center_file([[y_center[0], x_center[0], cr_center[0]]], guider, root, out_dir)
 
             LOGGER.info("Image Conversion: PSF center y,x,cr = {}, {}, {} vs Guiding knot y,x,cr = {}, {}, {}".format(
                 y_center[0], x_center[0], cr_center[0], y_list[0], x_list[0], cr_list[0]))
+        else:
+            psf_center_path = None
 
     except Exception as e:
         LOGGER.exception(e)
         raise
 
-    return data
+    return data, all_found_psfs_path, psf_center_path
 
 
 def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
