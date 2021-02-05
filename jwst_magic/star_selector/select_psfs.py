@@ -566,7 +566,7 @@ def manual_star_selection(data, all_found_psfs_path, guider,
 
 
 def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file_list=None,
-                smoothing='default', choose_center=False,
+                psf_center_path=None, smoothing='default', choose_center=False,
                 testing=False, out_dir=None, masterGUIapp=None, logger_passed=False):
     """Select guide and reference segments.
 
@@ -591,6 +591,8 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
         data. File was written out in the convert_image section of MAGIC
     guiding_selections_file_list : list of str, optional
         List of files containing locations and count rates of selected segments
+    psf_center_path : str
+        Path to psf center file. Only needed for MIMF cases.
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), or "default" for medium smoothing for other cases
@@ -621,7 +623,7 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
         center of pointing, either an int (0=mean, #=seg number) or a (y,x) location
     psf_center_path : str
         Path to unshifted_psf_center_{root}_G{guider}.txt file, which is only written for
-        smoothing='low', MIMF case
+        smoothing='low', MIMF case.
     """
     if not logger_passed:
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
@@ -693,7 +695,6 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
                                                                                          choose_center,
                                                                                          testing,
                                                                                          masterGUIapp)
-            psf_center_path = None
             old_configs = [False] * len(cols_list)
 
         # Save PNG of image and all PSF locations in out_dir
