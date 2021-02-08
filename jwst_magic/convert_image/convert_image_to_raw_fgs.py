@@ -1091,22 +1091,28 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             LOGGER.info("Image Conversion: Normalizing to {} FGS Countrate (FGS Mag: {})".format(fgs_countrate,
                                                                                                  fgs_mag))
 
-        # Save out all found PSFs file once the data has been normalized
-        x_list, y_list, cr_list, all_found_psfs_path = create_all_found_psfs_file(data, guider, root, out_dir,
-                                                                                  smoothing, save=True)
+        try:
+            # Save out all found PSFs file once the data has been normalized
+            x_list, y_list, cr_list, all_found_psfs_path = create_all_found_psfs_file(data, guider, root, out_dir,
+                                                                                      smoothing, save=True)
 
-        # Save out psf center file for no smoothing case
-        if smoothing == 'low':
-            LOGGER.info(
-                "Image Conversion: No smoothing chosen for MIMF case, so calculating PSF center")
+            # Save out psf center file for no smoothing case
+            if smoothing == 'low':
+                LOGGER.info(
+                    "Image Conversion: No smoothing chosen for MIMF case, so calculating PSF center")
 
-            x_center, y_center, cr_center, _ = create_all_found_psfs_file(data, guider, root, out_dir,
-                                                                          smoothing='choose center', save=False)
-            psf_center_path = save_psf_center_file([[y_center[0], x_center[0], cr_center[0]]], guider, root, out_dir)
+                x_center, y_center, cr_center, _ = create_all_found_psfs_file(data, guider, root, out_dir,
+                                                                              smoothing='choose center', save=False)
+                psf_center_path = save_psf_center_file([[y_center[0], x_center[0], cr_center[0]]], guider, root, out_dir)
 
-            LOGGER.info("Image Conversion: PSF center y,x,cr = {}, {}, {} vs Guiding knot y,x,cr = {}, {}, {}".format(
-                y_center[0], x_center[0], cr_center[0], y_list[0], x_list[0], cr_list[0]))
-        else:
+                LOGGER.info("Image Conversion: PSF center y,x,cr = {}, {}, {} vs Guiding knot y,x,cr = {}, {}, {}".format(
+                    y_center[0], x_center[0], cr_center[0], y_list[0], x_list[0], cr_list[0]))
+            else:
+                psf_center_path = None
+        except TypeError:
+            LOGGER.warning('Image Conversion: No PSFs were found in this image. '
+                           'Cannot write out an all found PSFs file.')
+            all_found_psfs_path = None
             psf_center_path = None
 
     except Exception as e:
