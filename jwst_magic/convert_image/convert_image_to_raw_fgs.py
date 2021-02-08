@@ -70,6 +70,7 @@ import logging
 import os
 
 # Third Party Imports
+from astropy.io import ascii as asc
 from astropy.io import fits
 from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
@@ -803,7 +804,7 @@ def save_psf_center_file(center_cols, guider, root, out_dir):
     return psf_center_path
 
 
-def create_seed_image(data, guider, root, out_dir, smoothing='default'):
+def create_seed_image(data, guider, root, out_dir, smoothing='default', all_found_psfs_file=None):
     """Create a seed image leaving only the foreground star by removing
     the background and any background stars, and setting the background
     to zero.
@@ -822,6 +823,12 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
         or "choose center" for finding the center of a MIMF PSF
+    all_found_psfs_file: str, optional
+        A pre-made all_found_psfs file to use when creating the pseudo-FGS
+        image rather than making a new one by smoothing the code. This can
+        be used when MAGIC's current smoothing methods aren't sufficient in
+        blocking background segments and PSFs need to be deleted from the
+        MAGIC-made all found PSFs file.
 
     Returns
     -------
@@ -837,8 +844,13 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
     if smoothing == 'low':
         smoothing = 'choose center'
 
-    # Generate PSF locations from original data; don't save out here
-    x_list, y_list, _, _ = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=False)
+    if all_found_psfs_file is None:
+        # Generate PSF locations from original data; don't save out here
+        x_list, y_list, _, _ = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=False)
+    else:
+        # Read in file
+        in_table = asc.read(all_found_psfs_file)
+        x_list, y_list = in_table['x'], in_table['y']
 
     # Cut out square postage stamps around the segments
     postage_stamps = []
@@ -881,7 +893,8 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default'):
 
 def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                nircam_det=None, normalize=True, norm_value=12.0,
-               norm_unit="FGS Magnitude", smoothing='default', gs_catalog=None,
+               norm_unit="FGS Magnitude", smoothing='default',
+               all_found_psfs_file=None, gs_catalog=None,
                coarse_pointing=False, jitter_rate_arcsec=None,
                logger_passed=False, itm=False):
     """Takes NIRCam or FGS image and converts it into an FGS-like image.
@@ -920,6 +933,12 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
         or "choose center" for finding the center of a MIMF PSF
+    all_found_psfs_file: str, optional
+        A pre-made all_found_psfs file to use when creating the pseudo-FGS
+        image rather than making a new one in the code. This can be used
+        when MAGIC's current smoothing methods aren't sufficient in
+        blocking background segments and PSFs need to be deleted from the
+        MAGIC-made all found PSFs file in the backend.
     gs_catalog : str, optional
         Guide star catalog version to query. E.g. 'GSC242'. None will use
         the default catalog as defined in teh FGS Count Rate Module.
@@ -1080,7 +1099,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
 
         if normalize or itm:
             # Remove the background and background stars and output a seed image with just the foreground stars
-            data = create_seed_image(data, guider, root, out_dir, smoothing)
+            data = create_seed_image(data, guider, root, out_dir, smoothing, all_found_psfs_file)
 
             # Convert magnitude/countrate to FGS countrate using new count rate module
             # Take norm_value and norm_unit to pass to count rate module
@@ -1092,9 +1111,17 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                                                                                                  fgs_mag))
 
         try:
-            # Save out all found PSFs file once the data has been normalized
-            x_list, y_list, cr_list, all_found_psfs_path = create_all_found_psfs_file(data, guider, root, out_dir,
-                                                                                      smoothing, save=True)
+            if all_found_psfs_file is None:
+                # Save out all found PSFs file once the data has been normalized
+                x_list, y_list, cr_list, all_found_psfs_path = create_all_found_psfs_file(data, guider, root, out_dir,
+                                                                                          smoothing, save=True)
+            else:
+                # Write the same file out in the correct directory with the correct name
+                table = asc.read(all_found_psfs_file)
+                colnames = table.colnames
+                all_cols = [[str(i) for i in table[name].tolist()] for name in colnames]
+                all_cols = list(map(list, zip(*all_cols)))
+                all_found_psfs_path = save_all_found_psfs_file(all_cols, guider, root, out_dir)
 
             # Save out psf center file for no smoothing case
             if smoothing == 'low':
@@ -1109,11 +1136,14 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                     y_center[0], x_center[0], cr_center[0], y_list[0], x_list[0], cr_list[0]))
             else:
                 psf_center_path = None
-        except TypeError:
-            LOGGER.warning('Image Conversion: No PSFs were found in this image. '
-                           'Cannot write out an all found PSFs file.')
-            all_found_psfs_path = None
-            psf_center_path = None
+        except TypeError as e:
+            if str(e) == "object of type 'NoneType' has no len()":
+                LOGGER.warning('Image Conversion: No PSFs were found in this image. '
+                               'Cannot write out an all found PSFs file.')
+                all_found_psfs_path = None
+                psf_center_path = None
+            else:
+                raise TypeError(str(e))
 
     except Exception as e:
         LOGGER.exception(e)
