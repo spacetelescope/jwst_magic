@@ -31,6 +31,7 @@ The following are ways to run convert_image:
 import os
 import yaml
 
+from astropy.io import ascii as asc
 from astropy.io import fits
 import numpy as np
 from photutils import find_peaks
@@ -48,6 +49,7 @@ NIRCAM_MIMF_IM = os.path.join(__location__, 'data', 'nircam_mimf.fits')
 FGS_PED_IM = os.path.join(__location__, 'data', 'fgs_w_ped.fits')
 FGS_GA_IM = os.path.join(__location__, 'data', 'fgs_data_1_beforelos2ga.fits')
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
+SEGMENT_INFILE = os.path.join(__location__, 'data', 'all_found_psfs_test_select_psfs.txt')
 
 PARAMETRIZED_DATA = parametrized_data()['test_convert_image']
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
@@ -184,3 +186,29 @@ def test_psf_center_file():
         no_smooth_contents = f.read()
 
     assert guiding_selections_contents != no_smooth_contents
+
+def test_read_in_all_found_psfs_file():
+    """Test reading in an all found psfs file into the convert_im function
+    """
+    image = NIRCAM_IM
+    guider = 1
+    input_all_found_psfs = SEGMENT_INFILE
+
+    data, all_found_psfs_file, \
+    psf_center_file = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=True,
+                                                          out_dir=__location__, smoothing='high',
+                                                          nircam_det=None, normalize=True,
+                                                          norm_value=12,
+                                                          norm_unit='FGS Magnitude',
+                                                          all_found_psfs_file=input_all_found_psfs,
+                                                          gs_catalog='GSC242',
+                                                          coarse_pointing=False,
+                                                          jitter_rate_arcsec=None,
+                                                          logger_passed=False, itm=False)
+
+    assert os.path.exists(all_found_psfs_file)
+    assert psf_center_file is None
+
+    input_table = asc.read(input_all_found_psfs)
+    output_table = asc.read(all_found_psfs_file)
+    assert all(input_table == output_table)
