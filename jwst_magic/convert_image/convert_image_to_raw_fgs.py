@@ -413,7 +413,7 @@ def pad_data(data, padding, fgs_pix):
         # If something else is going on....
         else:
             raise ValueError('Padded image not of proper size (should be 2040): {}'.format(padded_size))
-    padded_data = np.full((padded_size, padded_size), 0)
+    padded_data = np.zeros((padded_size, padded_size))
 
     # Replace center of array with real data
     padded_data[padding:padding + size, padding:padding + size] = data
