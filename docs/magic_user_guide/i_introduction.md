@@ -100,6 +100,4 @@ When provided with a count rate factor and a threshold factor, the tool will pro
 
 ###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
 
-###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
-
-###### Appendix D: [Mirror State Procedures](appendix_d_mirror_states.md)
+###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)
