@@ -32,6 +32,8 @@ CONVERTED_NIRCAM_IM_GA = os.path.join(__location__, 'data', 'converted_nircam_da
 CONVERTED_NIRCAM_IM_MIMF = os.path.join(__location__, 'data', 'converted_nircam_data_1_mimf.fits')
 ROOT = "test_select_psfs"
 SEGMENT_INFILE = os.path.join(__location__, 'data', 'all_found_psfs_{}.txt'.format(ROOT))
+SEGMENT_INFILE_NONGA = os.path.join(__location__, 'data', 'all_found_psfs_{}_nonga.txt'.format(ROOT))
+SEGMENT_INFILE_MIMF = os.path.join(__location__, 'data', 'all_found_psfs_{}_mimf.txt'.format(ROOT))
 SELECTED_SEGS = os.path.join(__location__, 'data', 'guiding_selections_{}_config1.txt'.format(ROOT))
 SELECTED_SEGS_2 = os.path.join(__location__, 'data', 'guiding_selections_{}_config2.txt'.format(ROOT))
 VISIT_NUM = 1
@@ -68,7 +70,8 @@ select_psfs_with_file_parameters = [([SELECTED_SEGS], [1]), ([SELECTED_SEGS, SEL
 def test_select_psfs_with_file(test_directory, guiding_selection_file, expected_configs):
     # Run code
     guiding_selections_path_list, all_found_psfs_path, _, _ = select_psfs(
-        CONVERTED_NIRCAM_IM_GA, ROOT, 2, guiding_selections_file_list=guiding_selection_file,
+        CONVERTED_NIRCAM_IM_GA, ROOT, 2, all_found_psfs_path=SEGMENT_INFILE,
+        guiding_selections_file_list=guiding_selection_file,
         out_dir=__location__
     )
 
@@ -92,14 +95,18 @@ def test_select_psfs_with_file(test_directory, guiding_selection_file, expected_
 
 
 test_data = PARAMETRIZED_DATA['test_select_psfs_without_file']
-select_psfs_without_file_parameters = [(CONVERTED_NIRCAM_IM_GA, 'default', 21, test_data['non-ga']),
-                                       (CONVERTED_NIRCAM_IM_GA, 'high', 18, test_data['ga']),
-                                       (CONVERTED_NIRCAM_IM_MIMF, 'low', 1, test_data['mimf'])
+select_psfs_without_file_parameters = [(CONVERTED_NIRCAM_IM_GA, 'default', 21, SEGMENT_INFILE_NONGA, test_data['non-ga']),
+                                       (CONVERTED_NIRCAM_IM_GA, 'high', 18, SEGMENT_INFILE, test_data['ga']),
+                                       (CONVERTED_NIRCAM_IM_MIMF, 'low', 1, SEGMENT_INFILE_MIMF, test_data['mimf'])
                                        ]
-@pytest.mark.parametrize('in_data, smooth, n_psfs, correct_all_found_psfs_txt', select_psfs_without_file_parameters)
-def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, correct_all_found_psfs_txt):
+@pytest.mark.parametrize('in_data, smooth, n_psfs, all_found_psfs, correct_all_found_psfs_txt',
+                         select_psfs_without_file_parameters)
+def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs,
+                                  all_found_psfs, correct_all_found_psfs_txt):
     guiding_selections_path_list, all_found_psfs_path, center_pointing_path, psf_center_path = select_psfs(
-        in_data, ROOT, 2, smoothing=smooth, testing=True,
+        in_data, ROOT, 2,
+        all_found_psfs_path=all_found_psfs,
+        smoothing=smooth, testing=True,
         out_dir=__location__
     )
 
@@ -108,8 +115,6 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
     assert os.path.exists(guiding_selections_path_list[0]), 'unshifted_guiding_selections_test_select_psfs_G2.txt not generated.'
     assert os.path.exists(all_found_psfs_path), 'unshifted_all_found_psfs_test_select_psfs_G2.txt not generated.'
     assert os.path.exists(center_pointing_path), 'center_pointing_test_select_psfs_G2.txt not generated.'
-    if smooth == 'low':
-        assert os.path.exists(psf_center_path), 'unshifted_psf_center_test_select_psfs_G2.txt not generated.'
 
     # Test that the contents of all_found_psfs_test_select_psfs_G2.txt is correct
     # Right number of PSFs found?
@@ -120,15 +125,6 @@ def test_select_psfs_without_file(test_directory, in_data, smooth, n_psfs, corre
     with open(all_found_psfs_path) as f:
         all_found_psfs_contents = f.read()
     assert all_found_psfs_contents == correct_all_found_psfs_txt
-
-    # Check PSF location in guiding selections doesn't match psf center
-    # guiding selections should have found a knot in the PSF not at the center
-    if smooth == 'low':
-        with open(guiding_selections_path_list[0]) as f:
-            guiding_selections_contents = f.read()
-        with open(psf_center_path) as f:
-            no_smooth_contents = f.read()
-        assert guiding_selections_contents != no_smooth_contents
 
 
 test_data = PARAMETRIZED_DATA['test_yaml_file']
@@ -162,7 +158,9 @@ def test_yaml_file(cols_order, cols_list, all_cols):
 
     # Simulate loading these 11 configs via a file
     guiding_selections_path_list, all_found_psfs_path, _, _ = select_psfs(
-        CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file_list=guiding_selections_path_list,
+        CONVERTED_NIRCAM_IM_GA, ROOT, guider,
+        all_found_psfs_path=SEGMENT_INFILE,
+        guiding_selections_file_list=guiding_selections_path_list,
         out_dir=__location__
     )
 
@@ -177,7 +175,9 @@ def test_yaml_file(cols_order, cols_list, all_cols):
 
     # Simulate re-loading the same config again + 1 more new config
     guiding_selections_path_list, all_found_psfs_path, _, _ = select_psfs(
-        CONVERTED_NIRCAM_IM_GA, ROOT, guider, guiding_selections_file_list=[guiding_selections_path_list[0], SELECTED_SEGS],
+        CONVERTED_NIRCAM_IM_GA, ROOT, guider,
+        all_found_psfs_path=SEGMENT_INFILE,
+        guiding_selections_file_list=[guiding_selections_path_list[0], SELECTED_SEGS],
         out_dir=__location__
     )
 

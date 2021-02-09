@@ -153,16 +153,19 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Either convert provided NIRCam image to an FGS image...
     if convert_im:
-        fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
-                                                     nircam=nircam,
-                                                     nircam_det=nircam_det,
-                                                     normalize=normalize,
-                                                     norm_value=norm_value,
-                                                     norm_unit=norm_unit,
-                                                     coarse_pointing=coarse_pointing,
-                                                     jitter_rate_arcsec=jitter_rate_arcsec,
-                                                     logger_passed=True,
-                                                     itm=itm)
+        fgs_im, all_found_psfs_file, psf_center_file = \
+            convert_image_to_raw_fgs.convert_im(image, guider, root,
+                                                out_dir=out_dir,
+                                                nircam=nircam,
+                                                nircam_det=nircam_det,
+                                                normalize=normalize,
+                                                norm_value=norm_value,
+                                                norm_unit=norm_unit,
+                                                smoothing=smoothing,
+                                                coarse_pointing=coarse_pointing,
+                                                jitter_rate_arcsec=jitter_rate_arcsec,
+                                                logger_passed=True,
+                                                itm=itm)
 
         if bkgd_stars:
             if not normalize and not itm:
@@ -178,14 +181,21 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     # Or, if an FGS image was provided, use it!
     else:
         fgs_im = image
+        all_found_psfs_file = os.path.join(out_dir_root, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
+        if smoothing == 'low':
+            psf_center_file = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
+        else:
+            psf_center_file = None
         LOGGER.info("Assuming that the input image is a raw FGS image")
 
     # Select guide & reference PSFs
     if star_selection:
         guiding_selections_path_list, all_found_psfs, center_pointing_file, psf_center_file = select_psfs.select_psfs(
             fgs_im, root, guider,
-            smoothing=smoothing,
+            all_found_psfs_path=all_found_psfs_file,
             guiding_selections_file_list=guiding_selections_file,
+            psf_center_path=psf_center_file,
+            smoothing=smoothing,
             out_dir=out_dir,
             logger_passed=True, masterGUIapp=masterGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
@@ -218,7 +228,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                 steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
 
             for step in steps:
-                fgs_files_obj= buildfgssteps.BuildFGSSteps(
+                fgs_files_obj = buildfgssteps.BuildFGSSteps(
                     fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                     psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
