@@ -28,18 +28,18 @@ Another very important part of MAGIC is creating the override file that can be u
 
    1. If creating a photometry override file, click the **Create photometry override file** radio button (*B*) and see [Section VIII](viii_write_pof.md).
 
-   2. If creating a segment override file, load guiding selections files by clicking the **Read in commands from files** radio button (*C*). By default, the path will point to the directory where all the files have been saved for this root, and the drop down box below will be populated with all the available guiding selections files in that path. 
-      1. Toggle between the **Use image shifted to ID attitude** radio button and the **Use Original Image** radio buttons to show the shifted and unshifted selections files available in that path respectively. 
-      
+   2. If creating a segment override file, load guiding selections files by clicking the **Read in commands from files** radio button (*C*). By default, the path will point to the directory where all the files have been saved for this root, and the drop down box below will be populated with all the available guiding selections files in that path.
+      1. Toggle between the **Use image shifted to ID attitude** radio button and the **Use Original Image** radio buttons to show the shifted and unshifted selections files available in that path respectively.
+
       2. Users can type in a new path and the drop down box will update with that path’s available guiding selection files.
-    
+
       3. If users want to change the order of the selections files that should go into the SOF from the order they are listed in the drop down box, they should check the **Change order of configurations** check box (*D*). This will bring up a pop up box that will list the files chosen. Users should change the order of the list of guiding selections files, which can be as simple as changing the config numbers in the file names, or by copy/pasting the file names to move them around ()using keyboard shortcuts or right-clicking) ending with 1 file per line. Then hit “OK” .
-        
+
 4. Before running the tool, obtain the following parameters with the following methods (skip to iii if you used the APT query):
 
    1. APT parameters: If you do not know, ask the Wavefront Ops for the **Program Number**, **Observation Number(s)**, and the **Visit Number**.
 
-   2. Guide star **RA** & **Dec**: Retrieve the guide star ID from the APT file (see [Appendix C](appendix_c_apt.md) for a step-by-step guide for doing this). Go to the Guide Star Catalog webform (http://gsss.stsci.edu/webservices/GSC2/
+   2. Guide star **RA** & **Dec**: Retrieve the guide star ID from the APT file. Go to the Guide Star Catalog webform (http://gsss.stsci.edu/webservices/GSC2/
 WebForm.aspx), and query with the guide star ID in the “HST ID” field to determine the RA and Dec.
 
    3. **Position Angle**: Ask the S&OC for the visit position angle at the guide star (V3PA@GS).
@@ -73,7 +73,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
    8. **V3 boresight offset** – that will be applied before the observation this file is for
 
-   9. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. This will be auto-populated from the threshold entered in the main GUI, but can be changed here based on DHAS testing results. 
+   9. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. This will be auto-populated from the threshold entered in the main GUI, but can be changed here based on DHAS testing results.
 
    Note: If you used the APT query functionality in [Section III](iii_determining_and_loading_the_input_image.md), the Program ID, Observation Number, Visit Number, and RA and DEC of the guide star should be pre-populated.
 
@@ -89,6 +89,4 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
 ###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
 
-###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
-
-###### Appendix D: [Mirror State Procedures](appendix_d_mirror_states.md)
+###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)
