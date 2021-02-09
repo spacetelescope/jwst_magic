@@ -187,6 +187,7 @@ def test_psf_center_file():
 
     assert guiding_selections_contents != no_smooth_contents
 
+
 def test_read_in_all_found_psfs_file():
     """Test reading in an all found psfs file into the convert_im function
     """

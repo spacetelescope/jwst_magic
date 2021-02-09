@@ -382,12 +382,6 @@ class BackgroundStarsDialog(QDialog):
         for fgs_mag in self.fgs_mags[~mask]:
             self.check_colorbar_limits(fgs_mag)
 
-        # Plot stars with known fgs_mags
-        self.catalog_stars = self.canvas.axes.scatter(
-            self.x[~mask], self.y[~mask], c=self.fgs_mags[~mask], marker='*',
-            s=500, cmap='viridis_r', vmin=self.vmax, vmax=self.vmin,
-            label=None
-        )
         # Plot stars with unknown fgs_mags
         if len(self.x[mask]) > 0:
             self.masked_catalog_stars = self.canvas.axes.scatter(
@@ -400,6 +394,13 @@ class BackgroundStarsDialog(QDialog):
             self.x = self.x[~mask]
             self.y = self.y[~mask]
             self.fgs_mags = self.fgs_mags[~mask]
+
+        # Plot stars with known fgs_mags
+        self.catalog_stars = self.canvas.axes.scatter(
+            self.x, self.y, c=self.fgs_mags, marker='*',
+            s=500, cmap='viridis_r', vmin=self.vmax, vmax=self.vmin,
+            label=None
+        )
 
         # Record what method was used
         self.method = "catalog"
