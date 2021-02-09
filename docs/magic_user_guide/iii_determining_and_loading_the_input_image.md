@@ -11,7 +11,7 @@ III.	Determining and Loading the Input Image
 
 MAGIC takes in a full-frame calibration FGS image or a NIRCam image from *any* of their detectors that was taken with the CLEAR filter in. Note that the NIRCam weak lens (WL) filter will cause MAGIC to crash. Any input image from NIRCam is expected to be fully processed through the DMS, though both DMS-processed and raw full-frame FGS data is accepted. Note that MAGIC cannot currently accept FGS ID strips data as an input. In most cases, MAGIC can determine from the header information which instrument and detector the image is from. However if it can’t figure this out due to a missing or different header keyword, you will have to help it by entering this information into MAGIC. Once it has all the information it needs (particularly which guider detector you want to create the pseudo-FGS image for) MAGIC will convert the input image into a raw detector FGS image.
 
-MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also known as ADU/s). However, if a cal.fits image is used as the input, MAGIC will check for the PHOTMJSR header keyword and use that to convert the image to the correct units. 
+MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also known as ADU/s). However, if a cal.fits image is used as the input, MAGIC will check for the PHOTMJSR header keyword and use that to convert the image to the correct units.
 
 1. Set general input parameters:
 
@@ -82,12 +82,12 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
              3. Enter the position angle (roll angle) of the observatory.
              4. Click the **Query GSC** button to add the objects (stars and extended sources) that are visible in the FOV of the selected guider.
              - Note: The guide star catalog version that is queried will be the default catalog version called in the FGS Count Rate Module.
- 
+
           2. To add stars randomly:
 
              1. Select the **Add Stars Randomly** (*B*) checkbox.
              2. Input the number of stars you want to add to the image
-             3. Specify the magnitude range that these additional stars will lie between (relative to the magnitude of the guide star). 
+             3. Specify the magnitude range that these additional stars will lie between (relative to the magnitude of the guide star).
                 - E.g. If you have a guide star of 12th FGS magnitude and you specify a range of 7-3, the background stars created will have FGS magnitudes between 19 and 15 magnitude, which is between 7 magnitudes dimmer than the guide star and 3 magnitudes dimmer than the guide star
 
           3. To add stars individually:
@@ -101,7 +101,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
       3. Click **Done** to save and apply these selections, or click **Cancel** to close the window without updating the background star selections.
       4. Verify that the indicator shows that the correct number of background stars have been added.
       5. The background stars will remain loaded until the user clicks the **Delete Background Stars** button (*F*) in the main GUI. This means that these will stay as you move to the next observation which is helpful if the guide star or PA has not changed, however if either has changed, you will need to either delete the background stars or add new ones using the steps above.
-    5. (Optional) Inspect the input image and determine if your PSF(s) meet one of the two scenarios that requires a change to the smoothing technique. If you are working with early commissioning PSFs, check the **High Smoothing (For Early Commissioning)** box (*G*). If you are working with MIMF PSFs, check the **Low Smoothing (For MIMF)** box (*H*). For high smoothing, this flag widens the smoothing filter for diffuse images in early commissioning stages when the telescope is un-phased (If you are unsure if the PSFs are phased, consult the procedure’s information on your observation). For low smoothing, this flag applies very little smoothing to better find the bright knot on doughnut PSFs like in MIMF rather than finding the center of the PSF. 
+    5. (Optional) Inspect the input image and determine if your PSF(s) meet one of the two scenarios that requires a change to the smoothing technique. If you are working with early commissioning PSFs, check the **High Smoothing (For Early Commissioning)** box (*G*). If you are working with MIMF PSFs, check the **Low Smoothing (For MIMF)** box (*H*). For high smoothing, this flag widens the smoothing filter for diffuse images in early commissioning stages when the telescope is un-phased (If you are unsure if the PSFs are phased, consult the procedure’s information on your observation). For low smoothing, this flag applies very little smoothing to better find the bright knot on doughnut PSFs like in MIMF rather than finding the center of the PSF.
 
 
 #### Next
@@ -120,6 +120,4 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
 
 ###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
 
-###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
-
-###### Appendix D: [Mirror State Procedures](appendix_d_mirror_states.md)
+###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)
