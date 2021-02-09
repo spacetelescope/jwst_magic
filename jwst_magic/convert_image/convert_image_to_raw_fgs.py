@@ -804,7 +804,7 @@ def save_psf_center_file(center_cols, guider, root, out_dir):
     return psf_center_path
 
 
-def create_seed_image(data, guider, root, out_dir, smoothing='default', all_found_psfs_file=None):
+def create_seed_image(data, guider, root, out_dir, smoothing='default', psf_size=None, all_found_psfs_file=None):
     """Create a seed image leaving only the foreground star by removing
     the background and any background stars, and setting the background
     to zero.
@@ -823,6 +823,11 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default', all_foun
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
         or "choose center" for finding the center of a MIMF PSF
+    psf_size: int, optional
+        Set the size of the stamps to use when cutting out PSFs from the image.
+        Input is the edge of the square size in pixels (e.g. if 100, the stamp
+        will be 100px x 100px). If not set, default values will be used based
+        on smoothing choice.
     all_found_psfs_file: str, optional
         A pre-made all_found_psfs file to use when creating the pseudo-FGS
         image rather than making a new one by smoothing the code. This can
@@ -835,10 +840,11 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default', all_foun
     seed_image : 2-D numpy array
         New image with no background and adjusted PSF values
     """
-    if smoothing == 'high':
-        psf_size = 150
-    else:
-        psf_size = 100
+    if psf_size is None:
+        if smoothing == 'high':
+            psf_size = 150
+        else:
+            psf_size = 100
 
     # If it's the MIMF case, we need to center the postage stamp on the PSF center
     if smoothing == 'low':
@@ -894,7 +900,7 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default', all_foun
 def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                nircam_det=None, normalize=True, norm_value=12.0,
                norm_unit="FGS Magnitude", smoothing='default',
-               all_found_psfs_file=None, gs_catalog=None,
+               psf_size=None, all_found_psfs_file=None, gs_catalog=None,
                coarse_pointing=False, jitter_rate_arcsec=None,
                logger_passed=False, itm=False):
     """Takes NIRCam or FGS image and converts it into an FGS-like image.
@@ -933,6 +939,11 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
         or "choose center" for finding the center of a MIMF PSF
+    psf_size: int, optional
+        Set the size of the stamps to use when cutting out PSFs from the image.
+        Input is the edge of the square size in pixels (e.g. if 100, the stamp
+        will be 100px x 100px). If not set, default values will be used based
+        on smoothing choice.
     all_found_psfs_file: str, optional
         A pre-made all_found_psfs file to use when creating the pseudo-FGS
         image rather than making a new one in the code. This can be used
@@ -1099,7 +1110,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
 
         if normalize or itm:
             # Remove the background and background stars and output a seed image with just the foreground stars
-            data = create_seed_image(data, guider, root, out_dir, smoothing, all_found_psfs_file)
+            data = create_seed_image(data, guider, root, out_dir, smoothing, psf_size, all_found_psfs_file)
 
             # Convert magnitude/countrate to FGS countrate using new count rate module
             # Take norm_value and norm_unit to pass to count rate module
