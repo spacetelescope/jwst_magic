@@ -866,21 +866,25 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default', psf_size
         cutout = Cutout2D(data, position, size)
         postage_stamps.append(cutout)
 
-    # Sigma clip postage stamps
-    clipped_stamps = []
-    for cutout in postage_stamps:
-        clipped_data = sigma_clip(cutout.data, sigma=3, cenfunc='mean', masked=True, copy=False, axis=[0, 1])
-        cutout.data = clipped_data
-        clipped_stamps.append(cutout)
+    # Sigma clip postage stamps # TODO: Figure out plan to remove bad pixels
+    # clipped_stamps = []
+    # for cutout in postage_stamps:
+    #     clipped_data = sigma_clip(cutout.data, sigma=3, cenfunc='mean', masked=True, copy=False, axis=[0, 1])
+    #     cutout.data = clipped_data
+    #     clipped_stamps.append(cutout)
 
     # Find the median of the background (without the postage stamps) and subtract it from the postage stamps
     old_bkgrd = data.copy()
-    for stamp in clipped_stamps:
+    for stamp in postage_stamps:
         old_bkgrd[stamp.slices_original[0], stamp.slices_original[1]] = np.full_like(stamp.data, np.nan)
+
+    # Do 2x sigma clipping with sigma = 3 (returning an array where clipped data are nans)
+    old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
+    old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
     med = np.nanmedian(old_bkgrd)
 
     final_stamps = []
-    for cutout in clipped_stamps:
+    for cutout in postage_stamps:
         cutout.data = cutout.data - med
         final_stamps.append(cutout)
 
