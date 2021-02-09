@@ -47,7 +47,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
    ![Star Selection GUI window](./figs/figure9_star_selection2.png)
 
-   1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light.
+   1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light. The red horizontal line represents the saturation level of the FGS detector.
    2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix D](appendix_d_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
    3. Utilize the pop-up of the WSS mapping of segment names in the FGS Raw frame by checking the **Show WSS Numbers** or **Show WSS Numbers - Inverted Array** check box (*A*). Un-check the button to close the pop-up.
    3. If you want to change your selections while in the tool, use the **Make Guide Star** (*B*) button to change the guide star, use the **Delete** button (*C*) to remove individual selections, and use the **Clear Selections** button (*D*) to start over.
