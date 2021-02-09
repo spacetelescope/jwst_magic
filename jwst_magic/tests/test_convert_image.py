@@ -43,7 +43,7 @@ from jwst_magic.convert_image import convert_image_to_raw_fgs
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_convertim"
-NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
+NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits') 
 NIRCAM_PED_IM = os.path.join(__location__, 'data', 'nircam_w_ped.fits')
 NIRCAM_MIMF_IM = os.path.join(__location__, 'data', 'nircam_mimf.fits')
 FGS_PED_IM = os.path.join(__location__, 'data', 'fgs_w_ped.fits')
