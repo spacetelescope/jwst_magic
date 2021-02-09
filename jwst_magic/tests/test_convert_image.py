@@ -58,7 +58,7 @@ norm_parameters = [
     (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 2138.5545260642302),
     (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6320.913674129601),
     (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1883.7917307547636),
-    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 5275.29299044267),
+    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 5858.823498069486),
     (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6320.913674129601),
     (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 66731.59555829671),  # NRC contains TEST keyword - tests ped
     (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 150008.40924385004)  # non-ITM FGS image - tests ped
