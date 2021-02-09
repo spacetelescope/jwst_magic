@@ -156,8 +156,8 @@ class BackgroundStarsDialog(QDialog):
         cmap = mpl.cm.viridis_r
         norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
         self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*', c=[self.fgs_mag],
-                                                   s=500, cmap=cmap,
-                                                   norm=norm)
+                                                   s=500, edgecolors='black', cmap=cmap,
+                                                   norm=norm, label='Guide Star')
 
         # Add colorbar
         self.canvas.cbar_ax = self.canvas.fig.add_axes([0.05, 0.1, 0.9, 0.03])
@@ -272,6 +272,7 @@ class BackgroundStarsDialog(QDialog):
         self.method = "random"
 
         # Redraw all necessary plot elements
+        self.legend = self.canvas.axes.legend()
         self.canvas.cbar.draw_all()
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.draw()
@@ -331,6 +332,7 @@ class BackgroundStarsDialog(QDialog):
         self.method = "user-defined"
 
         # Redraw all necessary plot elements
+        self.legend = self.canvas.axes.legend()
         self.canvas.cbar.draw_all()
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.draw()
@@ -458,6 +460,9 @@ class BackgroundStarsDialog(QDialog):
         norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
         self.guide_star.set_clim(self.vmax, self.vmin)
         self.guide_star.set_norm(norm)
+
+        # Redraw the length for the guide star's new color
+        self.legend = self.canvas.axes.legend()
 
         # Redraw the colorbar
         self.canvas.cbar.draw_all()
