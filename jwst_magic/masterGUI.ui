@@ -975,7 +975,7 @@ p, li { white-space: pre-wrap; }
            <item row="2" column="3">
             <widget class="QRadioButton" name="radioButton_nominal_id_attitude">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="text">
               <string>Nominal (0,0)</string>
@@ -991,7 +991,7 @@ p, li { white-space: pre-wrap; }
            <item row="2" column="4" colspan="2">
             <widget class="QRadioButton" name="radioButton_crowded_id_attitude">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="text">
               <string>Crowded Field (-45, 0)</string>
