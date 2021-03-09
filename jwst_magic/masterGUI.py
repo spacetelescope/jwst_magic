@@ -973,11 +973,15 @@ class MasterGui(QMainWindow):
             self.label_guidingcommands.setEnabled(False)
             self.comboBox_guidingcommands.setEnabled(False)
             self.checkBox_configorder.setEnabled(False)
+            self.radioButton_shifted.setEnabled(False)
+            self.radioButton_unshifted.setEnabled(False)
         elif self.sender() == self.radioButton_regfileSegmentGuiding:
             self.lineEdit_regfileSegmentGuiding.setEnabled(True)
             self.label_guidingcommands.setEnabled(True)
             self.comboBox_guidingcommands.setEnabled(True)
             self.checkBox_configorder.setEnabled(True)
+            self.radioButton_shifted.setEnabled(True)
+            self.radioButton_unshifted.setEnabled(True)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
