@@ -488,6 +488,9 @@ class MasterGui(QMainWindow):
         shift_id_attitude = self.checkBox_id_attitude.isChecked()
         crowded_field = self.radioButton_crowded_id_attitude.isChecked()
 
+        # For the POF case, create DHAS files using the default OSS numbers
+        use_oss_defaults = self.checkBox_OSS.isChecked()
+
         # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
             # Open converted FGS file
@@ -639,7 +642,8 @@ class MasterGui(QMainWindow):
                               itm=itm,
                               shift_id_attitude=shift_id_attitude,
                               crowded_field=crowded_field,
-                              threshold = threshold,
+                              threshold=threshold,
+                              use_oss_defaults=use_oss_defaults,
                               )
 
             # Update converted image preview

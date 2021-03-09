@@ -66,7 +66,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             star_selection=True, star_selection_gui=True, file_writer=True,
             masterGUIapp=None, copy_original=True, normalize=True,
             coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, crowded_field=False, threshold=0.6):
+            shift_id_attitude=True, crowded_field=False, threshold=0.6, use_oss_defaults=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -127,6 +127,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     threshold : float
         The threshold (aka count rate uncertainty factor) to use when writing
         FSW files.
+    use_oss_defaults : bool
+        Populate the DHAS files with the default numbers OSS would use. Should
+        only be True when testing photometry override files
     """
 
     # Determine filename root
@@ -232,6 +235,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                     fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                     psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
+                    use_oss_defaults=use_oss_defaults,
                 )
                 write_files.write_all(fgs_files_obj)
             LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i+1))
