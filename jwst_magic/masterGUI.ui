@@ -806,7 +806,7 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <property name="text">
-               <string>FGS Mag (10, 11, 12, 13, or 14)</string>
+               <string>FGS Magnitude</string>
               </property>
              </item>
             </widget>
