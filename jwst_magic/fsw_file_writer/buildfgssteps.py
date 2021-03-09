@@ -73,7 +73,7 @@ class BuildFGSSteps(object):
     """
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
                  out_dir=None, threshold=0.6, logger_passed=False, psf_center_file=None,
-                 shift_id_attitude=True):
+                 shift_id_attitude=True, use_oss_defaults=False):
         """Initialize the class and call build_fgs_steps().
         """
         # Set up logger
@@ -89,6 +89,7 @@ class BuildFGSSteps(object):
             self.yoffset = 12
             self.out_dir = out_dir
             self.threshold = threshold
+            self.use_oss_defaults = use_oss_defaults
 
             # READ IN IMAGE
             if isinstance(im, str):
@@ -185,6 +186,16 @@ class BuildFGSSteps(object):
             self.xarr = np.asarray([self.xarr])
             self.yarr = np.asarray([self.yarr])
             self.countrate = np.asarray([self.countrate])
+
+        # Overwrite threshold with OSS default values for the POF case
+        if self.use_oss_defaults:
+            trigger = 474608.4  # ADU/sec
+            if len(self.xarr) != 1:
+                raise ValueError('Trying to apply OSS defaults to non-POF case (with multiple star selections)')
+            if self.countrate[0] < trigger:
+                self.threshold = self.countrate[0] * 0.30
+            else:
+                self.threshold = self.countrate[0] - 332226
 
         # TODO: Add case that extracts countrates from input_im and the x/y
         # coords/inds so this module is no longer dependent on ALLpsfs
