@@ -268,6 +268,32 @@ def test_psf_center_file(test_directory):
     assert (fileobj_acq1.xarr, fileobj_acq1.yarr) != (fileobj_trk.xarr, fileobj_trk.yarr)
     assert fileobj_acq1.countrate == fileobj_trk.countrate
 
+def test_oss_defaults(test_directory):
+    """Test that when use_oss_defaults is set to True, the attributes
+    of the file object (which will be used when writing out all FSW files)
+    are set appropriatly. Where the countrate matches that of the input file
+    and the threshold is 0.3 * the count rate (since in this case the star is
+    below the trigger value of 474608.4 ADU/sec).
+    """
+    image = fits.getdata(CONVERTED_NIRCAM_IM_MIMF, 0)
+    guider = 1
+    shift_id_attitude = False
+    use_oss_defaults = True
+
+    fileobj = BuildFGSSteps(
+        image, guider, ROOT, step='ID', guiding_selections_file=SELECTED_SEGS_MIMF,
+        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=False,
+        use_oss_defaults=use_oss_defaults
+    )
+
+    # Read in the 3x3 countrate directly from the file
+    tbl = asc.read(SELECTED_SEGS_MIMF)
+    cr = tbl['countrate'][0]
+
+    # Compare the countrate and threhsold to what's expected for this dim star
+    assert fileobj.countrate == cr
+    assert fileobj.threshold == cr * 0.30 # because the countrate is less than the trigger value
+
 def test_rewrite_prc(open_image, test_directory):
     """Compare the results from reqrite_prc and buildfgsteps -
     check shifted guiding selections and ID prc file"""
