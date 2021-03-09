@@ -1001,6 +1001,20 @@ p, li { white-space: pre-wrap; }
              </attribute>
             </widget>
            </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_OSS">
+             <property name="text">
+              <string>For Photometry Override:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1" colspan="2">
+            <widget class="QCheckBox" name="checkBox_OSS">
+             <property name="text">
+              <string>Use Default OSS Numbers </string>
+             </property>
+            </widget>
+           </item>
           </layout>
           <zorder>checkBox_CAL</zorder>
           <zorder>checkBox_ID</zorder>
