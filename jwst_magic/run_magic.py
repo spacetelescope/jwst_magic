@@ -207,6 +207,11 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     if file_writer:
         out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
 
+        # If you're planning to write out FSW files using the OSS default values, you need to calculate and pass
+        # in the catalog countrate of the guide star
+        if use_oss_defaults:
+            fgs_countrate, fgs_mag = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider, gs_catalog)
+
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
         for i, guiding_selections_file in enumerate(guiding_selections_path_list):
 
@@ -235,7 +240,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                     fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                     psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
-                    use_oss_defaults=use_oss_defaults,
+                    use_oss_defaults=use_oss_defaults, catalog_countrate=fgs_countrate,
                 )
                 write_files.write_all(fgs_files_obj)
             LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i+1))
