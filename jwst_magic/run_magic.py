@@ -208,6 +208,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         # in the catalog countrate of the guide star
         if use_oss_defaults:
             fgs_countrate, _ = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider)
+        else:
+            fgs_countrate = None
 
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
         for i, guiding_selections_file in enumerate(guiding_selections_path_list):

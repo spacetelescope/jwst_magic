@@ -632,7 +632,6 @@ class MasterGui(QMainWindow):
                               out_dir=out_dir,
                               convert_im=convert_im,
                               star_selection=star_selection,
-                              star_selection_gui=star_selectiongui,
                               file_writer=file_writer,
                               masterGUIapp=self.app,
                               copy_original=copy_original,
