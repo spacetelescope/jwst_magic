@@ -23,6 +23,8 @@ import pytest
 from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.fsw_file_writer import write_files
 from jwst_magic.fsw_file_writer.buildfgssteps import BuildFGSSteps, shift_to_id_attitude
+from jwst_magic.fsw_file_writer.buildfgssteps import OSS_TRIGGER, COUNTRATE_CONVERSION, DIM_STAR_THRESHOLD_FACTOR, \
+    BRIGHT_STAR_THRESHOLD_ADDEND
 from jwst_magic.fsw_file_writer.rewrite_prc import rewrite_prc
 from jwst_magic.utils import utils
 
@@ -286,12 +288,12 @@ def test_oss_defaults(test_directory, catalog_countrate):
         use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
 
     # Compare the countrate and threhsold to what's expected
-    assert fileobj.countrate == catalog_countrate * 0.65 
+    assert fileobj.countrate == catalog_countrate * COUNTRATE_CONVERSION
 
-    if catalog_countrate < 474608.4:
-        assert fileobj.threshold == catalog_countrate * 0.65 * 0.30
+    if catalog_countrate < OSS_TRIGGER:
+        assert fileobj.threshold == catalog_countrate * COUNTRATE_CONVERSION * DIM_STAR_THRESHOLD_FACTOR
     else:
-        assert fileobj.threshold == (catalog_countrate * 0.65) - 332226
+        assert fileobj.threshold == (catalog_countrate * COUNTRATE_CONVERSION) - BRIGHT_STAR_THRESHOLD_ADDEND
 
 def test_rewrite_prc(open_image, test_directory):
     """Compare the results from reqrite_prc and buildfgsteps -

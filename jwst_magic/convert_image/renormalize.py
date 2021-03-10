@@ -54,29 +54,30 @@ def convert_to_countrate_fgsmag(value, unit, guider, gs_catalog=None):
         Guide star catalog version to query. E.g. 'GSC242'. None will use
         the default catalog as defined in teh FGS Count Rate Module.
     """
-    expected_type_dict = {
-        'fgs countrate': 'float or int',
-        'fgs magnitude': 'float or int',
-        'guide star id': 'str',
-    }
+    expected_type_dict = {'fgs countrate': (float, int),
+                          'fgs magnitude': (float, int),
+                          'guide star id': (str,)
+                          }
 
-    if unit.lower() == 'fgs countrate' and isinstance(value, (float, int)):
+    if not isinstance(value, expected_type_dict[unit.lower()]):
+        types = ' or '.join([d.__name__ for d in expected_type_dict[unit.lower()]])
+        raise TypeError(
+            'Mismatch: Normalization value for unit of "{}" should be of type(s) "{}". User passed: {}'.format(
+                unit, types, value))
+
+    if unit.lower() == 'fgs countrate':
         if value < 1000:
             LOGGER.warning("Normalize Calculation: Small count rate has been requested. This may be an error.")
         fgs_countrate = value
         fgs_mag = fgscountrate.convert_cr_to_fgs_mag(fgs_countrate, guider)
 
-    elif unit.lower() == 'fgs magnitude' and isinstance(value, (float, int)):
+    elif unit.lower() == 'fgs magnitude':
         fgs_mag = value
         fgs_countrate = fgscountrate.convert_fgs_mag_to_cr(fgs_mag, guider)
 
-    elif unit.lower() == 'guide star id' and isinstance(value, str):
+    elif unit.lower() == 'guide star id':
         LOGGER.info("Normalize Calculation: Using GSID {} to normalize image.".format(value))
         fgs = fgscountrate.FGSCountrate(guide_star_id=value, guider=guider)
         fgs_countrate, _, fgs_mag, _ = fgs.query_fgs_countrate_magnitude(catalog=gs_catalog)
-
-    else:
-        raise TypeError('Mismatch: Normalization value for unit of "{}" should be of type "{}". User passed: {}'.format(
-            unit, expected_type_dict[unit.lower()], value))
 
     return fgs_countrate, fgs_mag

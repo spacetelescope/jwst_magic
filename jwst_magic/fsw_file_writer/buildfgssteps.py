@@ -62,6 +62,12 @@ DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
+# Global Values
+OSS_TRIGGER = 474608.4  # ADU/sec
+COUNTRATE_CONVERSION = 0.65
+DIM_STAR_THRESHOLD_FACTOR = 0.30
+BRIGHT_STAR_THRESHOLD_ADDEND = 332226
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN CLASS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -196,13 +202,12 @@ class BuildFGSSteps(object):
             if len(self.xarr) != 1:
                 raise ValueError('Trying to apply OSS defaults to non-POF case (with multiple star selections)')
 
-            trigger = 474608.4  # ADU/sec
-            countrate_3x3 = self.catalog_countrate * 0.65
+            countrate_3x3 = self.catalog_countrate * COUNTRATE_CONVERSION
             self.countrate = np.asarray([countrate_3x3])
-            if countrate_3x3 < trigger:
-                self.threshold = countrate_3x3 * 0.30
+            if countrate_3x3 < OSS_TRIGGER:
+                self.threshold = countrate_3x3 * DIM_STAR_THRESHOLD_FACTOR
             else:
-                self.threshold = countrate_3x3 - 332226
+                self.threshold = countrate_3x3 - BRIGHT_STAR_THRESHOLD_ADDEND
 
         # TODO: Add case that extracts countrates from input_im and the x/y
         # coords/inds so this module is no longer dependent on ALLpsfs

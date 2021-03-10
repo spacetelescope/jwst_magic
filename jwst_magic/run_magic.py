@@ -47,7 +47,7 @@ print('Using backend: ', matplotlib.get_backend())
 import numpy as np
 
 # Local Imports
-from jwst_magic.convert_image import background_stars, convert_image_to_raw_fgs
+from jwst_magic.convert_image import background_stars, convert_image_to_raw_fgs, renormalize
 from jwst_magic.fsw_file_writer import buildfgssteps, write_files
 from jwst_magic.star_selector import select_psfs
 from jwst_magic.utils import utils
@@ -63,9 +63,8 @@ LOGGER = logging.getLogger(__name__)
 def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             nircam_det=None, nircam=True, smoothing='default', steps=None,
             guiding_selections_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
-            star_selection=True, star_selection_gui=True, file_writer=True,
-            masterGUIapp=None, copy_original=True, normalize=True,
-            coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
+            star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
+            normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
             shift_id_attitude=True, crowded_field=False, threshold=0.6, use_oss_defaults=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
@@ -106,8 +105,6 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         Run the convert_image module?
     star_selection : boolean, optional
         Run the  star_selector module?
-    star_selection_gui : boolean, optional
-        Show the GUI for the star_selector module?
     file_writer : boolean, optional
         Run the fsw_file_writer module?
     masterGUIapp : PyQt5.QtCore.QCoreApplication instance, optional
@@ -210,7 +207,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         # If you're planning to write out FSW files using the OSS default values, you need to calculate and pass
         # in the catalog countrate of the guide star
         if use_oss_defaults:
-            fgs_countrate, fgs_mag = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider, gs_catalog)
+            fgs_countrate, _ = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider)
 
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
         for i, guiding_selections_file in enumerate(guiding_selections_path_list):
