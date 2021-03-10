@@ -198,6 +198,7 @@ class BuildFGSSteps(object):
 
             trigger = 474608.4  # ADU/sec
             countrate_3x3 = self.catalog_countrate * 0.65
+            self.countrate = np.asarray([countrate_3x3])
             if countrate_3x3 < trigger:
                 self.threshold = countrate_3x3 * 0.30
             else:
