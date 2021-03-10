@@ -286,7 +286,7 @@ def test_oss_defaults(test_directory, catalog_countrate):
         use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
 
     # Compare the countrate and threhsold to what's expected
-    assert fileobj.countrate == catalog_countrate * 0.65
+    assert fileobj.countrate == catalog_countrate * 0.65 
 
     if catalog_countrate < 474608.4:
         assert fileobj.threshold == catalog_countrate * 0.65 * 0.30
