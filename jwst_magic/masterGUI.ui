@@ -2492,6 +2492,38 @@ QPushButton:pressed {
    </hints>
   </connection>
   <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>label_OSS</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>713</x>
+     <y>798</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>902</x>
+     <y>825</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_OSS</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>713</x>
+     <y>798</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>902</x>
+     <y>825</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>groupBox_fileWriter</sender>
    <signal>toggled(bool)</signal>
    <receiver>radioButton_nominal_id_attitude</receiver>

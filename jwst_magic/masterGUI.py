@@ -493,6 +493,10 @@ class MasterGui(QMainWindow):
 
         # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
+            # If use_oss_numbers if also checked, raise an error (needs catalog countrate information)
+            if self.checkBox_OSS.isChecked():
+                raise ValueError('Cannot use Default OSS Numbers and Rewrite PRC functionality at the same time.')
+
             # Open converted FGS file
             data, _ = utils.get_data_and_header(self.converted_im_file)
 
