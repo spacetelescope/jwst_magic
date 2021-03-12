@@ -270,6 +270,7 @@ class MasterGui(QMainWindow):
 
         # FSW File writer widgets
         self.groupBox_fileWriter.toggled.connect(self.update_groupBox_fileWriter)
+        self.checkBox_OSS.toggled.connect(self.turn_off_threshold)
 
         # Segment guiding widgets
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
@@ -645,7 +646,7 @@ class MasterGui(QMainWindow):
                               itm=itm,
                               shift_id_attitude=shift_id_attitude,
                               crowded_field=crowded_field,
-                              threshold=threshold,
+                              thresh_factor=threshold,
                               use_oss_defaults=use_oss_defaults,
                               )
 
@@ -987,6 +988,15 @@ class MasterGui(QMainWindow):
             self.checkBox_configorder.setEnabled(True)
             self.radioButton_shifted.setEnabled(True)
             self.radioButton_unshifted.setEnabled(True)
+
+    def turn_off_threshold(self):
+        """Disable threshold lineEdit when OSS default box is checked"""
+        if self.checkBox_OSS.isChecked():
+            self.label_threshold.setEnabled(False)
+            self.lineEdit_threshold.setEnabled(False)
+        else:
+            self.label_threshold.setEnabled(True)
+            self.lineEdit_threshold.setEnabled(True)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES
