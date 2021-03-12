@@ -218,7 +218,12 @@ class BackgroundStarsDialog(QDialog):
             self.lineEdit_definedFile.setText(filename)
 
             # Parse the file
-            tab = asc.read(filename)
+            tab = asc.read(filename, format='commented_header')
+
+            if tab.colnames == ['y', 'x', 'fgs_mag']:
+                new_order = ['x', 'y', 'fgs_mag']
+                tab = tab[new_order]
+
             for i_row, row in enumerate(tab):
                 if i_row + 1 > self.tableWidget.rowCount():
                     self.tableWidget.insertRow(i_row)
@@ -291,7 +296,7 @@ class BackgroundStarsDialog(QDialog):
                     return
                 elif self.tableWidget.item(i_row, i_col).text() == '':
                     return
-                elif not self.tableWidget.item(i_row, i_col).text().isnumeric():
+                elif not self.tableWidget.item(i_row, i_col).text().replace('.','',1).isdigit():
                     LOGGER.warning('Background Stars: There is a cell with non-numeric contents')
                     return
 

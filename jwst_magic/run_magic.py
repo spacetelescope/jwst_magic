@@ -173,7 +173,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                 norm_unit = "FGS Counts"
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars,
                                                            norm_value, norm_unit,
-                                                           guider)
+                                                           guider, save_file=True,
+                                                           root=root, out_dir=out_dir)
 
         # Write converted image
         convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider)
