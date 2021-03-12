@@ -1948,22 +1948,6 @@ QPushButton:pressed {
    </hints>
   </connection>
   <connection>
-   <sender>groupBox_starSelector</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>groupBox_fileWriter</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>332</x>
-     <y>703</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>168</x>
-     <y>823</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>checkBox_rewritePRC</sender>
    <signal>clicked(bool)</signal>
    <receiver>groupBox_segmentGuiding</receiver>
@@ -2536,22 +2520,6 @@ QPushButton:pressed {
     <hint type="destinationlabel">
      <x>610</x>
      <y>847</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>groupBox_fileWriter</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>groupBox_starSelector</receiver>
-   <slot>setChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>168</x>
-     <y>823</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>332</x>
-     <y>703</y>
     </hint>
    </hints>
   </connection>

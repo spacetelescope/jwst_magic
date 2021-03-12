@@ -655,6 +655,8 @@ class MasterGui(QMainWindow):
     def update_groupBox_fileWriter(self):
         """Enable/disable items in FSW group box"""
         if self.sender() == self.groupBox_fileWriter:
+            if self.groupBox_fileWriter.isChecked():
+                self.groupBox_starSelector.setChecked(True)
             if self.checkBox_id_attitude.isChecked() and self.groupBox_fileWriter.isChecked():
                 self.radioButton_nominal_id_attitude.setEnabled(True)
                 self.radioButton_crowded_id_attitude.setEnabled(True)
