@@ -4,7 +4,7 @@ import pkg_resources
 import socket
 import subprocess
 
-JENKINS = 'jenkins' in os.getcwd()
+JENKINS = '/home/developer/workspace/' in os.getcwd()
 if not JENKINS:
     from jwst_magic.masterGUI import run_MasterGui as run_tool_GUI
     from jwst_magic.run_magic import run_all as run_tool

@@ -51,7 +51,7 @@ from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from astropy.table import Table
 import matplotlib
-JENKINS = 'jenkins' in os.getcwd()
+JENKINS = '/home/developer/workspace/' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
     matplotlib.use("Qt5Agg")
 import matplotlib.path as mpltPath
