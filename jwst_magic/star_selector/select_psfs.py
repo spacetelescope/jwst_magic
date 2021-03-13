@@ -39,7 +39,7 @@ import yaml
 from astropy.io import ascii as asc
 from astropy.io import fits
 import matplotlib
-JENKINS = 'jenkins' in os.getcwd()
+JENKINS = '/home/developer/workspace/' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from matplotlib import rcParams
