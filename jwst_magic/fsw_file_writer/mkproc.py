@@ -163,8 +163,7 @@ class Mkproc(object):
         counts : list
             Count rates of guide and reference stars
         threshold : float, optional
-            Absolute threshold value. If both threshold and thresh_factor
-            are defined, this threshold is taken
+            Absolute threshold value.
         """
         eol = '\n'
         nref = len(xarr) - 1
@@ -256,8 +255,7 @@ class Mkproc(object):
         acq2_imgsize : int
             Array size of the ACQ2 window
         threshold : float, optional
-            Absolute threshold value. If both threshold and thresh_factor
-            are defined, this threshold is taken
+            Absolute threshold value.
         """
         eol = '\n'
 
