@@ -39,6 +39,8 @@ import os
 import logging
 import shutil
 
+import numpy as np
+
 # Local Imports
 from jwst_magic.utils import coordinate_transforms
 
@@ -55,9 +57,8 @@ class Mkproc(object):
     """
 
     def __init__(self, guider, root, xarr, yarr, counts, step, threshold=None,
-                 thresh_factor=0.5, out_dir=None, dhas_dir='dhas',
-                 ground_system_dir='ground_system', acq1_imgsize=None,
-                 acq2_imgsize=None):
+                 out_dir=None, dhas_dir='dhas', ground_system_dir='ground_system',
+                 acq1_imgsize=None, acq2_imgsize=None):
         """ Initialize the class and create CECIL proc files for guider 1 and 2.
 
         Parameters
@@ -74,12 +75,9 @@ class Mkproc(object):
             Count rates of guide and reference stars
         step : str
             Name of the step to create files for
-        threshold : float, optional
-            Absolute threshold value to go into the prc file. If both threshold
-            and thresh_factor are defined, this threshold is taken
-        thresh_factor : float, optional
-            Factor by which to multiply the countrates to determine
-            the threshold count rate
+        threshold : float or list, optional
+            Absolute threshold value(s) to go into the prc file. Must be a list
+            of the same length as the number of PSFs in the config
         out_dir : str, optional
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
@@ -114,13 +112,15 @@ class Mkproc(object):
 
         self.find_templates(guider, step=step, template_path=template_path)
 
+        # Confirm the threshold is a list
+        if not isinstance(threshold, (list, np.ndarray)):
+            threshold = [threshold]
+
         # Depending on the 'step' create the correct CECIL proc files.
         if step == 'ID':
-            self.create_id_proc_file(guider, root, xarr, yarr, counts, threshold=threshold,
-                                     thresh_factor=thresh_factor)
+            self.create_id_proc_file(guider, root, xarr, yarr, counts, threshold=threshold)
         elif step == 'ACQ':
-            self.create_acq_proc_file(guider, root, xarr, yarr, counts,
-                                      threshold=threshold, thresh_factor=thresh_factor,
+            self.create_acq_proc_file(guider, root, xarr, yarr, counts, threshold=threshold,
                                       acq1_imgsize=acq1_imgsize, acq2_imgsize=acq2_imgsize)
 
     def find_templates(self, guider, step, template_path):
@@ -146,7 +146,7 @@ class Mkproc(object):
             self.template_e = os.path.join(template_path, 'g{}{}templateE.prc'.format(guider, step))
             self.template_f = os.path.join(template_path, 'g{}{}templateF.prc'.format(guider, step))
 
-    def create_id_proc_file(self, guider, root, xarr, yarr, counts, threshold=None, thresh_factor=0.6):
+    def create_id_proc_file(self, guider, root, xarr, yarr, counts, threshold=None):
         """Creates the CECIL proc file for the identification (ID) step.
         Writes to {out_dir}/out/{root}/dhas/{root}_G{guider}_ID.prc
 
@@ -165,8 +165,6 @@ class Mkproc(object):
         threshold : float, optional
             Absolute threshold value. If both threshold and thresh_factor
             are defined, this threshold is taken
-        thresh_factor : float, optional
-            Count rate uncertainty
         """
         eol = '\n'
         nref = len(xarr) - 1
@@ -184,18 +182,12 @@ class Mkproc(object):
             # Convert real pixel to DHAS ideal angle
             xangle, yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
 
-            if threshold is not None:
-                # The threshold argument should only be set for the POF case where's there's 1 GS and no RS
-                thresh = [threshold]
-            else:
-                thresh = thresh_factor * counts
-
             file_out.write('@IFGS_GUIDESTAR {0}, DFT, {1:12.4f}, {2:12.4f}, \
                             {3:12d}, {4:8d}'.format(self.guider,
                                                     xangle[0],
                                                     yangle[0],
                                                     int(counts[0]),
-                                                    int(thresh[0])))
+                                                    int(threshold[0])))
             file_out.write(eol)
 
             self.write_from_template(self.template_b, file_out)
@@ -214,7 +206,7 @@ class Mkproc(object):
                                                                      xangle[istar],
                                                                      yangle[istar],
                                                                      int(counts[istar]),
-                                                                     int(thresh[istar])))
+                                                                     int(threshold[istar])))
                     file_out.write(eol)
                     self.write_from_template(self.template_d, file_out)
 
@@ -226,7 +218,7 @@ class Mkproc(object):
                                                      xangle[nref],
                                                      yangle[nref],
                                                      int(counts[nref]),
-                                                     int(thresh[nref])))
+                                                     int(threshold[nref])))
                 file_out.write(eol)
 
                 self.write_from_template(self.template_e, file_out)
@@ -243,7 +235,7 @@ class Mkproc(object):
                                                                  format(root, guider))))
 
     def create_acq_proc_file(self, guider, root, xarr, yarr, counts,
-                             acq1_imgsize, acq2_imgsize, threshold=None, thresh_factor=0.6):
+                             acq1_imgsize, acq2_imgsize, threshold=None):
         """Creates the CECIL proc file for the acquisition (ACQ) steps.
         Writes to {out_dir}/out/{root}/dhas/{root}_G{guider}_ACQ.prc
 
@@ -266,8 +258,6 @@ class Mkproc(object):
         threshold : float, optional
             Absolute threshold value. If both threshold and thresh_factor
             are defined, this threshold is taken
-        thresh_factor : float, optional
-            Count rate uncertainty
         """
         eol = '\n'
 
@@ -284,11 +274,7 @@ class Mkproc(object):
         # Get threshold from countrate (not from STC file)
         if len(counts) != 1:
             counts = counts[0]
-        if threshold is not None:
-            # The threshold argument should only be set for the POF case where's there's 1 GS and no RS
-            threshgs = threshold
-        else:
-            threshgs = thresh_factor * counts
+        threshold = threshold[0]
 
         dhas_filename = os.path.join(self.out_dir, self.dhas_dir,
                                      '{0}_G{1}_ACQ.prc'.format(root, guider))
@@ -305,7 +291,7 @@ class Mkproc(object):
             file_out.write('@IFGS_GUIDESTAR {0}, 2, {1:12.4f}, {2:12.4f}, \
                            {3:12.4f}, {4:8d}'.format(self.guider, float(gs_xangle),
                                                      float(gs_yangle), float(counts),
-                                                     int(threshgs)))
+                                                     int(threshold)))
 
             self.write_from_template(self.template_b, file_out)
 
