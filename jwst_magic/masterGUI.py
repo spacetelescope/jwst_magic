@@ -270,6 +270,7 @@ class MasterGui(QMainWindow):
 
         # FSW File writer widgets
         self.groupBox_fileWriter.toggled.connect(self.update_groupBox_fileWriter)
+        self.checkBox_OSS.toggled.connect(self.turn_off_threshold)
 
         # Segment guiding widgets
         self.buttonGroup_segmentGuiding_idAttitude.buttonClicked.connect(self.update_segment_guiding_shift)
@@ -488,8 +489,15 @@ class MasterGui(QMainWindow):
         shift_id_attitude = self.checkBox_id_attitude.isChecked()
         crowded_field = self.radioButton_crowded_id_attitude.isChecked()
 
+        # For the POF case, create DHAS files using the default OSS numbers
+        use_oss_defaults = self.checkBox_OSS.isChecked()
+
         # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
+            # If use_oss_numbers if also checked, raise an error (needs catalog countrate information)
+            if self.checkBox_OSS.isChecked():
+                raise ValueError('Cannot use Default OSS Numbers and Rewrite PRC functionality at the same time.')
+
             # Open converted FGS file
             data, _ = utils.get_data_and_header(self.converted_im_file)
 
@@ -629,7 +637,6 @@ class MasterGui(QMainWindow):
                               out_dir=out_dir,
                               convert_im=convert_im,
                               star_selection=star_selection,
-                              star_selection_gui=star_selectiongui,
                               file_writer=file_writer,
                               masterGUIapp=self.app,
                               copy_original=copy_original,
@@ -639,7 +646,8 @@ class MasterGui(QMainWindow):
                               itm=itm,
                               shift_id_attitude=shift_id_attitude,
                               crowded_field=crowded_field,
-                              threshold = threshold,
+                              thresh_factor=threshold,
+                              use_oss_defaults=use_oss_defaults,
                               )
 
             # Update converted image preview
@@ -648,6 +656,8 @@ class MasterGui(QMainWindow):
     def update_groupBox_fileWriter(self):
         """Enable/disable items in FSW group box"""
         if self.sender() == self.groupBox_fileWriter:
+            if self.groupBox_fileWriter.isChecked():
+                self.groupBox_starSelector.setChecked(True)
             if self.checkBox_id_attitude.isChecked() and self.groupBox_fileWriter.isChecked():
                 self.radioButton_nominal_id_attitude.setEnabled(True)
                 self.radioButton_crowded_id_attitude.setEnabled(True)
@@ -969,11 +979,24 @@ class MasterGui(QMainWindow):
             self.label_guidingcommands.setEnabled(False)
             self.comboBox_guidingcommands.setEnabled(False)
             self.checkBox_configorder.setEnabled(False)
+            self.radioButton_shifted.setEnabled(False)
+            self.radioButton_unshifted.setEnabled(False)
         elif self.sender() == self.radioButton_regfileSegmentGuiding:
             self.lineEdit_regfileSegmentGuiding.setEnabled(True)
             self.label_guidingcommands.setEnabled(True)
             self.comboBox_guidingcommands.setEnabled(True)
             self.checkBox_configorder.setEnabled(True)
+            self.radioButton_shifted.setEnabled(True)
+            self.radioButton_unshifted.setEnabled(True)
+
+    def turn_off_threshold(self):
+        """Disable threshold lineEdit when OSS default box is checked"""
+        if self.checkBox_OSS.isChecked():
+            self.label_threshold.setEnabled(False)
+            self.lineEdit_threshold.setEnabled(False)
+        else:
+            self.label_threshold.setEnabled(True)
+            self.lineEdit_threshold.setEnabled(True)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # DIALOG BOXES

@@ -23,6 +23,8 @@ import pytest
 from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.fsw_file_writer import write_files
 from jwst_magic.fsw_file_writer.buildfgssteps import BuildFGSSteps, shift_to_id_attitude
+from jwst_magic.fsw_file_writer.buildfgssteps import OSS_TRIGGER, COUNTRATE_CONVERSION, DIM_STAR_THRESHOLD_FACTOR, \
+    BRIGHT_STAR_THRESHOLD_ADDEND
 from jwst_magic.fsw_file_writer.rewrite_prc import rewrite_prc
 from jwst_magic.utils import utils
 
@@ -172,7 +174,7 @@ for guider in [1, 2]:
             correct_count_rate_parameters.append((guider, step,
                                                   test_data[g][step]))
         else:
-            correct_count_rate_parameters.append(pytest.param(guider, step,test_data[g][step],
+            correct_count_rate_parameters.append(pytest.param(guider, step, test_data[g][step],
                                                  marks=pytest.mark.xfail(reason="bias issue: see JWSTFGS-213")))
 @pytest.mark.parametrize('guider, step, correct_data_dict', correct_count_rate_parameters)
 def test_correct_count_rate(open_image, test_directory, guider, step, correct_data_dict):
@@ -240,6 +242,7 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
     assert (BFS.countrate == correct_data_dict['countrates']).all(), \
         'Incorrect {} count rate.'.format(step)
 
+
 def test_psf_center_file(test_directory):
     """Test that when psf_center_file is set, the array position for TRK
     is pulled from the psf_center file rather than the guiding selections file
@@ -268,6 +271,32 @@ def test_psf_center_file(test_directory):
     assert (fileobj_acq1.xarr, fileobj_acq1.yarr) != (fileobj_trk.xarr, fileobj_trk.yarr)
     assert fileobj_acq1.countrate == fileobj_trk.countrate
 
+
+oss_defaults_parameters = [100000, 1000000]
+@pytest.mark.parametrize('catalog_countrate', oss_defaults_parameters)
+def test_oss_defaults(test_directory, catalog_countrate):
+    """Test that when use_oss_defaults is set to True, the attributes
+    of the file object (which will be used when writing out all FSW files)
+    are set appropriatly.
+    """
+    image = fits.getdata(CONVERTED_NIRCAM_IM_MIMF, 0)
+    guider = 1
+    use_oss_defaults = True
+
+    fileobj = BuildFGSSteps(
+        image, guider, ROOT, step='ID', guiding_selections_file=SELECTED_SEGS_MIMF,
+        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=False,
+        use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
+
+    # Compare the countrate and threshold to what's expected
+    assert fileobj.countrate == catalog_countrate * COUNTRATE_CONVERSION
+
+    if catalog_countrate < OSS_TRIGGER:
+        assert fileobj.threshold == catalog_countrate * COUNTRATE_CONVERSION * DIM_STAR_THRESHOLD_FACTOR
+    else:
+        assert fileobj.threshold == (catalog_countrate * COUNTRATE_CONVERSION) - BRIGHT_STAR_THRESHOLD_ADDEND
+
+
 def test_rewrite_prc(open_image, test_directory):
     """Compare the results from reqrite_prc and buildfgsteps -
     check shifted guiding selections and ID prc file"""
@@ -283,7 +312,7 @@ def test_rewrite_prc(open_image, test_directory):
     center_of_pointing = 0
     center_of_pointing_file = CENTER_POINTING_1
     guider = 1
-    threshold = 0.5
+    thresh_factor = 0.5
     shifted = True
     crowded_field = False
     step = 'ID'
@@ -302,7 +331,7 @@ def test_rewrite_prc(open_image, test_directory):
         all_found_psfs_file=all_found_psfs_file, center_pointing_file=center_of_pointing_file,
         psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
     BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
-                        out_dir=out_fsw, threshold=threshold, shift_id_attitude=shifted)
+                        out_dir=out_fsw, thresh_factor=thresh_factor, shift_id_attitude=shifted)
     write_files.write_prc(BFS)
 
     # Check for output files
@@ -315,7 +344,7 @@ def test_rewrite_prc(open_image, test_directory):
         buildsteps_prc = file.read()
 
     # Run rewrite_prc
-    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, threshold, shifted, crowded_field)
+    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted, crowded_field)
 
     # Check for output files
     shifted_guiding_selections2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2',
@@ -330,3 +359,41 @@ def test_rewrite_prc(open_image, test_directory):
     # Confirm outputs match
     assert str(rewrite_prc_selections) == str(buildsteps_selections)
     assert rewrite_prc_prc == buildsteps_prc
+
+
+prc_list = [(False, 237576.0000, None, 'ID', 'ID'),  # gs countrate is from the above guiding selections file
+            (False, 237576.0000, None, 'ACQ1', 'ACQ'),
+            (True, None, 100000, 'ID', 'ID'),
+            (True, None, 100000, 'ACQ1', 'ACQ')]
+@pytest.mark.parametrize('use_oss_defaults, guide_star_countrate, catalog_countrate, step, step_name', prc_list)
+def test_prc_thresholds(test_directory, use_oss_defaults, guide_star_countrate, catalog_countrate, step, step_name):
+    """Check the right thresholds make it into the ID and ACQ prc files"""
+    # Delete path if it exists
+    if os.path.isdir(TEST_DIRECTORY):
+        shutil.rmtree(TEST_DIRECTORY)
+
+    # Define basic inputs
+    image = fits.getdata(CONVERTED_NIRCAM_IM_MIMF)
+    guider = 1
+    shifted = False
+    guiding_selections_file = SELECTED_SEGS_MIMF
+
+    # Set the threshold factor variable
+    thresh_factor = 0.5
+
+    # Run buildfgssteps
+    out_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_1')
+    BFS_factor = BuildFGSSteps(image, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
+                               out_dir=out_fsw, thresh_factor=thresh_factor, shift_id_attitude=shifted,
+                               use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
+    write_files.write_prc(BFS_factor)
+
+    # Check threshold in the output files
+    thresh_factor_prc = os.path.join(out_fsw, 'dhas', ROOT+f'_G1_{step_name}.prc')
+    assert os.path.exists(thresh_factor_prc)
+    with open(thresh_factor_prc, 'r') as file:
+        buildsteps_factor_prc = file.read()
+    if use_oss_defaults:
+        assert str(int(catalog_countrate * COUNTRATE_CONVERSION * DIM_STAR_THRESHOLD_FACTOR)) in buildsteps_factor_prc
+    else:
+        assert str(int(guide_star_countrate * thresh_factor)) in buildsteps_factor_prc

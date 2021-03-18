@@ -62,6 +62,12 @@ DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
+# Global Values
+OSS_TRIGGER = 474608.4  # ADU/sec
+COUNTRATE_CONVERSION = 0.65
+DIM_STAR_THRESHOLD_FACTOR = 0.30
+BRIGHT_STAR_THRESHOLD_ADDEND = 332226
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN CLASS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -72,8 +78,8 @@ class BuildFGSSteps(object):
     to be used with DHAS.
     """
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
-                 out_dir=None, threshold=0.6, logger_passed=False, psf_center_file=None,
-                 shift_id_attitude=True):
+                 out_dir=None, thresh_factor=0.6, logger_passed=False, psf_center_file=None,
+                 shift_id_attitude=True, use_oss_defaults=False, catalog_countrate=None):
         """Initialize the class and call build_fgs_steps().
         """
         # Set up logger
@@ -88,7 +94,10 @@ class BuildFGSSteps(object):
             self.step = step
             self.yoffset = 12
             self.out_dir = out_dir
-            self.threshold = threshold
+            self.thresh_factor = thresh_factor
+            self.use_oss_defaults = use_oss_defaults
+            self.catalog_countrate = catalog_countrate
+            self.threshold = None
 
             # READ IN IMAGE
             if isinstance(im, str):
@@ -185,6 +194,23 @@ class BuildFGSSteps(object):
             self.xarr = np.asarray([self.xarr])
             self.yarr = np.asarray([self.yarr])
             self.countrate = np.asarray([self.countrate])
+
+        # Overwrite threshold with OSS default values for the POF case
+        if self.use_oss_defaults:
+            if self.catalog_countrate is None:
+                raise ValueError('When creating FSW files with the OSS defaults (use_oss_defaults=True), you'
+                                 'must pass in the catalog_countrate of the guide star as well.')
+            if len(self.xarr) != 1:
+                raise ValueError('Trying to apply OSS defaults to non-POF case (with multiple star selections)')
+
+            countrate_3x3 = self.catalog_countrate * COUNTRATE_CONVERSION
+            self.countrate = np.asarray([countrate_3x3])
+            if countrate_3x3 < OSS_TRIGGER:
+                self.threshold = countrate_3x3 * DIM_STAR_THRESHOLD_FACTOR
+            else:
+                self.threshold = countrate_3x3 - BRIGHT_STAR_THRESHOLD_ADDEND
+        else:
+            self.threshold = self.countrate * self.thresh_factor
 
         # TODO: Add case that extracts countrates from input_im and the x/y
         # coords/inds so this module is no longer dependent on ALLpsfs

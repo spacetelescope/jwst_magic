@@ -56,12 +56,12 @@ TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 
 norm_parameters = [
     (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 2138.5545260642302),
-    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6320.913674129601),
+    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6635.360361175142),
     (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1883.7917307547636),
-    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 5858.823498069486),
-    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6320.913674129601),
-    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 66731.59555829671),  # NRC contains TEST keyword - tests ped
-    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 150008.40924385004)  # non-ITM FGS image - tests ped
+    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 6150.282570907751),
+    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6635.360361175142), # uses fgs_mag = 12 by default
+    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 72688.39577432793),  # NRC contains TEST keyword - tests ped
+    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.9196477208)  # non-ITM FGS image - tests ped
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
 def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, itm, data_max):
@@ -86,9 +86,9 @@ def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, 
 
 
 norm_parameters = [
-    (12.5, 'FGS Magnitude', ValueError, 'Unacceptable FGS Magnitude value'),
-    ('N13I000018', 'FGS Magnitude', TypeError, 'Mismatched normalization value'),
-    ('N13I000018', 'FGS countrate', TypeError, 'Mismatched normalization value')
+    (12.5, 'Guide Star ID', TypeError, 'Mismatch: Normalization value for unit of'),
+    ('N13I000018', 'FGS Magnitude', TypeError, 'Mismatch: Normalization value for unit of'),
+    ('N13I000018', 'FGS countrate', TypeError, 'Mismatch: Normalization value for unit of')
 ]
 @pytest.mark.parametrize('value, unit, error, error_text', norm_parameters)
 def test_convert_im_normalization_error(value, unit, error, error_text):
