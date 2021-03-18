@@ -170,7 +170,7 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
         # Rewrite CECIL proc file
         for step in ['ID', 'ACQ1', 'ACQ2', 'TRK']:
             fgs_files_obj = buildfgssteps.BuildFGSSteps(
-                fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
+                fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, thresh_factor=threshold,
                 logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                 psf_center_file=psf_center_file_fsw, shift_id_attitude=shifted,
             )

@@ -18,14 +18,18 @@ import numpy as np
 
 # Local Imports
 from jwst_magic.convert_image import renormalize
+from jwst_magic.utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+PACKAGE_PATH = os.path.split(__location__)[0]
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
 
-def add_background_stars(image, stars, norm_value, norm_unit, guider):
+def add_background_stars(image, stars, norm_value, norm_unit, guider,
+                         save_file=False, root=None, out_dir=None):
     """Add artificial copies of the input PSF to the image to mimic
     background stars.
 
@@ -42,6 +46,14 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
         Specifies the unit of norm_value (FGS Magnitude or FGS Counts)
     guider : int
         The number of the guider used to take the data
+    save_file : bool, optional
+        Save ASCII file containing y, x, and magnitude values for each
+        background star. Default is False
+    root: str, optional
+        The root desired for output images if different than root in image
+    out_dir : str, optional
+        Where output FGS image(s) will be saved. If not provided, the
+        image(s) will be saved to ../out/{root}.
 
     Returns
     -------
@@ -122,5 +134,18 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
                 'Background Stars: Adding background star with magnitude {:.1f} at location ({}, {}).'.
                 format(fgs_mag_back, x, y))
             add_data[y1:y2, x1:x2] += star_data
+
+    if save_file:
+        # Set up out dir
+        out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+        utils.ensure_dir_exists(out_dir)
+
+        # Write catalog of all background PSFs
+        background_psfs_file = os.path.join(out_dir, 'unshifted_background_psfs_{}_G{}.txt'.format(root, guider))
+        all_cols = utils.create_cols_for_coords_counts(x_back, y_back, fgs_mags_back, val=None,
+                                                       labels=None, inds=range(len(x_back)))
+        utils.write_cols_to_file(background_psfs_file,
+                                 labels=['y', 'x', 'fgs_mag'],
+                                 cols=all_cols, log=LOGGER)
 
     return add_data

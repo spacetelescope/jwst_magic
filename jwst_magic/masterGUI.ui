@@ -806,7 +806,7 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <property name="text">
-               <string>FGS Mag (10, 11, 12, 13, or 14)</string>
+               <string>FGS Magnitude</string>
               </property>
              </item>
             </widget>
@@ -926,7 +926,7 @@ p, li { white-space: pre-wrap; }
            <item row="0" column="0">
             <widget class="QLabel" name="label_threshold">
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Set Threshold&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Set Threshold Factor&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
@@ -975,7 +975,7 @@ p, li { white-space: pre-wrap; }
            <item row="2" column="3">
             <widget class="QRadioButton" name="radioButton_nominal_id_attitude">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="text">
               <string>Nominal (0,0)</string>
@@ -991,7 +991,7 @@ p, li { white-space: pre-wrap; }
            <item row="2" column="4" colspan="2">
             <widget class="QRadioButton" name="radioButton_crowded_id_attitude">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="text">
               <string>Crowded Field (-45, 0)</string>
@@ -999,6 +999,20 @@ p, li { white-space: pre-wrap; }
              <attribute name="buttonGroup">
               <string notr="true">buttonGroup_idAttitude</string>
              </attribute>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_OSS">
+             <property name="text">
+              <string>For Photometry Override:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1" colspan="2">
+            <widget class="QCheckBox" name="checkBox_OSS">
+             <property name="text">
+              <string>Use Default OSS Numbers </string>
+             </property>
             </widget>
            </item>
           </layout>
@@ -2449,6 +2463,38 @@ QPushButton:pressed {
    <sender>checkBox_rewritePRC</sender>
    <signal>clicked(bool)</signal>
    <receiver>checkBox_LOSTRK</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>713</x>
+     <y>798</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>902</x>
+     <y>825</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>label_OSS</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>713</x>
+     <y>798</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>902</x>
+     <y>825</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_rewritePRC</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_OSS</receiver>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
