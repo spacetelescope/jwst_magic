@@ -210,9 +210,10 @@ class SegmentGuidingCalculator:
                 v2_seg_n = v2_seg_array.mean()
                 v3_seg_n = v3_seg_array.mean()
 
-            # Calculate aim
-            v2_aim = self.v2_ref + v2_seg_n # v2_seg_n = dv2_aim
-            v3_aim = self.v3_ref + v3_seg_n # v3_seg_n = dv3_aim
+            # Calculate aim (add the v2/v3 ref that we had removed in Raw2Tel)
+                # v2, v3 aim is the position of the guide star in the full JWST FOV tel frame that pysiaf outputs
+            v2_aim = self.v2_ref + v2_seg_n  # v2_seg_n = dv2_aim
+            v3_aim = self.v3_ref + v3_seg_n  # v3_seg_n = dv3_aim
 
             # Convert to Ideal coordinates
             x_idl_aim, y_idl_aim = self.fgs_siaf_aperture.tel_to_idl(v2_aim, v3_aim)
@@ -259,6 +260,7 @@ class SegmentGuidingCalculator:
             n_segments = len(seg_id_array)
 
             # Get the attitude matrix
+            # These are the v2/v3 tel position of the guide star and the actual ra/dec of the guide star
             attitude = rotations.attitude(self.v2_aim[i] + self.v2_boff,
                                           self.v3_aim[i] + self.v3_boff,
                                           self.ra, self.dec, self.pa)
@@ -267,12 +269,14 @@ class SegmentGuidingCalculator:
             seg_ra = np.zeros(n_segments)
             seg_dec = np.zeros(n_segments)
             for j in range(n_segments):
-                v2 = self.v2_ref + self.v2_seg_array[i][j]
+                v2 = self.v2_ref + self.v2_seg_array[i][j]  # adding v2/v3 ref back in to match pysiaf tel frame
                 v3 = self.v3_ref + self.v3_seg_array[i][j]
+                # This is the same pysiaf tel_to_sky()
                 seg_ra[j], seg_dec[j] = rotations.pointing(attitude, v2, v3,
                                                                      positive_ra=True)
 
             # Convert V2/V3 coordinates to ideal coordinates and detector frame coordinates
+            # adding v2/v3 ref back in to match pysiaf tel frame (undoing subtraction in Raw2Tel)
             idl_coords = self.fgs_siaf_aperture.tel_to_idl(self.v2_seg_array[i] + self.v2_ref,
                                                            self.v3_seg_array[i] + self.v3_ref)
             x_idl_segs, y_idl_segs = idl_coords
