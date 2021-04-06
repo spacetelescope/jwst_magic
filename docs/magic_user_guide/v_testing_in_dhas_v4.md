@@ -57,6 +57,8 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
    1. Check the **Apply Bad Pixel Map?** box highlighted in yellow, in the Data Analysis section #ADD_FIGURE. *If the box is checked with a path next to it, a bad pixel map has already applied for the guider used for the last simulation; continue to step 3.*
 
+      ![Apply Bad Pixel Map](./figs/figure_apply_bad_pixel_v4.png)
+
    2. In the finder window that opens, choose the most recent bad pixel map for the corresponding guider (check the “rev” number on files with a .pix extension). For DHAS version 4, this file is `G1_F11_CV3_Rev_64.pix` for guider 1 and `G2_F14_CV3_Rev_64.pix` for guider 2.
 
    3. Click **Open**
@@ -70,7 +72,7 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
 
-   2. Click thepurple **ID Simulation** button in the Guide Simulations & Telemetry section
+   2. Click the purple **ID Simulation** button in the Guide Simulations & Telemetry section
 
       ![Selecting the ID simulator in DHAS](./figs/figure_d_dhas_mode_v4.png)
 
@@ -78,15 +80,19 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
    3. This will open the idSim_Config window.
 
 
-      ![idSim_Config Window](./figs/figure_dhas_idSim_Config.png)
+      ![idSim_Config Window](./figs/figure_dhas_idSim_Config_v4.png)
 
    4. To run in single file mode with a .prc file:
 
       1. Go to last line in the window and click. This will open a finder dialog box. Navigate to where the ``{root}_IDstrips.fits`` you selected is located and choose the associated ``{root}_ID.prc`` file and click Open.
 
+      ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
+
       2. You should see the path to this .prc file in the box where you clicked.
 
       3. Click the "Write to Star File" button above the box where the path to the .prc file is. This will convert your .prc file into a .star file.
+
+      ![Write to Star](./figs/figure_dhas_write_to_star_v4.png)
 
       4. Check the "Star Settings" section to make sure that the selections look correct
 
@@ -96,9 +102,9 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       1. Click on the box for "Enable Batch Mode"
 
-      2. Click "Select Files" and choose the relevant files ???????
+      2. Click "Select Files" and choose the relevant files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files???????
 
-    6. Click the “Run” button.
+    6. Click the “Run” button
 
 4. Wait for the simulator to run
 
@@ -167,6 +173,8 @@ If DHAS ID succeeds, continue on to test ACQ.
    5. Adjust ACQ parameters:
 
       **NOTE: You will NOT have to change these parameters if the "Commissioning Parameters" button in the Guide Simulations & Telemetry section is checked. If you button is checked when you run the simulations, skip to step 4.**
+
+      ![Commissioning Parameters button](./figs/figure_commissioning_parameters_v4.png)
 
       1. First, the **ACQ Mode Setup – ACQ1 Settings** dialog box will appear. You may adjust ACQ1 and ACQ2 table parameters here if you wish.
 
@@ -253,7 +261,7 @@ If DHAS ACQ succeeds, continue on to test TRK.
 
       ![Selecting the TRK simulator in DHAS](./figs/figure_g_dhas_trk_v4.png)
 
-   3. The **fd_TFG_sim_config** dialog box will appear (*numbers in the cells highlighted will only need to be updated if the table loads have not applied*):
+   3. The **fd_TFG_sim_config** dialog box will appear (*numbers in the cells highlighted will only need to be updated if the Commissioning Parameters button has not been clickedfi*):
 
       ![TRK fd_TFG_sim_config window in DHAS](./figs/figure_l_dhas_trk_window.png)
 
