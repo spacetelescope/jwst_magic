@@ -65,10 +65,16 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
    4. When the finder box disappears, the **Image Size Mismatch…** dialog box, will appear; this concerns the alignment of the subarrays with bad pixel map and the default values may be accepted by clicking **OK**.
 
+3. Commissioning Parameters
+
+   In DHAS versions 3.99 and later, we have a handy **Commissioning Parameters** check box that is the equivalent of loading the GA table loads that was required for earlier versions of DHAS. Note that because of this, we will not include the steps here to change parameters in the DHAS. For information on how to do that, see [Testing in DHAS versions 3 and earlier](v_testing_in_dhas.md).
+
+   ![Commissioning Parameters button](./figs/figure_commissioning_parameters_v4.png)
+
 
 3. Run the ID simulator
 
-   1. Click the corresponding G1 or G2 button depending on if this is a guider 1 vs. guider 2 image at the top of the page
+   1. Click the corresponding **Guider 1** or **Guider 2** button depending on if this is a guider 1 vs. guider 2 image at the top of the page
 
       ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
 
@@ -79,20 +85,19 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
    3. This will open the idSim_Config window.
 
-
       ![idSim_Config Window](./figs/figure_dhas_idSim_Config_v4.png)
 
    4. To run in single file mode with a .prc file:
 
       1. Go to last line in the window and click. This will open a finder dialog box. Navigate to where the ``{root}_IDstrips.fits`` you selected is located and choose the associated ``{root}_ID.prc`` file and click Open.
 
-      ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
+         ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
 
       2. You should see the path to this .prc file in the box where you clicked.
 
       3. Click the "Write to Star File" button above the box where the path to the .prc file is. This will convert your .prc file into a .star file.
 
-      ![Write to Star](./figs/figure_dhas_write_to_star_v4.png)
+         ![Write to Star](./figs/figure_dhas_write_to_star_v4.png)
 
       4. Check the "Star Settings" section to make sure that the selections look correct
 
@@ -100,11 +105,13 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
     5. To run in batch mode (note that you will need .star files for each configuration)
 
-      1. Click on the box for "Enable Batch Mode"
+      1. Click on the box for **Enable Batch Mode**
 
-      2. Click "Select Files" and choose the relevant files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files???????
+         ![ID Batch Mode](./figs/figure_dhas_batch_mode_v4.png)
 
-    6. Click the “Run” button
+      2. Click **Select Files** and choose the relevant files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files (?)
+
+    6. Click the green **Run** button
 
 4. Wait for the simulator to run
 
@@ -122,7 +129,7 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       1. Does DHAS think it successfully found the guide star? (Does **Status** equal SUCCESS?)
 
-      2. Did DHAS find all of the stars? (How many **# Candidates** were found (if less than 18 for GA or image array steps, are some of the PSFs difuse?)?)
+      2. Did DHAS find all of the stars? (How many **# Candidates** were found (if less than 18 for GA or image array steps, are some of the PSFs diffuse?)?)
 
       3. If necessary, click the **Export** button to more closely examine DHAS’s output plot and/or save the image as a .PNG
 
@@ -152,11 +159,11 @@ If DHAS ID succeeds, continue on to test ACQ.
 
    7. Click **Done**
 
-2. Add the Bad Pixel Map *(if the box is checked with a path next to it, a bad pixel map has already applied for the guider used for the last simulation)*. If the box is not already checked, following the steps in step 2 for ID above.
+2. Add the Bad Pixel Map. If the box is not already checked with a path to a bad pixel map next to it, following the steps in step 2 for ID above.
 
 3. Run the ACQ simulator
 
-   1. Click the corresponding G1 or G2 button depending on if this is a guider 1 vs. guider 2 image at the top of the page
+   1. Click the corresponding **Guider 1** or **Guider 2** button depending on if this is a guider 1 vs. guider 2 image at the top of the page
 
       ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
 
@@ -168,54 +175,7 @@ If DHAS ID succeeds, continue on to test ACQ.
 
    4. The **acq_star_catalog_page** dialog box will appear. *Record the Row and Column of the ACQ2 window - you will need this for track*. When you are happy with the values, click **DONE**.
 
-       ![DHAS ACQ Star Catalog](./figs/figure_q_acq_star_catalog.png)
-
-   5. Adjust ACQ parameters:
-
-      **NOTE: You will NOT have to change these parameters if the "Commissioning Parameters" button in the Guide Simulations & Telemetry section is checked. If you button is checked when you run the simulations, skip to step 4.**
-
-      ![Commissioning Parameters button](./figs/figure_commissioning_parameters_v4.png)
-
-      1. First, the **ACQ Mode Setup – ACQ1 Settings** dialog box will appear. You may adjust ACQ1 and ACQ2 table parameters here if you wish.
-
-         For simulations of commissioning data pre-MIMF, change the following values:
-
-         | Parameter Name            | Old Value | New Value |
-         |---------------------------|-----------|-----------|
-         | `Update default settings?`| 0         | 1         |
-
-         ![DHAS ACQ Mode Setup - ACQ1 Settings Window](./figs/figure_m_dhas_acq1_params.png)
-
-         When you are happy with the values, click **OK**. If you did not change `Update default settings?` to `1`, continue on to step 4.
-
-      2. Second, the **ACQ Mode Setup - ACQ1 Scanning Parameters** dialog box will appear. You may adjust ACQ1 table parameters here if you wish.
-
-         No parameters on this window need to be changed for pre-MIMF commissioning simulations.
-
-         When you are happy with the values, click **OK**.
-
-      3. Third, the **ACQ Mode Setup - ACQ1 Centroid Parameters** dialog box will appear. You may adjust ACQ1 table parameters here if you wish.
-
-         No parameters on this window need to be changed for pre-MIMF commissioning simulations.
-
-         When you are happy with the values, click **OK**.
-
-      4. Fourth, the **ACQ Mode Setup - ACQ2 Parameters** dialog box will appear (see screenshot below). You may adjust ACQ2 table parameters here if you wish.
-
-         For simulations of commissioning data pre-MIMF, make sure the following values are as stated or you will need to update them:
-
-         | Parameter Name            |   Value   |
-         |---------------------------|-----------|
-         | `softwareSubWindSize`     | 28        |
-         | `perimeterSubWindSize`    | 28        |
-         | `maxPSFWidth`             | 28        |
-         | `maxPSFHeight`            | 28        |
-         | `badDeltaSignalThreshold` | 8         |
-         | `badDeltaNoiseThreshold`  | 8         |
-
-         When you are happy with the values, click **OK**.
-
-         ![DHAS ACQ Mode Setup - ACQ2 Parameters Window](./figs/figure_p_ACQ_parameters.png)
+       ![DHAS ACQ Star Catalog](./figs/figure_q_acq_star_catalog_v4.png)
 
 4.	Inspect the DHAS Results:
 
@@ -261,37 +221,24 @@ If DHAS ACQ succeeds, continue on to test TRK.
 
       ![Selecting the TRK simulator in DHAS](./figs/figure_g_dhas_trk_v4.png)
 
-   3. The **fd_TFG_sim_config** dialog box will appear (*numbers in the cells highlighted will only need to be updated if the Commissioning Parameters button has not been clickedfi*):
+   3. The **fd_TFG_sim_config** dialog box will appear (*numbers in the cells highlighted will only need to be updated if the Commissioning Parameters button has not been clicked*):
 
-      ![TRK fd_TFG_sim_config window in DHAS](./figs/figure_l_dhas_trk_window.png)
+      ![TRK fd_TFG_sim_config window in DHAS](./figs/figure_l_dhas_trk_window_v4.png)
 
       Click **fixed window location** and the radio button next to 1024, 1024 in the *Window Location* pane on the right of the dialog box; and replace the values for the row and column with the values you recorded for ACQ2 window above.
 
       ![TRK Window Location selection with the DHAS](./figs/figure_h_dhas_trk_window_loc.png)
 
-      If the **Commissioning Parameters** check box has not been checked, you can adjust some of the table settings here. For simulations of commissioning data pre-MIMF, make sure that the table parameters listed in the table are as stated (these are the numbers included in the useGAtables table update):
-
-      | Parameter Name            |   Value   |
-      |---------------------------|-----------|
-      | `perimeterSubWindSize`    | 28        |
-      | `softwareSubWindSize`     | 28        |
-      | `badDeltaSignalThreshold` | 8         |
-      | `badDeltaNoiseThreshold`  | 8         |
-      | `maxPSFWidth`             | 28        |
-      | `maxPSFHeight`            | 28        |
-
-      *Note that the `subWinUpdateCriteria` and `swWinJump` parameters should ideally also be changed, to 28 and 28 respectively, but those changes would need to be made directly to the `fd_TRK_table.m` file in the DHAS source code. For now, proceed without changing those parameters.*
-
       When you are happy with the values, click the green **Run** button.
 
-   4. A finder window will appear; select the appropriate bad pixel map file (G1_F11_CV3_Rev_64.pix for guider 1 and G2_F14_CV3_Rev_64.pix for guider 2) and click **Open**.
+   4. A finder window will appear; select the appropriate bad pixel map file (`G1_F11_CV3_Rev_64.pix` for guider 1 and `G2_F14_CV3_Rev_64.pix` for guider 2) and click **Open**.
 
-3. It may take a few seconds for the thermometer-like status bar (see below) to appear and/or to begin to register progress in the simulation. If the status bar ever stalls after initial progress has been made, the simulation is not likely to recover. __*This is considered this a FAILED simulation*__.
-       ![TRK Status Bar in DHAS](./figs/figure_k_dhas_trk_status_bar.png)
+3. It may take a few seconds for the thermometer-like status bar (see below) to appear and/or to begin to register progress in the simulation. If the status bar ever stalls after initial progress has been made, the simulation is not likely to recover. *This is considered this a FAILED simulation*.
+   ![TRK Status Bar in DHAS](./figs/figure_k_dhas_trk_status_bar.png)
 
 4. Inspect the DHAS Results:
 
-   Several diagnostic plots will automatically pop up. The same plots are written to the same directory where you got the TRK files as a *.ps* file.
+   Several diagnostic plots will automatically pop up. The same plots are written to the same directory where you got the TRK files as a `.ps` file.
 
    View the **test_ACQ_G1_TRK: Centroid Location** plot (see example below). Ensure that the NEA (noise equivalent angle) value in pixels, listed underneath the plot title, is below the required threshold.
 
