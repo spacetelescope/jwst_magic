@@ -418,9 +418,7 @@ class MasterGui(QMainWindow):
         itm = self.itm
 
         # Handle the case where we want to use a pre-existing converted image
-        pre_existing_im = self.checkBox_useConvertedImage.isChecked() and \
-                          convert_im and \
-                          self.checkBox_useConvertedImage.isEnabled()
+        pre_existing_im = self.checkBox_useConvertedImage.isChecked() and convert_im
         if pre_existing_im:
             convert_im = False
             input_image = self.converted_im_file
