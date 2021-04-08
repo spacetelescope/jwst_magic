@@ -104,7 +104,7 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
        1.  Go to last line in the window and click. This will open a finder dialog box. Navigate to where the `{root}_IDstrips.fits` you selected is located and choose the associated `{root}_ID.star` file and click Open.
 
-          ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
+         ![Load .star file](./figs/figure_dhas_load_id_prc_v4.png)
 
        2. You should see the path to this `.star` file in the box where you clicked.
 
