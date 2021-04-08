@@ -90,9 +90,9 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
          ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
 
-      2. You should see the path to this .prc file in the box where you clicked.
+      2. You should see the path to this ``.prc`` file in the box where you clicked.
 
-      3. Click the "Write to Star File" button above the box where the path to the .prc file is. This will convert your .prc file into a .star file.
+      3. Click the "Write to Star File" button above the box where the path to the ``.prc`` file is. This will convert your ``.prc`` file into a ``.star`` file.
 
          ![Write to Star](./figs/figure_dhas_write_to_star_v4.png)
 
@@ -106,19 +106,19 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
           ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
 
-       2. You should see the path to this .star file in the box where you clicked.
+       2. You should see the path to this ``.star`` file in the box where you clicked.
 
        3. If you want to alter your guide & reference star selections, do so here by toggling the **GS** (guide star) and **REF#** (reference star) buttons
 
-   5. To run in *batch mode* (note that you will need ``.cfg`` files for *each* ID run in this batch)
+   5. To run in *batch mode* (note that you will need ``idSim_cfg_*.m`` files for *each* ID run in this batch)
 
       1. Click on the box for **Enable Batch Mode**
 
          ![ID Batch Mode](./figs/figure_dhas_batch_mode_v4.png)
 
-      2. Click **Select Files** and choose the relevant .cfg files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files
+      2. Click **Select Files** and choose the relevant ``idSim_cfg_*.m`` files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files
 
-      3. This mode will only work if you select more than one .cfg file
+      3. This mode will only work if you select more than one ``idSim_cfg_*.m`` file
 
     6. Click the green **Run** button
 
