@@ -289,17 +289,23 @@ def write_star(obj):
     .star files replace .prc files for ID in DHAS v4
     """
     # Open file
-    filename_star = os.path.join(obj.out_dir, obj.dhas_dir,
-                                 obj.filename_root + '.star')
+    try:
+        filename_root = obj.filename_root
+    except AttributeError:
+        filename_root = '{}_G{}_{}'.format(obj.root, obj.guider, obj.step)
+    filename_star = os.path.join(obj.out_dir, obj.dhas_dir, filename_root + '.star')
     file = open(filename_star, "w")
 
     # Add header
-    header = f'*** ID Star file for {obj.filename_root}: Config {obj.config}\n'
+    header = f'*** ID Star file for {filename_root}: Config {obj.config}\n'
     file.write(header)
 
     # Add each star
+    threshold = obj.threshold
+    if not isinstance(threshold, (list, np.ndarray)):
+        threshold = [threshold]
     xangle, yangle = coordinate_transforms.Raw2DHAS(obj.xarr, obj.yarr, obj.guider)
-    for i, (x, y, cr, thr) in enumerate(zip(xangle, yangle, obj.countrate, obj.threshold)):
+    for i, (x, y, cr, thr) in enumerate(zip(xangle, yangle, obj.countrate, threshold)):
         line = f'{i},{x},{y},{cr},{thr}\n'
         file.write(line)
 
@@ -331,7 +337,7 @@ def write_prc(obj):
         raise ValueError('Cannot write .prc file for step {}.'.format(obj.step))
 
     mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
-                  step=step, threshold=obj.threshold, out_dir=obj.out_dir,
+                  threshold=obj.threshold, out_dir=obj.out_dir,
                   dhas_dir=obj.dhas_dir, ground_system_dir=obj.ground_system_dir,
                   acq1_imgsize=acq1_imgsize, acq2_imgsize=acq2_imgsize)
 
