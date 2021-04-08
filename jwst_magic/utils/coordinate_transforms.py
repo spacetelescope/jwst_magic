@@ -146,7 +146,7 @@ def Raw2Tel(x_raw, y_raw, guider):
     # Subtract V2 and V3 references
     v2ref = fgs_full.V2Ref
     v3ref = fgs_full.V3Ref
-    v2 -= v2ref
+    v2 -= v2ref  # this is putting the JWST FOV TEL frame, to have the origin on the FGS v2/v3 reference point
     v3 -= v3ref
 
     return v2, v3

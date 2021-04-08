@@ -70,7 +70,7 @@ DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 LOGGER = logging.getLogger(__name__)
 
 
-def plot_centroids(data, coords, root, guider, out_dir):
+def plot_selections(data, coords, cols, root, out_file):
     """Plot the identified segment locations over the data
 
     Parameters
@@ -79,12 +79,12 @@ def plot_centroids(data, coords, root, guider, out_dir):
         Image data
     coords : list
         List of tuples of x and y coordinates of all identified PSFs
-    root : str, optional
-        Name used to generate output folder and output filenames.
-    guider : int
-        Guider number (1 or 2)
-    out_dir : str
-        Where output files will be saved.
+    cols : list
+        List of selected guide and reference stars to circle
+    root : str
+        Name used to generate plot title
+    out_file : str
+        File path and name to save plot
     """
     pad = 300
 
@@ -104,10 +104,20 @@ def plot_centroids(data, coords, root, guider, out_dir):
         plt.annotate('({}, {})'.format(int(coords[i][0]), int(coords[i][1])),
                      (coords[i][0] - (pad * 0.05),
                       coords[i][1] + (pad * 0.05)))
-    plt.title('Centroids found for {}'.format(root))
+    plt.title('Centroids found for {}'.format(root), size=15)
     plt.xlim(max(0, x_mid - ax_range / 2), min(2048, x_mid + ax_range / 2))
     plt.ylim(min(2048, y_mid + ax_range / 2), max(0, y_mid - ax_range / 2))
-    plt.savefig(os.path.join(out_dir, 'all_found_psfs_centroids_{}_G{}.png'.format(root, guider)))
+
+    if cols is not None:
+        print(cols)
+        for i, (y, x, cr) in enumerate(cols):
+            if i == 0:
+                c = 'orange'
+            else:
+                c = 'blue'
+            plt.plot(x, y, 'o', ms=50, mfc='none', mec=c, mew=2, lw=0)
+
+    plt.savefig(out_file)
 
     plt.close()
 
@@ -697,10 +707,6 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
                                                                                          masterGUIapp)
             old_configs = [False] * len(cols_list)
 
-        # Save PNG of image and all PSF locations in out_dir
-        if not JENKINS:
-            plot_centroids(data, all_coords, root, guider, out_dir)  # coords are in (x,y)
-
         if center_of_pointing is not None:
             # Write out center of pointing information
             center_pointing_path = os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))
@@ -730,13 +736,18 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
                     LOGGER.info("Star Selection: PSF Config {}: Ref Star at "
                                 "({},{}) has 3x3 Count Rate of {}".format(i, cols[j][0], cols[j][1], cols[j][2]))
 
-            guiding_selections_path = os.path.join(out_dir, 'guiding_config_{}'.format(i),
-                                                   'unshifted_guiding_selections_{}_G{}_config{}.txt'.format(
-                                                       root, guider, i))
+            guiding_selections_path = os.path.join(out_dir, f'guiding_config_{i}',
+                                                   f'unshifted_guiding_selections_{root}_G{guider}_config{i}.txt')
             utils.write_cols_to_file(guiding_selections_path,
                                      labels=['y', 'x', 'countrate'],
                                      cols=cols, log=LOGGER)
             guiding_selections_path_list.append(guiding_selections_path)
+
+            # Save PNG of image and all PSF locations in out_dir
+            if not JENKINS:
+                plot_selections(data, all_coords, cols, root,
+                               os.path.join(out_dir, f'guiding_config_{i}',
+                                            f'plot_selections_{root}_G{guider}_config{i}.png'))
 
     except Exception as e:
         LOGGER.exception(e)
