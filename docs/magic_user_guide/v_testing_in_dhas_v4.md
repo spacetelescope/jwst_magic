@@ -80,12 +80,11 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       ![Selecting the ID simulator in DHAS](./figs/figure_d_dhas_mode_v4.png)
 
-
    2. This will open the idSim_Config window.
 
       ![idSim_Config Window](./figs/figure_dhas_idSim_Config_v4.png)
 
-   3. To run in single file mode with a .prc file:
+   3. To run in *single file mode* with a ``.prc`` file:
 
       1. Go to last line in the window and click. This will open a finder dialog box. Navigate to where the ``{root}_IDstrips.fits`` you selected is located and choose the associated ``{root}_ID.prc`` file and click Open.
 
@@ -101,7 +100,17 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       5. If you want to alter your guide & reference star selections, do so here by toggling the **GS** (guide star) and **REF#** (reference star) buttons
 
-    4. To run in batch mode (note that you will need .cfg files for each configuration)
+   4. To run *single file mode* with a ``.star`` file
+
+       1.  Go to last line in the window and click. This will open a finder dialog box. Navigate to where the ``{root}_IDstrips.fits`` you selected is located and choose the associated ``{root}_ID.star`` file and click Open.
+
+          ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
+
+       2. You should see the path to this .star file in the box where you clicked.
+
+       3. If you want to alter your guide & reference star selections, do so here by toggling the **GS** (guide star) and **REF#** (reference star) buttons
+
+   5. To run in *batch mode* (note that you will need ``.cfg`` files for *each* ID run in this batch)
 
       1. Click on the box for **Enable Batch Mode**
 
@@ -111,7 +120,7 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       3. This mode will only work if you select more than one .cfg file
 
-    5. Click the green **Run** button
+    6. Click the green **Run** button
 
 6. Wait for the simulator to run
 
