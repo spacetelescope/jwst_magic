@@ -634,6 +634,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
         xend, yend = (1024, 1024)  # ID attitude; Different for crowded fields
         # Note this should actually be 1024.5, but the guiding selections file
         # needs an integer shift
+        # that 0.5 pixel shift should equate to a 9e-6 degree change in RA and DEC
         hdr_keyword = '{}'.format((xend, yend))
 
 
