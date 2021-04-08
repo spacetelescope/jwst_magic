@@ -38,19 +38,19 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
 
-2. Load the ``{root}_IDstrips.fits`` file for the current data:
+2. Load the `{root}_IDstrips.fits` file for the current data:
 
    1. Click the green **Load .FITS Images Files** button
 
       ![DHAS Load FITS button](./figs/figure_b_dhas_load_fits_v4.png)
 
-   2. Using the *Current Directory* drop-down menu (or by typing the path directly into the text box), navigate to the ``out/{root}`` directory where the images have been saved
+   2. Using the *Current Directory* drop-down menu (or by typing the path directly into the text box), navigate to the `out/{root}` directory where the images have been saved
 
-   3. Go the ``dhas`` or ``dhas_shifted`` subdirectory
+   3. Go the `dhas` or `dhas_shifted` subdirectory
 
    4. Check the **Show All Files** box
 
-   5. Select the ``{root}_IDstrips.fits`` file
+   5. Select the `{root}_IDstrips.fits` file
 
    6. Click **Add →**
 
@@ -84,15 +84,15 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       ![idSim_Config Window](./figs/figure_dhas_idSim_Config_v4.png)
 
-   3. To run in *single file mode* with a ``.prc`` file:
+   3. To run in *single file mode* with a `.prc` file:
 
-      1. Go to last line in the window and click. This will open a finder dialog box. Navigate to where the ``{root}_IDstrips.fits`` you selected is located and choose the associated ``{root}_ID.prc`` file and click Open.
+      1. Go to last line in the window and click. This will open a finder dialog box. Navigate to where the `{root}_IDstrips.fits` you selected is located and choose the associated `{root}_ID.prc` file and click Open.
 
          ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
 
-      2. You should see the path to this ``.prc`` file in the box where you clicked.
+      2. You should see the path to this `.prc` file in the box where you clicked.
 
-      3. Click the "Write to Star File" button above the box where the path to the ``.prc`` file is. This will convert your ``.prc`` file into a ``.star`` file.
+      3. Click the "Write to Star File" button above the box where the path to the `.prc` file is. This will convert your `.prc` file into a `.star` file.
 
          ![Write to Star](./figs/figure_dhas_write_to_star_v4.png)
 
@@ -100,25 +100,25 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       5. If you want to alter your guide & reference star selections, do so here by toggling the **GS** (guide star) and **REF#** (reference star) buttons
 
-   4. To run *single file mode* with a ``.star`` file
+   4. To run *single file mode* with a `.star` file
 
-       1.  Go to last line in the window and click. This will open a finder dialog box. Navigate to where the ``{root}_IDstrips.fits`` you selected is located and choose the associated ``{root}_ID.star`` file and click Open.
+       1.  Go to last line in the window and click. This will open a finder dialog box. Navigate to where the `{root}_IDstrips.fits` you selected is located and choose the associated `{root}_ID.star` file and click Open.
 
           ![Load .prc file](./figs/figure_dhas_load_id_prc_v4.png)
 
-       2. You should see the path to this ``.star`` file in the box where you clicked.
+       2. You should see the path to this `.star` file in the box where you clicked.
 
        3. If you want to alter your guide & reference star selections, do so here by toggling the **GS** (guide star) and **REF#** (reference star) buttons
 
-   5. To run in *batch mode* (note that you will need ``idSim_cfg_*.m`` files for *each* ID run in this batch)
+   5. To run in *batch mode* (note that you will need `idSim_cfg_*.m` files for *each* ID run in this batch)
 
       1. Click on the box for **Enable Batch Mode**
 
          ![ID Batch Mode](./figs/figure_dhas_batch_mode_v4.png)
 
-      2. Click **Select Files** and choose the relevant ``idSim_cfg_*.m`` files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files
+      2. Click **Select Files** and choose the relevant `idSim_cfg_*.m` files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files
 
-      3. This mode will only work if you select more than one ``idSim_cfg_*.m`` file
+      3. This mode will only work if you select more than one `idSim_cfg_*.m` file
 
     6. Click the green **Run** button
 
@@ -154,19 +154,19 @@ If DHAS ID succeeds, continue on to test ACQ.
 
    ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
 
-2. Load the ``{root}_ACQ.fits`` file you just created:
+2. Load the `{root}_ACQ.fits` file you just created:
 
    1. Click the green **Load .FITS Images Files** button
 
      ![DHAS Load FITS button](./figs/figure_b_dhas_load_fits_v4.png)
 
-   2. Using the *Current Directory* drop-down menu (or by typing the path directly into the textbox), navigate to the ``out/{root}`` directory where the images have been saved
+   2. Using the *Current Directory* drop-down menu (or by typing the path directly into the textbox), navigate to the `out/{root}` directory where the images have been saved
 
-   3. Go the ``dhas`` or ``dhas_shifted`` subdirectory
+   3. Go the `dhas` or `dhas_shifted` subdirectory
 
    4. Check the **Show All Files** box
 
-   5. Select the ``{root}_ACQ1.fits`` and ``{root}_ACQ2.fits`` files (preserving order, ACQ1 must be the top filename in the box on the right)
+   5. Select the `{root}_ACQ1.fits` and `{root}_ACQ2.fits` files (preserving order, ACQ1 must be the top filename in the box on the right)
 
    6.	Click **Add →**
 
@@ -206,19 +206,19 @@ If DHAS ACQ succeeds, continue on to test TRK.
 
    ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
 
-2. Load the ``{root}_TRK.fits`` file for the current data:
+2. Load the `{root}_TRK.fits` file for the current data:
 
    1. Click the green **Load .FITS Images Files** button
 
      ![DHAS Load FITS button](./figs/figure_b_dhas_load_fits_v4.png)
 
-   2. Using the *Current Directory* drop-down menu (or by typing the path directly into the text box), navigate to the ``out/{root}`` directory where the images have been saved
+   2. Using the *Current Directory* drop-down menu (or by typing the path directly into the text box), navigate to the `out/{root}` directory where the images have been saved
 
-   3. Go the ``dhas`` or ``dhas_shifted`` subdirectory
+   3. Go the `dhas` or `dhas_shifted` subdirectory
 
    4. Check the **Show All Files** box
 
-   5. Select the ``{root}_TRK.fits`` file
+   5. Select the `{root}_TRK.fits` file
 
    6.	Click **Add →**
 

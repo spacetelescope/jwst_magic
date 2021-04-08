@@ -31,7 +31,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
    4. Select the **Observation** number (*G*) of the activity you are generating an override file for. _(The observations in the dropdown box that are preceded by `+` are extras, in the case that an unplanned observation gets generated on-the-fly.)_
    5. (Optional) Re-set the APT number and select the **Update APT** button (*F*) to query a different APT file (e.g. if you are in a rehearsal, use the rehearsal APT number)
 
-   Considering these parameters all together, the output files will be saved in the ``/data/jwst/wss/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
+   Considering these parameters all together, the output files will be saved in the `/data/jwst/wss/guiding/{practice}/{car}/out/for_obs{obs}/` directory, with the root `for_obs{obs}_G{guider}`.
 
    Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
@@ -45,7 +45,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
    3. Specify the **Out** directory (*J*) to be `/data/jwst/wss/guiding/{practice}/{car}/`, filling in the directory for the current practice/rehearsal and the name of the current activity.
    4. Specify the APT Program ID and Observation Number and select the **Query APT** button (*K*) to query the APT file and Guide Star Catalog
 
-   Considering these parameters all together, the output files will be saved in the ``/data/jwst/wss/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
+   Considering these parameters all together, the output files will be saved in the `/data/jwst/wss/guiding/{practice}/{car}/out/for_obs{obs}/` directory, with the root `for_obs{obs}_G{guider}`.
 
    Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
@@ -53,10 +53,10 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
 
    1. Check the **Manual** radio button (*H*) to set the naming method.
    2. Specify a **Root** name (*I*). If different than the default name that was created when the input image was uploaded. The root will be used to to create the output directory where all created files will reside, out/{root}.
-   3. Change the **Out** directory (*J*). Choose the location to where the files will be saved. An ``out/`` directory will be created in this location, and this is where all the files will be saved.
+   3. Change the **Out** directory (*J*). Choose the location to where the files will be saved. An `out/` directory will be created in this location, and this is where all the files will be saved.
    4. (Optional) Specify the APT Program ID and Observation Number and select the **Query APT** button (*K*) to query the APT file and Guide Star Catalog
 
-   Considering these parameters all together, the output files will be saved in the ``{out}/out/{root}/`` directory, with names of the format ``{root}_G{guider}``
+   Considering these parameters all together, the output files will be saved in the `{out}/out/{root}/` directory, with names of the format `{root}_G{guider}`
 
    Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
@@ -65,7 +65,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
    ![Image Converter section of the Main GUI](./figs/figure5_main_image_convert.png)
 
    1. (Optional) Simulate the effects of **Coarse Pointing** (*A*)  by specifying the jitter rate of the observatory. A jitter rate of 0.7 arcsec/sec creates images that are similar to ITM simulations in coarse point. Otherwise, ensure the **Add jitter rate** box is unchecked.
-   2. Check that the **Input Image Instrument** (*B*) and **NIRCam detector** (*C*) used to take the input image are set to the correct values; change them if not. (The tool will attempt to parse the NIRCam detector from the input FITS header, but can be changed if the header cannot be parsed for this information.) The FGS-formatted image will be saved to ``out/{root}/FGS_imgs/{input_image}_G{guider}.fits``
+   2. Check that the **Input Image Instrument** (*B*) and **NIRCam detector** (*C*) used to take the input image are set to the correct values; change them if not. (The tool will attempt to parse the NIRCam detector from the input FITS header, but can be changed if the header cannot be parsed for this information.) The FGS-formatted image will be saved to `out/{root}/FGS_imgs/{input_image}_G{guider}.fits`
    3. (Optional) Specify Guide Star ID of the guide star you are trying to simulate, or the FGS magnitude, or FGS count rate for the **Image Normalization** (*D*) of the final image. If you do not want your image to renormalized, ensure the **Normalize to** box is unchecked.
    4. (Optional) Add **Background Stars** to the final image.
 
