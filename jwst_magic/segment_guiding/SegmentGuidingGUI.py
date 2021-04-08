@@ -32,6 +32,7 @@ import os
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from PyQt5 import uic
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QDialog, QMessageBox, QWidget)
 
 # Local Imports
@@ -64,6 +65,8 @@ class SegmentGuidingDialog(QDialog):
         DEC of guide star
     threshold : optional, float
         Count rate uncertainty factor
+    detector : optional, str
+        NIRCam detector used for default combobox
 
     Returns
     -------
@@ -73,7 +76,7 @@ class SegmentGuidingDialog(QDialog):
         countrate_factor)
     """
     def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None,
-                 log=None, threshold=None):
+                 log=None, threshold=None, detector=None):
         # Initialize attributes
         self.override_type = override_type
         self.guider = guider
@@ -82,6 +85,7 @@ class SegmentGuidingDialog(QDialog):
         self.visit_num = visit_num
         self.ra = ra
         self.dec = dec
+        self.detector = detector if detector is not None else 'A3'
 
         # Start logger
         if log is None:
@@ -102,6 +106,9 @@ class SegmentGuidingDialog(QDialog):
         self.lineEdit_programNumber.setText(str(program_id))
         self.lineEdit_observationNumber.setText(str(observation_num))
         self.lineEdit_visitNumber.setText(str(visit_num))
+
+        index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
+        self.comboBox_detector.setCurrentIndex(index)
 
         # Setting only for SOF, not POF
         try:
