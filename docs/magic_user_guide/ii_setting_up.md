@@ -34,7 +34,7 @@ II. Setting Up MAGIC
 
 ###### Section IV: [Selecting Guide & Reference Stars for an Input Image and Writing Out Files](iv_select_stars_and_write_files.md)
 
-###### Section V: [Testing Selections in DHAS](v_testing_in_dhas.md)
+###### Section V: DHAS Versions 3.0 and Earlier:[Testing Selections in DHAS Version 3.0 and Ealier](v_testing_in_dhas.md), DHAS Versions 3.99 and Laster:[Testing Selections in DHAS Version 3.99 and Laster](v_testing_in_dhas_v4.md)
 
 ###### Section VI: [Contingency: Re-selecting Stars and Re-running DHAS](vi_contingency_reselect_stars.md)
 

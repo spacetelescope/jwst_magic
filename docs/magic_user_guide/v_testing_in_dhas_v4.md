@@ -10,9 +10,9 @@
 
 -----------------------------------------
 
-V.	Testing Selections in DHAS
-==============================
-**Note: This documentation is for DHAS *Version 3.99* and later.**
+V.	Testing Selections in DHAS Version 3.99 and Later
+=====================================================
+**Note: This documentation is for DHAS *Version 3.99* and later. For earlier versions of the DHAS, see [Testing in DHAS Version 3.0 and Earlier](v_testing_in_dhas.md)**
 
 After selecting the guide and reference stars, we have to determine whether or not this selection will be successful with the flight software (FSW). To do this, we can use the files created in the last section to run our images through the FSW simulator, the FGS Data Handling Analysis System (DHAS) (see figure below). (If you do not have the DHAS set up, see [Appendix B](appendix_b_opening_dhas.md))
 
@@ -34,7 +34,11 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
 ## Testing ID in DHAS
 
-1. Load the ``{root}_IDstrips.fits`` file for the current data:
+1. Click the corresponding **Guider 1** or **Guider 2** button  in the Instrument box in the Guider Simulations & Telemetry section, depending on if this is a guider 1 vs. guider 2 image
+
+      ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
+
+2. Load the ``{root}_IDstrips.fits`` file for the current data:
 
    1. Click the green **Load .FITS Images Files** button
 
@@ -42,7 +46,7 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
    2. Using the *Current Directory* drop-down menu (or by typing the path directly into the text box), navigate to the ``out/{root}`` directory where the images have been saved
 
-   3. Go the ``dhas`` subdirectory
+   3. Go the ``dhas`` or ``dhas_shifted`` subdirectory
 
    4. Check the **Show All Files** box
 
@@ -52,10 +56,9 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
    7. Click **Done**
 
+3. Add the Bad Pixel Map
 
-2. Add the Bad Pixel Map
-
-   1. Check the **Apply Bad Pixel Map?** box highlighted in yellow, in the Data Analysis section #ADD_FIGURE. *If the box is checked with a path next to it, a bad pixel map has already applied for the guider used for the last simulation; continue to step 3.*
+   1. Check the **Apply Bad Pixel Map?** box highlighted in yellow, in the Data Analysis section. *If the box is checked with a path next to it, a bad pixel map has already applied for the guider used for the last simulation; continue to step 3.*
 
       ![Apply Bad Pixel Map](./figs/figure_apply_bad_pixel_v4.png)
 
@@ -65,29 +68,24 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
    4. When the finder box disappears, the **Image Size Mismatch…** dialog box, will appear; this concerns the alignment of the subarrays with bad pixel map and the default values may be accepted by clicking **OK**.
 
-3. Commissioning Parameters
+4. Commissioning Parameters
 
    In DHAS versions 3.99 and later, we have a handy **Commissioning Parameters** check box that is the equivalent of loading the GA table loads that was required for earlier versions of DHAS. Note that because of this, we will not include the steps here to change parameters in the DHAS. For information on how to do that, see [Testing in DHAS versions 3 and earlier](v_testing_in_dhas.md).
 
    ![Commissioning Parameters button](./figs/figure_commissioning_parameters_v4.png)
 
+5. Run the ID simulator
 
-3. Run the ID simulator
-
-   1. Click the corresponding **Guider 1** or **Guider 2** button depending on if this is a guider 1 vs. guider 2 image at the top of the page
-
-      ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
-
-   2. Click the purple **ID Simulation** button in the Guide Simulations & Telemetry section
+   1. Click the purple **ID Simulation** button in the Guide Simulations & Telemetry section
 
       ![Selecting the ID simulator in DHAS](./figs/figure_d_dhas_mode_v4.png)
 
 
-   3. This will open the idSim_Config window.
+   2. This will open the idSim_Config window.
 
       ![idSim_Config Window](./figs/figure_dhas_idSim_Config_v4.png)
 
-   4. To run in single file mode with a .prc file:
+   3. To run in single file mode with a .prc file:
 
       1. Go to last line in the window and click. This will open a finder dialog box. Navigate to where the ``{root}_IDstrips.fits`` you selected is located and choose the associated ``{root}_ID.prc`` file and click Open.
 
@@ -103,23 +101,25 @@ This section includes testing ID, ACQ, and TRK images with the DHAS. Make sure y
 
       5. If you want to alter your guide & reference star selections, do so here by toggling the **GS** (guide star) and **REF#** (reference star) buttons
 
-    5. To run in batch mode (note that you will need .star files for each configuration)
+    4. To run in batch mode (note that you will need .cfg files for each configuration)
 
       1. Click on the box for **Enable Batch Mode**
 
          ![ID Batch Mode](./figs/figure_dhas_batch_mode_v4.png)
 
-      2. Click **Select Files** and choose the relevant files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files (?)
+      2. Click **Select Files** and choose the relevant .cfg files using CMD+click (Mac keyboard) / CTRL+click (PC keyboard) to individually select multiple files
 
-    6. Click the green **Run** button
+      3. This mode will only work if you select more than one .cfg file
 
-4. Wait for the simulator to run
+    5. Click the green **Run** button
 
-5. DHAS results: Commanded (CMD) reference stars are denoted by yellow triangles (![Yellow Triangle](./figs/dhas_commanded_ref_star.png)). The commanded (CMD) guide star is denoted by a yellow cross/plus sign (![Yellow Plus](./figs/dhas_commanded_guide_star.png)). The reference stars that the DHAS has found are denoted by blue x’s (![Blue X](./figs/dhas_found_ref_star.png)) and the guide star is denoted by a blue asterisk (![Blue X](./figs/dhas_found_guide_star.png)). See the figure below for an example of a successful DHAS run.
+6. Wait for the simulator to run
+
+7. DHAS results: Commanded (CMD) reference stars are denoted by yellow triangles (![Yellow Triangle](./figs/dhas_commanded_ref_star.png)). The commanded (CMD) guide star is denoted by a yellow cross/plus sign (![Yellow Plus](./figs/dhas_commanded_guide_star.png)). The reference stars that the DHAS has found are denoted by blue x’s (![Blue X](./figs/dhas_found_ref_star.png)) and the guide star is denoted by a blue asterisk (![Blue X](./figs/dhas_found_guide_star.png)). See the figure below for an example of a successful DHAS run.
 
     ![Example of a successful DHAS finding of guide and reference stars](./figs/figure11_dhas_success.png)
 
-6. Inspect the DHAS results
+8. Inspect the DHAS results
 
    1. Do the stars that DHAS found (in blue) match the stars you commanded it to find (in yellow)? If not, ID has FAILED. In the example below, note that DHAS labeled this as a success, even though you can tell in the plot that it failed.
 
@@ -141,7 +141,11 @@ If DHAS ID succeeds, continue on to test ACQ.
 
 ## Testing ACQ in DHAS
 
-1. Load the ``{root}_ACQ.fits`` file you just created:
+1. Click the corresponding **Guider 1** or **Guider 2** button  in the Instrument box in the Guider Simulations & Telemetry section, depending on if this is a guider 1 vs. guider 2 image
+
+   ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
+
+2. Load the ``{root}_ACQ.fits`` file you just created:
 
    1. Click the green **Load .FITS Images Files** button
 
@@ -149,7 +153,7 @@ If DHAS ID succeeds, continue on to test ACQ.
 
    2. Using the *Current Directory* drop-down menu (or by typing the path directly into the textbox), navigate to the ``out/{root}`` directory where the images have been saved
 
-   3. Go the ``dhas`` subdirectory
+   3. Go the ``dhas`` or ``dhas_shifted`` subdirectory
 
    4. Check the **Show All Files** box
 
@@ -159,25 +163,21 @@ If DHAS ID succeeds, continue on to test ACQ.
 
    7. Click **Done**
 
-2. Add the Bad Pixel Map. If the box is not already checked with a path to a bad pixel map next to it, following the steps in step 2 for ID above.
+3. Add the Bad Pixel Map. If the box is not already checked with a path to a bad pixel map next to it, following the steps in step 2 for ID above.
 
-3. Run the ACQ simulator
+4. Run the ACQ simulator   
 
-   1. Click the corresponding **Guider 1** or **Guider 2** button depending on if this is a guider 1 vs. guider 2 image at the top of the page
-
-      ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
-
-   2. Click the purple **ACQ Simulation** button in the Guide Simulations & Telemetry section
+   1. Click the purple **ACQ Simulation** button in the Guide Simulations & Telemetry section
 
       ![Selecting the ACQ simulator in DHAS](./figs/figure_f_dhas_acq_v4.png)
 
-   3. A finder window will appear; select the appropriate `ACQ.prc` file and click **Open** (or double click on the `.prc` file). (Note that Acquisition still uses .prc files)
+   2. A finder window will appear; select the appropriate `ACQ.prc` file and click **Open** (or double click on the `.prc` file). (Note that Acquisition still uses .prc files)
 
-   4. The **acq_star_catalog_page** dialog box will appear. *Record the Row and Column of the ACQ2 window - you will need this for track*. When you are happy with the values, click **DONE**.
+   3. The **acq_star_catalog_page** dialog box will appear. *Record the Row and Column of the ACQ2 window - you will need this for track*. When you are happy with the values, click **DONE**.
 
        ![DHAS ACQ Star Catalog](./figs/figure_q_acq_star_catalog_v4.png)
 
-4.	Inspect the DHAS Results:
+5.	Inspect the DHAS Results:
 
     The *ACQ Centroid Plot* and *ACQ Centroid Telemetry* reports will pop up when the simulation is complete.
 
@@ -193,7 +193,11 @@ If DHAS ACQ succeeds, continue on to test TRK.
 
 ## Testing TRK in DHAS
 
-1. Load the ``{root}_TRK.fits`` file for the current data:
+1. Click the corresponding **Guider 1** or **Guider 2** button in the Instrument box in the Guider Simulations & Telemetry section, depending on if this is a guider 1 vs. guider 2 image
+
+   ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
+
+2. Load the ``{root}_TRK.fits`` file for the current data:
 
    1. Click the green **Load .FITS Images Files** button
 
@@ -201,7 +205,7 @@ If DHAS ACQ succeeds, continue on to test TRK.
 
    2. Using the *Current Directory* drop-down menu (or by typing the path directly into the text box), navigate to the ``out/{root}`` directory where the images have been saved
 
-   3. Go the ``dhas`` subdirectory
+   3. Go the ``dhas`` or ``dhas_shifted`` subdirectory
 
    4. Check the **Show All Files** box
 
@@ -211,17 +215,13 @@ If DHAS ACQ succeeds, continue on to test TRK.
 
    7. Click **Done**
 
-2. Run the TRK simulator
+3. Run the TRK simulator
 
-   1. Click the corresponding G1 or G2 button depending on if this is a guider 1 vs. guider 2 image at the top of the page
-
-      ![Choosing the Guider in DHAS](./figs/figure_c_dhas_guider_v4.png)
-
-   2. Click the **Stand-Alone** button in the Guider Simulations & Telemetry section, and then the purple **TRACK Simulations** button
+   1. Click the **Stand-Alone** button in the Guider Simulations & Telemetry section, and then the purple **TRACK Simulations** button
 
       ![Selecting the TRK simulator in DHAS](./figs/figure_g_dhas_trk_v4.png)
 
-   3. The **fd_TFG_sim_config** dialog box will appear (*numbers in the cells highlighted will only need to be updated if the Commissioning Parameters button has not been clicked*):
+   2. The **fd_TFG_sim_config** dialog box will appear:
 
       ![TRK fd_TFG_sim_config window in DHAS](./figs/figure_l_dhas_trk_window_v4.png)
 
@@ -231,7 +231,7 @@ If DHAS ACQ succeeds, continue on to test TRK.
 
       When you are happy with the values, click the green **Run** button.
 
-   4. A finder window will appear; select the appropriate bad pixel map file (`G1_F11_CV3_Rev_64.pix` for guider 1 and `G2_F14_CV3_Rev_64.pix` for guider 2) and click **Open**.
+   3. A finder window will appear; select the appropriate bad pixel map file (`G1_F11_CV3_Rev_64.pix` for guider 1 and `G2_F14_CV3_Rev_64.pix` for guider 2) and click **Open**.
 
 3. It may take a few seconds for the thermometer-like status bar (see below) to appear and/or to begin to register progress in the simulation. If the status bar ever stalls after initial progress has been made, the simulation is not likely to recover. *This is considered this a FAILED simulation*.
    ![TRK Status Bar in DHAS](./figs/figure_k_dhas_trk_status_bar.png)
