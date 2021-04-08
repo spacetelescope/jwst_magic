@@ -36,7 +36,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QDialog, QMessageBox, QWidget)
 
 # Local Imports
-from jwst_magic.utils.coordinate_transforms import nrca3pixel_offset_to_v2v3_offset
+from jwst_magic.utils.coordinate_transforms import nrcpixel_offset_to_v2v3_offset
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -134,10 +134,11 @@ class SegmentGuidingDialog(QDialog):
         if self.override_type == "SOF":
             # Parse what the boresight offset is
             if self.radioButton_boresightNIRCam.isChecked():
+                detector = str(self.comboBox_detector.currentText())
                 x_offset = float(self.lineEdit_boresightX.text())
                 y_offset = float(self.lineEdit_boresightY.text())
-                v2_offset, v3_offset = nrca3pixel_offset_to_v2v3_offset(x_offset,
-                                                                        y_offset)
+                v2_offset, v3_offset = nrcpixel_offset_to_v2v3_offset(x_offset, y_offset,
+                                                                      detector=detector)
                 self.log.info(
                     'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} pixels)'.
                         format(v2_offset, v3_offset, x_offset, y_offset)
