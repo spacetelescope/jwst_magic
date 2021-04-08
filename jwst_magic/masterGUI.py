@@ -1167,13 +1167,11 @@ class MasterGui(QMainWindow):
 
                 # Handle shortwave case
                 else:
-                    print('EDITING 1')
                     detector = detector.strip()[-2:]
                     index = self.comboBox_detector.findText(detector, Qt.MatchFixedString)
 
                 # Update dropdown menu
                 if index >= 0:
-                    print('EDITING 2')
                     self.comboBox_detector.setEnabled(True)
                     self.comboBox_detector.setCurrentIndex(index)
 
@@ -1182,7 +1180,6 @@ class MasterGui(QMainWindow):
                 self.radioButton_FGS.setChecked(True)
         # If there is not DETECTOR keyword, set NIRCam detector back to parse
         except KeyError:
-            print('EDITING 3')
             self.comboBox_detector.setCurrentIndex(0)
 
         # Parse for ITM
