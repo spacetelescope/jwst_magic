@@ -139,8 +139,8 @@ class SegmentGuidingDialog(QDialog):
                 v2_offset, v3_offset = nrcpixel_offset_to_v2v3_offset(x_offset, y_offset,
                                                                       detector=detector)
                 self.log.info(
-                    'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} pixels)'.
-                        format(v2_offset, v3_offset, x_offset, y_offset)
+                    'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} {} pixels)'.
+                        format(v2_offset, v3_offset, x_offset, y_offset, detector)
                 )
             else:
                 v2_offset = float(self.lineEdit_boresightV2.text())
