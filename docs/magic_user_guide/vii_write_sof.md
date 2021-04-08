@@ -47,7 +47,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
    ![Locations of V1, the guide star, and the target](./figs/figure14_locations_of_v1.png)
 
-   4. Get the current **V2 & V3 boresight offset** from the Wavefront Ops.
+   4. Get the current **boresight offset** in V2,V3 or NRCam X,Y pixels from the Wavefront Ops.
 
 5. Run the tool:
 
@@ -69,11 +69,11 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
    6. **Position Angle** – of the observatory at the guide star at the time of the visit
 
-   7. **V2 Boresight offset** – that will be applied before the observation this file is for
+   7. **Boresight offset** – that will be applied before the observation this file is for
 
-   8. **V3 boresight offset** – that will be applied before the observation this file is for
+      - Either in **X,Y** pixels with the NIRCam detector specified, or in **V2,V3**
 
-   9. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. This will be auto-populated from the threshold entered in the main GUI, but can be changed here based on DHAS testing results.
+   8. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. This will be auto-populated from the threshold entered in the main GUI, but can be changed here based on DHAS testing results.
 
    Note: If you used the APT query functionality in [Section III](iii_determining_and_loading_the_input_image.md), the Program ID, Observation Number, Visit Number, and RA and DEC of the guide star should be pre-populated.
 
