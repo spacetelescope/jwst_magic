@@ -605,7 +605,8 @@ class MasterGui(QMainWindow):
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
                     "SOF", guider, self.program_id, self.observation_num, self.visit_num,
-                    ra=self.gs_ra, dec=self.gs_dec, threshold=float(self.lineEdit_threshold.text()), log=None
+                    ra=self.gs_ra, dec=self.gs_dec, threshold=float(self.lineEdit_threshold.text()),
+                    detector=str(self.comboBox_detector.currentText()), log=None
                 )
 
                 # Generate the file
