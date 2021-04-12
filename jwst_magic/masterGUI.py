@@ -210,8 +210,8 @@ class MasterGui(QMainWindow):
             self.scrollArea_mainGUI.setMinimumHeight(height - 200)
 
     def init_matplotlib(self):
-        """Set up the two matplotlib canvases that will preview the
-        input image and converted image in the "Image Preview" section.
+        """Set up the three matplotlib canvases that will preview the
+        input, converted, and shifted images in the "Image Preview" section.
         """
 
         # Connect matplotlib canvases to the tab widgets
@@ -227,7 +227,6 @@ class MasterGui(QMainWindow):
             parent=self.canvas_shifted_slot, data=None, x=None, y=None,
             left=0.12, bottom=0, right=0.87, top=1
         )
-
 
         # Set the dimensions to be square and as big as possible
         max_dim = max(self.canvas_converted_slot.width(), self.canvas_converted_slot.height())
@@ -1517,8 +1516,8 @@ class MasterGui(QMainWindow):
             x, y = [None, None]
             if os.path.exists(self.shifted_all_found_psfs_file_list[i]):
                 psf_list = asc.read(self.shifted_all_found_psfs_file_list[i])
-                x = psf_list['x']
-                y = psf_list['y']
+                x, y = np.array([(xi, yi) for (xi, yi) in zip(psf_list['x'], psf_list['y'])
+                                 if (xi < 2048) & (yi < 2028)]).T
 
             # Plot data image and peak locations from all_found_psfs*.txt
             self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
@@ -1528,8 +1527,9 @@ class MasterGui(QMainWindow):
 
             if os.path.exists(shifted_guiding_selections_file):
                 selected_psf_list = asc.read(shifted_guiding_selections_file)
-                x_selected = selected_psf_list['x']
-                y_selected = selected_psf_list['y']
+                x_selected, y_selected = np.array([(xi, yi) for (xi, yi) in
+                                                   zip(selected_psf_list['x'], selected_psf_list['y'])
+                                                   if (xi < 2048) & (yi < 2028)]).T
 
                 # Remove old circles
                 for line in self.shifted_im_circles:
@@ -1617,7 +1617,6 @@ class MasterGui(QMainWindow):
             ]
 
         return acceptable_guiding_files_list, acceptable_all_psf_files_list
-
 
     def update_filepreview(self, new_guiding_selections=False):
         """
