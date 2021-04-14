@@ -81,11 +81,12 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider,
         y_back = random.sample(range(size), nstars_random)
         # Create the new stars 5 mags or more dimmer
         fgs_mags_back = random.sample(set(np.linspace(fgs_mag + 7, fgs_mag + 4, 100)), nstars_random)
+        hstid_back = []
 
     # If users passed a dictionary to the bkgd_stars argument, add stars
     # according the dictionary
     elif type(stars) == dict:
-        input_lengths = [len(stars[key]) for key in stars.keys()]
+        input_lengths = [len(stars[key]) for key in stars.keys() if key != 'hstid']
         if len(set(input_lengths)) != 1:
             raise ValueError('Invalid dictionary provided for background star '
                              'positions and magnitudes. Ensure the same number '
@@ -94,12 +95,22 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider,
         x_back = stars['x']
         y_back = stars['y']
         fgs_mags_back = stars['fgs_mag']
+        try:
+            hstid_back = stars['hstid']
+        except KeyError:
+            hstid_back = []
 
     else:
         raise TypeError(
             'Unfamiliar value passed to bkgd_stars: {} Please pass boolean or dictionary of background '
-            'star x, y, fgs_mag.'.format(stars)
+            'star x, y, fgs_mag, and optionally hstid.'.format(stars)
         )
+
+    # Handle formatting log, it might be an empty list if stars not added via query
+    if len(hstid_back) == 0:
+        hstid_back = [''] * len(fgs_mags_back)
+    else:
+        hstid_back = [' ' + str(hstid).strip() for hstid in hstid_back]  # add space for formatting log print out
 
     # Add stars to image
     # Copy original data array
@@ -108,7 +119,7 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider,
     # (Try to) only use the data for added stars, not the noise
     mean = np.mean(image)
     image[image < mean] = 0
-    for x, y, fgs_mag_back in zip(x_back, y_back, fgs_mags_back):
+    for x, y, fgs_mag_back, hstid_back in zip(x_back, y_back, fgs_mags_back, hstid_back):
         if fgs_mag_back != 0:  # should have already removed all "bad" values marked with 0
             star_fgs_countrate = fgscountrate.convert_fgs_mag_to_cr(fgs_mag_back, guider)
             scale_factor = star_fgs_countrate / fgs_countrate
@@ -131,8 +142,8 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider,
                 star_data = star_data[:, 2048 - (x2 - x1):]
 
             LOGGER.info(
-                'Background Stars: Adding background star with magnitude {:.1f} at location ({}, {}).'.
-                format(fgs_mag_back, x, y))
+                'Background Stars: Adding background star{} with magnitude {:.1f} at location ({}, {}).'.
+                format(hstid_back, fgs_mag_back, x, y))
             add_data[y1:y2, x1:x2] += star_data
 
     if save_file:
