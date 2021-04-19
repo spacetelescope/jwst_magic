@@ -1,4 +1,4 @@
-"""Create CECIL proc files needed to simulate ACQ with the DHAS.
+"""Create CECIL proc files needed to simulate ID and ACQ with the DHAS.
 
 Authors
 -------
@@ -10,7 +10,7 @@ Use
     This module can be used as such:
     ::
         from jwst_magic.fsw_file_writer import mkproc
-        mkproc.Mkproc(guider, root, xarr, yarr, counts)
+        mkproc.Mkproc(guider, root, xarr, yarr, counts, step)
 
     Required arguments:
         ``guider`` - guider number (1 or 2)
@@ -18,8 +18,7 @@ Use
         ``xarr`` - X coordinates of guide and reference stars (pixels)
         ``yarr`` - Y coordinates of guide and reference stars (pixels)
         ``counts`` - count rates of guide and reference stars
-        ``acq1_imgsize`` - dimension of ACQ1 images
-        ``acq2_imgsize`` - dimension of ACQ2 images
+        ``step`` - name of the step to create files for
 
     Optional arguments:
         ``thresh_factor`` - factor by which to multiply the countrates
@@ -27,6 +26,8 @@ Use
         ``out_dir`` - where output files will be saved. If not provided,
             the image(s) will be saved within the repository at
             jwst_magic/
+        ``acq1_imgsize`` - dimension of ACQ1 images
+        ``acq2_imgsize`` - dimension of ACQ2 images
 
 Notes
 -----
@@ -52,13 +53,13 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ directory
 LOGGER = logging.getLogger(__name__)
 
 class Mkproc(object):
-    """Makes CECIL ACQ proc files for FGS guider 1 and 2
+    """Makes CECIL proc files for FGS guider 1 and 2
     """
 
-    def __init__(self, guider, root, xarr, yarr, counts, acq1_imgsize,
-                 acq2_imgsize, threshold=None, out_dir=None,
-                 dhas_dir='dhas', ground_system_dir='ground_system'):
-        """ Initialize the class and create CECIL ACQ proc files for guider 1 and 2.
+    def __init__(self, guider, root, xarr, yarr, counts, step, threshold=None,
+                 out_dir=None, dhas_dir='dhas', ground_system_dir='ground_system',
+                 acq1_imgsize=None, acq2_imgsize=None):
+        """ Initialize the class and create CECIL proc files for guider 1 and 2.
 
         Parameters
         ----------
@@ -72,10 +73,8 @@ class Mkproc(object):
             Y coordinates of guide and reference stars (pixels)
         counts : list
             Count rates of guide and reference stars
-        acq1_imgsize : int
-            Array size of the ACQ1 window
-        acq2_imgsize : int
-            Array size of the ACQ2 window
+        step : str
+            Name of the step to create files for
         threshold : float or list, optional
             Absolute threshold value(s) to go into the prc file. Must be a list
             of the same length as the number of PSFs in the config
@@ -87,6 +86,10 @@ class Mkproc(object):
             Name of dhas directory. Either 'dhas' or 'dhas_shifted'
         ground_system_dir : str
             Name of ground_system directory. Either 'ground_system' or 'ground_system_shifted'
+        acq1_imgsize : int
+            Array size of the ACQ1 window
+        acq2_imgsize : int
+            Array size of the ACQ2 window
         """
 
         # Create output directory if does not exist
@@ -106,33 +109,129 @@ class Mkproc(object):
         # 'templates' directory that includes are necessary prc templates lives
         # in the same directory as this script
         template_path = os.path.join(PACKAGE_PATH, 'data', 'templates')
-        self.find_templates(guider, template_path=template_path)
+
+        self.find_templates(guider, step=step, template_path=template_path)
 
         # Confirm the threshold is a list
         if not isinstance(threshold, (list, np.ndarray)):
             threshold = [threshold]
 
-        # Create the CECIL proc file
-        self.create_acq_proc_file(guider, root, xarr, yarr, counts, threshold=threshold,
-                                  acq1_imgsize=acq1_imgsize, acq2_imgsize=acq2_imgsize)
+        # Depending on the 'step' create the correct CECIL proc files.
+        if step == 'ID':
+            self.create_id_proc_file(guider, root, xarr, yarr, counts, threshold=threshold)
+        elif step == 'ACQ':
+            self.create_acq_proc_file(guider, root, xarr, yarr, counts, threshold=threshold,
+                                      acq1_imgsize=acq1_imgsize, acq2_imgsize=acq2_imgsize)
 
-    def find_templates(self, guider, template_path):
+    def find_templates(self, guider, step, template_path):
         """Open the different templates used to make the proc file.
 
         Parameters
         ----------
         guider : int
             Guider number (1 or 20)
+        step : str
+            Name of step ('ID' or 'ACQ')
         template_path : str
             Path to prc templates
         """
         guider = str(guider)
         self.guider = 'GUIDER{}'.format(guider)
-        self.template_hdr = os.path.join(template_path, f'g{guider}ACQtemplateHDR.prc')
-        self.template_a = os.path.join(template_path, f'g{guider}ACQtemplateA.prc')
-        self.template_b = os.path.join(template_path, f'g{guider}ACQtemplateB.prc')
-        self.template_c = os.path.join(template_path, f'g{guider}ACQtemplateC.prc')
-        self.template_d = os.path.join(template_path, f'g{guider}ACQtemplateD.prc')
+        self.template_hdr = os.path.join(template_path, 'g{}{}templateHDR.prc'.format(guider, step))
+        self.template_a = os.path.join(template_path, 'g{}{}templateA.prc'.format(guider, step))
+        self.template_b = os.path.join(template_path, 'g{}{}templateB.prc'.format(guider, step))
+        self.template_c = os.path.join(template_path, 'g{}{}templateC.prc'.format(guider, step))
+        self.template_d = os.path.join(template_path, 'g{}{}templateD.prc'.format(guider, step))
+        if step == 'ID':
+            self.template_e = os.path.join(template_path, 'g{}{}templateE.prc'.format(guider, step))
+            self.template_f = os.path.join(template_path, 'g{}{}templateF.prc'.format(guider, step))
+
+    def create_id_proc_file(self, guider, root, xarr, yarr, counts, threshold=None):
+        """Creates the CECIL proc file for the identification (ID) step.
+        Writes to {out_dir}/out/{root}/dhas/{root}_G{guider}_ID.prc
+
+        Parameters
+        ----------
+        guider : int
+            Guider number (1 or 2)
+        root : str
+            Name used to create the output directory, {out_dir}/out/{root}
+        xarr : array
+            X coordinates of guide and reference stars (pixels)
+        yarr : array
+            Y coordinates of guide and reference stars (pixels)
+        counts : list
+            Count rates of guide and reference stars
+        threshold : float, optional
+            Absolute threshold value.
+        """
+        eol = '\n'
+        nref = len(xarr) - 1
+        dhas_filename = os.path.join(self.out_dir, self.dhas_dir,
+                                     '{0}_G{1}_ID.prc'.format(root, guider))
+
+        with open(dhas_filename, 'w') as file_out:
+            self.write_from_template(self.template_hdr, file_out)
+
+            file_out.write('PROC {0}_G{1}_ID'.format(root, guider))
+            file_out.write(eol)
+
+            self.write_from_template(self.template_a, file_out)
+
+            # Convert real pixel to DHAS ideal angle
+            xangle, yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
+
+            file_out.write('@IFGS_GUIDESTAR {0}, DFT, {1:12.4f}, {2:12.4f}, \
+                            {3:12d}, {4:8d}'.format(self.guider,
+                                                    xangle[0],
+                                                    yangle[0],
+                                                    int(counts[0]),
+                                                    int(threshold[0])))
+            file_out.write(eol)
+
+            self.write_from_template(self.template_b, file_out)
+
+            if nref >= 1:  # ref stars > 0
+                file_out.write('@IFGS_REFCOUNT DETECTOR={0}, REFSTARS={1}'.format(self.guider,
+                                                                                  nref))
+                file_out.write(eol)
+
+                self.write_from_template(self.template_c, file_out)
+
+                for istar in range(1, nref):
+                    file_out.write('@IFGS_REFSTAR {0}, {1:5d}, {2:12.6f}, \
+                                   {3:12.6f}, {4:8d}, {5:8d}'.format(self.guider,
+                                                                     int(istar),
+                                                                     xangle[istar],
+                                                                     yangle[istar],
+                                                                     int(counts[istar]),
+                                                                     int(threshold[istar])))
+                    file_out.write(eol)
+                    self.write_from_template(self.template_d, file_out)
+
+                # The last reference star ends with a different template so it
+                # written outside of the for loop
+                file_out.write('@IFGS_REFSTAR {0}, {1:5d}, {2:12.6f}, {3:12.6f}, \
+                               {4:8d},{5:8d}'.format(self.guider,
+                                                     int(nref),
+                                                     xangle[nref],
+                                                     yangle[nref],
+                                                     int(counts[nref]),
+                                                     int(threshold[nref])))
+                file_out.write(eol)
+
+                self.write_from_template(self.template_e, file_out)
+
+            self.write_from_template(self.template_f, file_out)
+
+        file_out.close()
+        LOGGER.info("Successfully wrote: {}".format(dhas_filename))
+        shutil.copy2(dhas_filename,
+                     os.path.join(self.out_dir, self.ground_system_dir))
+        LOGGER.info("Successfully wrote: {}".format(os.path.join(self.out_dir,
+                                                                 self.ground_system_dir,
+                                                                 '{0}_G{1}_ID.prc'.
+                                                                 format(root, guider))))
 
     def create_acq_proc_file(self, guider, root, xarr, yarr, counts,
                              acq1_imgsize, acq2_imgsize, threshold=None):
