@@ -210,7 +210,7 @@ def write_cds(obj):
         filename_cds = os.path.join(obj.out_dir,
                                     obj.stsci_dir,
                                     obj.filename_root + 'cds.fits')
-        utils.write_fits(filename_cds, np.uint16(obj.cds), log=LOGGER)
+        utils.write_fits(filename_cds, obj.cds, log=LOGGER)
 
 
 def write_image(obj):
