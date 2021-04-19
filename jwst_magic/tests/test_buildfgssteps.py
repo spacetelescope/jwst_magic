@@ -361,13 +361,12 @@ def test_rewrite_prc(open_image, test_directory):
     assert rewrite_prc_prc == buildsteps_prc
 
 
-prc_list = [(False, 237576.0000, None), (True, None, 100000)]
-@pytest.mark.parametrize('use_oss_defaults, guide_star_countrate, catalog_countrate', prc_list)
-def test_prc_thresholds(test_directory, use_oss_defaults, guide_star_countrate, catalog_countrate):
+prc_list = [('ID', 'ID', False, 237576.0000, None),
+            ('ACQ1', 'ACQ', False, 237576.0000, None),
+            ('ACQ1', 'ACQ', True, None, 100000)]
+@pytest.mark.parametrize('step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate', prc_list)
+def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate):
     """Check the right thresholds make it into the ACQ prc files"""
-    step = 'ACQ1'
-    step_name = 'ACQ'
-
     # Delete path if it exists
     if os.path.isdir(TEST_DIRECTORY):
         shutil.rmtree(TEST_DIRECTORY)
