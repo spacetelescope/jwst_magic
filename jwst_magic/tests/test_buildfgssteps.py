@@ -393,7 +393,7 @@ def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide
     elif step_name == 'ACQ':
         directory = 'dhas'
 
-    thresh_factor_prc = os.path.join(out_fsw, directory, ROOT+f'_G1_{step_name}.prc')
+    thresh_factor_prc = os.path.join(out_fsw, directory, f'{ROOT}_G1_{step_name}.prc')
     assert os.path.exists(thresh_factor_prc)
     with open(thresh_factor_prc, 'r') as file:
         buildsteps_factor_prc = file.read()
