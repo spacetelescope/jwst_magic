@@ -335,8 +335,8 @@ def test_rewrite_prc(open_image, test_directory):
     write_files.write_prc(BFS)
 
     # Check for output files
-    shifted_guiding_selections = os.path.join(out_fsw,  'shifted_guiding_selections_{}_config1.txt'.format(ROOT+'_G1'))
-    shifted_acq_prc = os.path.join(out_fsw, 'dhas_shifted', ROOT+'_G1_ACQ.prc')
+    shifted_guiding_selections = os.path.join(out_fsw,  f'shifted_guiding_selections_{ROOT}_G1_config1.txt')
+    shifted_acq_prc = os.path.join(out_fsw, 'dhas_shifted', f'{ROOT}_G1_ACQ.prc')
     assert os.path.exists(shifted_guiding_selections)
     assert os.path.exists(shifted_acq_prc)
     buildsteps_selections = asc.read(shifted_guiding_selections)
@@ -349,7 +349,7 @@ def test_rewrite_prc(open_image, test_directory):
     # Check for output files
     shifted_guiding_selections2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2',
                                                'shifted_guiding_selections_{}_config2.txt'.format(ROOT+'_G1'))
-    shifted_acq_prc2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2', 'dhas_shifted', ROOT+'_G1_ACQ.prc')
+    shifted_acq_prc2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2', 'dhas_shifted', f'{ROOT}_G1_ACQ.prc')
     assert os.path.exists(shifted_guiding_selections2)
     assert os.path.exists(shifted_acq_prc2)
     rewrite_prc_selections = asc.read(shifted_guiding_selections2)
@@ -431,7 +431,7 @@ def test_star_thresholds(test_directory, use_oss_defaults, guide_star_countrate,
     write_files.write_star(BFS_factor)
 
     # Check threshold in the output files (0th index for GS, 4th index for threshold)
-    thresh_factor_star = os.path.join(out_fsw, 'dhas', ROOT+f'_G1_{step}.star')
+    thresh_factor_star = os.path.join(out_fsw, 'dhas', f'{ROOT}_G1_{step}.star')
     assert os.path.exists(thresh_factor_star)
     star_data = asc.read(thresh_factor_star, data_start=1)
     if use_oss_defaults:
