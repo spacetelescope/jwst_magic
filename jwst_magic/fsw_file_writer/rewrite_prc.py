@@ -177,7 +177,9 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
 
             filename_root = '{}_G{}_{}'.format(root, guider, step)
             fgs_files_obj.filename_root = filename_root
-            if step in ['ID', 'ACQ1']:
+            if step == 'ID':
+                write_files.write_star(fgs_files_obj)
+            if step == 'ACQ1':
                 write_files.write_prc(fgs_files_obj)
             if step != 'ID':
                 write_files.write_image(fgs_files_obj)

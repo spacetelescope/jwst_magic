@@ -83,7 +83,7 @@ class Mkproc(object):
             image(s) will be saved within the repository at
             jwst_magic/
         dhas_dir : str
-            Name of dhas directory. Either 'dhas' or 'dhas_shifted'
+            Name of dhas directory. Either 'dhas' or 'dhas_shifted'. Only written to for ACQ prc
         ground_system_dir : str
             Name of ground_system directory. Either 'ground_system' or 'ground_system_shifted'
         acq1_imgsize : int
@@ -167,10 +167,10 @@ class Mkproc(object):
         """
         eol = '\n'
         nref = len(xarr) - 1
-        dhas_filename = os.path.join(self.out_dir, self.dhas_dir,
-                                     '{0}_G{1}_ID.prc'.format(root, guider))
+        ground_system_filename = os.path.join(self.out_dir, self.ground_system_dir,
+                                              '{0}_G{1}_ID.prc'.format(root, guider))
 
-        with open(dhas_filename, 'w') as file_out:
+        with open(ground_system_filename, 'w') as file_out:
             self.write_from_template(self.template_hdr, file_out)
 
             file_out.write('PROC {0}_G{1}_ID'.format(root, guider))
@@ -225,13 +225,7 @@ class Mkproc(object):
             self.write_from_template(self.template_f, file_out)
 
         file_out.close()
-        LOGGER.info("Successfully wrote: {}".format(dhas_filename))
-        shutil.copy2(dhas_filename,
-                     os.path.join(self.out_dir, self.ground_system_dir))
-        LOGGER.info("Successfully wrote: {}".format(os.path.join(self.out_dir,
-                                                                 self.ground_system_dir,
-                                                                 '{0}_G{1}_ID.prc'.
-                                                                 format(root, guider))))
+        LOGGER.info("Successfully wrote: {}".format(ground_system_filename))
 
     def create_acq_proc_file(self, guider, root, xarr, yarr, counts,
                              acq1_imgsize, acq2_imgsize, threshold=None):
