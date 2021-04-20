@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>314</width>
-    <height>807</height>
+    <height>855</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -268,7 +268,7 @@
       <string>Boresight Offset</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="2" column="0" colspan="2">
+      <item row="3" column="0" colspan="2">
        <widget class="QRadioButton" name="radioButton_boresightV2V3">
         <property name="text">
          <string>Provide V2/V3 values</string>
@@ -281,7 +281,7 @@
       <item row="0" column="0">
        <widget class="QRadioButton" name="radioButton_boresightNIRCam">
         <property name="text">
-         <string>Provide NIRCam A3 values</string>
+         <string>Provide NIRCam values</string>
         </property>
         <property name="checked">
          <bool>true</bool>
@@ -291,7 +291,53 @@
         </attribute>
        </widget>
       </item>
-      <item row="3" column="0" colspan="2">
+      <item row="2" column="0">
+       <widget class="QFrame" name="frame_2">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>40</height>
+         </size>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_6">
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineEdit_boresightX">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>ΔX (pixels)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>ΔY (pixels)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="lineEdit_boresightY">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="2">
        <widget class="QFrame" name="frame">
         <property name="enabled">
          <bool>false</bool>
@@ -365,49 +411,57 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QFrame" name="frame_2">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>40</height>
-         </size>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_6">
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="lineEdit_boresightX">
-           <property name="text">
-            <string>0</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_10">
-           <property name="text">
-            <string>ΔX (pixels)</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_11">
-           <property name="text">
-            <string>ΔY (pixels)</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="lineEdit_boresightY">
-           <property name="text">
-            <string>0</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+       <widget class="QComboBox" name="comboBox_detector">
+        <item>
+         <property name="text">
+          <string>NRCA1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCA2</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCA3</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCA4</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCA5</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCB1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCB2</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCB3</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCB4</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NRCB5</string>
+         </property>
+        </item>
        </widget>
       </item>
      </layout>
