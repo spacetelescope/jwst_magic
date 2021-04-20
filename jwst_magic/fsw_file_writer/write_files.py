@@ -110,6 +110,7 @@ def write_all(obj):
 
         # Write files for use in the DHAS and FGSES
         write_strips(obj)
+        write_prc(obj)
         write_star(obj)
         write_dat(obj)
 
