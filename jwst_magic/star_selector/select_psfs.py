@@ -109,7 +109,6 @@ def plot_selections(data, coords, cols, root, out_file):
     plt.ylim(min(2048, y_mid + ax_range / 2), max(0, y_mid - ax_range / 2))
 
     if cols is not None:
-        print(cols)
         for i, (y, x, cr) in enumerate(cols):
             if i == 0:
                 c = 'orange'

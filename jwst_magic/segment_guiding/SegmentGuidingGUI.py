@@ -32,10 +32,11 @@ import os
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from PyQt5 import uic
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QDialog, QMessageBox, QWidget)
 
 # Local Imports
-from jwst_magic.utils.coordinate_transforms import nrca3pixel_offset_to_v2v3_offset
+from jwst_magic.utils.coordinate_transforms import nrcpixel_offset_to_v2v3_offset
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -64,6 +65,8 @@ class SegmentGuidingDialog(QDialog):
         DEC of guide star
     threshold : optional, float
         Count rate uncertainty factor
+    detector : optional, str
+        NIRCam detector used for default combobox
 
     Returns
     -------
@@ -73,7 +76,7 @@ class SegmentGuidingDialog(QDialog):
         countrate_factor)
     """
     def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None,
-                 log=None, threshold=None):
+                 log=None, threshold=None, detector=None):
         # Initialize attributes
         self.override_type = override_type
         self.guider = guider
@@ -82,6 +85,7 @@ class SegmentGuidingDialog(QDialog):
         self.visit_num = visit_num
         self.ra = ra
         self.dec = dec
+        self.detector = detector if detector is not None else 'A3'
 
         # Start logger
         if log is None:
@@ -108,6 +112,8 @@ class SegmentGuidingDialog(QDialog):
             self.lineEdit_RA.setText(str(ra if ra is not None else ''))
             self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
             self.lineEdit_countrateUncertainty.setText(str(threshold if threshold is not None else 0.6))
+            index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
+            self.comboBox_detector.setCurrentIndex(index)
         except AttributeError:
             pass
 
@@ -127,13 +133,14 @@ class SegmentGuidingDialog(QDialog):
         if self.override_type == "SOF":
             # Parse what the boresight offset is
             if self.radioButton_boresightNIRCam.isChecked():
+                detector = str(self.comboBox_detector.currentText())
                 x_offset = float(self.lineEdit_boresightX.text())
                 y_offset = float(self.lineEdit_boresightY.text())
-                v2_offset, v3_offset = nrca3pixel_offset_to_v2v3_offset(x_offset,
-                                                                        y_offset)
+                v2_offset, v3_offset = nrcpixel_offset_to_v2v3_offset(x_offset, y_offset,
+                                                                      detector=detector)
                 self.log.info(
-                    'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} pixels)'.
-                        format(v2_offset, v3_offset, x_offset, y_offset)
+                    'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} {} pixels)'.
+                        format(v2_offset, v3_offset, x_offset, y_offset, detector)
                 )
             else:
                 v2_offset = float(self.lineEdit_boresightV2.text())

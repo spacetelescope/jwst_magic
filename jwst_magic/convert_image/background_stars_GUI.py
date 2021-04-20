@@ -98,6 +98,7 @@ class BackgroundStarsDialog(QDialog):
         self.x = []
         self.y = []
         self.fgs_mags = []
+        self.hstid = []
 
         # Set out directory and image name if variables are present
         if out_dir is not None and root is not None:
@@ -401,6 +402,7 @@ class BackgroundStarsDialog(QDialog):
             self.x = self.x[~mask]
             self.y = self.y[~mask]
             self.fgs_mags = self.fgs_mags[~mask]
+            self.hstid = self.hstid[~mask]
 
         # Plot stars with known fgs_mags
         self.catalog_stars = self.canvas.axes.scatter(
@@ -506,9 +508,10 @@ class BackgroundStarsDialog(QDialog):
         LOGGER.info('Background Stars: Querying Newest Guide Star Catalog')
 
         # Only take the necessary columns
-        queried_catalog = df[['ra', 'dec', 'classification']]
+        queried_catalog = df[['hstID', 'ra', 'dec', 'classification']]
         ra_list = df['ra'].values
         dec_list = df['dec'].values
+        id_list = df['hstID'].values
         fgs_mag_list = []
         for i in range(len(df)):
             row = df.iloc[[i]]
@@ -535,6 +538,7 @@ class BackgroundStarsDialog(QDialog):
             ra_list = ra_list[mask_guidestar]
             dec_list = dec_list[mask_guidestar]
             fgs_mag_list = fgs_mag_list[mask_guidestar]
+            id_list = id_list[mask_guidestar]
         else:
             LOGGER.warning('Background Stars: No guide star found within 1 arcsec of the pointing.')
 
@@ -559,6 +563,7 @@ class BackgroundStarsDialog(QDialog):
         self.x = x_raw[in_detector_frame]
         self.y = y_raw[in_detector_frame]
         self.fgs_mags = fgs_mag_list[in_detector_frame]
+        self.hstid = id_list[in_detector_frame]
 
         LOGGER.info('Background Stars: Found {} sources in GUIDER{} FOV.'
                     .format(len(self.x), self.guider))
@@ -570,7 +575,8 @@ class BackgroundStarsDialog(QDialog):
         if self.x != [] and self.y != [] and list(self.fgs_mags) != []:
             bkgd_stars_dict = {'x': self.x,
                                'y': self.y,
-                               'fgs_mag': self.fgs_mags}
+                               'fgs_mag': self.fgs_mags,
+                               'hstid': self.hstid}  # id_list can be empty
 
         else:
             bkgd_stars_dict = None

@@ -83,7 +83,7 @@ def test_Raw2Tel(guider, correct_conversion):
 
 
 def test_convert_boresight_to_v2v3():
-    v2v3_offset = coordinate_transforms.nrca3pixel_offset_to_v2v3_offset(-20.4, -140.53)
+    v2v3_offset = coordinate_transforms.nrcpixel_offset_to_v2v3_offset(-20.4, -140.53, 'NRCA3')
 
     assert np.isclose(v2v3_offset[0], -0.638167896), \
         "V2 value does not match expected value for boresight offset."
