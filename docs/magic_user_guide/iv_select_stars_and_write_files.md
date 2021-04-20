@@ -64,7 +64,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
 #### Next
 
-###### Section V: DHAS Versions 3.0 and Earlier:[Testing Selections in DHAS Version 3.0 and Ealier](v_testing_in_dhas.md), DHAS Versions 3.99 and Laster:[Testing Selections in DHAS Version 3.99 and Laster](v_testing_in_dhas_v4.md)
+###### Section V: [Testing Selections in DHAS](v_testing_in_dhas.md)
 
 ###### Section VI: [Contingency: Re-selecting Stars and Re-running DHAS](vi_contingency_reselect_stars.md)
 
