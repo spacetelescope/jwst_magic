@@ -98,6 +98,10 @@ class BuildFGSSteps(object):
             self.use_oss_defaults = use_oss_defaults
             self.catalog_countrate = catalog_countrate
             self.threshold = None
+            if 'config' in guiding_selections_file:
+                self.config = guiding_selections_file.split('/')[-1].split('.txt')[0].split('config')[-1]
+            else:
+                self.config = 'unknown'
 
             # READ IN IMAGE
             if isinstance(im, str):

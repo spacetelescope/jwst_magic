@@ -315,7 +315,7 @@ def test_rewrite_prc(open_image, test_directory):
     thresh_factor = 0.5
     shifted = True
     crowded_field = False
-    step = 'ID'
+    step = 'ACQ1'
 
     # Copy file for testing
     os.makedirs(os.path.join(TEST_DIRECTORY, 'FGS_imgs'))
@@ -335,12 +335,12 @@ def test_rewrite_prc(open_image, test_directory):
     write_files.write_prc(BFS)
 
     # Check for output files
-    shifted_guiding_selections = os.path.join(out_fsw,  'shifted_guiding_selections_{}_config1.txt'.format(ROOT+'_G1'))
-    shifted_id_prc = os.path.join(out_fsw, 'dhas_shifted', ROOT+'_G1_ID.prc')
+    shifted_guiding_selections = os.path.join(out_fsw,  f'shifted_guiding_selections_{ROOT}_G1_config1.txt')
+    shifted_acq_prc = os.path.join(out_fsw, 'dhas_shifted', f'{ROOT}_G1_ACQ.prc')
     assert os.path.exists(shifted_guiding_selections)
-    assert os.path.exists(shifted_id_prc)
+    assert os.path.exists(shifted_acq_prc)
     buildsteps_selections = asc.read(shifted_guiding_selections)
-    with open(shifted_id_prc, 'r') as file:
+    with open(shifted_acq_prc, 'r') as file:
         buildsteps_prc = file.read()
 
     # Run rewrite_prc
@@ -349,11 +349,11 @@ def test_rewrite_prc(open_image, test_directory):
     # Check for output files
     shifted_guiding_selections2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2',
                                                'shifted_guiding_selections_{}_config2.txt'.format(ROOT+'_G1'))
-    shifted_id_prc2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2', 'dhas_shifted', ROOT+'_G1_ID.prc')
+    shifted_acq_prc2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2', 'dhas_shifted', f'{ROOT}_G1_ACQ.prc')
     assert os.path.exists(shifted_guiding_selections2)
-    assert os.path.exists(shifted_id_prc2)
+    assert os.path.exists(shifted_acq_prc2)
     rewrite_prc_selections = asc.read(shifted_guiding_selections2)
-    with open(shifted_id_prc2, 'r') as file:
+    with open(shifted_acq_prc2, 'r') as file:
         rewrite_prc_prc = file.read()
 
     # Confirm outputs match
@@ -361,13 +361,12 @@ def test_rewrite_prc(open_image, test_directory):
     assert rewrite_prc_prc == buildsteps_prc
 
 
-prc_list = [(False, 237576.0000, None, 'ID', 'ID'),  # gs countrate is from the above guiding selections file
-            (False, 237576.0000, None, 'ACQ1', 'ACQ'),
-            (True, None, 100000, 'ID', 'ID'),
-            (True, None, 100000, 'ACQ1', 'ACQ')]
-@pytest.mark.parametrize('use_oss_defaults, guide_star_countrate, catalog_countrate, step, step_name', prc_list)
-def test_prc_thresholds(test_directory, use_oss_defaults, guide_star_countrate, catalog_countrate, step, step_name):
-    """Check the right thresholds make it into the ID and ACQ prc files"""
+prc_list = [('ID', 'ID', False, 237576.0000, None),
+            ('ACQ1', 'ACQ', False, 237576.0000, None),
+            ('ACQ1', 'ACQ', True, None, 100000)]
+@pytest.mark.parametrize('step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate', prc_list)
+def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate):
+    """Check the right thresholds make it into the ACQ prc files"""
     # Delete path if it exists
     if os.path.isdir(TEST_DIRECTORY):
         shutil.rmtree(TEST_DIRECTORY)
@@ -389,7 +388,12 @@ def test_prc_thresholds(test_directory, use_oss_defaults, guide_star_countrate, 
     write_files.write_prc(BFS_factor)
 
     # Check threshold in the output files
-    thresh_factor_prc = os.path.join(out_fsw, 'dhas', ROOT+f'_G1_{step_name}.prc')
+    if step_name == 'ID':
+        directory = 'ground_system'
+    elif step_name == 'ACQ':
+        directory = 'dhas'
+
+    thresh_factor_prc = os.path.join(out_fsw, directory, f'{ROOT}_G1_{step_name}.prc')
     assert os.path.exists(thresh_factor_prc)
     with open(thresh_factor_prc, 'r') as file:
         buildsteps_factor_prc = file.read()
@@ -397,3 +401,40 @@ def test_prc_thresholds(test_directory, use_oss_defaults, guide_star_countrate, 
         assert str(int(catalog_countrate * COUNTRATE_CONVERSION * DIM_STAR_THRESHOLD_FACTOR)) in buildsteps_factor_prc
     else:
         assert str(int(guide_star_countrate * thresh_factor)) in buildsteps_factor_prc
+
+
+star_list = [(False, 237576.0000, None),  # gs countrate is from the above guiding selections file
+             (True, None, 100000)]
+@pytest.mark.parametrize('use_oss_defaults, guide_star_countrate, catalog_countrate', star_list)
+def test_star_thresholds(test_directory, use_oss_defaults, guide_star_countrate, catalog_countrate):
+    """Check the right thresholds make it into the ID star files"""
+    step = 'ID'
+
+    # Delete path if it exists
+    if os.path.isdir(TEST_DIRECTORY):
+        shutil.rmtree(TEST_DIRECTORY)
+
+    # Define basic inputs
+    image = fits.getdata(CONVERTED_NIRCAM_IM_MIMF)
+    guider = 1
+    shifted = False
+    guiding_selections_file = SELECTED_SEGS_MIMF
+
+    # Set the threshold factor variable
+    thresh_factor = 0.5
+
+    # Run buildfgssteps
+    out_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_1')
+    BFS_factor = BuildFGSSteps(image, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
+                               out_dir=out_fsw, thresh_factor=thresh_factor, shift_id_attitude=shifted,
+                               use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
+    write_files.write_star(BFS_factor)
+
+    # Check threshold in the output files (0th index for GS, 4th index for threshold)
+    thresh_factor_star = os.path.join(out_fsw, 'dhas', f'{ROOT}_G1_{step}.star')
+    assert os.path.exists(thresh_factor_star)
+    star_data = asc.read(thresh_factor_star, data_start=1)
+    if use_oss_defaults:
+        assert np.isclose(int(catalog_countrate * COUNTRATE_CONVERSION * DIM_STAR_THRESHOLD_FACTOR), star_data[0][4])
+    else:
+        assert np.isclose(int(guide_star_countrate * thresh_factor), star_data[0][4])
