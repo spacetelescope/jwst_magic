@@ -40,7 +40,7 @@ SELECTED_SEGS_MIMF = os.path.join(__location__, 'data', 'guiding_selections_nirc
 PSF_CENTER_MIMF = os.path.join(__location__, 'data', 'psf_center_test_buildfgssteps_G1.txt')
 ALL_PSFS_MIMF = os.path.join(__location__, 'data', 'all_found_psfs_buildfgssteps_G1.txt')
 CENTER_POINTING_1 = os.path.join(__location__, 'data', 'center_pointing_{}_G1.txt'.format(ROOT))
-CENTER_POINTING_2 = os.path.join(__location__, 'data', 'center_pointing_{}_2_G1.txt'.format(ROOT)) 
+CENTER_POINTING_2 = os.path.join(__location__, 'data', 'center_pointing_{}_2_G1.txt'.format(ROOT))
 
 # PROGRAM_ID = 1141
 # OBSERVATION_NUM = 7
@@ -177,7 +177,7 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
     """Check that image data is being generated with counts and count
     rates as expected. Test for all guider steps and both guiders.
     """
-    print(guider, step)
+
     # Input data
     assert np.isclose(np.min(open_image), 0.0), 'Incorrect input data min - changed your file?'
     assert np.isclose(np.max(open_image), 15693.34), 'Incorrect input data max - changed your file?'
