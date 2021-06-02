@@ -40,7 +40,7 @@ SELECTED_SEGS_MIMF = os.path.join(__location__, 'data', 'guiding_selections_nirc
 PSF_CENTER_MIMF = os.path.join(__location__, 'data', 'psf_center_test_buildfgssteps_G1.txt')
 ALL_PSFS_MIMF = os.path.join(__location__, 'data', 'all_found_psfs_buildfgssteps_G1.txt')
 CENTER_POINTING_1 = os.path.join(__location__, 'data', 'center_pointing_{}_G1.txt'.format(ROOT))
-CENTER_POINTING_2 = os.path.join(__location__, 'data', 'center_pointing_{}_2_G1.txt'.format(ROOT))
+CENTER_POINTING_2 = os.path.join(__location__, 'data', 'center_pointing_{}_2_G1.txt'.format(ROOT)) 
 
 # PROGRAM_ID = 1141
 # OBSERVATION_NUM = 7
