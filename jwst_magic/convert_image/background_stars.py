@@ -18,14 +18,18 @@ import numpy as np
 
 # Local Imports
 from jwst_magic.convert_image import renormalize
+from jwst_magic.utils import utils
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+PACKAGE_PATH = os.path.split(__location__)[0]
+OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
 
 
-def add_background_stars(image, stars, norm_value, norm_unit, guider):
+def add_background_stars(image, stars, norm_value, norm_unit, guider,
+                         save_file=False, root=None, out_dir=None):
     """Add artificial copies of the input PSF to the image to mimic
     background stars.
 
@@ -42,6 +46,14 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
         Specifies the unit of norm_value (FGS Magnitude or FGS Counts)
     guider : int
         The number of the guider used to take the data
+    save_file : bool, optional
+        Save ASCII file containing y, x, and magnitude values for each
+        background star. Default is False
+    root: str, optional
+        The root desired for output images if different than root in image
+    out_dir : str, optional
+        Where output FGS image(s) will be saved. If not provided, the
+        image(s) will be saved to ../out/{root}.
 
     Returns
     -------
@@ -69,11 +81,12 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
         y_back = random.sample(range(size), nstars_random)
         # Create the new stars 5 mags or more dimmer
         fgs_mags_back = random.sample(set(np.linspace(fgs_mag + 7, fgs_mag + 4, 100)), nstars_random)
+        hstid_back = []
 
     # If users passed a dictionary to the bkgd_stars argument, add stars
     # according the dictionary
     elif type(stars) == dict:
-        input_lengths = [len(stars[key]) for key in stars.keys()]
+        input_lengths = [len(stars[key]) for key in stars.keys() if key != 'hstid']
         if len(set(input_lengths)) != 1:
             raise ValueError('Invalid dictionary provided for background star '
                              'positions and magnitudes. Ensure the same number '
@@ -82,12 +95,22 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
         x_back = stars['x']
         y_back = stars['y']
         fgs_mags_back = stars['fgs_mag']
+        try:
+            hstid_back = stars['hstid']
+        except KeyError:
+            hstid_back = []
 
     else:
         raise TypeError(
             'Unfamiliar value passed to bkgd_stars: {} Please pass boolean or dictionary of background '
-            'star x, y, fgs_mag.'.format(stars)
+            'star x, y, fgs_mag, and optionally hstid.'.format(stars)
         )
+
+    # Handle formatting log, it might be an empty list if stars not added via query
+    if len(hstid_back) == 0:
+        hstid_back = [''] * len(fgs_mags_back)
+    else:
+        hstid_back = [' ' + str(hstid).strip() for hstid in hstid_back]  # add space for formatting log print out
 
     # Add stars to image
     # Copy original data array
@@ -96,7 +119,7 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
     # (Try to) only use the data for added stars, not the noise
     mean = np.mean(image)
     image[image < mean] = 0
-    for x, y, fgs_mag_back in zip(x_back, y_back, fgs_mags_back):
+    for x, y, fgs_mag_back, hstid_back in zip(x_back, y_back, fgs_mags_back, hstid_back):
         if fgs_mag_back != 0:  # should have already removed all "bad" values marked with 0
             star_fgs_countrate = fgscountrate.convert_fgs_mag_to_cr(fgs_mag_back, guider)
             scale_factor = star_fgs_countrate / fgs_countrate
@@ -119,8 +142,21 @@ def add_background_stars(image, stars, norm_value, norm_unit, guider):
                 star_data = star_data[:, 2048 - (x2 - x1):]
 
             LOGGER.info(
-                'Background Stars: Adding background star with magnitude {:.1f} at location ({}, {}).'.
-                format(fgs_mag_back, x, y))
+                'Background Stars: Adding background star{} with magnitude {:.1f} at location ({}, {}).'.
+                format(hstid_back, fgs_mag_back, x, y))
             add_data[y1:y2, x1:x2] += star_data
+
+    if save_file:
+        # Set up out dir
+        out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+        utils.ensure_dir_exists(out_dir)
+
+        # Write catalog of all background PSFs
+        background_psfs_file = os.path.join(out_dir, 'unshifted_background_psfs_{}_G{}.txt'.format(root, guider))
+        all_cols = utils.create_cols_for_coords_counts(x_back, y_back, fgs_mags_back, val=None,
+                                                       labels=None, inds=range(len(x_back)))
+        utils.write_cols_to_file(background_psfs_file,
+                                 labels=['y', 'x', 'fgs_mag'],
+                                 cols=all_cols, log=LOGGER)
 
     return add_data

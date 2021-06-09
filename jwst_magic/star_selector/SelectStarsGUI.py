@@ -204,8 +204,10 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         self.axes.set_ylabel('Counts / Second')
         self.axes.set_xlabel('X Pixels')
 
-        self.countrate_label = self.axes.text(0.02, 0.9, '3 x 3 countrate:',
+        self.countrate_label = self.axes.text(0.02, 0.9, '3 x 3 CR:',
                                               transform=self.axes.transAxes)
+        self.peak_countrate_label = self.axes.text(0.02, 0.8, 'Peak CR:',
+                                                   transform=self.axes.transAxes)
         self.draw()
 
     def zoom_to_fit(self):
@@ -703,14 +705,29 @@ class StarSelectorWindow(QDialog):
             self.canvas_profile.axes.plot(x, y, c='cornflowerblue')
             self.canvas_profile.axes.set_xlim(int(np.floor(event.xdata - self.epsilon)),
                                               int(np.ceil(event.xdata + self.epsilon)))
+            self.canvas_profile.axes.axhline(65535, c='red')
 
             # Update countrate indicator
             countrate = np.sum(self.data[int(event.ydata) - 1:int(event.ydata) + 2,
                                          int(event.xdata) - 1:int(event.xdata) + 2])
             self.canvas_profile.countrate_label.set_text(
-                '3 x 3 countrate: {:.0f}'.
+                '3 x 3 CR: {:.0f}'.
                 format(countrate)
             )
+
+            # Update peak countrate indicator
+            # Determine if the cursor is close to a segment
+            dist = np.sqrt((self.x - event.xdata)**2 + (self.y - event.ydata)**2)
+            indseq = np.nonzero(np.equal(dist, np.amin(dist)))[0]
+            ind = indseq[0]
+
+            if dist[ind] <= self.epsilon:
+                peak_countrate = self.data[int(self.y[ind]), int(self.x[ind])]
+                peak_countrate = f'{peak_countrate:.0f}'
+            else:
+                peak_countrate = ''
+            self.canvas_profile.peak_countrate_label.set_text(
+                 f'Peak CR: {peak_countrate}')
 
             self.canvas_profile.draw()
 
@@ -972,7 +989,6 @@ class StarSelectorWindow(QDialog):
             else:
                 return False
 
-
     def save_orientation_to_list(self):
         """Save the currently selected segment orientation to the list
         of override commands.
@@ -1004,7 +1020,6 @@ class StarSelectorWindow(QDialog):
         self.tableWidget_commands.setItem(n_commands, 0, item)
         self.clear_selected_stars()
         self.n_orientations += 1
-
 
     def load_orientation(self):
         """Plot the segments in the currently selected override command
@@ -1242,7 +1257,6 @@ class StarSelectorWindow(QDialog):
             no_stars_selected_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             no_stars_selected_dialog.buttonClicked.connect(self.nostars_dialog)
             no_stars_selected_dialog.exec()
-
 
         # If they do everything they're supposed to, then quit.
         if self.answer:

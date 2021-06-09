@@ -21,6 +21,7 @@ import logging.config
 import os
 import re
 import requests
+import string
 import socket
 import sys
 import time
@@ -33,6 +34,9 @@ import pandas as pd
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
+
+# Start logger
+LOGGER = logging.getLogger(__name__)
 
 
 class CustomFormatter(logging.Formatter):
@@ -372,7 +376,50 @@ def correct_image(image, upper_threshold=65000, upper_limit=65000):
     return img
 
 
-def countrate_3x3(x, y, data):
+def count_rate_total(data, objects, num_objects, x, y, countrate_3x3=True):
+    """Get the count rates within each object from a segmentation image.
+
+    Parameters
+    ----------
+    data : 2-D numpy array
+        Image data
+    objects : 2-D numpy array
+        Segmentation of image data
+    num_objects : int
+        Number of individual objects in the segmentation data
+    x : list
+        List of x-coordinates of identified PSFs
+    y : list
+        List of y-coordinates of identified PSFs
+    countrate_3x3 : bool, optional
+        Calculate the value of the 3x3 square (True), or of the entire
+        object (False)
+
+    Returns
+    -------
+    countrate : list
+        List of count rates of each segmentation object
+    val : list
+        List of number of pixels within each segmentation object
+    """
+
+    countrate = []
+    val = []
+    for i in range(1, num_objects + 1):
+        im = np.copy(objects)
+        im[objects != i] = False
+        im[objects == i] = True
+
+        if countrate_3x3:
+            countrate.append(get_countrate_3x3(x[i - 1], y[i - 1], np.array(data)))
+        else:
+            countrate.append(np.sum(im * data))
+        val.append(np.sum(im * 1.))  # Number of pixels in object
+
+    return countrate, val
+
+
+def get_countrate_3x3(x, y, data):
     """
     Using the coordinates of each PSF, place a 3x3 box around center pixel and sum
     the countrate of the pixels in this box.
@@ -465,6 +512,121 @@ def make_out_dir(out_dir, default_out_path, root):
         out_dir = os.path.join(out_dir, 'out', root)
 
     return out_dir
+
+
+def create_cols_for_coords_counts(x, y, countrate, val=None, labels=None, inds=None):
+    """Format position and count rate data to be written to file.
+
+    Create an array of columns of y, x, and countrate of each PSF to be
+    written out. Use the inds returned from pick_stars based on user
+    input. If no inds are given, put the PSF with the most compact PSF
+    first in the list to make it the guide star.
+
+
+    Parameters
+    ----------
+    x : list
+        List of x-coordinates of identified PSFs
+    y : list
+        List of y-coordinates of identified PSFs
+    countrate : list
+        List of count rates of identified PSFs
+    val : list, optional
+        List of the number of pixels in each PSF's segmentation object.
+        Used to re-order PSFs by compact-ness
+    labels : list, optional
+        Denotes whether the PSF alphabetic labels should be included as
+        a column to write out
+    inds : list, optional
+        List of the indices of the guide and reference stars
+
+    Returns
+    -------
+    cols : list
+        List of segment positions, count rates, and maybe labels for
+        each selected segments
+    """
+    if labels is not None:
+        # NOTE: these coordinates are y, x
+        cols = [[ll, '{:.4f}'.format(yy),
+                 '{:.4f}'.format(xx),
+                 '{:.4f}'.format(co)] for ll, yy, xx, co in zip(labels, y, x, countrate)]
+    else:
+        # NOTE: these coordinates are y, x
+        cols = [[yy, xx, co] for yy, xx, co in zip(y, x, countrate)]
+
+    if inds is None and val is not None:
+        min_ind = np.where(val == np.min(val))[0][0]  # Find most compact PSF
+        cols.insert(0, cols.pop(min_ind))  # Move most compact PSF to top of the list
+    else:
+        cols = [cols[i] for i in inds]
+
+    return cols
+
+
+def match_psfs_to_segments(x, y, smoothing):
+    """Match PSFs found in the image to their alphabetic label (between A and R)
+
+    Parameters
+    ----------
+    x : list
+        List of x-coordinates of identified PSFs
+    y : list
+        List of y-coordinates of identified PSFs
+    smoothing: str
+        Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
+        smoothing (e.g. GA), or "default" for medium smoothing for other cases
+
+    Returns
+    -------
+    matched_labels : list
+        List of alphabetic labels for each identified PSF
+    """
+    labels = string.ascii_uppercase[:18]
+
+    # Determine boundaries of array
+    x_min = min(x)
+    x_max = max(x)
+    y_min = min(y)
+    y_max = max(y)
+
+    if (x_max - x_min) > (y_max - y_min):
+        # Horizontal orientation
+        x_list = [1, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 9]
+        y_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
+
+        x_coords = np.linspace(x_min, x_max, 9)
+        y_coords = np.linspace(y_min, y_max, 5)[::-1]
+    else:
+        # Vertical orientation
+        x_list = [3, 2, 4, 1, 3, 5, 2, 4, 1, 5, 2, 4, 1, 3, 5, 2, 4, 3]
+        y_list = [9, 8, 8, 7, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 1]
+
+        x_coords = np.linspace(x_min, x_max, 5)
+        y_coords = np.linspace(y_min, y_max, 9)[::-1]
+
+    seg_coords = np.array([[x_coords[i_x - 1],
+                            y_coords[i_y - 1]] for i_x, i_y in zip(x_list, y_list)])
+
+    # Match actual blob coordinates to segment name
+    matched_labels = []
+    for x_pos, y_pos in zip(x, y):
+        seg_distance = 2048
+        for i_sc, sc in enumerate(seg_coords):
+            x_distance = x_pos - sc[0]
+            y_distance = y_pos - sc[1]
+            distance = (x_distance**2 + y_distance**2)**0.5
+            if distance < seg_distance:
+                seg_distance = distance
+                i_seg = i_sc
+        matched_labels.append(labels[i_seg])
+
+    if len(set(matched_labels)) != len(matched_labels) and smoothing == 'high':
+        LOGGER.warning('Could not accurately map labels to segments. It will not '
+                       'be possible to run fsw_file_writer.rewrite_prc using the '
+                       'all_found_psfs*.txt file generated here.')
+
+    return matched_labels
 
 
 def get_car_data():

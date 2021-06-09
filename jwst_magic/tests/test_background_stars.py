@@ -15,7 +15,7 @@ import os
 import sys
 
 import numpy as np
-JENKINS = 'jenkins' in os.getcwd()
+JENKINS = '/home/developer/workspace/' in os.getcwd()
 if not JENKINS:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import QTableWidgetItem, QDialogButtonBox, QApplication
@@ -150,6 +150,9 @@ def test_run_background_stars_gui_query(bkgdstars_dialog):
     assert len(bkgdstars_dialog.x) != 0
     assert len(bkgdstars_dialog.y) != 0
     assert len(list(bkgdstars_dialog.fgs_mags)) != 0
+    assert len(list(bkgdstars_dialog.fgs_mags)) == len(bkgdstars_dialog.x)
+    assert len(list(bkgdstars_dialog.fgs_mags)) == len(bkgdstars_dialog.y)
+    assert len(list(bkgdstars_dialog.fgs_mags)) == len(bkgdstars_dialog.hstid)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -177,7 +180,9 @@ def test_run_background_stars_gui_random(bkgdstars_dialog):
     assert bkgdstars_dialog.vmin >= fgs_mag + 10
 
     # Check range of star magnitude is correct
-    assert all(fgs_mag + 9  <= mag <= fgs_mag + 10 for mag in list(bkgdstars_dialog.fgs_mags))
+    assert all(fgs_mag + 9 <= mag <= fgs_mag + 10 for mag in list(bkgdstars_dialog.fgs_mags))
+
+    assert bkgdstars_dialog.hstid == []
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -206,3 +211,5 @@ def test_run_background_stars_gui_user_input(bkgdstars_dialog):
 
     # Check the star magnitude is correct
     assert list(bkgdstars_dialog.fgs_mags)[0] == 15
+
+    assert bkgdstars_dialog.hstid == []

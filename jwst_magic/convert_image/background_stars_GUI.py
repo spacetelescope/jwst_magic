@@ -98,6 +98,7 @@ class BackgroundStarsDialog(QDialog):
         self.x = []
         self.y = []
         self.fgs_mags = []
+        self.hstid = []
 
         # Set out directory and image name if variables are present
         if out_dir is not None and root is not None:
@@ -156,8 +157,8 @@ class BackgroundStarsDialog(QDialog):
         cmap = mpl.cm.viridis_r
         norm = mpl.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
         self.guide_star = self.canvas.axes.scatter(1024, 1024, marker='*', c=[self.fgs_mag],
-                                                   s=500, cmap=cmap,
-                                                   norm=norm)
+                                                   s=500, edgecolors='black', cmap=cmap,
+                                                   norm=norm, label='Guide Star')
 
         # Add colorbar
         self.canvas.cbar_ax = self.canvas.fig.add_axes([0.05, 0.1, 0.9, 0.03])
@@ -218,7 +219,12 @@ class BackgroundStarsDialog(QDialog):
             self.lineEdit_definedFile.setText(filename)
 
             # Parse the file
-            tab = asc.read(filename)
+            tab = asc.read(filename, format='commented_header')
+
+            if tab.colnames == ['y', 'x', 'fgs_mag']:
+                new_order = ['x', 'y', 'fgs_mag']
+                tab = tab[new_order]
+
             for i_row, row in enumerate(tab):
                 if i_row + 1 > self.tableWidget.rowCount():
                     self.tableWidget.insertRow(i_row)
@@ -272,6 +278,7 @@ class BackgroundStarsDialog(QDialog):
         self.method = "random"
 
         # Redraw all necessary plot elements
+        self.legend = self.canvas.axes.legend()
         self.canvas.cbar.draw_all()
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.draw()
@@ -290,7 +297,7 @@ class BackgroundStarsDialog(QDialog):
                     return
                 elif self.tableWidget.item(i_row, i_col).text() == '':
                     return
-                elif not self.tableWidget.item(i_row, i_col).text().isnumeric():
+                elif not self.tableWidget.item(i_row, i_col).text().replace('.','',1).isdigit():
                     LOGGER.warning('Background Stars: There is a cell with non-numeric contents')
                     return
 
@@ -331,6 +338,7 @@ class BackgroundStarsDialog(QDialog):
         self.method = "user-defined"
 
         # Redraw all necessary plot elements
+        self.legend = self.canvas.axes.legend()
         self.canvas.cbar.draw_all()
         self.canvas.cbar.ax.invert_xaxis()
         self.canvas.draw()
@@ -382,12 +390,6 @@ class BackgroundStarsDialog(QDialog):
         for fgs_mag in self.fgs_mags[~mask]:
             self.check_colorbar_limits(fgs_mag)
 
-        # Plot stars with known fgs_mags
-        self.catalog_stars = self.canvas.axes.scatter(
-            self.x[~mask], self.y[~mask], c=self.fgs_mags[~mask], marker='*',
-            s=500, cmap='viridis_r', vmin=self.vmax, vmax=self.vmin,
-            label=None
-        )
         # Plot stars with unknown fgs_mags
         if len(self.x[mask]) > 0:
             self.masked_catalog_stars = self.canvas.axes.scatter(
@@ -400,6 +402,14 @@ class BackgroundStarsDialog(QDialog):
             self.x = self.x[~mask]
             self.y = self.y[~mask]
             self.fgs_mags = self.fgs_mags[~mask]
+            self.hstid = self.hstid[~mask]
+
+        # Plot stars with known fgs_mags
+        self.catalog_stars = self.canvas.axes.scatter(
+            self.x, self.y, c=self.fgs_mags, marker='*',
+            s=500, cmap='viridis_r', vmin=self.vmax, vmax=self.vmin,
+            label=None
+        )
 
         # Record what method was used
         self.method = "catalog"
@@ -458,6 +468,9 @@ class BackgroundStarsDialog(QDialog):
         self.guide_star.set_clim(self.vmax, self.vmin)
         self.guide_star.set_norm(norm)
 
+        # Redraw the length for the guide star's new color
+        self.legend = self.canvas.axes.legend()
+
         # Redraw the colorbar
         self.canvas.cbar.draw_all()
         self.canvas.cbar.ax.invert_xaxis()
@@ -495,9 +508,10 @@ class BackgroundStarsDialog(QDialog):
         LOGGER.info('Background Stars: Querying Newest Guide Star Catalog')
 
         # Only take the necessary columns
-        queried_catalog = df[['ra', 'dec', 'classification']]
+        queried_catalog = df[['hstID', 'ra', 'dec', 'classification']]
         ra_list = df['ra'].values
         dec_list = df['dec'].values
+        id_list = df['hstID'].values
         fgs_mag_list = []
         for i in range(len(df)):
             row = df.iloc[[i]]
@@ -524,6 +538,7 @@ class BackgroundStarsDialog(QDialog):
             ra_list = ra_list[mask_guidestar]
             dec_list = dec_list[mask_guidestar]
             fgs_mag_list = fgs_mag_list[mask_guidestar]
+            id_list = id_list[mask_guidestar]
         else:
             LOGGER.warning('Background Stars: No guide star found within 1 arcsec of the pointing.')
 
@@ -548,6 +563,7 @@ class BackgroundStarsDialog(QDialog):
         self.x = x_raw[in_detector_frame]
         self.y = y_raw[in_detector_frame]
         self.fgs_mags = fgs_mag_list[in_detector_frame]
+        self.hstid = id_list[in_detector_frame]
 
         LOGGER.info('Background Stars: Found {} sources in GUIDER{} FOV.'
                     .format(len(self.x), self.guider))
@@ -559,7 +575,8 @@ class BackgroundStarsDialog(QDialog):
         if self.x != [] and self.y != [] and list(self.fgs_mags) != []:
             bkgd_stars_dict = {'x': self.x,
                                'y': self.y,
-                               'fgs_mag': self.fgs_mags}
+                               'fgs_mag': self.fgs_mags,
+                               'hstid': self.hstid}  # id_list can be empty
 
         else:
             bkgd_stars_dict = None

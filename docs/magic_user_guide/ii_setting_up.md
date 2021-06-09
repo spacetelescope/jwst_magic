@@ -8,21 +8,21 @@ II. Setting Up MAGIC
 ====================
 
 1. If you have not yet installed the tools, go to [Appendix A](appendix_a_installing_magic.md).
-2. Check that you are in your astroconda environment. 
-3. Make sure that you have the most up-to-date version of the tools (``pull`` the most recent version of the tools from the repo):
+2. Check that you are in your astroconda environment.
+3. Make sure that you have the most up-to-date version of the tools (`pull` the most recent version of the tools from the repo):
 
        $ cd /Users/<username>/jwst-magic
-       
+
        $ git pull origin master
 
 4. From your astroconda environment, start an IPython session and launch the main GUI (see figure below):
 
        $ ipython
-    
+
        In [1]: import jwst_magic
-       
+
        In [2]: jwst_magic.run_tool_GUI()
-       
+
 
     ![Main GUI for the JWST MAGIC Tool](./figs/figure1_main_gui.png)
 
@@ -46,6 +46,4 @@ II. Setting Up MAGIC
 
 ###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
 
-###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
-
-###### Appendix D: [Mirror State Procedures](appendix_d_mirror_states.md)
+###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)

@@ -111,6 +111,7 @@ def write_all(obj):
         # Write files for use in the DHAS and FGSES
         write_strips(obj)
         write_prc(obj)
+        write_star(obj)
         write_dat(obj)
 
     elif obj.step == 'ACQ1':
@@ -210,7 +211,7 @@ def write_cds(obj):
         filename_cds = os.path.join(obj.out_dir,
                                     obj.stsci_dir,
                                     obj.filename_root + 'cds.fits')
-        utils.write_fits(filename_cds, np.uint16(obj.cds), log=LOGGER)
+        utils.write_fits(filename_cds, obj.cds, log=LOGGER)
 
 
 def write_image(obj):
@@ -248,6 +249,7 @@ def write_image(obj):
     else:
         utils.write_fits(filename, np.uint16(obj.image), log=LOGGER)
 
+
 def write_strips(obj):
     """Write an ID strips image
 
@@ -273,8 +275,49 @@ def write_strips(obj):
                      log=LOGGER)
 
 
+def write_star(obj):
+    """Write a star (.star) file for use with file software
+    Should only be used for ID case.
+
+    Parameters
+    ----------
+    obj : obj
+        FGS simulation object for CAL, ID, ACQ, and/or TRK stages;
+        created by ``buildfgssteps.py`
+
+    Notes
+    -----
+    .star files replace .prc files for ID in DHAS v4
+    """
+    # Open file
+    try:
+        filename_root = obj.filename_root
+    except AttributeError:
+        filename_root = '{}_G{}_{}'.format(obj.root, obj.guider, obj.step)
+    filename_star = os.path.join(obj.out_dir, obj.dhas_dir, filename_root + '.star')
+    file = open(filename_star, "w")
+
+    # Add header
+    header = f'*** ID Star file for {filename_root}: Config {obj.config}\n'
+    file.write(header)
+
+    # Add each star
+    threshold = obj.threshold
+    if not isinstance(threshold, (list, np.ndarray)):
+        threshold = [threshold]
+    xangle, yangle = coordinate_transforms.Raw2DHAS(obj.xarr, obj.yarr, obj.guider)
+    for i, (x, y, cr, thr) in enumerate(zip(xangle, yangle, obj.countrate, threshold)):
+        line = f'{i},{x},{y},{cr},{thr}\n'
+        file.write(line)
+
+    # Close file
+    file.close()
+    LOGGER.info(f"Successfully wrote: {filename_star}")
+
+
 def write_prc(obj):
     """Write a procedure (.prc) file for use with file software
+    Should only be used for ACQ case.
 
     Parameters
     ----------
@@ -296,13 +339,11 @@ def write_prc(obj):
         step = 'ACQ'
         acq1_imgsize = obj.acq1_imgsize
         acq2_imgsize = obj.acq2_imgsize
-
-
     else:
-        raise ValueError('Unknown step {}; cannot write .prc file.'.format(obj.step))
+        raise ValueError('Cannot write .prc file for step {}.'.format(obj.step))
 
     mkproc.Mkproc(obj.guider, obj.root, obj.xarr, obj.yarr, obj.countrate,
-                  step=step, thresh_factor=obj.threshold, out_dir=obj.out_dir,
+                  step=step, threshold=obj.threshold, out_dir=obj.out_dir,
                   dhas_dir=obj.dhas_dir, ground_system_dir=obj.ground_system_dir,
                   acq1_imgsize=acq1_imgsize, acq2_imgsize=acq2_imgsize)
 
