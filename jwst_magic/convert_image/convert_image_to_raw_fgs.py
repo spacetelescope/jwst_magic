@@ -94,7 +94,7 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 # Constants
-NIRCAM_SW_SCALE = 0.031  # NIRCam SW pixel scale (arcsec/pixel)
+NIRCAM_SW_SCALE = 0.0311  # NIRCam SW pixel scale (arcsec/pixel)
 NIRCAM_LW_SCALE = 0.063  # NIRCam LW pixel scale (arcsec/pixel)
 FGS_SCALE = 0.069  # FGS pixel scale (arcsec/pixel)
 FGS_PIXELS = 2048  # FGS image size in pixels
