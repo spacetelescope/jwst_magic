@@ -95,6 +95,7 @@ The `jwst_magic` package installation process will also check for the following 
   * `pytest`
   * `pyyaml`
   * `requests`
+  * `jwst`
 
 
 Running the Tools
