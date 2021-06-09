@@ -124,7 +124,7 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
     unshifted_all_rows = asc.read(unshifted_all_psfs)
 
    # Rewrite new unshifted guiding selections file, with new selections
-    cols_list = [select_psfs.create_cols_for_coords_counts(unshifted_all_rows['x'], unshifted_all_rows['y'],
+    cols_list = [utils.create_cols_for_coords_counts(unshifted_all_rows['x'], unshifted_all_rows['y'],
                                                      unshifted_all_rows['countrate'], 0,
                                                      inds=inds) for inds in inds_list]
 
@@ -170,14 +170,16 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
         # Rewrite CECIL proc file
         for step in ['ID', 'ACQ1', 'ACQ2', 'TRK']:
             fgs_files_obj = buildfgssteps.BuildFGSSteps(
-                fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
+                fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, thresh_factor=threshold,
                 logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                 psf_center_file=psf_center_file_fsw, shift_id_attitude=shifted,
             )
 
             filename_root = '{}_G{}_{}'.format(root, guider, step)
             fgs_files_obj.filename_root = filename_root
-            if step in ['ID', 'ACQ1']:
+            if step == 'ID':
+                write_files.write_star(fgs_files_obj)
+            if step == 'ACQ1':
                 write_files.write_prc(fgs_files_obj)
             if step != 'ID':
                 write_files.write_image(fgs_files_obj)

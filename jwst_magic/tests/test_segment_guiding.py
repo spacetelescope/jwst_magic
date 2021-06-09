@@ -60,7 +60,7 @@ import sys
 
 # Third Party Imports
 import numpy as np
-JENKINS = 'jenkins' in os.getcwd()
+JENKINS = '/home/developer/workspace/' in os.getcwd()
 if not JENKINS:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import QDialogButtonBox, QApplication

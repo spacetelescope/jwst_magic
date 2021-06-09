@@ -47,7 +47,7 @@ print('Using backend: ', matplotlib.get_backend())
 import numpy as np
 
 # Local Imports
-from jwst_magic.convert_image import background_stars, convert_image_to_raw_fgs
+from jwst_magic.convert_image import background_stars, convert_image_to_raw_fgs, renormalize
 from jwst_magic.fsw_file_writer import buildfgssteps, write_files
 from jwst_magic.star_selector import select_psfs
 from jwst_magic.utils import utils
@@ -63,10 +63,9 @@ LOGGER = logging.getLogger(__name__)
 def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             nircam_det=None, nircam=True, smoothing='default', steps=None,
             guiding_selections_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
-            star_selection=True, star_selection_gui=True, file_writer=True,
-            masterGUIapp=None, copy_original=True, normalize=True,
-            coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, crowded_field=False, threshold=0.6):
+            star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
+            normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
+            shift_id_attitude=True, crowded_field=False, thresh_factor=0.6, use_oss_defaults=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -106,8 +105,6 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         Run the convert_image module?
     star_selection : boolean, optional
         Run the  star_selector module?
-    star_selection_gui : boolean, optional
-        Show the GUI for the star_selector module?
     file_writer : boolean, optional
         Run the fsw_file_writer module?
     masterGUIapp : PyQt5.QtCore.QCoreApplication instance, optional
@@ -124,9 +121,12 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         per second to apply in the form of a Gaussian filter.
     itm : bool, Optional
         If this image come from the ITM simulator (important for normalization).
-    threshold : float
-        The threshold (aka count rate uncertainty factor) to use when writing
+    thresh_factor : float
+        The thresh_factor (aka count rate uncertainty factor) to use when writing
         FSW files.
+    use_oss_defaults : bool
+        Populate the DHAS files with the default numbers OSS would use. Should
+        only be True when testing photometry override files
     """
 
     # Determine filename root
@@ -153,16 +153,19 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Either convert provided NIRCam image to an FGS image...
     if convert_im:
-        fgs_im = convert_image_to_raw_fgs.convert_im(image, guider, root,
-                                                     nircam=nircam,
-                                                     nircam_det=nircam_det,
-                                                     normalize=normalize,
-                                                     norm_value=norm_value,
-                                                     norm_unit=norm_unit,
-                                                     coarse_pointing=coarse_pointing,
-                                                     jitter_rate_arcsec=jitter_rate_arcsec,
-                                                     logger_passed=True,
-                                                     itm=itm)
+        fgs_im, all_found_psfs_file, psf_center_file = \
+            convert_image_to_raw_fgs.convert_im(image, guider, root,
+                                                out_dir=out_dir,
+                                                nircam=nircam,
+                                                nircam_det=nircam_det,
+                                                normalize=normalize,
+                                                norm_value=norm_value,
+                                                norm_unit=norm_unit,
+                                                smoothing=smoothing,
+                                                coarse_pointing=coarse_pointing,
+                                                jitter_rate_arcsec=jitter_rate_arcsec,
+                                                logger_passed=True,
+                                                itm=itm)
 
         if bkgd_stars:
             if not normalize and not itm:
@@ -170,7 +173,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                 norm_unit = "FGS Counts"
             fgs_im = background_stars.add_background_stars(fgs_im, bkgd_stars,
                                                            norm_value, norm_unit,
-                                                           guider)
+                                                           guider, save_file=True,
+                                                           root=root, out_dir=out_dir)
 
         # Write converted image
         convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider)
@@ -178,14 +182,21 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     # Or, if an FGS image was provided, use it!
     else:
         fgs_im = image
+        all_found_psfs_file = os.path.join(out_dir_root, 'unshifted_all_found_psfs_{}_G{}.txt'.format(root, guider))
+        if smoothing == 'low':
+            psf_center_file = os.path.join(out_dir, 'unshifted_psf_center_{}_G{}.txt'.format(root, guider))
+        else:
+            psf_center_file = None
         LOGGER.info("Assuming that the input image is a raw FGS image")
 
     # Select guide & reference PSFs
     if star_selection:
         guiding_selections_path_list, all_found_psfs, center_pointing_file, psf_center_file = select_psfs.select_psfs(
             fgs_im, root, guider,
-            smoothing=smoothing,
+            all_found_psfs_path=all_found_psfs_file,
             guiding_selections_file_list=guiding_selections_file,
+            psf_center_path=psf_center_file,
+            smoothing=smoothing,
             out_dir=out_dir,
             logger_passed=True, masterGUIapp=masterGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
@@ -193,6 +204,13 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     # Create all files for FSW/DHAS/FGSES/etc.
     if file_writer:
         out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+
+        # If you're planning to write out FSW files using the OSS default values, you need to calculate and pass
+        # in the catalog countrate of the guide star
+        if use_oss_defaults:
+            fgs_countrate, _ = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider)
+        else:
+            fgs_countrate = None
 
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
         for i, guiding_selections_file in enumerate(guiding_selections_path_list):
@@ -218,10 +236,11 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                 steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
 
             for step in steps:
-                fgs_files_obj= buildfgssteps.BuildFGSSteps(
-                    fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, threshold=threshold,
+                fgs_files_obj = buildfgssteps.BuildFGSSteps(
+                    fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, thresh_factor=thresh_factor,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                     psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
+                    use_oss_defaults=use_oss_defaults, catalog_countrate=fgs_countrate,
                 )
                 write_files.write_all(fgs_files_obj)
             LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i+1))

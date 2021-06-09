@@ -23,7 +23,7 @@ from unittest.mock import patch
 
 # Third Party Imports
 import numpy as np
-JENKINS = 'jenkins' in os.getcwd()
+JENKINS = '/home/developer/workspace/' in os.getcwd()
 if not JENKINS:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import QDialogButtonBox, QApplication
@@ -303,6 +303,11 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
+    # Set detector
+    master_gui.radioButton_NIRCam.setChecked(True)
+    master_gui.comboBox_detector.setCurrentText('B2')
+    assert master_gui.comboBox_detector.currentText() == 'B2'
+
     # Set threshold
     master_gui.lineEdit_threshold.clear()
     qtbot.keyClicks(master_gui.lineEdit_threshold, '0.9')
@@ -351,6 +356,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
                 assert master_gui._test_sg_dialog.lineEdit_RA.text() != ''
                 assert master_gui._test_sg_dialog.lineEdit_Dec.text() != ''
                 assert master_gui._test_sg_dialog.lineEdit_countrateUncertainty.text() == '0.9'
+                assert master_gui._test_sg_dialog.comboBox_detector.currentText() == 'NRCB2'
             qtbot.mouseClick(master_gui._test_sg_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
         except AssertionError:
             # If something raising an error above, need to close the pop up gui anyway

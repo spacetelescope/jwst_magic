@@ -18,15 +18,17 @@ import pysiaf
 FGS_SIAF = pysiaf.Siaf('FGS')
 
 
-def nrca3pixel_offset_to_v2v3_offset(x_offset, y_offset):
-    """Convert a boresight offset from NIRCam A3 pixels to V2/V3 arcsec
+def nrcpixel_offset_to_v2v3_offset(x_offset, y_offset, detector):
+    """Convert a boresight offset from NIRCam pixels to V2/V3 arcsec
 
     Parameters
     ----------
     x_offset : float
-        Boresight offset in NIRCam A3 X pixels
+        Boresight offset in NIRCam X pixels
     y_offset : float
-        Boresight offset in NIRCam A3 Y pixels
+        Boresight offset in NIRCam Y pixels
+    detector : str
+        NIRCam detector to transform. E.g. 'NRCA3'
 
     Returns
     -------
@@ -35,13 +37,13 @@ def nrca3pixel_offset_to_v2v3_offset(x_offset, y_offset):
     """
     # Get pixel scale
     nrc_siaf = pysiaf.Siaf('NIRCam')
-    nrca3 = nrc_siaf['NRCA3_FULL_OSS']
-    nircam_sw_x_scale = nrca3.XSciScale  # arcsec/pixel
-    nircam_sw_y_scale = nrca3.YSciScale  # arcsec/pixel
+    nrc_det = nrc_siaf[f'{detector}_FULL_OSS']
+    nircam_x_scale = nrc_det.XSciScale  # arcsec/pixel
+    nircam_y_scale = nrc_det.YSciScale  # arcsec/pixel
 
     # Convert x/y offsets to V2/V3
-    v2_offset = x_offset * nircam_sw_x_scale  # arcsec
-    v3_offset = y_offset * nircam_sw_y_scale  # arcsec
+    v2_offset = x_offset * nircam_x_scale  # arcsec
+    v3_offset = y_offset * nircam_y_scale  # arcsec
 
     return v2_offset, v3_offset
 
@@ -146,7 +148,7 @@ def Raw2Tel(x_raw, y_raw, guider):
     # Subtract V2 and V3 references
     v2ref = fgs_full.V2Ref
     v3ref = fgs_full.V3Ref
-    v2 -= v2ref
+    v2 -= v2ref  # this is putting the JWST FOV TEL frame, to have the origin on the FGS v2/v3 reference point
     v3 -= v3ref
 
     return v2, v3

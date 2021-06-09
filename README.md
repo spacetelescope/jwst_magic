@@ -107,7 +107,7 @@ These tools are best run in the `IPython` terminal, in the conda environment whe
 
 Known Issues
 -----------------
-As with all software packages, there are several known issues for MAGIC. A [current list of known issues is available](https://jwstitarwiki.stsci.edu/display/WFSCOWG/MAGIC+Known+Issues), but please note that there is restricted access to this page.
+As with all software packages, there are several known issues for MAGIC. A [current list of known issues is available](https://jwstitarwiki.stsci.edu/display/WFSCOWG/MAGIC+Known+Issues+and+Work+Arounds), but please note that there is restricted access to this page.
 
 Documentation
 -----------------

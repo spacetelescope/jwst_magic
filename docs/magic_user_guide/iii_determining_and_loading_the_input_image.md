@@ -11,7 +11,7 @@ III.	Determining and Loading the Input Image
 
 MAGIC takes in a full-frame calibration FGS image or a NIRCam image from *any* of their detectors that was taken with the CLEAR filter in. Note that the NIRCam weak lens (WL) filter will cause MAGIC to crash. Any input image from NIRCam is expected to be fully processed through the DMS, though both DMS-processed and raw full-frame FGS data is accepted. Note that MAGIC cannot currently accept FGS ID strips data as an input. In most cases, MAGIC can determine from the header information which instrument and detector the image is from. However if it can’t figure this out due to a missing or different header keyword, you will have to help it by entering this information into MAGIC. Once it has all the information it needs (particularly which guider detector you want to create the pseudo-FGS image for) MAGIC will convert the input image into a raw detector FGS image.
 
-MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also known as ADU/s). However, if a cal.fits image is used as the input, MAGIC will check for the PHOTMJSR header keyword and use that to convert the image to the correct units. 
+MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also known as ADU/s). However, if a cal.fits image is used as the input, MAGIC will check for the PHOTMJSR header keyword and use that to convert the image to the correct units.
 
 1. Set general input parameters:
 
@@ -31,7 +31,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
    4. Select the **Observation** number (*G*) of the activity you are generating an override file for. _(The observations in the dropdown box that are preceded by `+` are extras, in the case that an unplanned observation gets generated on-the-fly.)_
    5. (Optional) Re-set the APT number and select the **Update APT** button (*F*) to query a different APT file (e.g. if you are in a rehearsal, use the rehearsal APT number)
 
-   Considering these parameters all together, the output files will be saved in the ``***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
+   Considering these parameters all together, the output files will be saved in the `***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/` directory, with the root `for_obs{obs}_G{guider}`.
 
    Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
@@ -45,7 +45,7 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
    3. Specify the **Out** directory (*J*) to be `***REMOVED***/guiding/{practice}/{car}/`, filling in the directory for the current practice/rehearsal and the name of the current activity.
    4. Specify the APT Program ID and Observation Number and select the **Query APT** button (*K*) to query the APT file and Guide Star Catalog
 
-   Considering these parameters all together, the output files will be saved in the ``***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/`` directory, with the root ``for_obs{obs}_G{guider}``.
+   Considering these parameters all together, the output files will be saved in the `***REMOVED***/guiding/{practice}/{car}/out/for_obs{obs}/` directory, with the root `for_obs{obs}_G{guider}`.
 
    Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
@@ -53,10 +53,10 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
 
    1. Check the **Manual** radio button (*H*) to set the naming method.
    2. Specify a **Root** name (*I*). If different than the default name that was created when the input image was uploaded. The root will be used to to create the output directory where all created files will reside, out/{root}.
-   3. Change the **Out** directory (*J*). Choose the location to where the files will be saved. An ``out/`` directory will be created in this location, and this is where all the files will be saved.
+   3. Change the **Out** directory (*J*). Choose the location to where the files will be saved. An `out/` directory will be created in this location, and this is where all the files will be saved.
    4. (Optional) Specify the APT Program ID and Observation Number and select the **Query APT** button (*K*) to query the APT file and Guide Star Catalog
 
-   Considering these parameters all together, the output files will be saved in the ``{out}/out/{root}/`` directory, with names of the format ``{root}_G{guider}``
+   Considering these parameters all together, the output files will be saved in the `{out}/out/{root}/` directory, with names of the format `{root}_G{guider}`
 
    Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
@@ -65,8 +65,8 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
    ![Image Converter section of the Main GUI](./figs/figure5_main_image_convert.png)
 
    1. (Optional) Simulate the effects of **Coarse Pointing** (*A*)  by specifying the jitter rate of the observatory. A jitter rate of 0.7 arcsec/sec creates images that are similar to ITM simulations in coarse point. Otherwise, ensure the **Add jitter rate** box is unchecked.
-   2. Check that the **Input Image Instrument** (*B*) and **NIRCam detector** (*C*) used to take the input image are set to the correct values; change them if not. (The tool will attempt to parse the NIRCam detector from the input FITS header, but can be changed if the header cannot be parsed for this information.) The FGS-formatted image will be saved to ``out/{root}/FGS_imgs/{input_image}_G{guider}.fits``
-   3. (Optional) Specify Guide Star ID of the guide star you are trying to simulate, or specify the FGS magnitude (MAGIC will only take 10, 11, 12, 13, or 14, at this time) or FGS count rate for the **Image Normalization** (*D*) of the final image. If you do not want your image to renormalized, ensure the **Normalize to** box is unchecked.
+   2. Check that the **Input Image Instrument** (*B*) and **NIRCam detector** (*C*) used to take the input image are set to the correct values; change them if not. (The tool will attempt to parse the NIRCam detector from the input FITS header, but can be changed if the header cannot be parsed for this information.) The FGS-formatted image will be saved to `out/{root}/FGS_imgs/{input_image}_G{guider}.fits`
+   3. (Optional) Specify Guide Star ID of the guide star you are trying to simulate, or the FGS magnitude, or FGS count rate for the **Image Normalization** (*D*) of the final image. If you do not want your image to renormalized, ensure the **Normalize to** box is unchecked.
    4. (Optional) Add **Background Stars** to the final image.
 
       1. Click **Add Background Stars** (*E*). The background stars dialog box will appear:
@@ -82,12 +82,12 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
              3. Enter the position angle (roll angle) of the observatory.
              4. Click the **Query GSC** button to add the objects (stars and extended sources) that are visible in the FOV of the selected guider.
              - Note: The guide star catalog version that is queried will be the default catalog version called in the FGS Count Rate Module.
- 
+
           2. To add stars randomly:
 
              1. Select the **Add Stars Randomly** (*B*) checkbox.
              2. Input the number of stars you want to add to the image
-             3. Specify the magnitude range that these additional stars will lie between (relative to the magnitude of the guide star). 
+             3. Specify the magnitude range that these additional stars will lie between (relative to the magnitude of the guide star).
                 - E.g. If you have a guide star of 12th FGS magnitude and you specify a range of 7-3, the background stars created will have FGS magnitudes between 19 and 15 magnitude, which is between 7 magnitudes dimmer than the guide star and 3 magnitudes dimmer than the guide star
 
           3. To add stars individually:
@@ -101,6 +101,8 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
       3. Click **Done** to save and apply these selections, or click **Cancel** to close the window without updating the background star selections.
       4. Verify that the indicator shows that the correct number of background stars have been added.
       5. The background stars will remain loaded until the user clicks the **Delete Background Stars** button (*F*) in the main GUI. This means that these will stay as you move to the next observation which is helpful if the guide star or PA has not changed, however if either has changed, you will need to either delete the background stars or add new ones using the steps above.
+    5. (Optional) Inspect the input image and determine if your PSF(s) meet one of the two scenarios that requires a change to the smoothing technique. If you are working with early commissioning PSFs, check the **High Smoothing (For Early Commissioning)** box (*G*). If you are working with MIMF PSFs, check the **Low Smoothing (For MIMF)** box (*H*). For high smoothing, this flag widens the smoothing filter for diffuse images in early commissioning stages when the telescope is un-phased (If you are unsure if the PSFs are phased, consult the procedure’s information on your observation). For low smoothing, this flag applies very little smoothing to better find the bright knot on doughnut PSFs like in MIMF rather than finding the center of the PSF.
+
 
 #### Next
 
@@ -118,6 +120,4 @@ MAGIC expects to use a rate.fits input image, ie one with units of Dn/s (also kn
 
 ###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
 
-###### Appendix C: [Using APT to Get Guide Star RA & Dec](appendix_c_apt.md)
-
-###### Appendix D: [Mirror State Procedures](appendix_d_mirror_states.md)
+###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)
