@@ -635,10 +635,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
             xend, yend = (1003, 1697)  # Converted from Ideal = (-45.6701, -0.8757)
         hdr_keyword = '{}'.format((xend, yend))
     else:
-        xend, yend = (1024, 1024)  # ID attitude; Different for crowded fields
-        # Note this should actually be 1024.5, but the guiding selections file
-        # needs an integer shift
-        # that 0.5 pixel shift should equate to a 9e-6 degree change in RA and DEC
+        xend, yend = (1024.5, 1024.5)  # ID attitude; Different for crowded fields
         hdr_keyword = '{}'.format((xend, yend))
 
 
@@ -647,9 +644,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     xstart, ystart = guiding_selections_cat['x', 'y'][0] # Guide star location
     dx = xend - xstart
     dy = yend - ystart
-
-    assert dx % 1 == 0, 'Trying to shift by a non-integer in x'
-    assert dy % 1 == 0, 'Trying to shift by a non-integer in y'
 
     if (dx, dy) == (0, 0):
         LOGGER.info('FSW File Writing: No need to shift file; guide star already at ID attitude.')
