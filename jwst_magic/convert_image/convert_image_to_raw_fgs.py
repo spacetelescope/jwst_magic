@@ -74,6 +74,8 @@ from astropy.io import ascii as asc
 from astropy.io import fits
 from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
+from jwst.resample import ResampleStep
+from jwst.datamodels import ImageModel
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
@@ -1024,7 +1026,25 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                 input_unit = hdr['BUNIT'].lower()
             if 'PHOTMJSR' in hdr:
                 photmjsr = hdr['PHOTMJSR']
+            if 'DATAMODL' in hdr:
+                datamodel = hdr['DATAMODL']
 
+        # Remove distortion from NIRCam or FGS cal data, but not from padded TRK data nor rate images
+        # as they cannot be run through the pipeline without lots of extra steps
+        try:
+            if datamodel != 'GuiderCalModel' and input_unit == 'mjy/sr':
+                LOGGER.info("Image Conversion: Removing distortion from data using the JWST Pipeline's Resample step.")
+                model = ImageModel(input_im, skip_fits_update=False)
+                result = ResampleStep.call(model, save_results=False)
+
+                # Crop data back to (2048, 2048), cutting out the top and right to keep the origin
+                LOGGER.info(f"Image Conversion: Cutting undistorted data from {result.data.shape} to (2048, 2048)")
+                data = result.data[0:2048, 0:2048]
+        except NameError:
+            LOGGER.info("Image Conversion: Skipping removing distortion from image due to missing either "
+                        "DATAMODL or BUNIT information.")
+
+        # Turn cal images into rate images
         try:
             if input_unit == 'mjy/sr':
                 convert_to_adu_s = photmjsr
