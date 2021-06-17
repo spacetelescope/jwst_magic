@@ -40,6 +40,7 @@ import os
 import shutil
 
 # Third Party Imports
+from astropy.io import fits
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
@@ -177,7 +178,13 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                            root=root, out_dir=out_dir)
 
         # Write converted image
-        convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider)
+        try:
+            resampled_image = os.path.join(out_dir_root, 'FGS_imgs',
+                                           image.split('/')[-1].replace('.fits', '_resamplestep.fits'))
+            wcs_header = fits.getheader(resampled_image, 1)
+        except IndexError:
+            wcs_header = None
+        convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider, wcs_header)
         LOGGER.info("*** Image Conversion COMPLETE ***")
     # Or, if an FGS image was provided, use it!
     else:

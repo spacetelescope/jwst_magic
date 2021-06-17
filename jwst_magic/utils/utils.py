@@ -184,9 +184,40 @@ def write_fits(outfile, data, header=None, log=None):
         os.makedirs(out_dir)
 
     if not any([isinstance(header, fits.header.Header), header is None]):
-        raise TypeError('Header to be written out in {} is not either "None" or of type fits.header.Header'.format(outfile))
+        raise TypeError('Header to be written out in {} is not either "None" or of type fits.header.Header'.format(
+            outfile))
 
     hdul = fits.PrimaryHDU(data=data, header=header)
+
+    hdul.writeto(outfile, overwrite=True)
+
+    if log is not None:
+        log.info("Successfully wrote: {}".format(outfile))
+    else:
+        print("Successfully wrote: {}".format(outfile))
+
+
+def write_multiext_fits(outfile, data_list, header_list, log=None):
+    """
+    Write data to a multi-extension fits file. Expands on write_fits()
+    """
+    out_dir = os.path.dirname(outfile)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
+    for header in header_list:
+        if not any([isinstance(header, fits.header.Header), header is None]):
+            raise TypeError('Header to be written out in {} is not either "None" or of type fits.header.Header'.format(
+                outfile))
+
+    hdu_list = []
+    for i, (data, header) in enumerate(zip(data_list, header_list)):
+        if i == 0:
+            hdu = fits.PrimaryHDU(data=data, header=header)
+        else:
+            hdu = fits.ImageHDU(data=data, header=header)
+        hdu_list.append(hdu)
+    hdul = fits.HDUList(hdu_list)
 
     hdul.writeto(outfile, overwrite=True)
 
