@@ -988,9 +988,11 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     if not logger_passed:
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-    # Set up out dir
+    # Set up out dir(s)
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir)
+    out_dir_fgs_imgs = os.path.join(out_dir, 'FGS_imgs')
+    utils.ensure_dir_exists(out_dir_fgs_imgs)
 
     try:
         LOGGER.info("Image Conversion: " +
@@ -1034,8 +1036,8 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         try:
             if datamodel != 'GuiderCalModel' and input_unit == 'mjy/sr':
                 LOGGER.info("Image Conversion: Removing distortion from data using the JWST Pipeline's Resample step.")
-                model = ImageModel(input_im, skip_fits_update=False)
-                result = ResampleStep.call(model, save_results=False)
+                with ImageModel(input_im, skip_fits_update=False) as model:
+                    result = ResampleStep.call(model, save_results=True, output_dir=out_dir_fgs_imgs)
 
                 # Crop data back to (2048, 2048), cutting out the top and right to keep the origin
                 LOGGER.info(f"Image Conversion: Cutting undistorted data from {result.data.shape} to (2048, 2048)")
@@ -1187,7 +1189,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     return data, all_found_psfs_path, psf_center_path
 
 
-def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
+def write_fgs_im(data, out_dir, root, guider, wcs_hdr=None, fgsout_path=None):
     """Writes an array of FGS data to the appropriate file:
     {out_dir}/out/{root}/FGS_imgs/{root}_G{guider}.fits
 
@@ -1203,6 +1205,9 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
         Name used to create the output directory, {out_dir}/out/{root}
     guider : int
         Guider number (1 or 2)
+    wcs_hdr : FITS header object, optional
+        Header information from original input image that contains
+        WCS information (usually the header from ext=1)
     fgsout_path : str, optional
         Alternate directory in which to save the FGS files. If not
         provided, the FGS images will be saved to
@@ -1226,7 +1231,20 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
     hdr = fits.getheader(header_file, ext=0)
 
+    # Add distortion information to header
+    hdr['DISTORT'] = 'False'
+
+    header_list = [hdr]
+    data_list = [None, data]
+
+    # Add WCS information to header
+    if wcs_hdr is not None:
+        header_list.append(wcs_hdr)
+    else:
+        # If there's no WCS information, the main header will still be in the primary
+        header_list.append(None)
+
     # Write FITS file
-    utils.write_fits(fgsout_file, data, header=hdr, log=LOGGER)
+    utils.write_multiext_fits(fgsout_file, data_list, header_list=header_list, log=LOGGER)
 
     return fgsout_path

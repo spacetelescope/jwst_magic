@@ -1131,7 +1131,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                         "Segment Guiding: Couldn't find center of pointing file {}. "
                         "Assuming the center of pointing is the mean of all segments (center_of_pointing = 0) and "
                         "writing out the file.".format(center_pointing_file, root, guider))
-                    cp_list == [0] * len(selected_segs_list)
+                    cp_list = [0] * len(selected_segs_list)
 
                 if len(cp_list) == 1:
                     # For the unshifted case where only 1 file is used for all data
