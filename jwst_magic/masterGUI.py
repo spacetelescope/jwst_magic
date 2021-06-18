@@ -1403,7 +1403,7 @@ class MasterGui(QMainWindow):
             self.comboBox_showcommandsconverted.setEnabled(True)
 
             # Load data
-            data, _ = utils.get_data_and_header(self.converted_im_file)
+            data, hdr = utils.get_data_and_header(self.converted_im_file)
             data[data <= 0] = 1
 
             # Load all_found_psfs*.text
@@ -1415,6 +1415,13 @@ class MasterGui(QMainWindow):
 
             # Plot data image and peak locations from all_found_psfs*.txt
             self.canvas_converted.compute_initial_figure(self.canvas_converted.fig, data, x, y)
+
+            # Check for distortion keyword and add banner
+            if 'DISTORT' not in hdr.keys():
+                self.canvas_converted.axes.text(400., 100.,
+                                                'File loaded is incorrectly distorted.',
+                                                fontsize=11,
+                                                bbox={'facecolor': 'lightcoral', 'pad': 7})
 
             # If possible, plot the selected stars in the guiding_selections*.txt
             if self.comboBox_showcommandsconverted.currentIndex() != 0:
@@ -1509,7 +1516,7 @@ class MasterGui(QMainWindow):
             self.textEdit_showingShifted.setText(self.shifted_im_file_list[i])
 
             # Load data
-            data, _ = utils.get_data_and_header(self.shifted_im_file_list[i])
+            data, hdr = utils.get_data_and_header(self.shifted_im_file_list[i])
             data[data <= 0] = 1
 
             # Load all_found_psfs*.text
@@ -1521,6 +1528,13 @@ class MasterGui(QMainWindow):
 
             # Plot data image and peak locations from all_found_psfs*.txt
             self.canvas_shifted.compute_initial_figure(self.canvas_shifted.fig, data, x, y)
+
+            # Check for distortion keyword and add banner
+            if 'DISTORT' not in hdr.keys():
+                self.canvas_shifted.axes.text(400., 100.,
+                                              'File loaded is incorrectly distorted.',
+                                              fontsize=11,
+                                              bbox={'facecolor': 'lightcoral', 'pad': 7})
 
             # If possible, plot the selected stars in the guiding_selections*.txt
             shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[i]
