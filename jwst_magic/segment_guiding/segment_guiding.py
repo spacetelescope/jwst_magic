@@ -256,7 +256,6 @@ class SegmentGuidingCalculator:
             pixcoord_list = list(zip(self.x_seg_array[i], self.y_seg_array[i]))
             radec_list = w.wcs_pix2world(pixcoord_list, 0)
             ra_segs, dec_segs = radec_list.T[0], radec_list.T[1]
-            print(ra_segs, dec_segs)
 
             # Convert from raw to ideal frame
             x_idl_segs, y_idl_segs = coordinate_transforms.Raw2Idl(self.x_seg_array[i], self.y_seg_array[i],
@@ -1044,107 +1043,102 @@ def generate_segment_override_file(segment_infile_list, guider,
     if log is None:
         log = logging.getLogger(__name__)
 
-    try:
-        # Get the guide star parameters
-        if parameter_dialog:
-            if dialog_obj is None:
-                dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
-                    "SOF", guider, program_id, observation_num, visit_num, ra, dec, log=log
-                )
-            accepted = dialog_obj.exec()
-            params = dialog_obj.get_dialog_parameters() if accepted else None
+    # Get the guide star parameters
+    if parameter_dialog:
+        if dialog_obj is None:
+            dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
+                "SOF", guider, program_id, observation_num, visit_num, ra, dec, log=log
+            )
+        accepted = dialog_obj.exec()
+        params = dialog_obj.get_dialog_parameters() if accepted else None
 
-            if params is not None:
-                guide_star_params_dict, program_id, observation_num, visit_num, \
-                    threshold_factor, _, _ = params
+        if params is not None:
+            guide_star_params_dict, program_id, observation_num, visit_num, \
+                threshold_factor, _, _ = params
 
-                if center_pointing_list is None:
-                    center_pointing_list = [os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))]
+            if center_pointing_list is None:
+                center_pointing_list = [os.path.join(out_dir, 'center_pointing_{}_G{}.txt'.format(root, guider))]
 
-                cp_list = []
-                # Will have multiple files for shifted case, 1 file for unshifted case
-                for center_pointing_file in center_pointing_list:
-                    if os.path.exists(center_pointing_file):
-                        log.info(
-                            'Segment Guiding: Pulling center of pointing information from {}'.format(center_pointing_file))
-                        in_table = asc.read(center_pointing_file, format='commented_header', delimiter=',')
-                        col = 'center_of_pointing' if 'center_of_pointing' in in_table.colnames else 'segnum'
-                        try:
-                            cp_list.append(int(in_table[col][0]))
-                        except ValueError:
-                            cp_list.append([float(i) for i in in_table[col][0].split(' ')])
-                    else:
-                        log.warning(
-                            "Segment Guiding: Couldn't find center of pointing file {}. Assuming the center of pointing "
-                            "is the mean of all segments (center_of_pointing = 0)".format(center_pointing_file))
-                if len(cp_list) == 0:
-                    # If none of the paths passed are valid
-                    utils.write_cols_to_file(center_pointing_file, labels=['center_of_pointing'], cols=[0], log=log)
+            cp_list = []
+            # Will have multiple files for shifted case, 1 file for unshifted case
+            for center_pointing_file in center_pointing_list:
+                if os.path.exists(center_pointing_file):
+                    log.info(
+                        'Segment Guiding: Pulling center of pointing information from {}'.format(center_pointing_file))
+                    in_table = asc.read(center_pointing_file, format='commented_header', delimiter=',')
+                    col = 'center_of_pointing' if 'center_of_pointing' in in_table.colnames else 'segnum'
+                    try:
+                        cp_list.append(int(in_table[col][0]))
+                    except ValueError:
+                        cp_list.append([float(i) for i in in_table[col][0].split(' ')])
+                else:
                     log.warning(
-                        "Segment Guiding: Couldn't find center of pointing file {}. "
-                        "Assuming the center of pointing is the mean of all segments (center_of_pointing = 0) and "
-                        "writing out the file.".format(center_pointing_file, root, guider))
-                    cp_list = [0] * len(selected_segs_list)
+                        "Segment Guiding: Couldn't find center of pointing file {}. Assuming the center of pointing "
+                        "is the mean of all segments (center_of_pointing = 0)".format(center_pointing_file))
+            if len(cp_list) == 0:
+                # If none of the paths passed are valid
+                utils.write_cols_to_file(center_pointing_file, labels=['center_of_pointing'], cols=[0], log=log)
+                log.warning(
+                    "Segment Guiding: Couldn't find center of pointing file {}. "
+                    "Assuming the center of pointing is the mean of all segments (center_of_pointing = 0) and "
+                    "writing out the file.".format(center_pointing_file, root, guider))
+                cp_list = [0] * len(selected_segs_list)
 
-                if len(cp_list) == 1:
-                    # For the unshifted case where only 1 file is used for all data
-                    cp_list *= len(selected_segs_list)
+            if len(cp_list) == 1:
+                # For the unshifted case where only 1 file is used for all data
+                cp_list *= len(selected_segs_list)
 
-                guide_star_params_dict['center_of_pointing'] = cp_list
+            guide_star_params_dict['center_of_pointing'] = cp_list
 
-            else:
-                log.warning('Segment Guiding: SOF creation cancelled.')
-                return
+        else:
+            log.warning('Segment Guiding: SOF creation cancelled.')
+            return
 
-        elif guide_star_params_dict is None:
-            raise ValueError(
-                'In order to run the segment guiding tool with '
-                '`parameter_dialog=False`, you must provide a dictionary '
-                'of guide star parameters to the `guide_star_params_dict` '
-                'argument in `segment_guiding.generate_segment_override_file()`.'
-            )
-
-        # Check if there is an existing file with the same prog/obs/visit
-        if not JENKINS:
-            overwrite_existing_file = SegmentGuidingGUI.check_override_overwrite(
-                out_dir, program_id, observation_num, visit_num, logger=log
-            )
-            if overwrite_existing_file:
-                return
-
-        # Determine which segments are the guide and reference segments
-        if selected_segs_list is None:
-            raise ValueError(
-                'In order to run the segment guiding tool, you must '
-                'provide a list of files specifying the locations and count rates '
-                'of the guide and reference stars as the `selected_segs_list` '
-                'argument in `segment_guiding.generate_segment_override_file()`.'
-            )
-
-        # Set up guiding calculator object
-        sg = SegmentGuidingCalculator(
-            "SOF", program_id, observation_num, visit_num, root, out_dir,
-            segment_infile_list=segment_infile_list,
-            guide_star_params_dict=guide_star_params_dict,
-            selected_segs_list=selected_segs_list, threshold_factor=threshold_factor,
-            log=log
+    elif guide_star_params_dict is None:
+        raise ValueError(
+            'In order to run the segment guiding tool with '
+            '`parameter_dialog=False`, you must provide a dictionary '
+            'of guide star parameters to the `guide_star_params_dict` '
+            'argument in `segment_guiding.generate_segment_override_file()`.'
         )
-        # Verify all guidestar parameters are valid
-        sg.check_guidestar_params("SOF")
 
-        # Determine the x,y of the pointing center
-        sg.get_center_pointing()
+    # Check if there is an existing file with the same prog/obs/visit
+    if not JENKINS:
+        overwrite_existing_file = SegmentGuidingGUI.check_override_overwrite(
+            out_dir, program_id, observation_num, visit_num, logger=log
+        )
+        if overwrite_existing_file:
+            return
 
-        # Write a SOF
-        sg.calculate_effective_ra_dec()
-        sg.write_override_file()  # Print and save final output
+    # Determine which segments are the guide and reference segments
+    if selected_segs_list is None:
+        raise ValueError(
+            'In order to run the segment guiding tool, you must '
+            'provide a list of files specifying the locations and count rates '
+            'of the guide and reference stars as the `selected_segs_list` '
+            'argument in `segment_guiding.generate_segment_override_file()`.'
+        )
 
-        if not JENKINS:
-            sg.plot_segments()  # Save .pngs of plots
+    # Set up guiding calculator object
+    sg = SegmentGuidingCalculator(
+        "SOF", program_id, observation_num, visit_num, root, out_dir,
+        segment_infile_list=segment_infile_list,
+        guide_star_params_dict=guide_star_params_dict,
+        selected_segs_list=selected_segs_list, threshold_factor=threshold_factor,
+        log=log
+    )
+    # Verify all guidestar parameters are valid
+    sg.check_guidestar_params("SOF")
 
-    except Exception as e:
-        log.exception(e)
-        raise
+    # Determine the x,y of the pointing center
+    sg.get_center_pointing()
+
+    # Write a SOF
+    sg.calculate_effective_ra_dec()
+    sg.write_override_file()  # Print and save final output
+
+    if not JENKINS:
+        sg.plot_segments()  # Save .pngs of plots
 
 
 def generate_photometry_override_file(root, program_id, observation_num, visit_num,
@@ -1189,44 +1183,39 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         log = logging.getLogger(__name__)
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
 
-    try:
-        # Get the program parameters and countrate factor
-        if parameter_dialog:
-            if dialog_obj is None:
-                dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
-                    "POF", None, program_id, observation_num, visit_num, log=log
-                )
-            accepted = dialog_obj.exec()
-            params = dialog_obj.get_dialog_parameters() if accepted else None
-
-            _, program_id, observation_num, visit_num, _, countrate_factor, countrate_uncertainty_factor = params
-
-        elif countrate_factor is None:
-            raise ValueError(
-                'In order to run the segment guiding tool with '
-                '`parameter_dialog=False`, you must provide a countrate factor '
-                'between 0.0 and 1.0 to the `countrate_factor` argument in '
-                '`segment_guiding.generate_photometry_override_file()`.'
+    # Get the program parameters and countrate factor
+    if parameter_dialog:
+        if dialog_obj is None:
+            dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
+                "POF", None, program_id, observation_num, visit_num, log=log
             )
-        elif countrate_uncertainty_factor is None:
-            raise ValueError(
-                'In order to run the segment guiding tool with '
-                '`parameter_dialog=False`, you must provide a countrate factor '
-                'between 0.01 (inclusive) and 1.0 to the `countrate_uncertainty_factor` argument in '
-                '`segment_guiding.generate_photometry_override_file()`.'
-            )
+        accepted = dialog_obj.exec()
+        params = dialog_obj.get_dialog_parameters() if accepted else None
 
-        # Set up guiding calculator object
-        sg = SegmentGuidingCalculator(
-            "POF", program_id, observation_num, visit_num, root, out_dir,
-            countrate_factor=countrate_factor, countrate_uncertainty_factor=countrate_uncertainty_factor, log=log
+        _, program_id, observation_num, visit_num, _, countrate_factor, countrate_uncertainty_factor = params
+
+    elif countrate_factor is None:
+        raise ValueError(
+            'In order to run the segment guiding tool with '
+            '`parameter_dialog=False`, you must provide a countrate factor '
+            'between 0.0 and 1.0 to the `countrate_factor` argument in '
+            '`segment_guiding.generate_photometry_override_file()`.'
         )
-        # Verify all guidestar parameters are valid
-        sg.check_guidestar_params("POF")
+    elif countrate_uncertainty_factor is None:
+        raise ValueError(
+            'In order to run the segment guiding tool with '
+            '`parameter_dialog=False`, you must provide a countrate factor '
+            'between 0.01 (inclusive) and 1.0 to the `countrate_uncertainty_factor` argument in '
+            '`segment_guiding.generate_photometry_override_file()`.'
+        )
 
-        # Write the POF
-        sg.write_override_file()
+    # Set up guiding calculator object
+    sg = SegmentGuidingCalculator(
+        "POF", program_id, observation_num, visit_num, root, out_dir,
+        countrate_factor=countrate_factor, countrate_uncertainty_factor=countrate_uncertainty_factor, log=log
+    )
+    # Verify all guidestar parameters are valid
+    sg.check_guidestar_params("POF")
 
-    except Exception as e:
-        log.exception(e)
-        raise
+    # Write the POF
+    sg.write_override_file()
