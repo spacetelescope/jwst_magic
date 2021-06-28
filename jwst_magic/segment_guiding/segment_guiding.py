@@ -253,18 +253,21 @@ class SegmentGuidingCalculator:
             w.wcs.pc = [[-np.cos(theta), -np.sin(theta)],[-np.sin(theta), np.cos(theta)]] # [pc1_1, pc1_2],[pc2_1, pc2_2]
 
             # Calculate list of effective ra and decs for each segment
-            pixcoord_list = zip(x_seg_array, y_seg_array)
+            pixcoord_list = list(zip(self.x_seg_array[i], self.y_seg_array[i]))
             radec_list = w.wcs_pix2world(pixcoord_list, 0)
+            ra_segs, dec_segs = radec_list.T[0], radec_list.T[1]
+            print(ra_segs, dec_segs)
 
             # Convert from raw to ideal frame
-            x_idl_segs, y_idl_segs = coordinate_transforms.Raw2Idl(x_seg_array, y_seg_array)
+            x_idl_segs, y_idl_segs = coordinate_transforms.Raw2Idl(self.x_seg_array[i], self.y_seg_array[i],
+                                                                   self.fgs_num)
 
             # Check to make sure all the computed segment locations are within the needed FOV
-            self.check_segments_inside_fov(seg_ra, seg_dec, self.x_seg_n[i], self.y_seg_n[i])
+            self.check_segments_inside_fov(ra_segs, dec_segs, self.x_seg_n[i], self.y_seg_n[i])
 
             self.n_segments.append(len(seg_id_array))
-            self.seg_ra.append(radec_list.T[0])
-            self.seg_dec.append(radec_list.T[1])
+            self.seg_ra.append(ra_segs)
+            self.seg_dec.append(dec_segs)
             self.x_idl_segs.append(x_idl_segs)
             self.y_idl_segs.append(y_idl_segs)
 
