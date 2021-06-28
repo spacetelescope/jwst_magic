@@ -224,6 +224,7 @@ class SegmentGuidingCalculator:
         self.fgs_siaf_aperture = FGS_SIAF[det]
         self.v2_ref = float(self.fgs_siaf_aperture.V2Ref) # TODO - can probably delete (and delete where it's used)
         self.v3_ref = float(self.fgs_siaf_aperture.V3Ref) # TODO - can probably delete (and delete where it's used)
+        self.v3_idl_yangle = self.fgs_siaf_aperture.V3IdlYAngle
         self.fgs_x_scale = float(self.fgs_siaf_aperture.XSciScale)  # arcsec/pixel
         self.fgs_y_scale = float(self.fgs_siaf_aperture.YSciScale)  # arcsec/pixel
 
@@ -244,11 +245,12 @@ class SegmentGuidingCalculator:
             # Create WCS object
             w = wcs.WCS(naxis=2)
             w.wcs.crpix = [x_center_pointing, y_center_pointing] # center of pointing with boresight offset
+            w.wcs.cdelt = [0.069/3600, 0.069/3600]  # using 0.069 to match what we used in convert_image
             w.wcs.crval = [self.ra, self.dec] # ra and dec of the guide star
-            w.wcs.ctype = ["RA—TAN", "DEC—TAN"]
+            w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
             w.wcs.cunit = ['deg', 'deg']
-            w.wcs.cdelt = [0.5, 0.5]  # TODO TBD on these values
-            w.wcs.set_pv([(2, 1, 45.0)])  # TODO TBD on these values
+            theta = 360. - self.pa - self.v3_idl_yangle
+            w.wcs.pc = [[-np.cos(theta), -np.sin(theta)],[-np.sin(theta), np.cos(theta)]] # [pc1_1, pc1_2],[pc2_1, pc2_2]
 
             # Calculate list of effective ra and decs for each segment
             pixcoord_list = zip(self.x_seg_array[i], self.y_seg_array[i])
