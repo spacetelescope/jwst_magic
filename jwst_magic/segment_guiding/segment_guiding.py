@@ -744,7 +744,7 @@ class SegmentGuidingCalculator:
             Filepath to guiding_selections*.txt
         num_file : int
             The index of the guiding_selections*.txt file in the input list.
-            Used to match PSFs in selections file to v2_seg_array and v3_seg_array
+            Used to match PSFs in selections file to x_seg_array and y_seg_array
             which were read in from the all_found_psfs file
 
         Raises
@@ -764,36 +764,23 @@ class SegmentGuidingCalculator:
         except:
             raise TypeError('Incompatible guiding_selections*.txt type: ', selected_segs)
 
-        # Are the segment positions already in V2/V3?
-        if (any(['V2Seg' == c for c in column_names])) and \
-           (any(['V3Seg' == c for c in column_names])):
-            selected_segment_coords = read_selected_segs
-
-        # If not, convert pixel x/y to V2/V3
-        elif (any(['x' == c for c in column_names])) and \
-             (any(['y' == c for c in column_names])):
-            selected_segment_coords = Table()
-            v2, v3 = coordinate_transforms.Raw2Tel(read_selected_segs['x'],
-                                                   read_selected_segs['y'],
-                                                   self.fgs_num)
-            selected_segment_coords['V2Seg'], selected_segment_coords['V3Seg'] = v2, v3
-
-        # If the positions aren't V2/V3 or x/y, what are they??
+        # Are the segment positions already in x,y?
+        if (any(['x' == c for c in column_names])) and (any(['y' == c for c in column_names])):
+            # Match locations of selected segments to IDs of known segments
+            selected_segs_ids = []
+            for coords in zip(read_selected_segs['x'], read_selected_segs['y']):
+                for i_seg in range(n_segs):
+                    if coords[0] == self.x_seg_array[num_file][i_seg] and \
+                            coords[1] == self.y_seg_array[num_file][i_seg]:
+                        selected_segs_ids.append(i_seg)
+            if len(selected_segs_ids) == 0:
+                raise TypeError(
+                    'Coordinates of selected segments file do not match those of '
+                    'the provided input file.'
+                )
+        # If the positions aren't x/y, what are they??
         else:
             raise TypeError('Incompatible guiding_selections*.txt type: ', selected_segs)
-
-        # Match locations of selected segments to IDs of known segments
-        selected_segs_ids = []
-        for coords in zip(selected_segment_coords['V2Seg', 'V3Seg']):
-            for i_seg in range(n_segs):
-                if coords[0]['V2Seg'] == self.v2_seg_array[num_file][i_seg] and \
-                   coords[0]['V3Seg'] == self.v3_seg_array[num_file][i_seg]:
-                    selected_segs_ids.append(i_seg)
-        if len(selected_segs_ids) == 0:
-            raise TypeError(
-                'Coordinates of selected segments file do not match those of '
-                'the provided input file.'
-            )
 
         return selected_segs_ids
 
@@ -811,7 +798,7 @@ class SegmentGuidingCalculator:
             plt.title('Segments')
             plt.xlabel('Raw X (undistorted)')
             plt.ylabel('Raw Y (undistorted)')
-            for s in range(len(v2_seg_array)):
+            for s in range(len(x_seg_array)):
                 plt.text(x_seg_array[s], y_seg_array[s], seg_id_array[s])
             plt.savefig(os.path.join(self.out_dir, self.root + '_XYsegments_config{}.png'.format(j+1)))
 
@@ -822,7 +809,7 @@ class SegmentGuidingCalculator:
             ra_mean = seg_ra.mean()
             dec_mean = seg_dec.mean()
             plt.plot(ra_mean, dec_mean, 'ro')
-            for i in range(len(v2_seg_array)):
+            for i in range(len(x_seg_array)):
                 plt.text(seg_ra[i], seg_dec[i], str(i + 1))
             plt.grid(True)
             plt.title('Segment RA and Dec')
