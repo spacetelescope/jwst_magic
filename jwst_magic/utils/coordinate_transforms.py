@@ -86,7 +86,7 @@ def Raw2Idl(x_raw, y_raw, guider):
     x_sci, y_sci = fgs_full.raw_to_sci(x_raw, y_raw)
 
     # Shift to the IDL origin location
-    x_idl_pix = x_sci - fgs_full.XSciRef  # TODO TBD ON IF USING THIS VALUE IS OKAY
+    x_idl_pix = x_sci - fgs_full.XSciRef
     y_idl_pix = y_sci - fgs_full.YSciRef
 
     # Convert from IDL pixels to idl arcseconds

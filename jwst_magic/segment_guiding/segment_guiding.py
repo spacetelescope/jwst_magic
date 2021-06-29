@@ -51,6 +51,7 @@ from astropy import wcs
 from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from astropy.table import Table
+from jwst.assign_wcs.util import calc_rotation_matrix
 import matplotlib
 JENKINS = '/home/developer/workspace/' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
@@ -225,6 +226,7 @@ class SegmentGuidingCalculator:
         self.v2_ref = float(self.fgs_siaf_aperture.V2Ref)
         self.v3_ref = float(self.fgs_siaf_aperture.V3Ref)
         self.v3_idl_yangle = self.fgs_siaf_aperture.V3IdlYAngle
+        self.v_idl_parity = self.fgs_siaf_aperture.VIdlParity
         self.fgs_x_scale = float(self.fgs_siaf_aperture.XSciScale)  # arcsec/pixel
         self.fgs_y_scale = float(self.fgs_siaf_aperture.YSciScale)  # arcsec/pixel
 
@@ -249,8 +251,10 @@ class SegmentGuidingCalculator:
             w.wcs.crval = [self.ra, self.dec] # ra and dec of the guide star
             w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
             w.wcs.cunit = ['deg', 'deg']
-            theta = 360. - self.pa - self.v3_idl_yangle
-            w.wcs.pc = [[-np.cos(theta), -np.sin(theta)],[-np.sin(theta), np.cos(theta)]] # [pc1_1, pc1_2],[pc2_1, pc2_2]
+            pc1_1, pc1_2, pc2_1, pc2_2 = calc_rotation_matrix(np.radians(self.pa), np.radians(self.v3_idl_yangle),
+                                                              self.v_idl_parity)
+            w.wcs.pc = [[pc1_1, pc1_2],[pc2_1, pc2_2]]
+
 
             # Calculate list of effective ra and decs for each segment
             pixcoord_list = list(zip(self.x_seg_array[i], self.y_seg_array[i]))
