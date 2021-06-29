@@ -406,32 +406,34 @@ class SegmentGuidingCalculator:
 
             if self.override_type == "SOF":
                 # Determine which segments have been selected
-                orientations = list(self.selected_segment_ids_flat)
+                orientations = list(self.unique_selected_segment_ids)  # use these numbers to pull the data
+                file_orientations = list(self.selected_file_ids)  # use these numbers to label the data
                 guide_segments = [s[0] for s in orientations]
-                all_selected_segs = list(set(np.concatenate(orientations)))
+                all_selected_segs = list(dict.fromkeys(np.concatenate(orientations))) # make a set but preseve order
+                all_selected_segs_file_id = list(dict.fromkeys(np.concatenate(file_orientations)))
 
                 if self._refonly:
                     n_guide_segments = len(guide_segments)
 
                 for i in range(len(all_selected_segs)):
-                    # Reorder all possible segments
-                    all_selected_segs.append(all_selected_segs[0])
-                    all_selected_segs.remove(all_selected_segs[0])
-                    new_seg = list(np.copy(all_selected_segs))
+                    new_seg = [all_selected_segs[i]]
+                    new_seg_file_id = [all_selected_segs_file_id[i]]
 
                     # Add to orientation list if not already provided as guide star
                     if new_seg[0] not in guide_segments:
                         orientations.append(new_seg)
-                        guide_segments.append(new_seg[0])
+                        file_orientations.append(new_seg_file_id)
 
                 # If countrates were included in the input file, use them!
-                # Note: This used to be where the oss factor was divided out, but that is now removed
                 rate = self.countrate_array_flat
                 uncertainty = np.array(self.countrate_array_flat) * self.threshold_factor
 
                 # Write the commands for each orientation
-                for i_o, orientation in enumerate(orientations):
+                for i_o, (orientation, file_ids) in enumerate(zip(orientations, file_orientations)):
+                    print(orientation)
                     guide_seg_id = orientation[0]
+                    guide_star_file_id = file_ids[0]
+                    print(guide_seg_id, guide_star_file_id)
 
                     label = 'star'
                     seg = i_o + 1
@@ -444,15 +446,15 @@ class SegmentGuidingCalculator:
 
                     # Format segment properties (ID, RA, Dec, countrate, uncertainty)
                     star_string = ' -%s%d = %d, %.6f, %.6f, %.1f, %.1f' % (
-                        label, seg, guide_seg_id + 1, self.seg_ra_flat[guide_seg_id],
+                        label, seg, guide_star_file_id, self.seg_ra_flat[guide_seg_id],
                         self.seg_dec_flat[guide_seg_id], rate[guide_seg_id],
                         uncertainty[guide_seg_id])
 
                     if not self._refonly or (self._refonly and label == 'star'):
                         # Add list of segment IDs for all reference stars
-                        for ref_seg_id in orientation:
-                            if ref_seg_id != guide_seg_id:
-                                star_string += ', %d' % (ref_seg_id + 1)
+                        for ref_seg_file_id in file_ids:
+                            if ref_seg_file_id != guide_star_file_id:
+                                star_string += ', %d' % (ref_seg_file_id)
 
                     out_string += star_string
 
