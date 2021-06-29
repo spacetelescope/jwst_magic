@@ -262,7 +262,8 @@ class SegmentGuidingCalculator:
             ra_segs, dec_segs = radec_list.T[0], radec_list.T[1]
 
             # Convert from raw to ideal frame
-            x_idl_segs, y_idl_segs = coordinate_transforms.Raw2Idl(self.x_seg_array[i], self.y_seg_array[i],
+            x_idl_segs, y_idl_segs = coordinate_transforms.Raw2Idl(np.array(self.x_seg_array[i]),
+                                                                   np.array(self.y_seg_array[i]),
                                                                    self.fgs_num)
 
             # Check to make sure all the computed segment locations are within the needed FOV
@@ -313,31 +314,38 @@ class SegmentGuidingCalculator:
 
             # Flatten data into 1 list of all PSFs
             self.n_segments_flat = sum(self.n_segments)
-            self.seg_id_array_flat = np.arange(len([x for n in self.seg_id_array for x in n.tolist()])) + 1  # Re-do numbering so all have unique numbers
+            self.seg_id_array_flat = np.arange(len([x for n in self.seg_id_array for x in n.tolist()])) + 1  # Re-do numbering so all have unique numbers (flat)
             self.x_segs_flat = [x for n in self.x_seg_array for x in n.tolist()] # raw values
             self.y_segs_flat = [x for n in self.y_seg_array for x in n.tolist()]
-            self.x_idl_segs_flat = [x for n in self.x_idl_segs for x in n.tolist()] # idl values
-            self.y_idl_segs_flat = [x for n in self.y_idl_segs for x in n.tolist()]
+            self.x_idl_segs_flat = np.array(self.x_idl_segs).flatten() # idl values
+            self.y_idl_segs_flat = np.array(self.y_idl_segs).flatten()
             self.seg_ra_flat = np.array(self.seg_ra).flatten() # RA values
             self.seg_dec_flat = np.array(self.seg_dec).flatten() # Dec values
             self.countrate_array_flat = [x for n in self.countrate_array for x in n.tolist()] # count rate values
 
-            # TODO CURRENTLY FIGURING OUT WHAT THIS CODE DOES AND IF IT STILL WORKS
-            # Replace number if ra and dec pair match another pair in the list
-            for radec in zip(self.seg_ra_flat, self.seg_dec_flat):
-                if list(zip(self.seg_ra_flat, self.seg_dec_flat)).count(radec) > 1:
-                    inds = [i for i, x in enumerate(list(zip(self.seg_ra_flat, self.seg_dec_flat))) if x == radec]
-                    for i in inds[1:]:
-                        self.seg_id_array_flat[i] = int(self.seg_id_array_flat[inds[0]])
 
-            # Re-match numbering in self.selected_segment_ids
-            self.selected_segment_ids_flat = []
+            # Pull the selected guide stars and if any match, point them to the same ID in self.new_seg_id_array
+            self.new_seg_id_array = [sublist + len(sublist) * i for i, sublist in enumerate(self.seg_id_array)] # sub-arrays with no-repeat numbering
+            guide_stars = [s[0] for s in self.selected_segment_ids]
+            for i, gs in enumerate(guide_stars):
+                # If the guide star appears more than once and this is the first time
+                if guide_stars.count(gs) > 1 and guide_stars.index(gs) >= i:
+                    inds = [i for i, x in enumerate(guide_stars) if x == gs]
+                    for i in inds[1:]:
+                        self.new_seg_id_array[i] = self.new_seg_id_array[inds[0]]
+
+            self.new_seg_id_array_flat = np.array(self.new_seg_id_array).flatten()
+
+            # Re-match numbering in self.selected_segment_ids to get unique IDs for all segments
+            self.unique_selected_segment_ids = []
             for i, config in enumerate(self.selected_segment_ids):
                 new_config = []
                 for psf_ind in config:
                     shift = sum(self.n_segments[:i])
-                    new_config.append(self.seg_id_array_flat[shift + psf_ind] - 1)
-                self.selected_segment_ids_flat.append(new_config)
+                    new_config.append(self.new_seg_id_array_flat[shift + psf_ind] - 1)
+                self.unique_selected_segment_ids.append(new_config)
+
+            self.unique_selected_segment_ids_flat = np.array(self.unique_selected_segment_ids).flatten()
 
             #  Print summary of input data (guide star RA, Dec, and PA, etc...)
             if verbose:
