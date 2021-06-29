@@ -123,7 +123,7 @@ class BuildFGSSteps(object):
             self.build_fgs_steps(guiding_selections_file, configfile, psf_center_file)
 
         except Exception as e:
-            LOGGER.exception(e)
+            LOGGER.exception(f'{repr(e)}: {e}')
             raise
 
     def build_fgs_steps(self, guiding_selections_file, configfile, psf_center_file=None):
