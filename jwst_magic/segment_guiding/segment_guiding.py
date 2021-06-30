@@ -244,6 +244,10 @@ class SegmentGuidingCalculator:
             x_center_pointing = self.x_seg_n[i] + (self.v2_boff / self.fgs_x_scale)
             y_center_pointing = self.y_seg_n[i] + (self.v3_boff / self.fgs_y_scale)
 
+            # Convert all coords we'll be using with the WCS into SCI frame
+            x_center_pointing, y_center_pointing = coordinate_transforms.Raw2Sci(x_center_pointing, y_center_pointing, self.fgs_num)
+            x_seg_array_sci, y_seg_array_sci = coordinate_transforms.Raw2Sci(self.x_seg_array[i], self.y_seg_array[i], self.fgs_num)
+
             # Create WCS object
             w = wcs.WCS(naxis=2)
             w.wcs.crpix = [x_center_pointing, y_center_pointing] # center of pointing with boresight offset
@@ -257,7 +261,7 @@ class SegmentGuidingCalculator:
 
 
             # Calculate list of effective ra and decs for each segment
-            pixcoord_list = list(zip(self.x_seg_array[i], self.y_seg_array[i]))
+            pixcoord_list = list(zip(x_seg_array_sci, y_seg_array_sci))
             radec_list = w.wcs_pix2world(pixcoord_list, 0)
             ra_segs, dec_segs = radec_list.T[0], radec_list.T[1]
 
