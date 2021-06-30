@@ -479,7 +479,7 @@ class SegmentGuidingCalculator:
                     out_string += star_string
 
                 # Write out the override report
-                self.write_override_report(out_file, orientations, n_guide_segments, obs_list_name)
+                self.write_override_report(out_file, orientations, file_orientations, n_guide_segments, obs_list_name)
 
             f.write(out_string)
 
@@ -491,7 +491,7 @@ class SegmentGuidingCalculator:
                             format(out_file))
 
 
-    def write_override_report(self, filename, orientations, n_guide_segments, obs_list_name):
+    def write_override_report(self, filename, orientations, file_orientations, n_guide_segments, obs_list_name):
         """Write a report.txt file to supplement the override file.
         """
         # Define path and name of output override report
@@ -513,14 +513,15 @@ class SegmentGuidingCalculator:
             f.write('{:14s}: {:f}'.format('Guide Star Dec', self.dec) + '\n')
             f.write('{:14s}: {:f}'.format('V3 PA @ GS', self.pa) + '\n')
             f.write('\n')
-            columns = 'Star Name, MAGIC ID, RA, Dec, Ideal X, Ideal Y, OSS Ideal X, OSS Ideal Y, Raw X, Raw Y'.split(', ')
+            columns = 'Star Name, File ID, MAGIC ID, RA, Dec, Ideal X, Ideal Y, OSS Ideal X, OSS Ideal Y, Raw X, Raw Y'.split(', ')
             header_string_to_format = '{:^13s}| '* len(columns)
             header_string = header_string_to_format[:-2].format(*columns) + '\n'
             f.write(header_string)
             f.write('-'*len(header_string) + '\n')
 
-            for i_o, orientation in enumerate(orientations):
+            for i_o, (orientation, file_ids) in enumerate(zip(orientations, file_orientations)):
                 guide_seg_id = orientation[0]
+                guide_star_file_id = file_ids[0]
 
                 label = 'star'
                 seg = i_o + 1
@@ -529,13 +530,13 @@ class SegmentGuidingCalculator:
                         label = 'ref_only'
                         seg = i_o + 1 - n_guide_segments
 
-                values = [label + str(seg), int(guide_seg_id + 1),
+                values = [label + str(seg), int(guide_star_file_id), int(guide_seg_id + 1),
                           self.seg_ra_flat[guide_seg_id], self.seg_dec_flat[guide_seg_id],
                           self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
                           -self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
                           self.x_segs_flat[guide_seg_id], self.y_segs_flat[guide_seg_id]]
 
-                row_string_to_format = '{:<13s}| ' + '{:<13d}| ' +  '{:<13f}| '* (len(values) - 2)
+                row_string_to_format = '{:<13s}| ' + '{:<13d}| '* 2 +  '{:<13f}| '* (len(values) - 3)
                 row_string = row_string_to_format[:-2].format(*values) + '\n'
                 f.write(row_string)
 
