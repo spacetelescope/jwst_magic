@@ -317,10 +317,10 @@ class SegmentGuidingCalculator:
             self.seg_id_array_flat = np.arange(len([x for n in self.seg_id_array for x in n.tolist()])) + 1  # Re-do numbering so all have unique numbers (flat)
             self.x_segs_flat = [x for n in self.x_seg_array for x in n.tolist()] # raw values
             self.y_segs_flat = [x for n in self.y_seg_array for x in n.tolist()]
-            self.x_idl_segs_flat = np.array(self.x_idl_segs).flatten() # idl values
-            self.y_idl_segs_flat = np.array(self.y_idl_segs).flatten()
-            self.seg_ra_flat = np.array(self.seg_ra).flatten() # RA values
-            self.seg_dec_flat = np.array(self.seg_dec).flatten() # Dec values
+            self.x_idl_segs_flat = np.concatenate(self.x_idl_segs) # idl values
+            self.y_idl_segs_flat = np.concatenate(self.y_idl_segs)
+            self.seg_ra_flat = np.concatenate(self.seg_ra) # RA values
+            self.seg_dec_flat = np.concatenate(self.seg_dec) # Dec values
             self.countrate_array_flat = [x for n in self.countrate_array for x in n.tolist()] # count rate values
 
 
@@ -333,8 +333,7 @@ class SegmentGuidingCalculator:
                     inds = [i for i, x in enumerate(guide_stars) if x == gs]
                     for i in inds[1:]:
                         self.new_seg_id_array[i] = self.new_seg_id_array[inds[0]]
-
-            self.new_seg_id_array_flat = np.array(self.new_seg_id_array).flatten()
+            self.new_seg_id_array_flat = np.concatenate(self.new_seg_id_array)
 
             # Re-match numbering in self.selected_segment_ids to get unique IDs for all segments
             self.unique_selected_segment_ids = []
@@ -345,7 +344,30 @@ class SegmentGuidingCalculator:
                     new_config.append(self.new_seg_id_array_flat[shift + psf_ind] - 1)
                 self.unique_selected_segment_ids.append(new_config)
 
-            self.unique_selected_segment_ids_flat = np.array(self.unique_selected_segment_ids).flatten()
+            # Create the set of IDs to be written out to the override file (must be 1-18)
+            magic_to_file_ids_dict = {}
+            self.selected_file_ids = []
+            ind = 1
+            for i, config in enumerate(self.unique_selected_segment_ids):
+                sublist = []
+                for j, val in enumerate(config):
+                    # If the value was already used, use the same new ind
+                    if val in magic_to_file_ids_dict.keys():
+                        sublist.append(magic_to_file_ids_dict[val])
+                    # If it's a new value, pick a new ind and add it to the dict
+                    else:
+                        magic_to_file_ids_dict[val] = ind
+                        sublist.append(ind)
+                        ind += 1
+                self.selected_file_ids.append(sublist)
+
+            # Check the file numbering matches what OSS can handle
+            selected_file_ids_flat = np.concatenate(self.selected_file_ids)
+            if 18 in selected_file_ids_flat:
+                raise ValueError(f'Segment Guiding: Too many stars selected. OSS will only accept 18 unique segments, '
+                                 f'and currently {len(selected_file_ids_flat)} segments are chosen. Go back and either '
+                                 f'choose fewer segments in the star selector section, or choose fewer guiding '
+                                 f'configurations in the drop down menu.')
 
             #  Print summary of input data (guide star RA, Dec, and PA, etc...)
             if verbose:
@@ -430,10 +452,8 @@ class SegmentGuidingCalculator:
 
                 # Write the commands for each orientation
                 for i_o, (orientation, file_ids) in enumerate(zip(orientations, file_orientations)):
-                    print(orientation)
                     guide_seg_id = orientation[0]
                     guide_star_file_id = file_ids[0]
-                    print(guide_seg_id, guide_star_file_id)
 
                     label = 'star'
                     seg = i_o + 1
