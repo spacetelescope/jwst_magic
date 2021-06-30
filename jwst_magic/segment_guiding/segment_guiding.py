@@ -327,32 +327,11 @@ class SegmentGuidingCalculator:
             self.seg_dec_flat = np.concatenate(self.seg_dec) # Dec values
             self.countrate_array_flat = [x for n in self.countrate_array for x in n.tolist()] # count rate values
 
-
-            # Pull the selected guide stars and if any match, point them to the same ID in self.new_seg_id_array
-            self.new_seg_id_array = [sublist + len(sublist) * i for i, sublist in enumerate(self.seg_id_array)] # sub-arrays with no-repeat numbering
-            guide_stars = [s[0] for s in self.selected_segment_ids]
-            for i, gs in enumerate(guide_stars):
-                # If the guide star appears more than once and this is the first time
-                if guide_stars.count(gs) > 1 and guide_stars.index(gs) >= i:
-                    inds = [i for i, x in enumerate(guide_stars) if x == gs]
-                    for i in inds[1:]:
-                        self.new_seg_id_array[i] = self.new_seg_id_array[inds[0]]
-            self.new_seg_id_array_flat = np.concatenate(self.new_seg_id_array)
-
-            # Re-match numbering in self.selected_segment_ids to get unique IDs for all segments
-            self.unique_selected_segment_ids = []
-            for i, config in enumerate(self.selected_segment_ids):
-                new_config = []
-                for psf_ind in config:
-                    shift = sum(self.n_segments[:i])
-                    new_config.append(self.new_seg_id_array_flat[shift + psf_ind] - 1)
-                self.unique_selected_segment_ids.append(new_config)
-
             # Create the set of IDs to be written out to the override file (must be 1-18)
             magic_to_file_ids_dict = {}
             self.selected_file_ids = []
             ind = 1
-            for i, config in enumerate(self.unique_selected_segment_ids):
+            for i, config in enumerate(self.selected_segment_ids):
                 sublist = []
                 for j, val in enumerate(config):
                     # If the value was already used, use the same new ind
@@ -432,7 +411,7 @@ class SegmentGuidingCalculator:
 
             if self.override_type == "SOF":
                 # Determine which segments have been selected
-                orientations = list(self.unique_selected_segment_ids)  # use these numbers to pull the data
+                orientations = list(self.selected_segment_ids)  # use these numbers to pull the data
                 file_orientations = list(self.selected_file_ids)  # use these numbers to label the data
                 guide_segments = [s[0] for s in orientations]
                 all_selected_segs = list(dict.fromkeys(np.concatenate(orientations))) # make a set but preseve order
