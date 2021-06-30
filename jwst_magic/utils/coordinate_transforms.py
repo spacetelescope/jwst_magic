@@ -181,3 +181,34 @@ def Raw2DHAS(x_raw, y_raw, guider):
     x_dhas, y_dhas = Idl2DHAS(x_idealangle, y_idealangle)
 
     return x_dhas, y_dhas
+
+def Raw2Sci(x_raw, y_raw, guider):
+    """Pass in undistorted X and Y pixels in the raw/native coordinate frame
+    and get out undistorted X and Y pixels in the sci coordinate frame
+
+    Parameters
+    ----------
+    x_raw : float
+        Undistorted X pixels in the raw coordinate frame
+    y_raw : float
+        Undistorted Y pixels in the raw coordinate frame
+    guider : int
+        Which FGS detector to convert for (1 or 2)
+
+    Returns
+    -------
+    x_sci : float
+        Undistorted X pixels in the sci coordinate frame
+    y_sci : float
+        Undistorted Y pixels in the sci coordinate frame
+    """
+    if int(guider) == 1:
+        fgs_full = FGS_SIAF['FGS1_FULL']
+    elif int(guider) == 2:
+        fgs_full = FGS_SIAF['FGS2_FULL']
+    else:
+        raise ValueError('Unrecognized guider number: {}'.format(guider))
+
+    x_sci, y_sci = fgs_full.raw_to_sci(x_raw, y_raw)
+
+    return x_sci, y_sci
