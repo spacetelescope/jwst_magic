@@ -635,7 +635,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
             xend, yend = (1003, 1697)  # Converted from Ideal = (-45.6701, -0.8757)
         hdr_keyword = '{}'.format((xend, yend))
     else:
-        xend, yend = (1024.5, 1024.5)  # ID attitude; Different for crowded fields
+        xend, yend = (1023.5, 1023.5)  # ID attitude; Different for crowded fields
         hdr_keyword = '{}'.format((xend, yend))
 
 
