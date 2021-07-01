@@ -461,6 +461,18 @@ class SegmentGuidingCalculator:
 
                     out_string += star_string
 
+                # Check gs-select parameters are not being violated
+                if 'star19' in out_string:
+                    raise ValueError(
+                        f'Segment Guiding: Too many -star labels created. OSS will only accept up to '
+                        f'-star18. Go back and either choose fewer segments in the star selector section, '
+                        f'or choose fewer guiding configurations in the drop down menu.')
+                if 'refonly11' in out_string:
+                    raise ValueError(
+                        f'Segment Guiding: Too many -refonly labels created. OSS will only accept up to '
+                        f'-refonly10. Go back and either choose fewer segments in the star selector section, '
+                        f'or choose fewer guiding configurations in the drop down menu.')
+
                 # Write out the override report
                 self.write_override_report(out_file, orientations, file_orientations, n_guide_segments, obs_list_name)
 
