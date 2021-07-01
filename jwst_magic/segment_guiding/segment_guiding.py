@@ -642,7 +642,7 @@ class SegmentGuidingCalculator:
                 if (any(['x' == c for c in column_names])) and \
                         (any(['y' == c for c in column_names])):
                     # Define the IDs and coordinates of all segments
-                    self.seg_id_array.append(np.linspace(1, n_segs, n_segs).astype(int)) # TODO this used to be appending a table object, TBD on if that's a problem to change it
+                    self.seg_id_array.append(np.linspace(1, n_segs, n_segs).astype(int))
                     self.x_seg_array.append(read_table['x'])
                     self.y_seg_array.append(read_table['y'])
 
