@@ -250,7 +250,7 @@ class SegmentGuidingCalculator:
 
             # Create WCS object
             w = wcs.WCS(naxis=2)
-            w.wcs.crpix = [x_center_pointing, y_center_pointing] # center of pointing with boresight offset
+            w.wcs.crpix = [x_center_pointing+1, y_center_pointing+1] # center of pointing with boresight offset, in image pixels
             w.wcs.cdelt = [0.069/3600, 0.069/3600]  # using 0.069 to match what we used in convert_image
             w.wcs.crval = [self.ra, self.dec] # ra and dec of the guide star
             w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
