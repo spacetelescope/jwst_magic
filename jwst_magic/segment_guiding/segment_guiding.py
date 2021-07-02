@@ -219,7 +219,7 @@ class SegmentGuidingCalculator:
             raise ValueError('Invalid guider number: "{}"'.format(self.fgs_num))
 
         # Construct the aperture name
-        det = 'FGS' + str(self.fgs_num) + '_FULL_OSS'
+        det = 'FGS' + str(self.fgs_num) + '_FULL'
 
         # Read SIAF for appropriate guider aperture with pysiaf
         self.fgs_siaf_aperture = FGS_SIAF[det]
