@@ -44,7 +44,7 @@ def nrcpixel_offset_to_v2v3_offset(x_offset, y_offset, detector):
     """
     # Get pixel scale
     nrc_siaf = pysiaf.Siaf('NIRCam')
-    nrc_det = nrc_siaf[f'{detector}_FULL_OSS']
+    nrc_det = nrc_siaf[f'{detector}_FULL']
     nircam_x_scale = nrc_det.XSciScale  # arcsec/pixel
     nircam_y_scale = nrc_det.YSciScale  # arcsec/pixel
 
