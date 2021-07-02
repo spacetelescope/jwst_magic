@@ -348,7 +348,7 @@ class SegmentGuidingCalculator:
             selected_file_ids_flat = np.concatenate(self.selected_file_ids)
             if 18 in selected_file_ids_flat:
                 raise ValueError(f'Segment Guiding: Too many stars selected. OSS will only accept 18 unique segments, '
-                                 f'and currently {len(selected_file_ids_flat)} segments are chosen. Go back and either '
+                                 f'and currently {len(set(selected_file_ids_flat))} segments are chosen. Go back and either '
                                  f'choose fewer segments in the star selector section, or choose fewer guiding '
                                  f'configurations in the drop down menu.')
 
@@ -467,7 +467,7 @@ class SegmentGuidingCalculator:
                         f'Segment Guiding: Too many -star labels created. OSS will only accept up to '
                         f'-star18. Go back and either choose fewer segments in the star selector section, '
                         f'or choose fewer guiding configurations in the drop down menu.')
-                if 'refonly11' in out_string:
+                if 'ref_only11' in out_string:
                     raise ValueError(
                         f'Segment Guiding: Too many -refonly labels created. OSS will only accept up to '
                         f'-refonly10. Go back and either choose fewer segments in the star selector section, '
