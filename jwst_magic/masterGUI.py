@@ -1422,6 +1422,9 @@ class MasterGui(QMainWindow):
                                                 'File loaded is incorrectly distorted.',
                                                 fontsize=11,
                                                 bbox={'facecolor': 'lightcoral', 'pad': 7})
+            else:
+                for txt in self.canvas_converted.axes.texts:
+                    txt.set_visible(False)
 
             # If possible, plot the selected stars in the guiding_selections*.txt
             if self.comboBox_showcommandsconverted.currentIndex() != 0:
@@ -1535,6 +1538,9 @@ class MasterGui(QMainWindow):
                                               'File loaded is incorrectly distorted.',
                                               fontsize=11,
                                               bbox={'facecolor': 'lightcoral', 'pad': 7})
+            else:
+                for txt in self.canvas_shifted.axes.texts:
+                    txt.set_visible(False)
 
             # If possible, plot the selected stars in the guiding_selections*.txt
             shifted_guiding_selections_file = self.shifted_guiding_selections_file_list[i]
