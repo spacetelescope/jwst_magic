@@ -51,7 +51,7 @@ test_buildfgssteps:
                 bias: [40.0, 29350.0]
                 time_normed_im: [-5.616039e-05, 5852.6533]
                 cds: [-20.0, 6090.0]
-                strips: [30.0, 29830.0]
+                strips: [30.0, 30350.0]
                 ID: [40.0, 30150.0]
             ACQ1:
                 countrates: [65596.]
