@@ -671,7 +671,7 @@ def get_car_data():
     html_page = requests.get(url).text
     l = pd.read_html(html_page)
     df = l[0]
-    df_set = df[df['Activity ID'].str.contains("OTE|LOS", case=False)]  # only include OTE and LOS rows
+    df_set = df[df['Activity ID'].str.contains("OTE|LOS|NIRCam-005|NIRCam-035", case=False)]  # only include OTE and LOS rows
 
     commissioning_dict = {car.lower(): str(int(apt))
                           for car, apt in zip(df_set['Activity ID'].values, df_set['Program'].values)}
