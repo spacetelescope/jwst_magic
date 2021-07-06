@@ -82,8 +82,12 @@ def Raw2Idl(x_raw, y_raw, guider):
     else:
         raise ValueError('Unrecognized guider number: {}'.format(guider))
 
+    # Add +1 to incoming values to convert from python array 0-indexing to pixel coordinates 1-indexing
+    x_raw_px = x_raw + 1
+    y_raw_px = y_raw + 1
+
     # Convert from RAW -> SCI (just a coordinate origin change, no distortion change)
-    x_sci, y_sci = fgs_full.raw_to_sci(x_raw, y_raw)
+    x_sci, y_sci = fgs_full.raw_to_sci(x_raw_px, y_raw_px)
 
     # Shift to the IDL origin location
     x_idl_pix = x_sci - fgs_full.XSciRef
@@ -123,7 +127,7 @@ def Raw2Tel(x_raw, y_raw, guider):
     else:
         raise ValueError('Unrecognized guider number: {}'.format(guider))
 
-    # Convert from Raw to IDL
+    # Convert from Raw to IDL (1 added to raw value in Raw2Idl to go from python 0-based to pixel coord 1-based)
     x_idl, y_idl = Raw2Idl(x_raw, y_raw, guider)
 
     # Convert from IDL -> TEL (just a coordinate origin change, no distortion change)
@@ -177,6 +181,7 @@ def Raw2DHAS(x_raw, y_raw, guider):
     y_dhas : float
         Y angle (arcsec) in the DHAS frame
     """
+    # +1 added to raw value in Raw2Idl to go from python 0-based to pixel coord 1-based
     x_idealangle, y_idealangle = Raw2Idl(x_raw, y_raw, guider)
     x_dhas, y_dhas = Idl2DHAS(x_idealangle, y_idealangle)
 
@@ -209,6 +214,14 @@ def Raw2Sci(x_raw, y_raw, guider):
     else:
         raise ValueError('Unrecognized guider number: {}'.format(guider))
 
-    x_sci, y_sci = fgs_full.raw_to_sci(x_raw, y_raw)
+    # Add +1 to incoming values to convert from python array 0-indexing to pixel coordinates 1-indexing
+    x_raw_px = x_raw + 1
+    y_raw_px = y_raw + 1
+
+    x_sci, y_sci = fgs_full.raw_to_sci(x_raw_px, y_raw_px)
+
+    # Remove 1 from outgoing values to convert back to python array 0-indexing
+    x_sci -= 1
+    y_sci -= 1
 
     return x_sci, y_sci
