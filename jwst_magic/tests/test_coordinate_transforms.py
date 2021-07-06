@@ -25,8 +25,8 @@ def test_Idl2DHAS():
         "Incorrect conversion from ideal to DHAS coordinates."
 
 
-Raw2DHAS_parameters = [(1, (-53.63248581599999, -50.358308568)),
-                       (2, (-53.21744955799999, 50.186975399999994))]
+Raw2DHAS_parameters = [(1, (-53.563954655999986, -50.428367427999994)),
+                       (2, (-53.149448727999996, 50.25679589999999))]
 @pytest.mark.parametrize('guider, correct_conversion', Raw2DHAS_parameters)
 def test_Raw2DHAS(guider, correct_conversion):
     x_dhas, y_dhas = coordinate_transforms.Raw2DHAS(*PIXEL_COORDS, guider)
@@ -36,8 +36,8 @@ def test_Raw2DHAS(guider, correct_conversion):
         "Incorrect conversion from FGS raw to DHAS coordinates."
 
 
-Raw2Idl_parameters = [(1, (53.63248581599999, -50.358308568)),
-                      (2, (53.21744955799999, 50.186975399999994))]
+Raw2Idl_parameters = [(1, (53.563954655999986, -50.428367427999994)),
+                      (2, (53.149448727999996, 50.25679589999999))]
 @pytest.mark.parametrize('guider, correct_conversion', Raw2Idl_parameters)
 def test_Raw2Idl(guider, correct_conversion):
     x_idealangle, y_idealangle = coordinate_transforms.Raw2Idl(*PIXEL_COORDS, guider)
@@ -47,8 +47,8 @@ def test_Raw2Idl(guider, correct_conversion):
         "Incorrect conversion from FGS raw to ideal coordinates."
 
 
-Raw2Tel_parameters = [(1, (153.94357268603113, -749.4870601974866)),
-                      (2, (-30.20548566488923, -649.1255667574394))]
+Raw2Tel_parameters = [(1, (154.01361684103352, -749.5556063870631)),
+                      (2, (-30.13725333672268, -649.0559724725167))]
 @pytest.mark.parametrize('guider, correct_conversion', Raw2Tel_parameters)
 def test_Raw2Tel(guider, correct_conversion):
     v2, v3 = coordinate_transforms.Raw2Tel(*PIXEL_COORDS, guider)
