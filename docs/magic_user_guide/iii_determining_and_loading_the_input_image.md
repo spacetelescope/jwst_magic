@@ -13,6 +13,8 @@ MAGIC takes in a full-frame calibration FGS image or a NIRCam image from *any* o
 
 MAGIC expects to use a cal.fits image is used as the input. MAGIC will check for the PHOTMJSR header keyword and use that to convert the image to a rate image, one with units of Dn/s (also known as ADU/s).
 
+If MAGIC is given a NIRCam cal.fits image, it will have it's distortion removed correctly. If any other type of NIRCam image is passed in (e.g. a rate image, an ITM image, or a mirage seed image), MAGIC will not be able to accurately remove the image's distortion. Keep this in mind when selecting an input image, and choose cal images whenever possible. Padded TRK images also cannot have their distortion corrected, but they are necessary for POF cases.
+
 1. Set general input parameters:
 
 
