@@ -245,8 +245,8 @@ class SegmentGuidingCalculator:
             y_center_pointing = self.y_seg_n[i] + (self.v3_boff / self.fgs_y_scale)
 
             # Convert all coords we'll be using with the WCS into undistorted SCI frame (only updating the origin)
-            x_center_pointing, y_center_pointing = coordinate_transforms.Raw2Sci(x_center_pointing, y_center_pointing, self.fgs_num)
-            x_seg_array_sci, y_seg_array_sci = coordinate_transforms.Raw2Sci(self.x_seg_array[i], self.y_seg_array[i], self.fgs_num)
+            x_center_pointing, y_center_pointing = coordinate_transforms.raw2sci(x_center_pointing, y_center_pointing, self.fgs_num)
+            x_seg_array_sci, y_seg_array_sci = coordinate_transforms.raw2sci(self.x_seg_array[i], self.y_seg_array[i], self.fgs_num)
 
             # Create WCS object
             w = wcs.WCS(naxis=2)
@@ -265,7 +265,7 @@ class SegmentGuidingCalculator:
             ra_segs, dec_segs = radec_list.T[0], radec_list.T[1]
 
             # Convert from undistorted raw to ideal frame (already undistorted so only an origin change)
-            x_idl_segs, y_idl_segs = coordinate_transforms.Raw2Idl(np.array(self.x_seg_array[i]),
+            x_idl_segs, y_idl_segs = coordinate_transforms.raw2idl(np.array(self.x_seg_array[i]),
                                                                    np.array(self.y_seg_array[i]),
                                                                    self.fgs_num)
 
@@ -545,7 +545,7 @@ class SegmentGuidingCalculator:
             Y position of the center of pointing
         """
         # Calculate attidude matrix (v2/v3 + boresight_offset is the center of pointing in the tel frame)
-        v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(x_seg_n, y_seg_n, self.fgs_num)
+        v2_seg_n, v3_seg_n = coordinate_transforms.raw2tel(x_seg_n, y_seg_n, self.fgs_num)
         attitude = rotations.attitude(v2_seg_n + self.v2_boff,
                                       v3_seg_n + self.v3_boff,
                                       self.ra, self.dec, self.pa)

@@ -19,39 +19,39 @@ PIXEL_COORDS = (1743.3, 241.9)
 ANGLE_COORDS = (-55.736935, 8.139518)
 
 
-def test_Idl2DHAS():
-    x_dhas, y_dhas = coordinate_transforms.Idl2DHAS(*ANGLE_COORDS)
+def test_idl2dhas():
+    x_dhas, y_dhas = coordinate_transforms.idl2dhas(*ANGLE_COORDS)
     assert (x_dhas, y_dhas) == (55.736935, 8.139518), \
         "Incorrect conversion from ideal to DHAS coordinates."
 
 
-Raw2DHAS_parameters = [(1, (-53.563954655999986, -50.428367427999994)),
+raw2dhas_parameters = [(1, (-53.563954655999986, -50.428367427999994)),
                        (2, (-53.149448727999996, 50.25679589999999))]
-@pytest.mark.parametrize('guider, correct_conversion', Raw2DHAS_parameters)
-def test_Raw2DHAS(guider, correct_conversion):
-    x_dhas, y_dhas = coordinate_transforms.Raw2DHAS(*PIXEL_COORDS, guider)
+@pytest.mark.parametrize('guider, correct_conversion', raw2dhas_parameters)
+def test_raw2dhas(guider, correct_conversion):
+    x_dhas, y_dhas = coordinate_transforms.raw2dhas(*PIXEL_COORDS, guider)
     assert np.isclose(x_dhas, correct_conversion[0]), \
         "Incorrect conversion from FGS raw to DHAS coordinates."
     assert np.isclose(y_dhas, correct_conversion[1]), \
         "Incorrect conversion from FGS raw to DHAS coordinates."
 
 
-Raw2Idl_parameters = [(1, (53.563954655999986, -50.428367427999994)),
+raw2idl_parameters = [(1, (53.563954655999986, -50.428367427999994)),
                       (2, (53.149448727999996, 50.25679589999999))]
-@pytest.mark.parametrize('guider, correct_conversion', Raw2Idl_parameters)
-def test_Raw2Idl(guider, correct_conversion):
-    x_idealangle, y_idealangle = coordinate_transforms.Raw2Idl(*PIXEL_COORDS, guider)
+@pytest.mark.parametrize('guider, correct_conversion', raw2idl_parameters)
+def test_raw2idl(guider, correct_conversion):
+    x_idealangle, y_idealangle = coordinate_transforms.raw2idl(*PIXEL_COORDS, guider)
     assert np.isclose(x_idealangle, correct_conversion[0]), \
         "Incorrect conversion from FGS raw to ideal coordinates."
     assert np.isclose(y_idealangle, correct_conversion[1]), \
         "Incorrect conversion from FGS raw to ideal coordinates."
 
 
-Raw2Tel_parameters = [(1, (154.01361684103352, -749.5556063870631)),
+raw2tel_parameters = [(1, (154.01361684103352, -749.5556063870631)),
                       (2, (-30.13725333672268, -649.0559724725167))]
-@pytest.mark.parametrize('guider, correct_conversion', Raw2Tel_parameters)
-def test_Raw2Tel(guider, correct_conversion):
-    v2, v3 = coordinate_transforms.Raw2Tel(*PIXEL_COORDS, guider)
+@pytest.mark.parametrize('guider, correct_conversion', raw2tel_parameters)
+def test_raw2tel(guider, correct_conversion):
+    v2, v3 = coordinate_transforms.raw2tel(*PIXEL_COORDS, guider)
     assert np.isclose(v2, correct_conversion[0]), \
         "Incorrect conversion from FGS raw to V2/V3 coordinates."
     assert np.isclose(v3, correct_conversion[1]), \

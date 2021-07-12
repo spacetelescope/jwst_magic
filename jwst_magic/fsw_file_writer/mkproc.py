@@ -179,7 +179,7 @@ class Mkproc(object):
             self.write_from_template(self.template_a, file_out)
 
             # Convert real pixel to DHAS ideal angle
-            xangle, yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
+            xangle, yangle = coordinate_transforms.raw2dhas(xarr, yarr, guider)
 
             file_out.write('@IFGS_GUIDESTAR {0}, DFT, {1:12.4f}, {2:12.4f}, \
                             {3:12d}, {4:8d}'.format(self.guider,
@@ -257,10 +257,10 @@ class Mkproc(object):
             xarr, yarr = xarr[0], yarr[0]
 
         # Corner coordinates & guide star counts
-        gs_xangle, gs_yangle = coordinate_transforms.Raw2DHAS(xarr, yarr, guider)
-        a1_xangle, a1_yangle = coordinate_transforms.Raw2DHAS(int(xarr - acq1_imgsize / 2),
+        gs_xangle, gs_yangle = coordinate_transforms.raw2dhas(xarr, yarr, guider)
+        a1_xangle, a1_yangle = coordinate_transforms.raw2dhas(int(xarr - acq1_imgsize / 2),
                                                               int(yarr - acq1_imgsize / 2), guider)
-        a2_xangle, a2_yangle = coordinate_transforms.Raw2DHAS(int(xarr - acq2_imgsize / 2),
+        a2_xangle, a2_yangle = coordinate_transforms.raw2dhas(int(xarr - acq2_imgsize / 2),
                                                               int(yarr - acq2_imgsize / 2), guider)
 
         # Get threshold from countrate (not from STC file)
