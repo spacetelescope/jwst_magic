@@ -103,12 +103,12 @@ def test_run_background_stars_gui_populated(qtbot, master_gui):
     # Set general input
     qtbot.keyClicks(master_gui.lineEdit_inputImage, NIRCAM_IM)
     qtbot.mouseClick(master_gui.buttonGroup_name.buttons()[1], QtCore.Qt.LeftButton)  # set naming method
-    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)  # set to guider 1
+    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)  # set to guider 2
     qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
     qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
-    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
     qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)
-    qtbot.keyClicks(master_gui.lineEdit_manualid, '1148')
+    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
+    qtbot.keyClicks(master_gui.lineEdit_manualid, '1151')
     qtbot.keyClicks(master_gui.lineEdit_manualobs, '01')
     qtbot.mouseClick(master_gui.pushButton_manualid, QtCore.Qt.LeftButton)
 
