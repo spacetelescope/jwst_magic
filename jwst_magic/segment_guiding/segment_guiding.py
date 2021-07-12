@@ -64,7 +64,7 @@ from pysiaf.utils import rotations
 # Local Imports
 if not JENKINS:
     from jwst_magic.segment_guiding import SegmentGuidingGUI
-from jwst_magic.convert_image.convert_image_to_raw_fgs import FGS_SCALE
+from jwst_magic.convert_image.convert_image_to_raw_fgs import FGS1_SCALE, FGS2_SCALE
 from jwst_magic.utils import coordinate_transforms, utils
 
 # Establish segment guiding files directory
@@ -249,9 +249,10 @@ class SegmentGuidingCalculator:
             x_seg_array_sci, y_seg_array_sci = coordinate_transforms.raw2sci(self.x_seg_array[i], self.y_seg_array[i], self.fgs_num)
 
             # Create WCS object
+            scale = globals()['FGS{}_SCALE'.format(self.fgs_num)]
             w = wcs.WCS(naxis=2)
             w.wcs.crpix = [x_center_pointing+1, y_center_pointing+1]  # center of pointing with boresight offset, in image pixels
-            w.wcs.cdelt = [FGS_SCALE/3600, FGS_SCALE/3600]  # using 0.069 to match what we used in convert_image
+            w.wcs.cdelt = [scale/3600, scale/3600]  # match what we used in convert_image
             w.wcs.crval = [self.ra, self.dec]  # ra and dec of the guide star
             w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
             w.wcs.cunit = ['deg', 'deg']

@@ -98,9 +98,11 @@ DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 # Constants
 NIRCAM_SW_SCALE = 0.0311  # NIRCam SW pixel scale (arcsec/pixel)
 NIRCAM_LW_SCALE = 0.063  # NIRCam LW pixel scale (arcsec/pixel)
-FGS_SCALE = 0.069  # FGS pixel scale (arcsec/pixel)
+FGS1_SCALE = 0.06929  # FGS 1 pixel scale (arcsec/pixel)
+FGS2_SCALE = 0.06891  # FGS 2 pixel scale (arcsec/pixel)
 FGS_PIXELS = 2048  # FGS image size in pixels
-FGS_PLATE_SIZE = 2.4  # FGS image size in arcminutes
+FGS1_PLATE_SIZE = FGS1_SCALE * FGS_PIXELS / 60  # FGS 1 image size in arcminutes
+FGS2_PLATE_SIZE = FGS2_SCALE * FGS_PIXELS / 60  # FGS 2 image size in arcminutes
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
@@ -427,7 +429,7 @@ def pad_data(data, padding, fgs_pix):
     return padded_data
 
 
-def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
+def resize_nircam_image(data, nircam_scale, fgs_pix, guider):
     """Resize a NIRCam image to the expected FGS size and pixel scale
 
     Parameters
@@ -438,14 +440,15 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
         Pixel scale of NIRCam detector
     fgs_pix : int
         Number of pixels along one side of an FGS image (probably 2048)
-    fgs_plate_size : float
-        Pixel scale of FGS detector
+    guider : int
+        Guider number, 1 or 2
 
     Returns
     -------
     fgs_data
         Re-binned and padded image data
     """
+    fgs_plate_size = globals()['FGS{}_PLATE_SIZE'.format(guider)]
     cropped = data[4:-4, 4:-4]  # crop 4pixel zero-padding
     binned_pix = int(round((data.shape[0] * nircam_scale * fgs_pix) / (fgs_plate_size * 60)))
     data_resized = utils.resize_array(cropped, binned_pix, binned_pix)
@@ -1099,7 +1102,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             # Rotate the NIRCAM image into FGS frame
             nircam_scale, data = transform_nircam_image(data, guider, nircam_det, header)
             # Pad image
-            data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
+            data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, guider)
 
         # -------------- From FGS --------------
         else:
@@ -1115,7 +1118,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
 
         # Apply Gaussian filter to simulate coarse pointing
         if coarse_pointing:
-            pixel_scale = nircam_scale if nircam else FGS_SCALE
+            pixel_scale = nircam_scale if nircam else globals()['FGS{}_SCALE'.format(guider)]
 
             data = apply_coarse_pointing_filter(data, jitter_rate_arcsec, pixel_scale)
             LOGGER.info("Image Conversion: Applied Gaussian filter to simulate "
