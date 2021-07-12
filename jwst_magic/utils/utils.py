@@ -184,17 +184,16 @@ def write_fits(outfile, data, header=None, log=None):
         os.makedirs(out_dir)
 
     if not any([isinstance(header, fits.header.Header), header is None]):
-        raise TypeError('Header to be written out in {} is not either "None" or of type fits.header.Header'.format(
-            outfile))
+        raise TypeError(f'Header to be written out in {outfile} is not either "None" or of type fits.header.Header')
 
     hdul = fits.PrimaryHDU(data=data, header=header)
 
     hdul.writeto(outfile, overwrite=True)
 
     if log is not None:
-        log.info("Successfully wrote: {}".format(outfile))
+        log.info(f"Successfully wrote: {outfile}")
     else:
-        print("Successfully wrote: {}".format(outfile))
+        print(f"Successfully wrote: {outfile}")
 
 
 def write_multiext_fits(outfile, data_list, header_list, log=None):

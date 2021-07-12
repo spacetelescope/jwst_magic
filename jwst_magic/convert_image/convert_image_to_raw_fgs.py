@@ -100,7 +100,7 @@ NIRCAM_SW_SCALE = 0.0311  # NIRCam SW pixel scale (arcsec/pixel)
 NIRCAM_LW_SCALE = 0.063  # NIRCam LW pixel scale (arcsec/pixel)
 FGS_SCALE = 0.069  # FGS pixel scale (arcsec/pixel)
 FGS_PIXELS = 2048  # FGS image size in pixels
-FGS_PLATE_SIZE = 2.4  # FGS image size in arcseconds
+FGS_PLATE_SIZE = 2.4  # FGS image size in arcminutes
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
@@ -1031,6 +1031,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
 
         # Remove distortion from NIRCam or FGS cal data, but not from padded TRK data nor rate images
         # as they cannot be run through the pipeline without lots of extra steps
+        distortion = True # is there distortion in the image
         try:
             if datamodel != 'GuiderCalModel' and input_unit == 'mjy/sr':
                 LOGGER.info("Image Conversion: Removing distortion from data using the JWST Pipeline's Resample step.")
@@ -1040,6 +1041,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                 # Crop data back to (2048, 2048), cutting out the top and right to keep the origin
                 LOGGER.info(f"Image Conversion: Cutting undistorted data from {result.data.shape} to (2048, 2048)")
                 data = result.data[0:2048, 0:2048]
+                distortion = False
         except NameError:
             LOGGER.info("Image Conversion: Skipping removing distortion from image due to missing either "
                         "DATAMODL or BUNIT information.")
@@ -1184,10 +1186,10 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         LOGGER.exception(f'{repr(e)}: {e}')
         raise
 
-    return data, all_found_psfs_path, psf_center_path
+    return data, all_found_psfs_path, psf_center_path, distortion
 
 
-def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
+def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
     """Writes an array of FGS data to the appropriate file:
     {out_dir}/out/{root}/FGS_imgs/{root}_G{guider}.fits
 
@@ -1203,6 +1205,8 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
         Name used to create the output directory, {out_dir}/out/{root}
     guider : int
         Guider number (1 or 2)
+    distortion : bool
+        True if the image still has distortion, False if it does not.
     fgsout_path : str, optional
         Alternate directory in which to save the FGS files. If not
         provided, the FGS images will be saved to
@@ -1227,7 +1231,7 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     hdr = fits.getheader(header_file, ext=0)
 
     # Add distortion information to header
-    hdr['DISTORT'] = 'False'
+    hdr['DISTORT'] = str(distortion)
 
     header_list = [hdr, None]
     data_list = [None, data]

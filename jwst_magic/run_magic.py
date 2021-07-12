@@ -40,7 +40,6 @@ import os
 import shutil
 
 # Third Party Imports
-from astropy.io import fits
 import matplotlib
 if matplotlib.get_backend() != 'Qt5Agg':
     matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
@@ -154,7 +153,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Either convert provided NIRCam image to an FGS image...
     if convert_im:
-        fgs_im, all_found_psfs_file, psf_center_file = \
+        fgs_im, all_found_psfs_file, psf_center_file, distortion = \
             convert_image_to_raw_fgs.convert_im(image, guider, root,
                                                 out_dir=out_dir,
                                                 nircam=nircam,
@@ -178,7 +177,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                            root=root, out_dir=out_dir)
 
         # Write converted image
-        convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider)
+        convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider, distortion)
         LOGGER.info("*** Image Conversion COMPLETE ***")
     # Or, if an FGS image was provided, use it!
     else:
