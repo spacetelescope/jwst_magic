@@ -15,8 +15,8 @@ Authors
 Use
 ---
     ::
-        from jwst_magic.coordinate_transforms import Raw2Idl
-        x_idl, y_idl = Raw2Idl(x_raw, y_raw)
+        from jwst_magic.coordinate_transforms import raw2idl
+        x_idl, y_idl = raw2idl(x_raw, y_raw)
 """
 
 import pysiaf
@@ -55,7 +55,7 @@ def nrcpixel_offset_to_v2v3_offset(x_offset, y_offset, detector):
     return v2_offset, v3_offset
 
 
-def Raw2Idl(x_raw, y_raw, guider):
+def raw2idl(x_raw, y_raw, guider):
     """Pass in undistorted X and Y pixels in the raw/native coordinate frame
      and get out X Y angles in the ideal frame
 
@@ -100,7 +100,7 @@ def Raw2Idl(x_raw, y_raw, guider):
     return x_idealangle, y_idealangle
 
 
-def Raw2Tel(x_raw, y_raw, guider):
+def raw2tel(x_raw, y_raw, guider):
     """Pass in undistorted X and Y pixels in the raw/native coordinate frame
      and get out angles in the V2/V3 frame
 
@@ -127,8 +127,8 @@ def Raw2Tel(x_raw, y_raw, guider):
     else:
         raise ValueError('Unrecognized guider number: {}'.format(guider))
 
-    # Convert from Raw to IDL (1 added to raw value in Raw2Idl to go from python 0-based to pixel coord 1-based)
-    x_idl, y_idl = Raw2Idl(x_raw, y_raw, guider)
+    # Convert from Raw to IDL (1 added to raw value in raw2idl to go from python 0-based to pixel coord 1-based)
+    x_idl, y_idl = raw2idl(x_raw, y_raw, guider)
 
     # Convert from IDL -> TEL (just a coordinate origin change, no distortion change)
     v2, v3 = fgs_full.idl_to_tel(x_idl, y_idl)
@@ -136,7 +136,7 @@ def Raw2Tel(x_raw, y_raw, guider):
     return v2, v3
 
 
-def Idl2DHAS(x_idealangle, y_idealangle):
+def idl2dhas(x_idealangle, y_idealangle):
     """Pass in X and Y angles in the ideal frame and get out X and Y angles in the
     frame DHAS requires.
 
@@ -161,7 +161,7 @@ def Idl2DHAS(x_idealangle, y_idealangle):
     return x_dhas, y_dhas
 
 
-def Raw2DHAS(x_raw, y_raw, guider):
+def raw2dhas(x_raw, y_raw, guider):
     """Pass in undistorted X and Y pixels in the raw/native coordinate frame
     and get out X and Y angles in the frame DHAS requires.
 
@@ -181,14 +181,14 @@ def Raw2DHAS(x_raw, y_raw, guider):
     y_dhas : float
         Y angle (arcsec) in the DHAS frame
     """
-    # +1 added to raw value in Raw2Idl to go from python 0-based to pixel coord 1-based
-    x_idealangle, y_idealangle = Raw2Idl(x_raw, y_raw, guider)
-    x_dhas, y_dhas = Idl2DHAS(x_idealangle, y_idealangle)
+    # +1 added to raw value in raw2idl to go from python 0-based to pixel coord 1-based
+    x_idealangle, y_idealangle = raw2idl(x_raw, y_raw, guider)
+    x_dhas, y_dhas = idl2dhas(x_idealangle, y_idealangle)
 
     return x_dhas, y_dhas
 
 
-def Raw2Sci(x_raw, y_raw, guider):
+def raw2sci(x_raw, y_raw, guider):
     """Pass in undistorted X and Y pixels in the raw/native coordinate frame
     and get out undistorted X and Y pixels in the sci coordinate frame
 
