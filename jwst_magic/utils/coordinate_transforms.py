@@ -1,11 +1,11 @@
 """Convert between FGS raw/native frame (pixels), ideal angle frame
 (arcsec), and DHAS frame (arcsec).
 
-Note that the images used in MAGIC are all undistorted, so whenever
-the "raw", "det" or "sci" frames are discussed here, they are not the
-actual frames from the SIAF definition, but are instead an undistorted
-frame where the coodinte system matches the "raw", "det" or "sci" frames
-from the SIAF respectively.
+Note that the input *cal.fits images used in MAGIC are all undistorted
+immediately, so whenever the "raw", "det" or "sci" frames are discussed
+here, they are not the actual frames from the SIAF definition, but are
+instead an undistorted frame where the coodinte system matches the "raw",
+"det" or "sci" frames from the SIAF respectively.
 
 Authors
 -------
@@ -186,6 +186,7 @@ def Raw2DHAS(x_raw, y_raw, guider):
     x_dhas, y_dhas = Idl2DHAS(x_idealangle, y_idealangle)
 
     return x_dhas, y_dhas
+
 
 def Raw2Sci(x_raw, y_raw, guider):
     """Pass in undistorted X and Y pixels in the raw/native coordinate frame
