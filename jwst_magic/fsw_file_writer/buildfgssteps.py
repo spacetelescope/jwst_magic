@@ -750,6 +750,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
     saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
     saved_shifted_image = np.uint16(saved_shifted_image)
-    utils.write_multiext_fits(shifted_FGS_img, [None, saved_shifted_image], header_list=[hdr, None], log=LOGGER)
+    utils.write_fits(shifted_FGS_img, [None, saved_shifted_image], header=[hdr, None], log=LOGGER)
 
     return shifted_image, shifted_guiding_selections, psf_center_file

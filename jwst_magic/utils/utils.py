@@ -177,16 +177,29 @@ def on_sogs_network():
 
 def write_fits(outfile, data, header=None, log=None):
     """
-    Write data to a simple fits. Assumes one extension and no header.
+    Write data to a fits file. Can take in an array/header
+    or lists of arrays/headers
     """
     out_dir = os.path.dirname(outfile)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    if not any([isinstance(header, fits.header.Header), header is None]):
-        raise TypeError(f'Header to be written out in {outfile} is not either "None" or of type fits.header.Header')
+    header_list = header if isinstance(header, list) else [header]
+    for hdr in header_list:
+        if not any([isinstance(hdr, fits.header.Header), hdr is None]):
+            raise TypeError(f'Header to be written out in {outfile} is not either "None" or of type fits.header.Header')
 
-    hdul = fits.PrimaryHDU(data=data, header=header)
+    if not isinstance(data, list):
+        hdul = fits.PrimaryHDU(data=data, header=header)
+    else:
+        hdu_list = []
+        for i, (dat, hdr) in enumerate(zip(data, header)):
+            if i == 0:
+                hdu = fits.PrimaryHDU(data=dat, header=hdr)
+            else:
+                hdu = fits.ImageHDU(data=dat, header=hdr, name='IMAGE')
+            hdu_list.append(hdu)
+        hdul = fits.HDUList(hdu_list)
 
     hdul.writeto(outfile, overwrite=True)
 
@@ -194,36 +207,6 @@ def write_fits(outfile, data, header=None, log=None):
         log.info(f"Successfully wrote: {outfile}")
     else:
         print(f"Successfully wrote: {outfile}")
-
-
-def write_multiext_fits(outfile, data_list, header_list, log=None):
-    """
-    Write data to a multi-extension fits file. Expands on write_fits()
-    """
-    out_dir = os.path.dirname(outfile)
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-
-    for header in header_list:
-        if not any([isinstance(header, fits.header.Header), header is None]):
-            raise TypeError('Header to be written out in {} is not either "None" or of type fits.header.Header'.format(
-                outfile))
-
-    hdu_list = []
-    for i, (data, header) in enumerate(zip(data_list, header_list)):
-        if i == 0:
-            hdu = fits.PrimaryHDU(data=data, header=header)
-        else:
-            hdu = fits.ImageHDU(data=data, header=header)
-        hdu_list.append(hdu)
-    hdul = fits.HDUList(hdu_list)
-
-    hdul.writeto(outfile, overwrite=True)
-
-    if log is not None:
-        log.info("Successfully wrote: {}".format(outfile))
-    else:
-        print("Successfully wrote: {}".format(outfile))
 
 
 def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):

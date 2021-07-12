@@ -1237,6 +1237,6 @@ def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
     data_list = [None, data]
 
     # Write FITS file
-    utils.write_multiext_fits(fgsout_file, data_list, header_list=header_list, log=LOGGER)
+    utils.write_fits(fgsout_file, data_list, header=header_list, log=LOGGER)
 
     return fgsout_path
