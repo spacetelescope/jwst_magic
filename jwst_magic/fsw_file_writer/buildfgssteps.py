@@ -638,7 +638,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
         xend, yend = (1023.5, 1023.5)  # ID attitude; Different for crowded fields
         hdr_keyword = '{}'.format((xend, yend))
 
-
     # 1) Shift the image array
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     xstart, ystart = guiding_selections_cat['x', 'y'][0] # Guide star location
@@ -670,7 +669,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
                              labels=['y', 'x', 'countrate'],
                              cols=shifted_guiding_selections_cat,
                              log=LOGGER)
-
 
     # 3) Write new shifted all_found_psfs*.txt
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -714,7 +712,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
                              cols=[shifted_center_pointing_cat],
                              log=LOGGER)
 
-
     # 5) Write new shifted psf_center*.txt
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if psf_center_file is not None:
@@ -733,7 +730,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
                                  cols=shifted_psf_center_cat,
                                  log=LOGGER)
 
-
     # 6) Rewrite the shifted FGS image and save old file as _unshifted.fits
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Load header file (try to use the converted image to get distortion information)
@@ -743,8 +739,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     hdr = fits.getheader(header_file, ext=0)
     hdr['IDATTPIX'] = (hdr_keyword, 'Image shifted to place GS at ID attitude')
 
-    shifted_FGS_img = os.path.join(out_dir, 'FGS_imgs',
-                                   'shifted_' + file_root + '.fits')
+    shifted_FGS_img = os.path.join(out_dir, 'FGS_imgs', 'shifted_' + file_root + '.fits')
 
     # Write new FITS files
     # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
