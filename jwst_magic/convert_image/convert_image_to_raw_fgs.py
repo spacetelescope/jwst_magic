@@ -74,6 +74,8 @@ from astropy.io import ascii as asc
 from astropy.io import fits
 from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
+from jwst.resample import ResampleStep
+from jwst.datamodels import ImageModel
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
@@ -94,11 +96,13 @@ OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ director
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 
 # Constants
-NIRCAM_SW_SCALE = 0.031  # NIRCam SW pixel scale (arcsec/pixel)
+NIRCAM_SW_SCALE = 0.0311  # NIRCam SW pixel scale (arcsec/pixel)
 NIRCAM_LW_SCALE = 0.063  # NIRCam LW pixel scale (arcsec/pixel)
-FGS_SCALE = 0.069  # FGS pixel scale (arcsec/pixel)
+FGS1_SCALE = 0.06929  # FGS 1 pixel scale (arcsec/pixel)
+FGS2_SCALE = 0.06891  # FGS 2 pixel scale (arcsec/pixel)
 FGS_PIXELS = 2048  # FGS image size in pixels
-FGS_PLATE_SIZE = 2.4  # FGS image size in arcseconds
+FGS1_PLATE_SIZE = FGS1_SCALE * FGS_PIXELS / 60  # FGS 1 image size in arcminutes
+FGS2_PLATE_SIZE = FGS2_SCALE * FGS_PIXELS / 60  # FGS 2 image size in arcminutes
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
@@ -425,7 +429,7 @@ def pad_data(data, padding, fgs_pix):
     return padded_data
 
 
-def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
+def resize_nircam_image(data, nircam_scale, fgs_pix, guider):
     """Resize a NIRCam image to the expected FGS size and pixel scale
 
     Parameters
@@ -436,14 +440,15 @@ def resize_nircam_image(data, nircam_scale, fgs_pix, fgs_plate_size):
         Pixel scale of NIRCam detector
     fgs_pix : int
         Number of pixels along one side of an FGS image (probably 2048)
-    fgs_plate_size : float
-        Pixel scale of FGS detector
+    guider : int
+        Guider number, 1 or 2
 
     Returns
     -------
     fgs_data
         Re-binned and padded image data
     """
+    fgs_plate_size = globals()['FGS{}_PLATE_SIZE'.format(guider)]
     cropped = data[4:-4, 4:-4]  # crop 4pixel zero-padding
     binned_pix = int(round((data.shape[0] * nircam_scale * fgs_pix) / (fgs_plate_size * 60)))
     data_resized = utils.resize_array(cropped, binned_pix, binned_pix)
@@ -986,7 +991,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     if not logger_passed:
         utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
 
-    # Set up out dir
+    # Set up out dir(s)
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir)
 
@@ -1024,7 +1029,27 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                 input_unit = hdr['BUNIT'].lower()
             if 'PHOTMJSR' in hdr:
                 photmjsr = hdr['PHOTMJSR']
+            if 'DATAMODL' in hdr:
+                datamodel = hdr['DATAMODL']
 
+        # Remove distortion from NIRCam or FGS cal data, but not from padded TRK data nor rate images
+        # as they cannot be run through the pipeline without lots of extra steps
+        distortion = True # is there distortion in the image
+        try:
+            if datamodel != 'GuiderCalModel' and input_unit == 'mjy/sr':
+                LOGGER.info("Image Conversion: Removing distortion from data using the JWST Pipeline's Resample step.")
+                with ImageModel(input_im, skip_fits_update=False) as model:
+                    result = ResampleStep.call(model, save_results=False)
+
+                # Crop data back to (2048, 2048), cutting out the top and right to keep the origin
+                LOGGER.info(f"Image Conversion: Cutting undistorted data from {result.data.shape} to (2048, 2048)")
+                data = result.data[0:2048, 0:2048]
+                distortion = False
+        except NameError:
+            LOGGER.info("Image Conversion: Skipping removing distortion from image due to missing either "
+                        "DATAMODL or BUNIT information.")
+
+        # Turn cal images into rate images
         try:
             if input_unit == 'mjy/sr':
                 convert_to_adu_s = photmjsr
@@ -1077,7 +1102,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             # Rotate the NIRCAM image into FGS frame
             nircam_scale, data = transform_nircam_image(data, guider, nircam_det, header)
             # Pad image
-            data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, FGS_PLATE_SIZE)
+            data = resize_nircam_image(data, nircam_scale, FGS_PIXELS, guider)
 
         # -------------- From FGS --------------
         else:
@@ -1093,7 +1118,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
 
         # Apply Gaussian filter to simulate coarse pointing
         if coarse_pointing:
-            pixel_scale = nircam_scale if nircam else FGS_SCALE
+            pixel_scale = nircam_scale if nircam else globals()['FGS{}_SCALE'.format(guider)]
 
             data = apply_coarse_pointing_filter(data, jitter_rate_arcsec, pixel_scale)
             LOGGER.info("Image Conversion: Applied Gaussian filter to simulate "
@@ -1161,13 +1186,13 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                 raise TypeError(str(e))
 
     except Exception as e:
-        LOGGER.exception(e)
+        LOGGER.exception(f'{repr(e)}: {e}')
         raise
 
-    return data, all_found_psfs_path, psf_center_path
+    return data, all_found_psfs_path, psf_center_path, distortion
 
 
-def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
+def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
     """Writes an array of FGS data to the appropriate file:
     {out_dir}/out/{root}/FGS_imgs/{root}_G{guider}.fits
 
@@ -1183,6 +1208,8 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
         Name used to create the output directory, {out_dir}/out/{root}
     guider : int
         Guider number (1 or 2)
+    distortion : bool
+        True if the image still has distortion, False if it does not.
     fgsout_path : str, optional
         Alternate directory in which to save the FGS files. If not
         provided, the FGS images will be saved to
@@ -1206,7 +1233,13 @@ def write_fgs_im(data, out_dir, root, guider, fgsout_path=None):
     header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
     hdr = fits.getheader(header_file, ext=0)
 
+    # Add distortion information to header
+    hdr['DISTORT'] = str(distortion)
+
+    header_list = [hdr, None]
+    data_list = [None, data]
+
     # Write FITS file
-    utils.write_fits(fgsout_file, data, header=hdr, log=LOGGER)
+    utils.write_fits(fgsout_file, data_list, header=header_list, log=LOGGER)
 
     return fgsout_path

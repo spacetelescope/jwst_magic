@@ -99,7 +99,7 @@ def test_change_practice_commissioning(master_gui):
     doesn't re-run the fgscountrate call
     """
     # Set main GUI parameters
-    master_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
+    master_gui.buttonGroup_guider.buttons()[0].setChecked(True)  # set to guider 2
 
     # Set naming method
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
@@ -126,24 +126,24 @@ def test_change_car_and_obs_commissioning(master_gui):
     file by hand
     """
     # Set main GUI parameters
-    master_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
+    master_gui.buttonGroup_guider.buttons()[0].setChecked(True)  # set to guider 2
 
     # Set naming method
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
     master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
-    master_gui.comboBox_car.setCurrentText('OTE-07')
+    master_gui.comboBox_car.setCurrentText('OTE-16')
     master_gui.lineEdit_obs.setText('01')
-    master_gui.pushButton_commid.click() # handle editingfinished not being called in code
+    master_gui.pushButton_commid.click()  # handle editingfinished not being called in code
 
     # Check Attributes
-    assert master_gui.program_id == 1141
+    assert master_gui.program_id == 1151
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'N13I018276'
-    assert master_gui.gs_id == 'N13I018276'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14571855223096, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.53019715082439, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'S4FM000115'
+    assert master_gui.gs_id == 'S4FM000115'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 102.43992218415, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, -62.0214206990925, decimal=4)
 
     # Re-set CAR & OBS
     master_gui.comboBox_car.setCurrentText('OTE-13')
@@ -155,10 +155,10 @@ def test_change_car_and_obs_commissioning(master_gui):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'N1HL000080'
-    assert master_gui.gs_id == 'N1HL000080'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 281.754679175766, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 70.3265788750301, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'S0VR118570'
+    assert master_gui.gs_id == 'S0VR118570'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 81.24507, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, -73.81053, decimal=4)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -173,24 +173,24 @@ def test_update_apt_button_commissioning(master_gui):
     file by hand
     """
     # Set main GUI parameters
-    master_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
+    master_gui.buttonGroup_guider.buttons()[0].setChecked(True)  # set to guider 2
 
     # Set naming method
     master_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
     master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
-    master_gui.comboBox_car.setCurrentText('OTE-07')
+    master_gui.comboBox_car.setCurrentText('OTE-16')
     master_gui.lineEdit_obs.setText('01')
     master_gui.pushButton_commid.click()
 
     # Check Attributes
-    assert master_gui.program_id == 1141
+    assert master_gui.program_id == 1151
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'N13I018276'
-    assert master_gui.gs_id == 'N13I018276'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14571855223096, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.53019715082439, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'S4FM000115'
+    assert master_gui.gs_id == 'S4FM000115'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 102.43992218415, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, -62.0214206990925, decimal=4)
 
     # Re-set APT number and press button
     master_gui.lineEdit_commid.setText('1148')
@@ -202,10 +202,10 @@ def test_update_apt_button_commissioning(master_gui):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'N1HL000080'
-    assert master_gui.gs_id == 'N1HL000080'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 281.754679175766, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 70.3265788750301, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'S0VR118570'
+    assert master_gui.gs_id == 'S0VR118570'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 81.24507, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, -73.81053, decimal=4)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -214,25 +214,25 @@ def test_use_apt_button_manual(master_gui, test_directory):
     Test that re-setting apt to blank re-sets program id/obs/visit attributes
     """
     # Set main GUI parameters
-    master_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
+    master_gui.buttonGroup_guider.buttons()[0].setChecked(True)  # set to guider 2
 
     # Set basic info
     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
     master_gui.lineEdit_root.setText(ROOT)  # set root
     master_gui.textEdit_out.setText(__location__)  # set out directory
-    master_gui.lineEdit_manualid.setText('1141')
+    master_gui.lineEdit_manualid.setText('1151')
     master_gui.lineEdit_manualobs.setText('01')
     master_gui.pushButton_manualid.click()
 
     # Check Attributes
-    assert master_gui.program_id == 1141
+    assert master_gui.program_id == 1151
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'N13I018276'
-    assert master_gui.gs_id == 'N13I018276'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 273.14571855223096, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, 65.53019715082439, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'S4FM000115'
+    assert master_gui.gs_id == 'S4FM000115'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 102.43992218415, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, -62.0214206990925, decimal=4)
 
     # Reset to blank
     master_gui.lineEdit_manualid.setText('')
@@ -267,7 +267,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
     # Set general input
     qtbot.keyClicks(master_gui.lineEdit_inputImage, INPUT_IMAGE)
     qtbot.mouseClick(master_gui.buttonGroup_name.buttons()[button_name], QtCore.Qt.LeftButton)  # set naming method
-    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)  # set to guider 1
+    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)  # set to guider 2
 
     # Set practice information
     if type == 'commissioning':
@@ -286,8 +286,8 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
     elif type == 'manual':
         qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
         qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
-        qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
         qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)
+        qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
         qtbot.keyClicks(master_gui.lineEdit_manualid, '1148')
         qtbot.keyClicks(master_gui.lineEdit_manualobs, '01')
         qtbot.mouseClick(master_gui.pushButton_manualid, QtCore.Qt.LeftButton)
@@ -298,7 +298,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
         assert master_gui.lineEdit_root.text() == ROOT
         assert master_gui.textEdit_out.toPlainText() == __location__
 
-    assert master_gui.buttonGroup_guider.checkedButton().text() == '1'
+    assert master_gui.buttonGroup_guider.checkedButton().text() == '2'
     assert master_gui.program_id == 1148
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
@@ -419,16 +419,16 @@ def test_apt_guider_disagree_manual(mock_dialog, master_gui, test_directory):
     master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
     master_gui.lineEdit_root.setText(ROOT)  # set root
     master_gui.textEdit_out.setText(__location__)  # set out directory
-    master_gui.lineEdit_manualid.setText('1141')
+    master_gui.lineEdit_manualid.setText('1151')
     master_gui.lineEdit_manualobs.setText('01')
     master_gui.pushButton_manualid.click()
 
     # Check setting to the matching guider is fine
-    master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
+    master_gui.buttonGroup_guider.buttons()[0].click()  # set to guider 2
     assert mock_dialog.call_count == 0  # Check dialog box doesn't pop up
 
     # Check setting the wrong guider fails
-    master_gui.buttonGroup_guider.buttons()[0].click()  # set to guider 2
+    master_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
     assert mock_dialog.called  # Check dialog box pops up
 
     # Check it works setting the guider before choosing CAR/Obs

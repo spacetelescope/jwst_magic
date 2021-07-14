@@ -177,23 +177,36 @@ def on_sogs_network():
 
 def write_fits(outfile, data, header=None, log=None):
     """
-    Write data to a simple fits. Assumes one extension and no header.
+    Write data to a fits file. Can take in an array/header
+    or lists of arrays/headers
     """
     out_dir = os.path.dirname(outfile)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    if not any([isinstance(header, fits.header.Header), header is None]):
-        raise TypeError('Header to be written out in {} is not either "None" or of type fits.header.Header'.format(outfile))
+    header_list = header if isinstance(header, list) else [header]
+    for hdr in header_list:
+        if not any([isinstance(hdr, fits.header.Header), hdr is None]):
+            raise TypeError(f'Header to be written out in {outfile} is not either "None" or of type fits.header.Header')
 
-    hdul = fits.PrimaryHDU(data=data, header=header)
+    if not isinstance(data, list):
+        hdul = fits.PrimaryHDU(data=data, header=header)
+    else:
+        hdu_list = []
+        for i, (dat, hdr) in enumerate(zip(data, header)):
+            if i == 0:
+                hdu = fits.PrimaryHDU(data=dat, header=hdr)
+            else:
+                hdu = fits.ImageHDU(data=dat, header=hdr, name='IMAGE')
+            hdu_list.append(hdu)
+        hdul = fits.HDUList(hdu_list)
 
     hdul.writeto(outfile, overwrite=True)
 
     if log is not None:
-        log.info("Successfully wrote: {}".format(outfile))
+        log.info(f"Successfully wrote: {outfile}")
     else:
-        print("Successfully wrote: {}".format(outfile))
+        print(f"Successfully wrote: {outfile}")
 
 
 def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
@@ -640,7 +653,7 @@ def get_car_data():
     html_page = requests.get(url).text
     l = pd.read_html(html_page)
     df = l[0]
-    df_set = df[df['Activity ID'].str.contains("OTE|LOS", case=False)]  # only include OTE and LOS rows
+    df_set = df[df['Activity ID'].str.contains("OTE|LOS|NIRCam-005|NIRCam-035", case=False)]  # only include guiding CARs
 
     commissioning_dict = {car.lower(): str(int(apt))
                           for car, apt in zip(df_set['Activity ID'].values, df_set['Program'].values)}

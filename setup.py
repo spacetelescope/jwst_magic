@@ -39,6 +39,7 @@ INSTALL_REQUIRES = [
     'scipy',
     'pytest-qt',
     'pandas',
+    'jwst',
 ]
 
 # Determine if PyQt5 needs to be included in the install_requires

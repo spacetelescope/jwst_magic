@@ -42,19 +42,19 @@ The components discussed above directly map to the four main components of MAGIC
 
 NIRCam or FGS science to FGS raw image conversion (Image Converter)
 ------------------------------------------------
-This module can take in a (simulated or real) NIRCam image from any of the short- and longwave detectors, or full-frame calibration FGS image from either detector, and convert it to a pseudo-FGS raw (guider 1 or guider 2) image. This pseudo-FGS raw image that is created is not a simulated image, but an expectation of the raw image that the FGS flight software will see. This module works with the [`jwst-fgs-countrate`](https://github.com/spacetelescope/jwst-fgs-countrate) module to use the count rates in the input image to renormalize the image to the expected count rates for a different object. This module appropriately rotates the image from the science frame, adjusts the pixel scale and image size if converting from a NIRCam image, corrects bad pixels, and normalizes the image to the magnitude and count rates of a specified guide star.
+This module can take in a (simulated or real) NIRCam image from any of the short- and longwave detectors, or full-frame calibration FGS image from either detector, and convert it to a pseudo-FGS (guider 1 or guider 2) image. This pseudo-FGS image that is created is not a simulated image, but an expectation of the undistorted, raw coordinate-frame image that the FGS flight software will see. This module works with the [`jwst-fgs-countrate`](https://github.com/spacetelescope/jwst-fgs-countrate) module to use the count rates in the input image to renormalize the image to the expected count rates for a different object. This module removes distortion, appropriately rotates the image from the science frame, adjusts the pixel scale and image size if converting from a NIRCam image, corrects bad pixels, and normalizes the image to the magnitude and count rates of a specified guide star.
 
   [Section III: Determining and Loading the Input Image](iii_determining_and_loading_the_input_image.md)
 
 Star Selection Tool (Star Selector)
 -----------------------------------
-This module takes in a raw FGS image and allows the user to choose the guide and reference star PSFs using a GUI.
+This module takes in an undistorted, raw FGS image and allows the user to choose the guide and reference star PSFs using a GUI.
 
   [Section IV: Selecting Guide & Reference Stars for an Input Image and Writing Out Files](iv_select_stars_and_write_files.md)
 
 Flight Software File Writer (Flight Software (FSW) File Writer)
 ---------------------------------------------------------------
-This module requires an FGS raw image (for example, the image that comes out of the Image Converter tool, and accompanying file (for example, the "guiding_selections" file that comes out of the Star Selection Tool) that includes a list of the guide and reference PSF image coordinates and their associated measured count rates. The output is all files necessary to test this image with different flight software simulators (FGS DHAS, FGSES, etc.) includes all the files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
+This module requires an FGS undistorted, raw image (for example, the image that comes out of the Image Converter tool, and accompanying file (for example, the "guiding_selections" file that comes out of the Star Selection Tool) that includes a list of the guide and reference PSF image coordinates and their associated measured count rates. The output is all files necessary to test this image with different flight software simulators (FGS DHAS, FGSES, etc.) includes all the files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
 
   [Section IV: Selecting Guide & Reference Stars for an Input Image and Writing Out Files](iv_select_stars_and_write_files.md)
 
