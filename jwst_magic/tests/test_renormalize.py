@@ -30,7 +30,7 @@ def test_convert_to_count_rate_mag(norm_value, norm_unit, guider, correct_countr
     Test how the FGS count rate and magnitude are calculated based on input norm unit and value
     """
 
-    fgs_countrate, fgs_mag = convert_to_countrate_fgsmag(norm_value, norm_unit, guider)
+    fgs_countrate, fgs_mag = convert_to_countrate_fgsmag(norm_value, norm_unit, guider, gs_catalog='GSC242')
 
     assert np.isclose(fgs_countrate, correct_countrate, 1e-5)
     assert np.isclose(fgs_mag, correct_magnitude, 1e-5)

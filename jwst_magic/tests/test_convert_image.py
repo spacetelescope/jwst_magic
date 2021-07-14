@@ -55,12 +55,12 @@ PARAMETRIZED_DATA = parametrized_data()['test_convert_image']
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 
 norm_parameters = [
-    (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 2138.5545260642302),
-    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6635.360361175142),
-    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1883.7917307547636),
+    (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 2052.138207909823),
+    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6445.04162318262),
+    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1807.6700590566643),
     (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 6150.282570907751),
-    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6635.360361175142), # uses fgs_mag = 12 by default
-    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 72688.39577432793),  # NRC contains TEST keyword - tests ped
+    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6445.041623182621),  # uses fgs_mag = 12 by default
+    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 73691.17850191628),  # NRC contains TEST keyword - tests ped
     (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.9196477208)  # non-ITM FGS image - tests ped
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
@@ -70,15 +70,15 @@ def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, 
     fgscountrate module
     """
     data, all_found_psfs_file, \
-    psf_center_file = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=nircam,
-                                                          out_dir=__location__, smoothing='default',
-                                                          nircam_det=None, normalize=True,
-                                                          norm_value=norm_value,
-                                                          norm_unit=norm_unit,
-                                                          gs_catalog='GSC242',
-                                                          coarse_pointing=False,
-                                                          jitter_rate_arcsec=None,
-                                                          logger_passed=False, itm=itm)
+    psf_center_file, _ = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=nircam,
+                                                             out_dir=__location__, smoothing='default',
+                                                             nircam_det=None, normalize=True,
+                                                             norm_value=norm_value,
+                                                             norm_unit=norm_unit,
+                                                             gs_catalog='GSC242',
+                                                             coarse_pointing=False,
+                                                             jitter_rate_arcsec=None,
+                                                             logger_passed=False, itm=itm)
 
     assert os.path.exists(all_found_psfs_file)
     assert psf_center_file is None
@@ -93,12 +93,12 @@ norm_parameters = [
 @pytest.mark.parametrize('value, unit, error, error_text', norm_parameters)
 def test_convert_im_normalization_error(value, unit, error, error_text):
     with pytest.raises(error) as excinfo:
-        data, _, _ = convert_image_to_raw_fgs.convert_im(NIRCAM_IM, 1, ROOT, nircam=True,
-                                                   nircam_det=None, normalize=True,
-                                                   norm_value=value, norm_unit=unit,
-                                                   coarse_pointing=False,
-                                                   jitter_rate_arcsec=None,
-                                                   logger_passed=False, itm=True)
+        data, _, _, _ = convert_image_to_raw_fgs.convert_im(NIRCAM_IM, 1, ROOT, nircam=True,
+                                                            nircam_det=None, normalize=True,
+                                                            norm_value=value, norm_unit=unit,
+                                                            coarse_pointing=False,
+                                                            jitter_rate_arcsec=None,
+                                                            logger_passed=False, itm=True)
         assert error_text in str(excinfo)
 
 
@@ -165,15 +165,15 @@ def test_psf_center_file():
     guider = 1
 
     data, all_found_psfs_file, \
-    psf_center_file = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=True,
-                                                          out_dir=__location__, smoothing='low',
-                                                          nircam_det=None, normalize=True,
-                                                          norm_value=12,
-                                                          norm_unit='FGS Magnitude',
-                                                          gs_catalog='GSC242',
-                                                          coarse_pointing=False,
-                                                          jitter_rate_arcsec=None,
-                                                          logger_passed=False, itm=False)
+    psf_center_file, _ = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=True,
+                                                             out_dir=__location__, smoothing='low',
+                                                             nircam_det=None, normalize=True,
+                                                             norm_value=12,
+                                                             norm_unit='FGS Magnitude',
+                                                             gs_catalog='GSC242',
+                                                             coarse_pointing=False,
+                                                             jitter_rate_arcsec=None,
+                                                             logger_passed=False, itm=False)
 
     assert os.path.exists(all_found_psfs_file)
     assert os.path.exists(psf_center_file)
@@ -196,16 +196,16 @@ def test_read_in_all_found_psfs_file():
     input_all_found_psfs = SEGMENT_INFILE
 
     data, all_found_psfs_file, \
-    psf_center_file = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=True,
-                                                          out_dir=__location__, smoothing='high',
-                                                          nircam_det=None, normalize=True,
-                                                          norm_value=12,
-                                                          norm_unit='FGS Magnitude',
-                                                          all_found_psfs_file=input_all_found_psfs,
-                                                          gs_catalog='GSC242',
-                                                          coarse_pointing=False,
-                                                          jitter_rate_arcsec=None,
-                                                          logger_passed=False, itm=False)
+    psf_center_file, _ = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=True,
+                                                             out_dir=__location__, smoothing='high',
+                                                             nircam_det=None, normalize=True,
+                                                             norm_value=12,
+                                                             norm_unit='FGS Magnitude',
+                                                             all_found_psfs_file=input_all_found_psfs,
+                                                             gs_catalog='GSC242',
+                                                             coarse_pointing=False,
+                                                             jitter_rate_arcsec=None,
+                                                             logger_passed=False, itm=False)
 
     assert os.path.exists(all_found_psfs_file)
     assert psf_center_file is None

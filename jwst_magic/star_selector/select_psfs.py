@@ -749,7 +749,7 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
                                             f'plot_selections_{root}_G{guider}_config{i}.png'))
 
     except Exception as e:
-        LOGGER.exception(e)
+        LOGGER.exception(f'{repr(e)}: {e}')
         raise
 
     return guiding_selections_path_list, all_found_psfs_path, center_pointing_path, psf_center_path

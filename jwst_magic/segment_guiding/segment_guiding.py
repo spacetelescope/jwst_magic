@@ -47,9 +47,10 @@ import time
 
 # Third Party Imports
 from astropy import units as u
+from astropy import wcs
 from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
-from astropy.table import Table
+from jwst.assign_wcs.util import calc_rotation_matrix
 import matplotlib
 JENKINS = '/home/developer/workspace/' in os.getcwd()
 if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
@@ -63,6 +64,7 @@ from pysiaf.utils import rotations
 # Local Imports
 if not JENKINS:
     from jwst_magic.segment_guiding import SegmentGuidingGUI
+from jwst_magic.convert_image.convert_image_to_raw_fgs import FGS1_SCALE, FGS2_SCALE
 from jwst_magic.utils import coordinate_transforms, utils
 
 # Establish segment guiding files directory
@@ -167,78 +169,57 @@ class SegmentGuidingCalculator:
             self.get_selected_segs(selected_segs_list)
 
     def get_center_pointing(self):
-        """Determine the V2/V3 position of the chosen segment.
+        """Determine the X,Y position of the chosen segment.
 
         Check that the user-provided segment ID number is valid (0 to
-        18). Calculate the central V2/V3 point of either the provided
+        18). Calculate the central X,Y point of either the provided
         segment or the center of the segment array.
         """
 
         # Ensure the provided segment ID is valid
-        flat_v2_array = [val for l in self.v2_seg_array for val in l]
-        segment_max = int(len(flat_v2_array) / self._num_infiles) # same number of founds psfs for each config
+        flat_x_array = [val for l in self.x_seg_array for val in l]
+        segment_max = int(len(flat_x_array) / self._num_infiles) # same number of founds psfs for each config
         for center_of_pointing in self.center_of_pointing:
             if isinstance(center_of_pointing, int):
                 if (center_of_pointing < 0) or (center_of_pointing > segment_max):
-                    msg = 'Segment number {} out of range (0, {})'.format(center_of_pointing, segment_max)
+                    msg = f'Segment number {center_of_pointing} out of range (0, {segment_max})'
                     raise ValueError(msg)
             elif not isinstance(center_of_pointing, list):
-                raise ValueError('Center of pointing {} must be a list of ints or lists; '
-                                 'cannot include {}'.format(self.center_of_pointing, type(center_of_pointing)))
+                raise ValueError(f"Center of pointing {self.center_of_pointing} must be a list of ints or lists; "
+                                 f"cannot include {type(center_of_pointing)}")
 
-        # Determine the central V2/V3 point from the given segment ID
-
-        # FIXME: is this wrong? adding the V2/V3 reference twice...?
-
-        # If a specific segment was provided, set the V2/V3 ref point to be
-        # that segment's location
-        self.v2_seg_n, self.v3_seg_n = [], []
-        self.v2_aim, self.v3_aim = [], []
-        self.x_idl_aim, self.y_idl_aim = [], []
-
-        for i, (center_of_pointing, v2_seg_array, v3_seg_array) in enumerate(zip(self.center_of_pointing,
-                                                                                 self.v2_seg_array, self.v3_seg_array)):
+        # Determine the central X,Y point from the given segment ID
+        self.x_seg_n, self.y_seg_n = [], []
+        for i, (center_of_pointing, x_seg_array, y_seg_array) in enumerate(zip(self.center_of_pointing,
+                                                                               self.x_seg_array, self.y_seg_array)):
+            # Set the x,y coordinate of the center of pointing
             if isinstance(center_of_pointing, list):
-                v2_seg_n, v3_seg_n = coordinate_transforms.Raw2Tel(center_of_pointing[1], center_of_pointing[0],
-                                                                   self.fgs_num)
+                x_seg_n = center_of_pointing[1]
+                y_seg_n = center_of_pointing[0]
             elif center_of_pointing > 0:
-                v2_seg_n = v2_seg_array[center_of_pointing - 1]
-                v3_seg_n = v3_seg_array[center_of_pointing - 1]
-            # Otherwise, if the input segment ID was 0, set the V2/V3 ref point to
-            # be the mean of all segments' locations
+                x_seg_n = x_seg_array[center_of_pointing - 1]
+                y_seg_n = y_seg_array[center_of_pointing - 1]
             else:
-                v2_seg_n = v2_seg_array.mean()
-                v3_seg_n = v3_seg_array.mean()
-
-            # Calculate aim (add the v2/v3 ref that we had removed in Raw2Tel)
-                # v2, v3 aim is the position of the guide star in the full JWST FOV tel frame that pysiaf outputs
-            v2_aim = self.v2_ref + v2_seg_n  # v2_seg_n = dv2_aim
-            v3_aim = self.v3_ref + v3_seg_n  # v3_seg_n = dv3_aim
-
-            # Convert to Ideal coordinates
-            x_idl_aim, y_idl_aim = self.fgs_siaf_aperture.tel_to_idl(v2_aim, v3_aim)
+                # If the input segment ID was 0, set the X,Y ref point to be the mean of all segments' locations
+                x_seg_n = x_seg_array.mean()
+                y_seg_n = y_seg_array.mean()
 
             # Save variables to list attributes
-            self.v2_seg_n.append(v2_seg_n)
-            self.v3_seg_n.append(v3_seg_n)
-            self.v2_aim.append(v2_aim)
-            self.v3_aim.append(v3_aim)
-            self.x_idl_aim.append(x_idl_aim)
-            self.y_idl_aim.append(y_idl_aim)
+            self.x_seg_n.append(x_seg_n)
+            self.y_seg_n.append(y_seg_n)
 
     def get_guider_aperture(self):
         """Extract needed parameters from the SIAF file for the given FGS.
 
-        Taking the current guider number, extracts V2Ref, V3Ref,
-        V3IdlYAngle, and VIdlParity from the respective aperture in the
-        FGS SIAF.
+        Taking the current guider number, extracts SIAF values from the
+        respective aperture in the FGS SIAF.
         """
         # Ensure the guider number is valid
         if str(self.fgs_num) not in ['1', '2']:
-            raise ValueError('Invalid guider number: "{}"'.format(self.fgs_num))
+            raise ValueError(f'Invalid guider number: "{self.fgs_num}"')
 
         # Construct the aperture name
-        det = 'FGS' + str(self.fgs_num) + '_FULL_OSS'
+        det = f'FGS{self.fgs_num}_FULL'
 
         # Read SIAF for appropriate guider aperture with pysiaf
         self.fgs_siaf_aperture = FGS_SIAF[det]
@@ -246,6 +227,8 @@ class SegmentGuidingCalculator:
         self.v3_ref = float(self.fgs_siaf_aperture.V3Ref)
         self.v3_idl_yangle = self.fgs_siaf_aperture.V3IdlYAngle
         self.v_idl_parity = self.fgs_siaf_aperture.VIdlParity
+        self.fgs_x_scale = float(self.fgs_siaf_aperture.XSciScale)  # arcsec/pixel
+        self.fgs_y_scale = float(self.fgs_siaf_aperture.YSciScale)  # arcsec/pixel
 
     def calculate_effective_ra_dec(self):
         """Calculate the effective RAs and Decs for each segment.
@@ -254,45 +237,47 @@ class SegmentGuidingCalculator:
         self.n_segments = []
         self.seg_ra, self.seg_dec = [], []
         self.x_idl_segs, self.y_idl_segs = [], []
-        self.x_det_segs, self.y_det_segs = [], []
 
         for i, seg_id_array in enumerate(self.seg_id_array):
-            n_segments = len(seg_id_array)
 
-            # Get the attitude matrix
-            # These are the v2/v3 tel position of the guide star and the actual ra/dec of the guide star
-            attitude = rotations.attitude(self.v2_aim[i] + self.v2_boff,
-                                          self.v3_aim[i] + self.v3_boff,
-                                          self.ra, self.dec, self.pa)
+            # Include the boresight offset (converted from V2/V3 to x,y pixels) in the center of pointing value
+            x_center_pointing = self.x_seg_n[i] + (self.v2_boff / self.fgs_x_scale)
+            y_center_pointing = self.y_seg_n[i] + (self.v3_boff / self.fgs_y_scale)
 
-            # Get RA and Dec for each segment.
-            seg_ra = np.zeros(n_segments)
-            seg_dec = np.zeros(n_segments)
-            for j in range(n_segments):
-                v2 = self.v2_ref + self.v2_seg_array[i][j]  # adding v2/v3 ref back in to match pysiaf tel frame
-                v3 = self.v3_ref + self.v3_seg_array[i][j]
-                # This is the same pysiaf tel_to_sky()
-                seg_ra[j], seg_dec[j] = rotations.pointing(attitude, v2, v3,
-                                                                     positive_ra=True)
+            # Convert all coords we'll be using with the WCS into undistorted SCI frame (only updating the origin)
+            x_center_pointing, y_center_pointing = coordinate_transforms.raw2sci(x_center_pointing, y_center_pointing, self.fgs_num)
+            x_seg_array_sci, y_seg_array_sci = coordinate_transforms.raw2sci(self.x_seg_array[i], self.y_seg_array[i], self.fgs_num)
 
-            # Convert V2/V3 coordinates to ideal coordinates and detector frame coordinates
-            # adding v2/v3 ref back in to match pysiaf tel frame (undoing subtraction in Raw2Tel)
-            idl_coords = self.fgs_siaf_aperture.tel_to_idl(self.v2_seg_array[i] + self.v2_ref,
-                                                           self.v3_seg_array[i] + self.v3_ref)
-            x_idl_segs, y_idl_segs = idl_coords
-            x_det_segs, y_det_segs = self.fgs_siaf_aperture.idl_to_det(x_idl_segs,y_idl_segs)
+            # Create WCS object
+            scale = globals()['FGS{}_SCALE'.format(self.fgs_num)]
+            w = wcs.WCS(naxis=2)
+            w.wcs.crpix = [x_center_pointing+1, y_center_pointing+1]  # center of pointing with boresight offset, in image pixels
+            w.wcs.cdelt = [scale/3600, scale/3600]  # match what we used in convert_image
+            w.wcs.crval = [self.ra, self.dec]  # ra and dec of the guide star
+            w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
+            w.wcs.cunit = ['deg', 'deg']
+            pc1_1, pc1_2, pc2_1, pc2_2 = calc_rotation_matrix(np.radians(self.pa), np.radians(self.v3_idl_yangle),
+                                                              self.v_idl_parity)
+            w.wcs.pc = [[pc1_1, pc1_2],[pc2_1, pc2_2]]
 
-            # Check to make sure all the computed segment locations are within
-            # the needed FOV
-            self.check_segments_inside_fov(attitude, x_det_segs, y_det_segs, seg_id_array, seg_ra, seg_dec)
+            # Calculate list of effective ra and decs for each segment
+            pixcoord_list = list(zip(x_seg_array_sci, y_seg_array_sci))
+            radec_list = w.wcs_pix2world(pixcoord_list, 0)
+            ra_segs, dec_segs = radec_list.T[0], radec_list.T[1]
 
-            self.n_segments.append(n_segments)
-            self.seg_ra.append(seg_ra)
-            self.seg_dec.append(seg_dec)
+            # Convert from undistorted raw to ideal frame (already undistorted so only an origin change)
+            x_idl_segs, y_idl_segs = coordinate_transforms.raw2idl(np.array(self.x_seg_array[i]),
+                                                                   np.array(self.y_seg_array[i]),
+                                                                   self.fgs_num)
+
+            # Check to make sure all the computed segment locations are within the needed FOV
+            self.check_segments_inside_fov(ra_segs, dec_segs, self.x_seg_n[i], self.y_seg_n[i])
+
+            self.n_segments.append(len(seg_id_array))
+            self.seg_ra.append(ra_segs)
+            self.seg_dec.append(dec_segs)
             self.x_idl_segs.append(x_idl_segs)
             self.y_idl_segs.append(y_idl_segs)
-            self.x_det_segs.append(x_det_segs)
-            self.y_det_segs.append(y_det_segs)
 
     def write_override_file(self, verbose=True):
         """Write the segment guiding override file: {out_dir}/out/{root}/
@@ -308,10 +293,9 @@ class SegmentGuidingCalculator:
 
         # Define path and name of output override file
         # Only add observations and visits to the list if an observation is specified
-        out_file = '{}_gs_override_{}'.format(datetime.now().strftime('%Y%m%d'),
-                                              self.program_id)
+        out_file = f'{datetime.now().strftime("%Y%m%d")}_gs_override_{self.program_id}'
         if obs_list_name is not None:
-            out_file += "_{}".format(obs_list_name)
+            out_file += f"_{obs_list_name}"
 
             if len(obs_num_list) > 1:
                 out_file += "_1"
@@ -322,7 +306,7 @@ class SegmentGuidingCalculator:
                 self.visit_num = 1
 
             elif self.visit_num is not None:
-                out_file += "_{}".format(self.visit_num)
+                out_file += f"_{self.visit_num}"
 
         out_file += ('.txt')
 
@@ -332,57 +316,60 @@ class SegmentGuidingCalculator:
         if self.override_type == "SOF":
 
             # Flatten data into 1 list of all PSFs
-            self.countrate_array_flat = [x for n in self.countrate_array for x in n.tolist()]
             self.n_segments_flat = sum(self.n_segments)
-            self.seg_id_array_flat = np.arange(len(
-                [x for n in self.seg_id_array for x in n.tolist()])) + 1  # Re-do numbering so all have unique numbers
-            self.v2_seg_array_flat = [x for n in self.v2_seg_array for x in n.tolist()]
-            self.v3_seg_array_flat = [x for n in self.v3_seg_array for x in n.tolist()]
-            self.x_idl_segs_flat = [x for n in self.x_idl_segs for x in n.tolist()]
-            self.y_idl_segs_flat = [x for n in self.y_idl_segs for x in n.tolist()]
-            self.seg_ra_flat = np.array(self.seg_ra).flatten()
-            self.seg_dec_flat = np.array(self.seg_dec).flatten()
-            self.x_det_segs_flat = [x for n in self.x_det_segs for x in n.tolist()]
-            self.y_det_segs_flat = [x for n in self.y_det_segs for x in n.tolist()]
+            self.seg_id_array_flat = np.arange(len([x for n in self.seg_id_array for x in n.tolist()])) + 1  # Re-do numbering so all have unique numbers (flat)
+            self.x_segs_flat = [x for n in self.x_seg_array for x in n.tolist()] # raw values
+            self.y_segs_flat = [x for n in self.y_seg_array for x in n.tolist()]
+            self.x_idl_segs_flat = np.concatenate(self.x_idl_segs) # idl values
+            self.y_idl_segs_flat = np.concatenate(self.y_idl_segs)
+            self.seg_ra_flat = np.concatenate(self.seg_ra) # RA values
+            self.seg_dec_flat = np.concatenate(self.seg_dec) # Dec values
+            self.countrate_array_flat = [x for n in self.countrate_array for x in n.tolist()] # count rate values
 
-            for radec in zip(self.seg_ra_flat, self.seg_dec_flat):
-                if list(zip(self.seg_ra_flat, self.seg_dec_flat)).count(radec) > 1:
-                    inds = [i for i, x in enumerate(list(zip(self.seg_ra_flat, self.seg_dec_flat))) if x == radec]
-                    for i in inds[1:]:
-                        self.seg_id_array_flat[i] = int(self.seg_id_array_flat[inds[0]])
-
-            # Re-match numbering in self.selected_segment_ids
-            self.selected_segment_ids_flat = []
+            # Create the set of IDs to be written out to the override file (must be 1-18)
+            magic_to_file_ids_dict = {}
+            self.selected_file_ids = []
+            ind = 1
             for i, config in enumerate(self.selected_segment_ids):
-                new_config = []
-                for psf_ind in config:
-                    shift = sum(self.n_segments[:i])
-                    new_config.append(self.seg_id_array_flat[shift + psf_ind] - 1)
-                self.selected_segment_ids_flat.append(new_config)
+                sublist = []
+                for j, val in enumerate(config):
+                    # If the value was already used, use the same new ind
+                    if val in magic_to_file_ids_dict.keys():
+                        sublist.append(magic_to_file_ids_dict[val])
+                    # If it's a new value, pick a new ind and add it to the dict
+                    else:
+                        magic_to_file_ids_dict[val] = ind
+                        sublist.append(ind)
+                        ind += 1
+                self.selected_file_ids.append(sublist)
+
+            # Check the file numbering matches what OSS can handle
+            selected_file_ids_flat = np.concatenate(self.selected_file_ids)
+            if 18 in selected_file_ids_flat:
+                raise ValueError(f'Segment Guiding: Too many stars selected. OSS will only accept 18 unique segments, '
+                                 f'and currently {len(set(selected_file_ids_flat))} segments are chosen. Go back and either '
+                                 f'choose fewer segments in the star selector section, or choose fewer guiding '
+                                 f'configurations in the drop down menu.')
 
             #  Print summary of input data (guide star RA, Dec, and PA, etc...)
             if verbose:
                 # Print guide star and boresight parameters
-                summary_output = """Guide Star Parameters
-                    Aperture FGS: {0}
-                    V2/V3 Refs: ({1:10.4f}, {2:10.4f}) arc-sec
-                    Guiding segment number: {3}
-                    V2/V3 Boresight offset: ({4}, {5}) arc-sec
-                    Guide star RA & Dec: ({6}, {7}) degrees
-                    Position angle: {8} degrees""".\
-                    format(self.fgs_num, self.v2_ref, self.v3_ref, self.center_of_pointing,
-                           self.v2_boff, self.v3_boff, self.ra, self.dec, self.pa)
-                self.log.info('Segment Guiding: ' + summary_output)
+                summary_output = f"""Guide Star Parameters
+                    Aperture FGS: {self.fgs_num}
+                    V2/V3 Refs: ({self.v2_ref:10.4f}, {self.v3_ref:10.4f}) arc-sec
+                    Guiding segment number: {self.center_of_pointing}
+                    V2/V3 Boresight offset: ({self.v2_boff}, {self.v3_boff}) arc-sec
+                    Guide star RA & Dec: ({self.ra}, {self.dec}) degrees
+                    Position angle: {self.pa} degrees"""
+                self.log.info(f'Segment Guiding: {summary_output}')
 
                 all_segments = 'All Segment Locations'
-                all_segments += '\n                Segment     dV2    dV3    xIdl' +\
-                                '   yIdl     RA         Dec         xDet     yDet'
+                all_segments += '\n                Segment     xIdl   yIdl     RA         Dec         xRaw     yRaw'
                 for p in range(self.n_segments_flat):
-                    all_segments += ('\n                %5s    %6.2f %6.2f  %6.2f %6.2f  %10.6f %10.6f  %8.2f %8.2f'
-                                     % (self.seg_id_array_flat[p], self.v2_seg_array_flat[p],
-                                        self.v3_seg_array_flat[p], self.x_idl_segs_flat[p],
-                                        self.y_idl_segs_flat[p], self.seg_ra_flat[p],
-                                        self.seg_dec_flat[p], self.x_det_segs_flat[p], self.y_det_segs_flat[p]))
+                    all_segments += (f'\n                {self.seg_id_array_flat[p]}         '
+                                     f'{self.x_idl_segs_flat[p]:6.2f} {self.y_idl_segs_flat[p]:6.2f}  '
+                                     f'{self.seg_ra_flat[p]:10.6f} {self.seg_dec_flat[p]:10.6f}  '
+                                     f'{self.x_segs_flat[p]:8.2f} {self.y_segs_flat[p]:8.2f}')
                 self.log.info('Segment Guiding: ' + all_segments)
 
         # Determine what the commands should be:
@@ -399,54 +386,53 @@ class SegmentGuidingCalculator:
         # Write out override file with RA/Decs of selected segments
         with open(out_file, 'w') as f:
             # Determine whether to include a multiplicative countrate factor
-            countrate_qualifier = ' -count_rate_factor={:.4f}'.\
-                format(self.countrate_factor) if self.countrate_factor else ''
-            countrate_uncertainty_qualifier = ' -count_rate_uncertainty_factor={:.4f}'.\
-                format(self.countrate_uncertainty_factor) if self.countrate_uncertainty_factor else ''
+            countrate_qualifier = f' -count_rate_factor={self.countrate_factor:.4f}' if self.countrate_factor else ''
+            countrate_uncertainty_qualifier = f' -count_rate_uncertainty_factor={self.countrate_uncertainty_factor:.4f}' \
+                if self.countrate_uncertainty_factor else ''
             out_string = 'sts -gs_select '
 
             for o, v in zip(obs_list, visit_list):
                 if out_string[-2:] == 't ':
-                    out_string += "{:05d}".format(self.program_id)
+                    out_string += f"{self.program_id:05d}"
                 else:
-                    out_string += ", {:05d}".format(self.program_id)
+                    out_string += f", {self.program_id:05d}"
 
                 if o is not None:
-                    out_string +="{:03d}".format(int(o))
+                    out_string += f"{int(o):03d}"
                     if v is not None:
-                        out_string +="{:03d}".format(int(v))
+                        out_string += f"{int(v):03d}"
 
-            out_string += (countrate_qualifier)
-            out_string += (countrate_uncertainty_qualifier)
+            out_string += countrate_qualifier
+            out_string += countrate_uncertainty_qualifier
 
             if self.override_type == "SOF":
                 # Determine which segments have been selected
-                orientations = list(self.selected_segment_ids_flat)
+                orientations = list(self.selected_segment_ids)  # use these numbers to pull the data
+                file_orientations = list(self.selected_file_ids)  # use these numbers to label the data
                 guide_segments = [s[0] for s in orientations]
-                all_selected_segs = list(set(np.concatenate(orientations)))
+                all_selected_segs = list(dict.fromkeys(np.concatenate(orientations))) # make a set but preseve order
+                all_selected_segs_file_id = list(dict.fromkeys(np.concatenate(file_orientations)))
 
                 if self._refonly:
                     n_guide_segments = len(guide_segments)
 
                 for i in range(len(all_selected_segs)):
-                    # Reorder all possible segments
-                    all_selected_segs.append(all_selected_segs[0])
-                    all_selected_segs.remove(all_selected_segs[0])
-                    new_seg = list(np.copy(all_selected_segs))
+                    new_seg = [all_selected_segs[i]]
+                    new_seg_file_id = [all_selected_segs_file_id[i]]
 
                     # Add to orientation list if not already provided as guide star
                     if new_seg[0] not in guide_segments:
                         orientations.append(new_seg)
-                        guide_segments.append(new_seg[0])
+                        file_orientations.append(new_seg_file_id)
 
                 # If countrates were included in the input file, use them!
-                # Note: This used to be where the oss factor was divided out, but that is now removed
                 rate = self.countrate_array_flat
                 uncertainty = np.array(self.countrate_array_flat) * self.threshold_factor
 
                 # Write the commands for each orientation
-                for i_o, orientation in enumerate(orientations):
+                for i_o, (orientation, file_ids) in enumerate(zip(orientations, file_orientations)):
                     guide_seg_id = orientation[0]
+                    guide_star_file_id = file_ids[0]
 
                     label = 'star'
                     seg = i_o + 1
@@ -458,21 +444,32 @@ class SegmentGuidingCalculator:
                             seg = i_o + 1 - n_guide_segments
 
                     # Format segment properties (ID, RA, Dec, countrate, uncertainty)
-                    star_string = ' -%s%d = %d, %.6f, %.6f, %.1f, %.1f' % (
-                        label, seg, guide_seg_id + 1, self.seg_ra_flat[guide_seg_id],
-                        self.seg_dec_flat[guide_seg_id], rate[guide_seg_id],
-                        uncertainty[guide_seg_id])
+                    star_string = f' -{label}{seg} = {guide_star_file_id}, ' \
+                                  f'{self.seg_ra_flat[guide_seg_id]:.6f}, {self.seg_dec_flat[guide_seg_id]:.6f}, ' \
+                                  f'{rate[guide_seg_id]:.1f}, {uncertainty[guide_seg_id]:.1f}'
 
                     if not self._refonly or (self._refonly and label == 'star'):
                         # Add list of segment IDs for all reference stars
-                        for ref_seg_id in orientation:
-                            if ref_seg_id != guide_seg_id:
-                                star_string += ', %d' % (ref_seg_id + 1)
+                        for ref_seg_file_id in file_ids:
+                            if ref_seg_file_id != guide_star_file_id:
+                                star_string += f', {ref_seg_file_id}'
 
                     out_string += star_string
 
+                # Check gs-select parameters are not being violated
+                if 'star19' in out_string:
+                    raise ValueError(
+                        'Segment Guiding: Too many -star labels created. OSS will only accept up to '
+                        '-star18. Go back and either choose fewer segments in the star selector section, '
+                        'or choose fewer guiding configurations in the drop down menu.')
+                if 'ref_only11' in out_string:
+                    raise ValueError(
+                        'Segment Guiding: Too many -refonly labels created. OSS will only accept up to '
+                        '-refonly10. Go back and either choose fewer segments in the star selector section, '
+                        'or choose fewer guiding configurations in the drop down menu.')
+
                 # Write out the override report
-                self.write_override_report(out_file, orientations, n_guide_segments, obs_list_name)
+                self.write_override_report(out_file, orientations, file_orientations, n_guide_segments, obs_list_name)
 
             f.write(out_string)
 
@@ -484,7 +481,9 @@ class SegmentGuidingCalculator:
                             format(out_file))
 
 
-    def write_override_report(self, filename, orientations, n_guide_segments, obs_list_name):
+    def write_override_report(self, filename, orientations, file_orientations, n_guide_segments, obs_list_name):
+        """Write a report.txt file to supplement the override file.
+        """
         # Define path and name of output override report
         file_root = filename.split('.txt')[0]
         out_file = '{}_REPORT.txt'.format(file_root)
@@ -504,14 +503,15 @@ class SegmentGuidingCalculator:
             f.write('{:14s}: {:f}'.format('Guide Star Dec', self.dec) + '\n')
             f.write('{:14s}: {:f}'.format('V3 PA @ GS', self.pa) + '\n')
             f.write('\n')
-            columns = 'Star Name, MAGIC ID, RA, Dec, Ideal X, Ideal Y, OSS Ideal X, OSS Ideal Y, Detector X, Detector Y'.split(', ')
-            header_string_to_format = '{:^13s}| '* len(columns)
+            columns = 'Star Name, File ID, MAGIC ID, RA, Dec, Ideal X, Ideal Y, OSS Ideal X, OSS Ideal Y, Raw X, Raw Y'.split(', ')
+            header_string_to_format = '{:^13s}| ' * len(columns)
             header_string = header_string_to_format[:-2].format(*columns) + '\n'
             f.write(header_string)
             f.write('-'*len(header_string) + '\n')
 
-            for i_o, orientation in enumerate(orientations):
+            for i_o, (orientation, file_ids) in enumerate(zip(orientations, file_orientations)):
                 guide_seg_id = orientation[0]
+                guide_star_file_id = file_ids[0]
 
                 label = 'star'
                 seg = i_o + 1
@@ -520,30 +520,36 @@ class SegmentGuidingCalculator:
                         label = 'ref_only'
                         seg = i_o + 1 - n_guide_segments
 
-                values = [label + str(seg), int(guide_seg_id + 1), self.seg_ra_flat[guide_seg_id], self.seg_dec_flat[guide_seg_id],
-                           self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
-                           -self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
-                           self.x_det_segs_flat[guide_seg_id], self.y_det_segs_flat[guide_seg_id]]
+                values = [label + str(seg), int(guide_star_file_id), int(guide_seg_id + 1),
+                          self.seg_ra_flat[guide_seg_id], self.seg_dec_flat[guide_seg_id],
+                          self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
+                          -self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
+                          self.x_segs_flat[guide_seg_id], self.y_segs_flat[guide_seg_id]]
 
-                row_string_to_format = '{:<13s}| ' + '{:<13d}| ' +  '{:<13f}| '* (len(values) - 2)
+                row_string_to_format = '{:<13s}| ' + '{:<13d}| '* 2 +  '{:<13f}| '* (len(values) - 3)
                 row_string = row_string_to_format[:-2].format(*values) + '\n'
                 f.write(row_string)
 
-    def check_segments_inside_fov(self, attitude, x_det_segs, y_det_segs, seg_id_array, seg_ra, seg_dec):
+    def check_segments_inside_fov(self, seg_ra, seg_dec, x_seg_n, y_seg_n):
         """Check to make sure that the calculated RA and Dec of each
         segment is within the field of view of the given FGS.
 
         Parameters
         ----------
-        attitude : 3 x 3 numpy array
-            Attitude matrix generated by pysiaf.utils.rotations.attitude
+        seg_ra : float
+            Right ascension of the segment
+        seg_dec : float
+            Declination of the segment
+        x_seg_n : float
+            X position of the center of pointing
+        y_seg_n : float
+            Y position of the center of pointing
         """
-        # Check to make sure no segments are off the detector, pixel-wise
-        for x, y, i_seg in zip(x_det_segs, y_det_segs, seg_id_array):
-            if x < 0.5 or x > 2048.5:
-                self.log.warning('Segment Guiding: %8s off detector in X direction' % i_seg)
-            if y < 0.5 or y > 2048.5:
-                self.log.warning('Segment Guiding: %8s off detector in Y direction' % i_seg)
+        # Calculate attidude matrix (v2/v3 + boresight_offset is the center of pointing in the tel frame)
+        v2_seg_n, v3_seg_n = coordinate_transforms.raw2tel(x_seg_n, y_seg_n, self.fgs_num)
+        attitude = rotations.attitude(v2_seg_n + self.v2_boff,
+                                      v3_seg_n + self.v3_boff,
+                                      self.ra, self.dec, self.pa)
 
         # Get the vertices of the given FGS detector
         vertices = [(self.fgs_siaf_aperture.XIdlVert1, self.fgs_siaf_aperture.YIdlVert1),
@@ -588,7 +594,6 @@ class SegmentGuidingCalculator:
     def get_gs_params(self, guide_star_params_dict, selected_segs_list):
         """Map guide_star_params_dict values and keys to attributes
         """
-
         self.v2_boff = float(guide_star_params_dict['v2_boff'])
         self.v3_boff = float(guide_star_params_dict['v3_boff'])
         self.fgs_num = int(guide_star_params_dict['fgs_num'])
@@ -629,8 +634,8 @@ class SegmentGuidingCalculator:
         """
         self.countrate_array = []
         self.seg_id_array = []
-        self.v2_seg_array = []
-        self.v3_seg_array = []
+        self.x_seg_array = []
+        self.y_seg_array = []
         self._num_infiles = 0
 
         for segment_infile in segment_infile_list:
@@ -640,20 +645,13 @@ class SegmentGuidingCalculator:
                 column_names = read_table.colnames
                 n_segs = len(read_table)
 
-                # Are the segment positions already in V2/V3?
-                if (any(['V2Seg' == c for c in column_names])) and \
-                   (any(['V3Seg' == c for c in column_names])):
-                    segment_coords = read_table
-
-                # If not, convert pixel x/y to V2/V3
-                elif (any(['x' == c for c in column_names])) and \
-                     (any(['y' == c for c in column_names])):
-                    segment_coords = Table()
-                    segment_coords['SegID'] = np.linspace(1, n_segs, n_segs).astype(int)
-                    v2, v3 = coordinate_transforms.Raw2Tel(read_table['x'],
-                                                           read_table['y'],
-                                                           self.fgs_num)
-                    segment_coords['V2Seg'], segment_coords['V3Seg'] = v2, v3
+                # Read in pixel locations in x,y
+                if (any(['x' == c for c in column_names])) and \
+                        (any(['y' == c for c in column_names])):
+                    # Define the IDs and coordinates of all segments
+                    self.seg_id_array.append(np.linspace(1, n_segs, n_segs).astype(int))
+                    self.x_seg_array.append(read_table['x'])
+                    self.y_seg_array.append(read_table['y'])
 
                 else:
                     raise TypeError('Incompatible file type: ', segment_infile)
@@ -665,16 +663,10 @@ class SegmentGuidingCalculator:
             else:
                 raise TypeError('Incompatible file type: ', segment_infile)
 
-            # Define the IDs and coordinates of all segments
-            self.seg_id_array.append(segment_coords['SegID'])
-            self.v2_seg_array.append(segment_coords['V2Seg'])
-            self.v3_seg_array.append(segment_coords['V3Seg'])
             self._num_infiles += 1
 
             self.log.info(
-                'Segment Guiding: {} segment coordinates read from {}'.
-                format(len(segment_coords['SegID']), segment_infile)
-            )
+                'Segment Guiding: {} segment coordinates read from {}'.format(n_segs, segment_infile))
 
     def get_selected_segs(self, selected_segs):
         """If a file of selected segments has been provided, get their
@@ -721,9 +713,8 @@ class SegmentGuidingCalculator:
         # Otherwise, we don't know what it is...
         else:
             raise TypeError(
-                'Unrecognized data type passed to selected_segs ({}); must be guiding_selections*.txt path or array of indices.'.
-                format(selected_segs)
-            )
+                'Unrecognized data type passed to selected_segs ({}); must be guiding_selections*.txt path '
+                'or array of indices.'.format(selected_segs))
 
     def parse_guiding_selections_file(self, selected_segs, num_file):
         """Extract the segment positions and count rates from a guiding_selections*.txt
@@ -734,7 +725,7 @@ class SegmentGuidingCalculator:
             Filepath to guiding_selections*.txt
         num_file : int
             The index of the guiding_selections*.txt file in the input list.
-            Used to match PSFs in selections file to v2_seg_array and v3_seg_array
+            Used to match PSFs in selections file to x_seg_array and y_seg_array
             which were read in from the all_found_psfs file
 
         Raises
@@ -754,57 +745,43 @@ class SegmentGuidingCalculator:
         except:
             raise TypeError('Incompatible guiding_selections*.txt type: ', selected_segs)
 
-        # Are the segment positions already in V2/V3?
-        if (any(['V2Seg' == c for c in column_names])) and \
-           (any(['V3Seg' == c for c in column_names])):
-            selected_segment_coords = read_selected_segs
-
-        # If not, convert pixel x/y to V2/V3
-        elif (any(['x' == c for c in column_names])) and \
-             (any(['y' == c for c in column_names])):
-            selected_segment_coords = Table()
-            v2, v3 = coordinate_transforms.Raw2Tel(read_selected_segs['x'],
-                                                   read_selected_segs['y'],
-                                                   self.fgs_num)
-            selected_segment_coords['V2Seg'], selected_segment_coords['V3Seg'] = v2, v3
-
-        # If the positions aren't V2/V3 or x/y, what are they??
+        # Are the segment positions already in x,y?
+        if (any(['x' == c for c in column_names])) and (any(['y' == c for c in column_names])):
+            # Match locations of selected segments to IDs of known segments
+            selected_segs_ids = []
+            for coords in zip(read_selected_segs['x'], read_selected_segs['y']):
+                for i_seg in range(n_segs):
+                    if coords[0] == self.x_seg_array[num_file][i_seg] and \
+                            coords[1] == self.y_seg_array[num_file][i_seg]:
+                        selected_segs_ids.append(i_seg)
+            if len(selected_segs_ids) == 0:
+                raise TypeError(
+                    'Coordinates of selected segments file do not match those of '
+                    'the provided input file.'
+                )
+        # If the positions aren't x/y, what are they??
         else:
             raise TypeError('Incompatible guiding_selections*.txt type: ', selected_segs)
-
-        # Match locations of selected segments to IDs of known segments
-        selected_segs_ids = []
-        for coords in zip(selected_segment_coords['V2Seg', 'V3Seg']):
-            for i_seg in range(n_segs):
-                if coords[0]['V2Seg'] == self.v2_seg_array[num_file][i_seg] and \
-                   coords[0]['V3Seg'] == self.v3_seg_array[num_file][i_seg]:
-                    selected_segs_ids.append(i_seg)
-        if len(selected_segs_ids) == 0:
-            raise TypeError(
-                'Coordinates of selected segments file do not match those of '
-                'the provided input file.'
-            )
 
         return selected_segs_ids
 
     def plot_segments(self):
-        """Generate and save plots of segments in V2/V3 and RA/Dec.
+        """Generate and save plots of segments in X,Y and RA/Dec.
         """
-        # Plot segments in V2/V3 frame
-        for j, (v2_seg_array, v3_seg_array, seg_id_array, seg_ra, seg_dec) in \
-                enumerate(zip(self.v2_seg_array, self.v3_seg_array, self.seg_id_array, self.seg_ra, self.seg_dec)):
+        # Plot segments in Raw, undistorted frame
+        for j, (x_seg_array, y_seg_array, seg_id_array, seg_ra, seg_dec) in \
+                enumerate(zip(self.x_seg_array, self.y_seg_array, self.seg_id_array, self.seg_ra, self.seg_dec)):
             plt.figure(1)
             plt.clf()
-            plt.plot(v2_seg_array, v3_seg_array, 'b*')
-            plt.plot(v2_seg_array.mean(), v3_seg_array.mean(), 'ro')
+            plt.plot(x_seg_array, y_seg_array, 'b*')
+            plt.plot(x_seg_array.mean(), y_seg_array.mean(), 'ro')
             plt.grid(True)
-            plt.axis([40.0, -40.0, -40.0, 40.0])  # V2 to the left
             plt.title('Segments')
-            plt.xlabel('<-- Delta V2')
-            plt.ylabel('Delta V3 -->')
-            for s in range(len(v2_seg_array)):
-                plt.text(v2_seg_array[s], v3_seg_array[s], seg_id_array[s])
-            plt.savefig(os.path.join(self.out_dir, self.root + '_V2V3segments_config{}.png'.format(j+1)))
+            plt.xlabel('Raw X (undistorted)')
+            plt.ylabel('Raw Y (undistorted)')
+            for s in range(len(x_seg_array)):
+                plt.text(x_seg_array[s], y_seg_array[s], seg_id_array[s])
+            plt.savefig(os.path.join(self.out_dir, self.root + '_XYsegments_config{}.png'.format(j+1)))
 
             # Plot calculate segments' RA and Dec
             plt.figure(2)
@@ -813,7 +790,7 @@ class SegmentGuidingCalculator:
             ra_mean = seg_ra.mean()
             dec_mean = seg_dec.mean()
             plt.plot(ra_mean, dec_mean, 'ro')
-            for i in range(len(v2_seg_array)):
+            for i in range(len(x_seg_array)):
                 plt.text(seg_ra[i], seg_dec[i], str(i + 1))
             plt.grid(True)
             plt.title('Segment RA and Dec')
@@ -1131,7 +1108,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                         "Segment Guiding: Couldn't find center of pointing file {}. "
                         "Assuming the center of pointing is the mean of all segments (center_of_pointing = 0) and "
                         "writing out the file.".format(center_pointing_file, root, guider))
-                    cp_list == [0] * len(selected_segs_list)
+                    cp_list = [0] * len(selected_segs_list)
 
                 if len(cp_list) == 1:
                     # For the unshifted case where only 1 file is used for all data
@@ -1179,7 +1156,7 @@ def generate_segment_override_file(segment_infile_list, guider,
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params("SOF")
 
-        # Determine the V2/V3 of the pointing center
+        # Determine the x,y of the pointing center
         sg.get_center_pointing()
 
         # Write a SOF
@@ -1190,9 +1167,8 @@ def generate_segment_override_file(segment_infile_list, guider,
             sg.plot_segments()  # Save .pngs of plots
 
     except Exception as e:
-        log.exception(e)
+        log.exception(f'{repr(e)}: {e}')
         raise
-
 
 def generate_photometry_override_file(root, program_id, observation_num, visit_num,
                                       countrate_factor=None,
@@ -1275,5 +1251,5 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         sg.write_override_file()
 
     except Exception as e:
-        log.exception(e)
+        log.exception(f'{repr(e)}: {e}')
         raise

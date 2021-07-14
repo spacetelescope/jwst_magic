@@ -305,7 +305,7 @@ def write_star(obj):
     threshold = obj.threshold
     if not isinstance(threshold, (list, np.ndarray)):
         threshold = [threshold]
-    xangle, yangle = coordinate_transforms.Raw2DHAS(obj.xarr, obj.yarr, obj.guider)
+    xangle, yangle = coordinate_transforms.raw2dhas(obj.xarr, obj.yarr, obj.guider)
     for i, (x, y, cr, thr) in enumerate(zip(xangle, yangle, obj.countrate, threshold)):
         line = f'{i},{x},{y},{cr},{thr}\n'
         file.write(line)
@@ -422,7 +422,7 @@ def write_stc(obj):
         xarr = obj.xarr
         yarr = obj.yarr
 
-    xia, yia = coordinate_transforms.Raw2DHAS(xarr, yarr, obj.guider)
+    xia, yia = coordinate_transforms.raw2dhas(xarr, yarr, obj.guider)
     xia = np.asarray(xia)
     yia = np.asarray(yia)
     countrate = np.asarray(obj.countrate)

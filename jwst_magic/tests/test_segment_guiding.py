@@ -261,10 +261,9 @@ def test_segment_override_command_out_of_fov(test_directory):
     # Make a phony attitude matrix and other args
     attitude = np.random.rand(3, 3)
 
-    # Check with phony attitude matrix
+    # Check with bad center of pointing values: (1,1) instead of (1343, 1211)
     with pytest.raises(ValueError) as excinfo:
-        sg.check_segments_inside_fov(attitude, sg.x_det_segs[0], sg.y_det_segs[0],
-                                     sg.seg_id_array[0], sg.seg_ra[0], sg.seg_dec[0])
+        sg.check_segments_inside_fov(sg.seg_ra[0], sg.seg_dec[0], 1, 1)
     assert 'Incorrect segment guiding calculations' in str(excinfo.value)
 
     # # Check with phony X/Y locations between -5000 and 5000
@@ -449,7 +448,7 @@ def test_write_override_report(test_directory):
     assert os.path.isfile(report_file)
 
     correct_file = '''Guide Star Override Report
-Generated on 2018/12/07 at 11:59:16 by lchambers
+Generated on 2021/07/12 at 14:20:45 by sosborne
 
 Program ID    : 1141
 Observation # : 7
@@ -459,14 +458,14 @@ Guide Star RA : 90.970800
 Guide Star Dec: -67.357800
 V3 PA @ GS    : 157.123400
 
-  Star Name  |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |  Detector X  |  Detector Y
------------------------------------------------------------------------------------------------------------------------------------------------------
-star1        | 1            | 90.987850    | -67.355022   | -12.648238   | -22.174651   | 12.648238    | -22.174651   | 840.000187   | 1344.998823
-star2        | 4            | 90.986120    | -67.362103   | -0.034250    | 0.106095     | 0.034250     | 0.106095     | 1024.000008  | 1023.000013
-ref_only1    | 2            | 90.986990    | -67.358569   | -6.338517    | -11.010128   | 6.338517     | -11.010128   | 932.000192   | 1183.999172
-ref_only2    | 3            | 90.980194    | -67.352832   | -6.188804    | -33.708446   | 6.188804     | -33.708446   | 933.999283   | 1504.998775
-ref_only3    | 12           | 90.963123    | -67.355541   | 19.393433    | -34.482825   | -19.393433   | -34.482825   | 1304.997893  | 1503.997675
-ref_only4    | 18           | 90.953775    | -67.360493   | 38.500751    | -23.505004   | -38.500751   | -23.505004   | 1581.997741  | 1339.996887
+  Star Name  |    File ID   |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |     Raw X    |     Raw Y    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+star1        | 1            | 1            | 90.987859    | -67.354849   | 12.575468    | -22.523923   | -12.575468   | -22.523923   | 1345.000000  | 840.000000   
+star2        | 4            | 4            | 90.986049    | -67.361953   | -0.034266    | 0.035029     | 0.034266     | 0.035029     | 1023.000000  | 1024.000000  
+ref_only1    | 2            | 2            | 90.986954    | -67.358401   | 6.270601     | -11.244447   | -6.270601    | -11.244447   | 1184.000000  | 932.000000   
+ref_only2    | 3            | 3            | 90.980300    | -67.352779   | 6.133539     | -33.733341   | -6.133539    | -33.733341   | 1505.000000  | 934.000000   
+ref_only3    | 5            | 18           | 90.954105    | -67.360775   | -38.274653   | -22.173629   | 38.274653    | -22.173629   | 1340.000000  | 1582.000000  
+ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -19.291522   | -33.663282   | 19.291522    | -33.663282   | 1504.000000  | 1305.000000  
 '''.split('\n')
 
     with open(report_file) as f:
