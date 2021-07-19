@@ -99,6 +99,9 @@ def write_all(obj):
         write_cds(obj)
         write_image(obj)
 
+        # Write files for use in the DHAS and FGSES
+        write_dat(obj)
+
     elif obj.step == 'ID':
         # Write files for use by folks at STScI
         write_sky(obj)
