@@ -1034,7 +1034,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
 
         # Remove distortion from NIRCam or FGS cal data, but not from padded TRK data nor rate images
         # as they cannot be run through the pipeline without lots of extra steps
-        distortion = True # is there distortion in the image
+        distortion = True  # is there distortion in the image
         try:
             if datamodel != 'GuiderCalModel' and input_unit == 'mjy/sr':
                 LOGGER.info("Image Conversion: Removing distortion from data using the JWST Pipeline's Resample step.")

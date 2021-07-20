@@ -1419,7 +1419,7 @@ class MasterGui(QMainWindow):
             # Check for distortion keyword and add banner
             if 'DISTORT' not in hdr.keys():
                 self.canvas_converted.axes.text(400., 100.,
-                                                'File loaded is incorrectly distorted.',
+                                                'File loaded is incorrectly distorted',
                                                 fontsize=11,
                                                 bbox={'facecolor': 'lightcoral', 'pad': 7})
             else:
@@ -1535,7 +1535,7 @@ class MasterGui(QMainWindow):
             # Check for distortion keyword and add banner
             if 'DISTORT' not in hdr.keys():
                 self.canvas_shifted.axes.text(400., 100.,
-                                              'File loaded is incorrectly distorted.',
+                                              'File loaded is incorrectly distorted',
                                               fontsize=11,
                                               bbox={'facecolor': 'lightcoral', 'pad': 7})
             else:
@@ -1781,11 +1781,20 @@ class MasterGui(QMainWindow):
         # Pull: List of Observations for the CAR > Specific Obs > Special Requirements Info (sr)
         namespace_tag = '{http://www.stsci.edu/JWST/APT}'
         observation_list = tree.find(namespace_tag + 'DataRequests').findall('.//' + namespace_tag + 'Observation')
-        try:
-            observation = observation_list[obs_number - 1]  # indexes from 1
-        except IndexError:
-            shutil.rmtree(apt_file_path)
-            raise ValueError("This program doesn't have an observation {}".format(obs_number))
+
+        # Find the right observation number and pull that observation
+        for i, obs in enumerate(observation_list):
+            num = [x for x in obs.iterchildren() if x.tag.split(namespace_tag)[1] == "Number"][0].text
+            if int(num) == obs_number:
+                break
+            if i == len(observation_list) - 1:  # if you get to the end of the list and don't find a matching obs number
+                shutil.rmtree(apt_file_path)
+                raise ValueError("This program doesn't have an observation {}".format(obs_number))
+        observation = observation_list[i]
+        if int([x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "Number"][0].text) \
+                != obs_number:
+            raise ValueError('Failed to find the right observation. The user will need to check the APT file by hand.')
+
         sr = [x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "SpecialRequirements"][0]
 
         # Try to pull the Guide Star information

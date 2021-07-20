@@ -246,10 +246,10 @@ def write_to_file(filename, rows, labels='', mode='w', fmt='%.4f'):
         try:
             np.savetxt(filename, rows, fmt=fmt, header=' '.join(labels))
         except TypeError:
-            f = open(filename, 'w')
-            f.write('# ' + ' '.join(labels) + '\n')
-            for row in rows:
-                f.write(' '.join(row) + '\n')
+            with open(filename, 'w') as f:
+                f.write('# ' + ' '.join(labels) + '\n')
+                for row in rows:
+                    f.write(' '.join(row) + '\n')
 
 
 def write_cols_to_file(file_path, labels, cols, log=None):

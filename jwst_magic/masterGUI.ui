@@ -622,7 +622,7 @@ p, li { white-space: pre-wrap; }
               <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
              </property>
              <property name="text">
-              <string>Normalize to:</string>
+              <string>Normalize</string>
              </property>
              <property name="checked">
               <bool>true</bool>
@@ -2248,38 +2248,6 @@ QPushButton:pressed {
     <hint type="destinationlabel">
      <x>779</x>
      <y>559</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_normalize</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>lineEdit_normalize</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>386</x>
-     <y>507</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>518</x>
-     <y>507</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_normalize</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>comboBox_normalize</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>386</x>
-     <y>507</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>764</x>
-     <y>510</y>
     </hint>
    </hints>
   </connection>
