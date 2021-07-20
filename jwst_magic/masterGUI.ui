@@ -622,7 +622,7 @@ p, li { white-space: pre-wrap; }
               <string>Normalize the final image to a specified value. Expecting input in ADU/sec (countrate)</string>
              </property>
              <property name="text">
-              <string>Normalize:</string>
+              <string>Normalize</string>
              </property>
              <property name="checked">
               <bool>true</bool>
