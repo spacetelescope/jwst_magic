@@ -302,7 +302,7 @@ class SegmentGuidingCalculator:
                 if self.visit_num is not None:
                     if int(self.visit_num) != 1:
                         self.log.warning('Visit number set to 001. You cannot specify '
-                                       'visit numbers if specifying multiple observations.')
+                                         'visit numbers if specifying multiple observations.')
                 self.visit_num = 1
 
             elif self.visit_num is not None:
@@ -475,11 +475,9 @@ class SegmentGuidingCalculator:
 
             if verbose:
                 self.log.info('Segment Guiding: Guide Star Override: ' +
-                            out_string.replace('-star', '\n                -star').
-                            replace('-ref_only', '\n                -ref_only'))
-                self.log.info('Segment Guiding: Saved override command to {}'.
-                            format(out_file))
-
+                              out_string.replace('-star', '\n                -star').replace(
+                                  '-ref_only', '\n                -ref_only'))
+                self.log.info('Segment Guiding: Saved override command to {}'.format(out_file))
 
     def write_override_report(self, filename, orientations, file_orientations, n_guide_segments, obs_list_name):
         """Write a report.txt file to supplement the override file.
@@ -675,7 +673,7 @@ class SegmentGuidingCalculator:
 
         Parameters
         ----------
-        selected_segs_list : list of str and/or an array
+        selected_segs : list of str and/or an array
             list of file(s) containing locations and count rates of
             selected segments. If an array, reminder that the ids
             should go from 1 -> 18
@@ -701,7 +699,7 @@ class SegmentGuidingCalculator:
 
         # Else if they are a list of guiding_selections*.txt files, parse them.
         elif bool(selected_segs) and all(isinstance(elem, str) for elem in selected_segs):
-            self.selected_segment_ids =[]
+            self.selected_segment_ids = []
             for i, path in enumerate(selected_segs):
                 if os.path.exists(path):
                     selected_segs_ids = self.parse_guiding_selections_file(path, i)
@@ -1169,6 +1167,7 @@ def generate_segment_override_file(segment_infile_list, guider,
     except Exception as e:
         log.exception(f'{repr(e)}: {e}')
         raise
+
 
 def generate_photometry_override_file(root, program_id, observation_num, visit_num,
                                       countrate_factor=None,

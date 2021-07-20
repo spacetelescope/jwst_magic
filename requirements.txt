@@ -6,7 +6,7 @@ notebook
 numpy
 pyqt5>=5.11,<6.0
 pysiaf>=0.7.1
-python>=3.6
+python>=3.7
 pyyaml
 requests
 pytest
