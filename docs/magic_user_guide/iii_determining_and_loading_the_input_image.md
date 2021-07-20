@@ -13,7 +13,7 @@ MAGIC takes in a full-frame calibration FGS image or a NIRCam image from *any* o
 
 MAGIC expects to use a cal.fits image is used as the input. MAGIC will check for the PHOTMJSR header keyword and use that to convert the image to a rate image, one with units of Dn/s (also known as ADU/s).
 
-If MAGIC is given a NIRCam cal.fits image, it will have it's distortion removed correctly. If any other type of NIRCam image is passed in (e.g. a rate image, an ITM image, or a mirage seed image), MAGIC will not be able to accurately remove the image's distortion. Keep this in mind when selecting an input image, and choose cal images whenever possible. Padded TRK images also cannot have their distortion corrected, but they are necessary for POF cases.
+If MAGIC is given a NIRCam cal.fits image, it will have its distortion removed correctly. If any other type of NIRCam image is passed in (e.g. a rate image, an ITM image, or a mirage seed image), MAGIC will not be able to accurately remove the image's distortion. Keep this in mind when selecting an input image, and choose cal images whenever possible. Padded TRK images also cannot have their distortion corrected, but they are necessary for POF cases.
 
 1. Set general input parameters:
 
@@ -62,7 +62,11 @@ If MAGIC is given a NIRCam cal.fits image, it will have it's distortion removed 
 
    Setting the CAR and Observation number will automatically query APT and the Guide Star Catalog and pre-populate the guide star ID in the normalization field and the Program ID, Obs #, RA, and DEC in the SOF pop up.
 
-5. Set image conversion parameters: (Note: The steps labelled “optional” below will create higher-fidelity simulations, but are not necessary when using MAGIC to generate FSW input or guiding override files.)
+
+5. Once the general input parameters are set, if the guider, root, and out directory have already been used, the previously generated FGS image will appear in the **Image Preview** box on the right. If you see a label in the Image Preview box that says "File loaded is incorrectly distorted", this is a warning that the previously-made converted FGS file is out of date with new MAGIC changes and should be re-run through the Image Conversion section of MAGIC.
+
+
+6. Set image conversion parameters: (Note: The steps labelled “optional” below will create higher-fidelity simulations, but are not necessary when using MAGIC to generate FSW input or guiding override files.)
 
    ![Image Converter section of the Main GUI](./figs/figure5_main_image_convert.png)
 

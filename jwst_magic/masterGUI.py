@@ -1419,7 +1419,7 @@ class MasterGui(QMainWindow):
             # Check for distortion keyword and add banner
             if 'DISTORT' not in hdr.keys():
                 self.canvas_converted.axes.text(400., 100.,
-                                                'File loaded is incorrectly distorted.',
+                                                'File loaded is incorrectly distorted',
                                                 fontsize=11,
                                                 bbox={'facecolor': 'lightcoral', 'pad': 7})
             else:
@@ -1535,7 +1535,7 @@ class MasterGui(QMainWindow):
             # Check for distortion keyword and add banner
             if 'DISTORT' not in hdr.keys():
                 self.canvas_shifted.axes.text(400., 100.,
-                                              'File loaded is incorrectly distorted.',
+                                              'File loaded is incorrectly distorted',
                                               fontsize=11,
                                               bbox={'facecolor': 'lightcoral', 'pad': 7})
             else:
