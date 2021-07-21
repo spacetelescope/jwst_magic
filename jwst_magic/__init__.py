@@ -43,6 +43,8 @@ if "sogs" not in socket.gethostname():
         if p[0].decode('utf-8') != '':
             tag_list = p[0].decode('utf-8').strip()
             latest_remote_version = tag_list.split('\n')[-1].split('tags/')[-1]
+            latest_remote_version = latest_remote_version.replace('^{}', '')  # remove ^{} from tag if tag was updated
+
             if version == latest_remote_version:
                 print("Your {} package is up to date".format(name))
             else:
