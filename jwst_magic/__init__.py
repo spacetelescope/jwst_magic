@@ -35,7 +35,7 @@ if "sogs" not in socket.gethostname():
 
     for name, path, ssh, version in [('MAGIC', magic_path, ssh_magic, __version__),
                                      ('FGS COUNTRATE', cr_path, ssh_cr, cr_version)]:
-        cmd = 'git --git-dir={}.git ls-remote --tags {}'.format(path, ssh)
+        cmd = f'git --git-dir={path}.git ls-remote --tags {ssh}'
         p = subprocess.Popen(cmd, shell=True, executable='/bin/bash',
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p = p.communicate()
@@ -43,6 +43,8 @@ if "sogs" not in socket.gethostname():
         if p[0].decode('utf-8') != '':
             tag_list = p[0].decode('utf-8').strip()
             latest_remote_version = tag_list.split('\n')[-1].split('tags/')[-1]
+            latest_remote_version = latest_remote_version.replace('^{}', '')  # remove ^{} from tag if tag was updated
+
             if version == latest_remote_version:
                 print("Your {} package is up to date".format(name))
             else:
