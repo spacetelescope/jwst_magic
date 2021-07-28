@@ -64,6 +64,8 @@ jwst_magic/tests/out/*
 # Notebooks #
 #############
 notebooks/playground_*
+notebooks/playground
+notebooks/*/playground_*
 notebooks/WFR Testing/*
 
 # JWST MAGIC Files #
