@@ -451,11 +451,11 @@ def get_countrate_3x3(x, y, data):
     y = int(y)
 
     countrate = np.sum(data[y - 1:y + 2, x - 1:x + 2])
-    
+
     return countrate
 
 
-def find_peaks(data, box_size, npeaks=np.inf, threshold=None):
+def find_peaks(data, box_size, npeaks=np.inf, threshold=None, return_threshold=False):
     """
     Find a number of peak pixels (npeaks) in a array (data).
 
@@ -468,7 +468,9 @@ def find_peaks(data, box_size, npeaks=np.inf, threshold=None):
 
     # Find PSFs
     sources = photutils.find_peaks(data, threshold, box_size=box_size, npeaks=npeaks)
-    return sources
+
+    return (sources, threshold) if return_threshold else sources
+
 
 
 def get_guider(header, guider=None, log=None):

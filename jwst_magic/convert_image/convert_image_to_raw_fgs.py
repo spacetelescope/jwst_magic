@@ -674,7 +674,7 @@ def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, choose=False):
 
     else:
         # Find PSFs
-        sources = utils.find_peaks(smoothed_data, box_size=gauss_sigma, npeaks=npeaks)
+        sources, threshold = utils.find_peaks(smoothed_data, box_size=gauss_sigma, npeaks=npeaks, return_threshold=True)
         num_psfs = len(sources)
         if num_psfs == 0:
             raise ValueError("You have no sources in your data.")
