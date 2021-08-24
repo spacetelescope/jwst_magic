@@ -451,6 +451,7 @@ def get_countrate_3x3(x, y, data):
     y = int(y)
 
     countrate = np.sum(data[y - 1:y + 2, x - 1:x + 2])
+    
     return countrate
 
 
