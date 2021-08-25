@@ -101,7 +101,7 @@ shift_to_id_attitude_parameters = [
 ]
 @pytest.mark.parametrize('guiding_selections, crowded_field, guider, guiding_selections_coords, all_found_psfs_coords,'
                          'center_pointing', shift_to_id_attitude_parameters)
-def test_shift_to_id_attitude(open_image, guiding_selections, crowded_field, guider,
+def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, crowded_field, guider,
                               guiding_selections_coords, all_found_psfs_coords, center_pointing):
 
     #Run the prep code that's in run_magic.py
@@ -177,7 +177,7 @@ for guider in [1, 2]:
         correct_count_rate_parameters.append((guider, step,
                                                   test_data[g][step]))
 @pytest.mark.parametrize('guider, step, correct_data_dict', correct_count_rate_parameters)
-def test_correct_count_rate(open_image, guider, step, correct_data_dict):
+def test_correct_count_rate(open_image, test_directory, guider, step, correct_data_dict):
     """Check that image data is being generated with counts and count
     rates as expected. Test for all guider steps and both guiders.
     """
@@ -243,7 +243,7 @@ def test_correct_count_rate(open_image, guider, step, correct_data_dict):
         'Incorrect {} count rate.'.format(step)
 
 
-def test_psf_center_file():
+def test_psf_center_file(test_directory):
     """Test that when psf_center_file is set, the array position for TRK
     is pulled from the psf_center file rather than the guiding selections file
     which is used for all other steps.
@@ -274,7 +274,7 @@ def test_psf_center_file():
 
 oss_defaults_parameters = [100000, 1000000]
 @pytest.mark.parametrize('catalog_countrate', oss_defaults_parameters)
-def test_oss_defaults(catalog_countrate):
+def test_oss_defaults(test_directory, catalog_countrate):
     """Test that when use_oss_defaults is set to True, the attributes
     of the file object (which will be used when writing out all FSW files)
     are set appropriatly.
@@ -297,7 +297,7 @@ def test_oss_defaults(catalog_countrate):
         assert fileobj.threshold == (catalog_countrate * COUNTRATE_CONVERSION) - BRIGHT_STAR_THRESHOLD_ADDEND
 
 
-def test_rewrite_prc(open_image):
+def test_rewrite_prc(open_image, test_directory):
     """Compare the results from reqrite_prc and buildfgsteps -
     check shifted guiding selections and ID prc file"""
 
@@ -367,7 +367,7 @@ prc_list = [('ID', 'ID', False, 237576.0000, None),
             ('ACQ1', 'ACQ', False, 237576.0000, None),
             ('ACQ1', 'ACQ', True, None, 100000)]
 @pytest.mark.parametrize('step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate', prc_list)
-def test_prc_thresholds(step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate):
+def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate):
     """Check the right thresholds make it into the ACQ prc files"""
     # Delete path if it exists
     if os.path.isdir(TEST_DIRECTORY):
@@ -411,7 +411,7 @@ def test_prc_thresholds(step, step_name, use_oss_defaults, guide_star_countrate,
 star_list = [(False, 237576.0000, None),  # gs countrate is from the above guiding selections file
              (True, None, 100000)]
 @pytest.mark.parametrize('use_oss_defaults, guide_star_countrate, catalog_countrate', star_list)
-def test_star_thresholds(use_oss_defaults, guide_star_countrate, catalog_countrate):
+def test_star_thresholds(test_directory, use_oss_defaults, guide_star_countrate, catalog_countrate):
     """Check the right thresholds make it into the ID star files"""
     step = 'ID'
 
