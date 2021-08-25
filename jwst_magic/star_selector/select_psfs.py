@@ -1,8 +1,6 @@
 """Find all the relevant PSFs in the image, be it manually or using a
 file, and generate a guiding_selections*.txt and all_found_psfs*.txt.
 
-Analyze image data using the photutils find_peaks function to identify
-the locations and count rates of all stars (or segments) in the image.
 Either prompt the use to select which stars to use as the guide and
 reference stars, or read the guide and reference stars from a
 pre-existing guiding_selections*.txt. Generate an all_found_psfs*.txt file that lists all the
@@ -46,7 +44,6 @@ from matplotlib import rcParams
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import numpy as np
-from photutils import find_peaks
 from scipy import ndimage
 
 # Local Imports
@@ -480,9 +477,7 @@ def manual_star_selection(data, all_found_psfs_path, guider,
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
-    Algorithmically find and locate all PSFs in image using
-    photutils.find_peaks; prompt user to select guide and reference stars
-    using the GUI.
+    Prompt user to select guide and reference stars using the GUI.
 
     Parameters
     ----------
@@ -753,4 +748,3 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
         raise
 
     return guiding_selections_path_list, all_found_psfs_path, center_pointing_path, psf_center_path
-
