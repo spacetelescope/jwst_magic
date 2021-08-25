@@ -101,7 +101,7 @@ shift_to_id_attitude_parameters = [
 ]
 @pytest.mark.parametrize('guiding_selections, crowded_field, guider, guiding_selections_coords, all_found_psfs_coords,'
                          'center_pointing', shift_to_id_attitude_parameters)
-def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, crowded_field, guider,
+def test_shift_to_id_attitude(open_image, guiding_selections, crowded_field, guider,
                               guiding_selections_coords, all_found_psfs_coords, center_pointing):
 
     #Run the prep code that's in run_magic.py
@@ -112,7 +112,7 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
         out_dir_fsw = TEST_DIRECTORY
 
     # Run main function to test
-    fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
+    _, guiding_selections_file, _ = shift_to_id_attitude(
         open_image, ROOT, guider, out_dir_fsw, guiding_selections_file=guiding_selections,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=center_pointing,
         psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
@@ -126,10 +126,13 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
     if 'G{}'.format(guider) not in file_root:
         file_root += '_G{}'.format(guider)
 
-    guiding_selections_file = os.path.join(out_dir_fsw, 'shifted_guiding_selections_{}.txt'.format(file_root))
-    all_found_psfs_file = os.path.join(out_dir_fsw, 'shifted_all_found_psfs_{}.txt'.format(file_root))
-    FGS_img = os.path.join(out_dir_fsw,  'FGS_imgs', 'shifted_' + file_root + '.fits')
-    center_pointing_file = os.path.join(out_dir_fsw, 'shifted_center_pointing_{}.txt'.format(file_root))
+    guiding_selections_file = os.path.join(out_dir_fsw,
+                                           'shifted_guiding_selections_{}.txt'.format(file_root))
+    all_found_psfs_file = os.path.join(out_dir_fsw,
+                                       'shifted_all_found_psfs_{}.txt'.format(file_root))
+    FGS_img = os.path.join(out_dir_fsw, 'FGS_imgs', f'shifted_{file_root}.fits')
+    center_pointing_file = os.path.join(out_dir_fsw,
+                                        'shifted_center_pointing_{}.txt'.format(file_root))
 
     # Check that the right files were put in the right place
     assert os.path.exists(FGS_img)
@@ -147,10 +150,12 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
     coords = np.array([(x, y) for (x, y) in all_found_psfs_cat['x', 'y']])
     assert np.array_equal(coords, all_found_psfs_coords)
 
-    # Make sure the shifted center_pointing file is correct (if its a list, it's shifted, if it's not, its unchanged)
+    # Make sure the shifted center_pointing file is correct (if its a list, it's shifted,
+    # if it's not, its unchanged)
     center_pointing_cat = asc.read(center_pointing_file, format='commented_header', delimiter=',')
     label = center_pointing_cat.colnames[0]
-    center_pointing_cat_original = asc.read(center_pointing, format='commented_header', delimiter=',')
+    center_pointing_cat_original = asc.read(center_pointing, format='commented_header',
+                                            delimiter=',')
     if isinstance(center_pointing_cat[label][0], str):
         assert center_pointing_cat[label][0] != center_pointing_cat_original[label][0]
     else:
@@ -172,7 +177,7 @@ for guider in [1, 2]:
         correct_count_rate_parameters.append((guider, step,
                                                   test_data[g][step]))
 @pytest.mark.parametrize('guider, step, correct_data_dict', correct_count_rate_parameters)
-def test_correct_count_rate(open_image, test_directory, guider, step, correct_data_dict):
+def test_correct_count_rate(open_image, guider, step, correct_data_dict):
     """Check that image data is being generated with counts and count
     rates as expected. Test for all guider steps and both guiders.
     """
@@ -182,7 +187,7 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
     assert np.isclose(np.max(open_image), 15693.34), 'Incorrect input data max - changed your file?'
 
     # Run the code
-    fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
+    fgs_im, guiding_selections_file, _ = shift_to_id_attitude(
         open_image, ROOT, guider, TEST_DIRECTORY, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=CENTER_POINTING_1,
         psf_center_file=None, crowded_field=False, logger_passed=True)
@@ -238,7 +243,7 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
         'Incorrect {} count rate.'.format(step)
 
 
-def test_psf_center_file(test_directory):
+def test_psf_center_file():
     """Test that when psf_center_file is set, the array position for TRK
     is pulled from the psf_center file rather than the guiding selections file
     which is used for all other steps.
@@ -269,7 +274,7 @@ def test_psf_center_file(test_directory):
 
 oss_defaults_parameters = [100000, 1000000]
 @pytest.mark.parametrize('catalog_countrate', oss_defaults_parameters)
-def test_oss_defaults(test_directory, catalog_countrate):
+def test_oss_defaults(catalog_countrate):
     """Test that when use_oss_defaults is set to True, the attributes
     of the file object (which will be used when writing out all FSW files)
     are set appropriatly.
@@ -292,7 +297,7 @@ def test_oss_defaults(test_directory, catalog_countrate):
         assert fileobj.threshold == (catalog_countrate * COUNTRATE_CONVERSION) - BRIGHT_STAR_THRESHOLD_ADDEND
 
 
-def test_rewrite_prc(open_image, test_directory):
+def test_rewrite_prc(open_image):
     """Compare the results from reqrite_prc and buildfgsteps -
     check shifted guiding selections and ID prc file"""
 
@@ -321,7 +326,7 @@ def test_rewrite_prc(open_image, test_directory):
 
     # Run buildfgssteps
     out_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_1')
-    fgs_im, guiding_selections_file, psf_center_file = shift_to_id_attitude(
+    fgs_im, guiding_selections_file, _ = shift_to_id_attitude(
         open_image, ROOT, guider, out_fsw, guiding_selections_file=guiding_selections_file,
         all_found_psfs_file=all_found_psfs_file, center_pointing_file=center_of_pointing_file,
         psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
@@ -330,7 +335,8 @@ def test_rewrite_prc(open_image, test_directory):
     write_files.write_prc(BFS)
 
     # Check for output files
-    shifted_guiding_selections = os.path.join(out_fsw,  f'shifted_guiding_selections_{ROOT}_G1_config1.txt')
+    shifted_guiding_selections = os.path.join(out_fsw,
+                                              f'shifted_guiding_selections_{ROOT}_G1_config1.txt')
     shifted_acq_prc = os.path.join(out_fsw, 'dhas_shifted', f'{ROOT}_G1_ACQ.prc')
     assert os.path.exists(shifted_guiding_selections)
     assert os.path.exists(shifted_acq_prc)
@@ -339,7 +345,8 @@ def test_rewrite_prc(open_image, test_directory):
         buildsteps_prc = file.read()
 
     # Run rewrite_prc
-    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted, crowded_field)
+    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted,
+                crowded_field)
 
     # Check for output files
     shifted_guiding_selections2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2',
@@ -360,7 +367,7 @@ prc_list = [('ID', 'ID', False, 237576.0000, None),
             ('ACQ1', 'ACQ', False, 237576.0000, None),
             ('ACQ1', 'ACQ', True, None, 100000)]
 @pytest.mark.parametrize('step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate', prc_list)
-def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate):
+def test_prc_thresholds(step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate):
     """Check the right thresholds make it into the ACQ prc files"""
     # Delete path if it exists
     if os.path.isdir(TEST_DIRECTORY):
@@ -377,9 +384,12 @@ def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide
 
     # Run buildfgssteps
     out_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_1')
-    BFS_factor = BuildFGSSteps(image, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
-                               out_dir=out_fsw, thresh_factor=thresh_factor, shift_id_attitude=shifted,
-                               use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
+    BFS_factor = BuildFGSSteps(image, guider, ROOT, step,
+                               guiding_selections_file=guiding_selections_file,
+                               out_dir=out_fsw, thresh_factor=thresh_factor,
+                               shift_id_attitude=shifted,
+                               use_oss_defaults=use_oss_defaults,
+                               catalog_countrate=catalog_countrate)
     write_files.write_prc(BFS_factor)
 
     # Check threshold in the output files
@@ -401,7 +411,7 @@ def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide
 star_list = [(False, 237576.0000, None),  # gs countrate is from the above guiding selections file
              (True, None, 100000)]
 @pytest.mark.parametrize('use_oss_defaults, guide_star_countrate, catalog_countrate', star_list)
-def test_star_thresholds(test_directory, use_oss_defaults, guide_star_countrate, catalog_countrate):
+def test_star_thresholds(use_oss_defaults, guide_star_countrate, catalog_countrate):
     """Check the right thresholds make it into the ID star files"""
     step = 'ID'
 
@@ -420,9 +430,12 @@ def test_star_thresholds(test_directory, use_oss_defaults, guide_star_countrate,
 
     # Run buildfgssteps
     out_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_1')
-    BFS_factor = BuildFGSSteps(image, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
-                               out_dir=out_fsw, thresh_factor=thresh_factor, shift_id_attitude=shifted,
-                               use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
+    BFS_factor = BuildFGSSteps(image, guider, ROOT, step,
+                               guiding_selections_file=guiding_selections_file,
+                               out_dir=out_fsw, thresh_factor=thresh_factor,
+                               shift_id_attitude=shifted,
+                               use_oss_defaults=use_oss_defaults,
+                               catalog_countrate=catalog_countrate)
     write_files.write_star(BFS_factor)
 
     # Check threshold in the output files (0th index for GS, 4th index for threshold)
