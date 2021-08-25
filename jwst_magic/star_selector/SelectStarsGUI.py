@@ -104,8 +104,7 @@ class StarClickerMatplotlibCanvas(FigureCanvas):
         """Creates a matplotlib canvas as a PyQt widget to plot an FGS image.
 
         Initializes and draws a matplotlib canvas which plots the following
-        the provided FGS image and the locations of the PSFs as identified by
-        photutils.find_peaks.
+        the provided FGS image and the locations of the PSFs.
 
         Parameters
         ----------

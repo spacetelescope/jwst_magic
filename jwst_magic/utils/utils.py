@@ -31,6 +31,7 @@ import yaml
 from astropy.io import fits
 import numpy as np
 import pandas as pd
+import photutils
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
@@ -418,13 +419,20 @@ def count_rate_total(data, objects, num_objects, x, y, countrate_3x3=True):
 
     countrate = []
     val = []
-    for i in range(1, num_objects + 1):
+    for i, x_old, y_old in zip(np.arange(1, num_objects + 1), x, y):
         im = np.copy(objects)
         im[objects != i] = False
         im[objects == i] = True
 
         if countrate_3x3:
-            countrate.append(get_countrate_3x3(x[i - 1], y[i - 1], np.array(data)))
+            image_window = 40 # This should be more than large enough to get the core of the PSF
+            sources = find_peaks(data[int(y_old)-image_window:int(y_old)+image_window,
+                                      int(x_old)-image_window:int(x_old)+image_window],
+                                 box_size=1, npeaks=1)
+            x_new = sources['x_peak'][0] + x_old - image_window # find new x value
+            y_new = sources['y_peak'][0] + y_old - image_window # find new y value
+            # Get the 3x3 count rate
+            countrate.append(get_countrate_3x3(x_new, y_new, np.array(data)))
         else:
             countrate.append(np.sum(im * data))
         val.append(np.sum(im * 1.))  # Number of pixels in object
@@ -443,7 +451,26 @@ def get_countrate_3x3(x, y, data):
     y = int(y)
 
     countrate = np.sum(data[y - 1:y + 2, x - 1:x + 2])
+
     return countrate
+
+
+def find_peaks(data, box_size, npeaks=np.inf, threshold=None, return_threshold=False):
+    """
+    Find a number of peak pixels (npeaks) in a array (data).
+
+    This function is a wrapper around photutils.find_peaks
+    """
+    if not threshold:
+        median = np.median(data)
+        std = np.std(data)
+        threshold = median + (3 * std)
+
+    # Find PSFs
+    sources = photutils.find_peaks(data, threshold, box_size=box_size, npeaks=npeaks)
+
+    return (sources, threshold) if return_threshold else sources
+
 
 
 def get_guider(header, guider=None, log=None):
@@ -674,6 +701,7 @@ def natural_keys(text):
         return int(text) if text.isdigit() else text
 
     return [atoi(c) for c in re.split(r'(\d+)', text)]
+
 
 def setup_yaml():
     """

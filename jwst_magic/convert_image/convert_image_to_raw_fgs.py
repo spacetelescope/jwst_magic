@@ -79,7 +79,6 @@ from jwst.datamodels import ImageModel
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
-from photutils import find_peaks
 import pysiaf
 from scipy import signal
 from scipy import ndimage
@@ -597,8 +596,8 @@ def choose_threshold(smoothed_data, gauss_sigma):
     # Run find_peaks with two different threshold options
     thresholds = [3 * std, mean]
 
-    sources_std = find_peaks(smoothed_data, thresholds[0], box_size=gauss_sigma)
-    sources_mean = find_peaks(smoothed_data, thresholds[1], box_size=gauss_sigma)
+    sources_std = utils.find_peaks(smoothed_data, box_size=gauss_sigma, threshold=thresholds[0])
+    sources_mean = utils.find_peaks(smoothed_data, box_size=gauss_sigma, threshold=thresholds[1])
 
     # Show plots of each for user to choose between
     plt.ion()
@@ -645,7 +644,8 @@ def choose_threshold(smoothed_data, gauss_sigma):
 
 
 def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, choose=False):
-    """Use photutils.find_peaks to count how many PSFS are present in the data
+    """Use utils.find_peaks, which is a wrapper around photutils.find_peaks, to count how many PSFS
+    are present in the data.
 
     Parameters
     ----------
@@ -673,14 +673,8 @@ def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, choose=False):
         num_psfs, coords, threshold = choose_threshold(smoothed_data, gauss_sigma)
 
     else:
-        # Perform statistics
-        median = np.median(smoothed_data)
-        std = np.std(smoothed_data)
-
         # Find PSFs
-        threshold = median + (3 * std)  # Used to be median + 3 * std
-
-        sources = find_peaks(smoothed_data, threshold, box_size=gauss_sigma, npeaks=npeaks)
+        sources, threshold = utils.find_peaks(smoothed_data, box_size=gauss_sigma, npeaks=npeaks, return_threshold=True)
         num_psfs = len(sources)
         if num_psfs == 0:
             raise ValueError("You have no sources in your data.")
