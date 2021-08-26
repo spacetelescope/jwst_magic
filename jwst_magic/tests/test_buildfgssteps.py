@@ -92,17 +92,20 @@ def open_image(image=FGS_CMIMF_IM):
     yield fgs_data
 
 
-test_data = PARAMETRIZED_DATA['test_shift_to_id_attitude']
 shift_to_id_attitude_parameters = [
-    (SELECTED_SEGS_CMIMF_OLD, False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0], CENTER_POINTING_1),
-    (SELECTED_SEGS_CMIMF, False, 1, test_data['guiding_selections_coords'][0], test_data['all_found_psfs_coords'][0], CENTER_POINTING_1),
-    (SELECTED_SEGS_CMIMF, True, 1, test_data['guiding_selections_coords'][1], test_data['all_found_psfs_coords'][1], CENTER_POINTING_2),
-    (SELECTED_SEGS_CMIMF, True, 2, test_data['guiding_selections_coords'][2], test_data['all_found_psfs_coords'][2], CENTER_POINTING_2)
+    (SELECTED_SEGS_CMIMF_OLD, 1, CENTER_POINTING_1),
+    (SELECTED_SEGS_CMIMF, 1, CENTER_POINTING_1),
+    (SELECTED_SEGS_CMIMF, 1, CENTER_POINTING_2),
+    (SELECTED_SEGS_CMIMF, 2, CENTER_POINTING_2)
 ]
-@pytest.mark.parametrize('guiding_selections, crowded_field, guider, guiding_selections_coords, all_found_psfs_coords,'
-                         'center_pointing', shift_to_id_attitude_parameters)
-def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, crowded_field, guider,
-                              guiding_selections_coords, all_found_psfs_coords, center_pointing):
+@pytest.mark.parametrize('guiding_selections, guider, center_pointing', shift_to_id_attitude_parameters)
+def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, guider, center_pointing):
+    """Test the shift to ID attitude functionality"""
+
+    # Define correct solutions to compare results to
+    test_data = PARAMETRIZED_DATA['test_shift_to_id_attitude']
+    guiding_selections_coords = test_data['guiding_selections_coords']
+    all_found_psfs_coords = test_data['all_found_psfs_coords']
 
     #Run the prep code that's in run_magic.py
     if 'guiding_config' in guiding_selections:
@@ -115,7 +118,7 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, cr
     _, guiding_selections_file, _ = shift_to_id_attitude(
         open_image, ROOT, guider, out_dir_fsw, guiding_selections_file=guiding_selections,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=center_pointing,
-        psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
+        psf_center_file=None, logger_passed=True)
 
     # Define filenames
     file_root = guiding_selections.split('/')[-1]
@@ -190,7 +193,7 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
     fgs_im, guiding_selections_file, _ = shift_to_id_attitude(
         open_image, ROOT, guider, TEST_DIRECTORY, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=CENTER_POINTING_1,
-        psf_center_file=None, crowded_field=False, logger_passed=True)
+        psf_center_file=None, logger_passed=True)
     BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
                         out_dir=TEST_DIRECTORY, shift_id_attitude=True)
 
@@ -314,7 +317,6 @@ def test_rewrite_prc(open_image, test_directory):
     guider = 1
     thresh_factor = 0.5
     shifted = True
-    crowded_field = False
     step = 'ACQ1'
 
     # Copy file for testing
@@ -329,7 +331,7 @@ def test_rewrite_prc(open_image, test_directory):
     fgs_im, guiding_selections_file, _ = shift_to_id_attitude(
         open_image, ROOT, guider, out_fsw, guiding_selections_file=guiding_selections_file,
         all_found_psfs_file=all_found_psfs_file, center_pointing_file=center_of_pointing_file,
-        psf_center_file=None, crowded_field=crowded_field, logger_passed=True)
+        psf_center_file=None, logger_passed=True)
     BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
                         out_dir=out_fsw, thresh_factor=thresh_factor, shift_id_attitude=shifted)
     write_files.write_prc(BFS)
@@ -345,8 +347,7 @@ def test_rewrite_prc(open_image, test_directory):
         buildsteps_prc = file.read()
 
     # Run rewrite_prc
-    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted,
-                crowded_field)
+    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted)
 
     # Check for output files
     shifted_guiding_selections2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2',

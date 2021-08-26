@@ -65,7 +65,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             guiding_selections_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
             star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, crowded_field=False, thresh_factor=0.6, use_oss_defaults=False):
+            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -226,7 +226,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                 fgs_im_fsw, guiding_selections_file_fsw, psf_center_file_fsw = buildfgssteps.shift_to_id_attitude(
                     fgs_im, root, guider, out_dir_fsw, guiding_selections_file=guiding_selections_file,
                     all_found_psfs_file=all_found_psfs, center_pointing_file=center_pointing_file,
-                    psf_center_file=psf_center_file, crowded_field=crowded_field, logger_passed=True)
+                    psf_center_file=psf_center_file, logger_passed=True)
             else:
                 fgs_im_fsw = fgs_im
                 guiding_selections_file_fsw = guiding_selections_file
