@@ -484,7 +484,6 @@ class MasterGui(QMainWindow):
 
         # Shift image to ID attitude:
         shift_id_attitude = self.checkBox_id_attitude.isChecked()
-        crowded_field = self.radioButton_crowded_id_attitude.isChecked()
 
         # For the POF case, create DHAS files using the default OSS numbers
         use_oss_defaults = self.checkBox_OSS.isChecked()
@@ -528,8 +527,7 @@ class MasterGui(QMainWindow):
 
             # Rewrite the id.prc and acq.prc files
             rewrite_prc.rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold=threshold,
-                                    shifted=shift_id_attitude,
-                                    crowded_field=crowded_field)
+                                    shifted=shift_id_attitude)
 
             # Update converted image preview
             self.update_filepreview(new_guiding_selections=True)
@@ -641,7 +639,6 @@ class MasterGui(QMainWindow):
                               jitter_rate_arcsec=jitter_rate_arcsec,
                               itm=itm,
                               shift_id_attitude=shift_id_attitude,
-                              crowded_field=crowded_field,
                               thresh_factor=threshold,
                               use_oss_defaults=use_oss_defaults,
                               )
@@ -654,12 +651,6 @@ class MasterGui(QMainWindow):
         if self.sender() == self.groupBox_fileWriter:
             if self.groupBox_fileWriter.isChecked():
                 self.groupBox_starSelector.setChecked(True)
-            if self.checkBox_id_attitude.isChecked() and self.groupBox_fileWriter.isChecked():
-                self.radioButton_nominal_id_attitude.setEnabled(True)
-                self.radioButton_crowded_id_attitude.setEnabled(True)
-            else:
-                self.radioButton_nominal_id_attitude.setEnabled(False)
-                self.radioButton_crowded_id_attitude.setEnabled(False)
 
     def on_change_jitter(self):
         """If the coarse pointing slider or text box controlling the
