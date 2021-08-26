@@ -557,7 +557,6 @@ class MasterGui(QMainWindow):
 
             else:
                 # Define location of all_found_psfs catalog file(s)
-                # Define location of all_found_psfs catalog file(s)
                 if self.radioButton_shifted.isChecked():
                     guiding_files = self.shifted_guiding_selections_file_list
                     all_psf_files = self.shifted_all_found_psfs_file_list
