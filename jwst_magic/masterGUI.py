@@ -550,7 +550,8 @@ class MasterGui(QMainWindow):
                 )
                 # Generate the file
                 segment_guiding.generate_photometry_override_file(
-                    root, self.program_id, self.observation_num, self.visit_num, out_dir=out_dir,
+                    root, self.program_id, self.observation_num, self.visit_num, guider=guider,
+                    norm_value=norm_value, norm_unit=norm_unit, out_dir=out_dir,
                     parameter_dialog=True, dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
 
