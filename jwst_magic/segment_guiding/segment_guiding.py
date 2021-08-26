@@ -439,7 +439,7 @@ class SegmentGuidingCalculator:
                 orientations = list(self.selected_segment_ids)  # use these numbers to pull the data
                 file_orientations = list(self.selected_file_ids)  # use these numbers to label the data
                 guide_segments = [s[0] for s in orientations]
-                all_selected_segs = list(dict.fromkeys(np.concatenate(orientations))) # make a set but preseve order
+                all_selected_segs = list(dict.fromkeys(np.concatenate(orientations))) # make a set but preserve order
                 all_selected_segs_file_id = list(dict.fromkeys(np.concatenate(file_orientations)))
 
                 if self._refonly:
@@ -473,9 +473,9 @@ class SegmentGuidingCalculator:
 
                     # Check the count rates for the guide vs ref stars and truncate if needed for override file
                     countrate = self.countrate_array_flat[guide_seg_id]
-                    cr_threshold = GUIDE_STAR_MAX_COUNTRATE if label == 'star' else REF_STAR_MAX_COUNTRATE
-                    if countrate > cr_threshold:
-                        countrate = cr_threshold
+                    cr_max_value = GUIDE_STAR_MAX_COUNTRATE if label == 'star' else REF_STAR_MAX_COUNTRATE
+                    if countrate > cr_max_value:
+                        countrate = cr_max_value
                         self.log.info(f'Segment Guiding:The count rate for star {guide_star_file_id} is too high for '
                                       f'the override file. Updating count rate for from '
                                       f'{self.countrate_array_flat[guide_seg_id]} to {countrate}')
@@ -561,7 +561,7 @@ class SegmentGuidingCalculator:
                           -self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
                           self.x_segs_flat[guide_seg_id], self.y_segs_flat[guide_seg_id]]
 
-                row_string_to_format = '{:<13s}| ' + '{:<13d}| '* 2 +  '{:<13f}| '* (len(values) - 3)
+                row_string_to_format = '{:<13s}| ' + '{:<13d}| '* 2 + '{:<13f}| '* (len(values) - 3)
                 row_string = row_string_to_format[:-2].format(*values) + '\n'
                 f.write(row_string)
 
