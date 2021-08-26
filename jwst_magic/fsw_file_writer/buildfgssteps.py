@@ -557,7 +557,7 @@ def create_im_subarray(image, xcoord, ycoord, imgsize, show_fig=False):
 
 def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
                          all_found_psfs_file, center_pointing_file, psf_center_file=None,
-                         crowded_field=False, logger_passed=False):
+                         logger_passed=False):
     """Shift the FGS image such that the guide star is at the ID
     attitude. Rewrite the FGS FITS file, guiding_selections, and all_found_psfs
     catalog files for this shifted case. (Rename old versions of those files
@@ -582,9 +582,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     psf_center_file : str, optional
         Path to existing unshifted_psf_center_{root}_G{guider}.txt
         center psf file
-    crowded_field : bool, optional
-        Denotes whether the current case is a crowded field,
-        in which the ID attitude changes.
     logger_passed : bool
         T/F if a logger is passed into the function
 
@@ -625,18 +622,9 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     guiding_selections_cat = asc.read(guiding_selections_file)
     all_found_psfs_cat = asc.read(all_found_psfs_file)
 
-    # Determine the pixel shift
-    if crowded_field:
-        # Locations obtained from Beverly Owens, 12/3/18:
-        # https://innerspace.stsci.edu/display/INSTEL/FGS+Specifications
-        if guider == 1:
-            xend, yend = (986, 1688)  # Converted from Ideal = (-45.6799, 1.2244)
-        elif guider == 2:
-            xend, yend = (1003, 1697)  # Converted from Ideal = (-45.6701, -0.8757)
-        hdr_keyword = '{}'.format((xend, yend))
-    else:
-        xend, yend = (1023.5, 1023.5)  # ID attitude; Different for crowded fields
-        hdr_keyword = '{}'.format((xend, yend))
+    # Set the pixel shift
+    xend, yend = (1023.5, 1023.5)  # ID attitude
+    hdr_keyword = '{}'.format((xend, yend))
 
     # 1) Shift the image array
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
