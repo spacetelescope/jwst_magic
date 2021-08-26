@@ -386,6 +386,7 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     #           threshold_factor, countrate_factor)
     assert params == out_params
 
+
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
 def test_no_image_needed_for_pof(qtbot, master_gui):
@@ -479,6 +480,7 @@ ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -19.2
     for l, c in zip(lines[2:], correct_file[2:]):
         assert l.rstrip() == c.rstrip()
 
+
 sof_wo_obs_visit_parameters = [(OBSERVATION_NUM, ''),
                                ('', ''),
                                ('', 1),
@@ -502,6 +504,7 @@ def test_segment_override_file_wo_obs_visit(obsnum, visitnum):
             guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
         )
     assert 'Invalid input for SOF: ' in str(excinfo.value)
+
 
 test_data = PARAMETRIZED_DATA['test_photometry_override_file_wo_obs_visit']
 pof_wo_obs_visit_parameters = [(OBSERVATION_NUM, '', 'gs_override_1141_7.txt', test_data[0]),
@@ -533,6 +536,7 @@ def test_photometry_override_file_wo_obs_visit(test_directory, obsnum, visitnum,
         photometry_override_file = f.read()
     assert photometry_override_file == correct_command
 
+
 test_data = PARAMETRIZED_DATA['test_split_obs_num']
 split_obs_num_parameters = [('2', *test_data[0]),
                             ('2, 4, 6', *test_data[1]),
@@ -563,6 +567,7 @@ def test_split_obs_num(obs_num, correct_list, correct_string):
 
     assert final_num_list == correct_list, 'Incorrect observation number list'
     assert obs_list_string == correct_string, 'Incorrect observation number string'
+
 
 test_data = PARAMETRIZED_DATA['test_segment_override_file_single_obs']
 sof_single_obs_parameters = [('2', 'gs_override_1141_2_1.txt', test_data[0])]
@@ -602,6 +607,7 @@ def test_segment_override_file_single_obs(test_directory, obs_num, correct_file_
         segment_override_command = f.read()
     assert segment_override_command == correct_command
 
+
 sof_multiple_obs_parameters = ['13-15',
                                '2, 4, 6',
                                '5, 7, 10-12',
@@ -626,6 +632,7 @@ def test_segment_override_file_multiple_obs(test_directory, obs_num):
         )
     assert 'Invalid input for SOF: multiple observation numbers not allowed' in str(excinfo.value)
 
+
 test_data = PARAMETRIZED_DATA['test_photometry_override_file_multiple_obs']
 pof_multiple_obs_parameters = [('2', 'gs_override_1141_2_1.txt', test_data[0]),
                                ('2, 4, 6', 'gs_override_1141_2,4,6_1.txt', test_data[1]),
@@ -636,7 +643,10 @@ pof_multiple_obs_parameters = [('2', 'gs_override_1141_2_1.txt', test_data[0]),
                                ('10-12, 5, 7', 'gs_override_1141_5,7,10-12_1.txt', test_data[5])]
 @pytest.mark.parametrize('obs_num, correct_file_name, correct_command', pof_multiple_obs_parameters)
 def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_file_name, correct_command):
-
+    """Test that the photometry override file can take multiple observations.
+    Also test that nothing breaks in the norm_value and norm_unit are not passed in
+    for a POF
+    """
     generate_photometry_override_file(
         ROOT, PROGRAM_ID, obs_num, VISIT_NUM, guider=1, countrate_factor=0.7,
         countrate_uncertainty_factor=0.5, out_dir=__location__, parameter_dialog=False
@@ -652,6 +662,7 @@ def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_
     with open(photometry_override_file) as f:
         photometry_override_command = f.read()
     assert photometry_override_command == correct_command
+
 
 test_center_of_pointing_parameters = [([SEGMENT_INFILE], [SELECTED_SEGS2], [[840.0, 1345.0]]),
                                       ([SHIFTED_INFILE], [SHIFTED_SEGS], [[976.0, 801.0]]),

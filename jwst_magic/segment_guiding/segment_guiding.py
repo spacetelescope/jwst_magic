@@ -155,7 +155,7 @@ class SegmentGuidingCalculator:
         self.override_type = override_type
         self.program_id = int(program_id)
         self.observation_num = observation_num if observation_num != '' else None
-        self.visit_num = visit_num  if visit_num != '' else None
+        self.visit_num = visit_num if visit_num != '' else None
         self.fgs_num = guider # defined here for POF, re-defined from dialog for SOF
         self.root = root
         self.out_dir = out_dir
@@ -580,7 +580,7 @@ class SegmentGuidingCalculator:
         y_seg_n : float
             Y position of the center of pointing
         """
-        # Calculate attidude matrix (v2/v3 + boresight_offset is the center of pointing in the tel frame)
+        # Calculate attitude matrix (v2/v3 + boresight_offset is the center of pointing in the tel frame)
         v2_seg_n, v3_seg_n = coordinate_transforms.raw2tel(x_seg_n, y_seg_n, self.fgs_num)
         attitude = rotations.attitude(v2_seg_n + self.v2_boff,
                                       v3_seg_n + self.v3_boff,
