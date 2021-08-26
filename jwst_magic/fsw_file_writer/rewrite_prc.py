@@ -54,7 +54,7 @@ from jwst_magic.utils import utils
 LOGGER = logging.getLogger(__name__)
 
 
-def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold, shifted, crowded_field):
+def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold, shifted):
     """For a given dataset, rewrite the PRC and guiding_selections*.txt to select a
     new commanded guide star and reference stars
 
@@ -77,8 +77,6 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
         Threshold to use in prc files
     shifted : bool
         If the image has been chosen to be shifted to the ID attitude
-    crowded_field : bool
-        If the image is a crowded field image
 
     Raises
     ------
@@ -161,7 +159,7 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
             fgs_im_fsw, guiding_selections_file_fsw, psf_center_file_fsw = buildfgssteps.shift_to_id_attitude(
                 fgs_im, root, guider, out_dir_fsw, guiding_selections_file=guiding_selections_file,
                 all_found_psfs_file=unshifted_all_psfs, center_pointing_file=center_pointing_path,
-                psf_center_file=psf_center_file, crowded_field=crowded_field, logger_passed=True)
+                psf_center_file=psf_center_file, logger_passed=True)
         else:
             fgs_im_fsw = fgs_im
             guiding_selections_file_fsw = guiding_selections_file
