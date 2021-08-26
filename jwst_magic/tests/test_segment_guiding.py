@@ -69,9 +69,9 @@ import pytest
 # Local Imports
 from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.utils import utils
-from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file,
-                                                        SegmentGuidingCalculator,
-                                                        generate_photometry_override_file)
+from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file, SegmentGuidingCalculator,
+                                                        generate_photometry_override_file, GUIDE_STAR_MAX_COUNTRATE,
+                                                        REF_STAR_MAX_COUNTRATE)
 if not JENKINS:
     from jwst_magic.segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
     from jwst_magic.masterGUI import MasterGui
@@ -93,6 +93,8 @@ SHIFTED_SEGS3 = os.path.join(__location__, 'data', 'shifted_guiding_selections_{
 SHIFTED_INFILE = os.path.join(__location__, 'data', 'shifted_all_found_psfs_{}_G1_config1.txt'.format(ROOT))
 SHIFTED_INFILE2 = os.path.join(__location__, 'data', 'shifted_all_found_psfs_{}_G1_config2.txt'.format(ROOT))
 SHIFTED_INFILE3 = os.path.join(__location__, 'data', 'shifted_all_found_psfs_{}_G1_config3.txt'.format(ROOT))
+BRIGHT_SEGMENT_INFILE = os.path.join(__location__, 'data', 'unshifted_all_found_psfs_bright-{}_G1_config1.txt'.format(ROOT))
+BRIGHT_SELECTED_SEGS = os.path.join(__location__, 'data', 'unshifted_guiding_selections_bright-{}_G1_config1.txt'.format(ROOT))
 
 PROGRAM_ID = 1141
 OBSERVATION_NUM = 7
@@ -229,7 +231,8 @@ def test_generate_override_file_valueerrors(test_directory):
     # Test error if parameter_dialog=False and countrate_factor=None and countrate_uncertainty_factor=None
     with pytest.raises(ValueError) as excinfo:
         generate_photometry_override_file(
-            ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM,
+            ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, guider=1,
+            norm_value=12, norm_unit='FGS Magnitude',
             out_dir=__location__, parameter_dialog=False
         )
     assert '`parameter_dialog=False`' in str(excinfo.value)
@@ -277,7 +280,8 @@ def test_segment_override_command_out_of_fov(test_directory):
 
 def test_generate_photometry_override_file(test_directory):
     generate_photometry_override_file(
-        ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=0.7,
+        ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, guider=1,
+        norm_value=14, norm_unit='FGS Magnitude', countrate_factor=0.7,
         countrate_uncertainty_factor=0.5, out_dir=__location__, parameter_dialog=False
     )
 
@@ -300,7 +304,8 @@ def test_fail_photometry_override_file(test_directory, countrate_factor, countra
     # Try with an incorrect countrate factor and make sure there's an error
     with pytest.raises(ValueError) as excinfo:
         generate_photometry_override_file(
-            ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, countrate_factor=countrate_factor,
+            ROOT, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, guider=1,
+            norm_value=14, norm_unit='FGS Magnitude', countrate_factor=countrate_factor,
             countrate_uncertainty_factor=countrate_uncertainty_factor, out_dir=__location__, parameter_dialog=False)
     assert error in str(excinfo.value)
 
@@ -508,14 +513,15 @@ def test_photometry_override_file_wo_obs_visit(test_directory, obsnum, visitnum,
     """ Test that blank visit num and/or blank obs num is allowed and
     written out correctly for photometry override files
     """
-    guider = 1
-
     generate_photometry_override_file(
         ROOT, PROGRAM_ID, obsnum, visitnum,
-        countrate_factor = 0.6,
-        countrate_uncertainty_factor = 0.7,
-        out_dir = __location__, parameter_dialog = False,
-        dialog_obj = None, log = None
+        guider=1,
+        norm_value=14,
+        norm_unit='FGS Magnitude',
+        countrate_factor=0.6,
+        countrate_uncertainty_factor=0.7,
+        out_dir=__location__, parameter_dialog=False,
+        dialog_obj=None, log=None
     )
 
     # Check to make sure the override file was created, and in the right place
@@ -548,8 +554,9 @@ def test_split_obs_num(obs_num, correct_list, correct_string):
 
     sg = SegmentGuidingCalculator(
         "POF", PROGRAM_ID, obs_num, VISIT_NUM, ROOT, __location__,
-        countrate_factor = 0.6,
-        countrate_uncertainty_factor = 0.7
+        guider=1,
+        countrate_factor=0.6,
+        countrate_uncertainty_factor=0.7
     )
 
     final_num_list, obs_list_string = sg._split_obs_num(obs_num)
@@ -631,7 +638,7 @@ pof_multiple_obs_parameters = [('2', 'gs_override_1141_2_1.txt', test_data[0]),
 def test_photometry_override_file_multiple_obs(test_directory, obs_num, correct_file_name, correct_command):
 
     generate_photometry_override_file(
-        ROOT, PROGRAM_ID, obs_num, VISIT_NUM, countrate_factor=0.7,
+        ROOT, PROGRAM_ID, obs_num, VISIT_NUM, guider=1, countrate_factor=0.7,
         countrate_uncertainty_factor=0.5, out_dir=__location__, parameter_dialog=False
     )
 
@@ -700,3 +707,67 @@ def test_center_of_pointing(test_directory, infile, selected_segs_list, center_p
 
     # Compare commands (skipping program id, obs num, and visit nun information)
     assert segment_override_command_mean[27:] == segment_override_file_pixel[27:]
+
+
+def test_resetting_SOF_count_rates(test_directory):
+    """Test that when SOF count rate results in values that
+    are too high for the override files to handle, the
+    values will be truncated accordingly
+    """
+    # Test SOF - running bright data
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': 1,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'center_of_pointing': 0}
+
+    generate_segment_override_file(
+        [BRIGHT_SEGMENT_INFILE], 1, PROGRAM_ID, 3, VISIT_NUM, root=ROOT,
+        out_dir=__location__, selected_segs_list=[BRIGHT_SELECTED_SEGS],
+        guide_star_params_dict=guide_star_params_dict, parameter_dialog=False
+    )
+
+    sof_file = 'gs_override_1141_3_1.txt'
+    segment_override_file = os.path.join(test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'), sof_file))
+    assert os.path.isfile(segment_override_file)
+    with open(segment_override_file) as f:
+        segment_override_command = f.read()
+
+    # Check count rates are the truncated values
+    gs_cr = segment_override_command.split(' ')[8][:-1]
+    ref1_cr = segment_override_command.split(' ')[17][:-1]
+    ref2_cr = segment_override_command.split(' ')[24][:-1]
+
+    assert float(gs_cr) == GUIDE_STAR_MAX_COUNTRATE
+    assert float(ref1_cr) == REF_STAR_MAX_COUNTRATE
+    assert float(ref2_cr) == REF_STAR_MAX_COUNTRATE
+
+
+def test_resetting_POF_count_rate_factors(test_directory):
+    """Test that when POF count rate factor results in values that
+    are too high for the override files to handle, the
+    values will be truncated accordingly
+    """
+    cr_factor = 0.6
+    generate_photometry_override_file(
+        ROOT, PROGRAM_ID, 4, VISIT_NUM,
+        guider=1,
+        norm_value=10,
+        norm_unit='FGS Magnitude',
+        countrate_factor=cr_factor,
+        countrate_uncertainty_factor=0.7,
+        out_dir=__location__, parameter_dialog=False,
+        dialog_obj=None, log=None
+    )
+
+    pof_file = 'gs_override_1141_4_1.txt'
+    photometry_override_file = os.path.join(test_directory, '{}_{}'.format(datetime.now().strftime('%Y%m%d'), pof_file))
+    assert os.path.isfile(photometry_override_file)
+    with open(photometry_override_file) as f:
+        photometry_override_command = f.read()
+
+    # Check the count rate factor has changed
+    count_rate_factor = photometry_override_command.split(' ')[3].split('=')[-1][:-1]
+    assert float(count_rate_factor) < cr_factor
