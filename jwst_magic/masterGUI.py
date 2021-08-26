@@ -543,6 +543,11 @@ class MasterGui(QMainWindow):
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():
+                # Raise error if normalization information isn't set
+                if norm_value == '':
+                    raise ValueError('Missing a normalization value (guide star ID, count rate, or magnitude) which '
+                                     'is required to make a photometry override file')
+
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
                                        "POF", None, self.program_id, self.observation_num, self.visit_num, log=None
