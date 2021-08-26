@@ -320,7 +320,6 @@ class MasterGui(QMainWindow):
         self.lineEdit_obs.editingFinished.connect(self.update_commissioning_name)
         self.pushButton_commid.clicked.connect(self.update_commissioning_name)
 
-
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # WIDGET CONNECTIONS
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
