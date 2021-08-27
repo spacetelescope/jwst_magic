@@ -64,6 +64,7 @@ from pysiaf.utils import rotations
 # Local Imports
 if not JENKINS:
     from jwst_magic.segment_guiding import SegmentGuidingGUI
+from jwst_magic.convert_image import renormalize
 from jwst_magic.convert_image.convert_image_to_raw_fgs import FGS1_SCALE, FGS2_SCALE
 from jwst_magic.utils import coordinate_transforms, utils
 
@@ -72,15 +73,21 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 PACKAGE_PATH = os.path.split(__location__)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
+# Define maximum count rate values for the override files
+# This is a flight requirement limit and higher count rates will cause issues upstream during commissioning
+GUIDE_STAR_MAX_COUNTRATE = 1e7
+REF_STAR_MAX_COUNTRATE = 2e7
+
 # Open the SIAF with pysiaf
 FGS_SIAF = pysiaf.Siaf('FGS')
 
 
 class SegmentGuidingCalculator:
     def __init__(self, override_type, program_id, observation_num, visit_num,
-                 root, out_dir, segment_infile_list=None, guide_star_params_dict=None,
+                 root, out_dir, guider=None, segment_infile_list=None, guide_star_params_dict=None,
                  selected_segs_list=None, threshold_factor=0.9, countrate_factor=None,
-                 countrate_uncertainty_factor=None, log=None):
+                 countrate_uncertainty_factor=None, norm_value=None,
+                 norm_unit=None, log=None):
         """Initialize the segment guiding calculator class.
 
         Parameters
@@ -98,6 +105,8 @@ class SegmentGuidingCalculator:
             Name used to generate output folder and output filenames.
         out_dir : str
             Location of out/ directory.
+        guider : int, optional
+            Guider used, 1 or 2. Must be defined for POF, will be defined elsewhere for SOF.
         segment_infile_list : list of str, optional
             Filepath(s) to all_found_psfs*.txt file with list of all
             segment locations and countrates
@@ -132,6 +141,12 @@ class SegmentGuidingCalculator:
             The factor by which countrate uncertainties are multiplied by to simulate
             diffuse PSFs (e.g. in MIMF)
             Used for POF Generation
+        norm_value: float, optional
+            The value to be used for normalization (depends on norm_unit). Used to check
+            count rate values in POF
+        norm_unit: str, optional
+            The unit to be used for normalization (expecting "FGS Counts" or "FGS Magnitude")
+            Used to check count rate values in POF
         log : logger object
             Pass a logger object (output of tils.create_logger_from_yaml) or a new log
             will be created
@@ -141,12 +156,15 @@ class SegmentGuidingCalculator:
         self.override_type = override_type
         self.program_id = int(program_id)
         self.observation_num = observation_num if observation_num != '' else None
-        self.visit_num = visit_num  if visit_num != '' else None
+        self.visit_num = visit_num if visit_num != '' else None
+        self.fgs_num = guider # defined here for POF, re-defined from dialog for SOF
         self.root = root
         self.out_dir = out_dir
         self.threshold_factor = threshold_factor
         self.countrate_factor = countrate_factor
         self.countrate_uncertainty_factor = countrate_uncertainty_factor
+        self.norm_value = norm_value
+        self.norm_unit = norm_unit
 
         # Start logger
         if log is None:
@@ -372,6 +390,18 @@ class SegmentGuidingCalculator:
                                      f'{self.x_segs_flat[p]:8.2f} {self.y_segs_flat[p]:8.2f}')
                 self.log.info('Segment Guiding: ' + all_segments)
 
+        # Check the count rate factor of the guide star and reset if needed for override file
+        if self.override_type == "POF" and None not in (self.norm_value, self.norm_unit):
+            countrate, _ = renormalize.convert_to_countrate_fgsmag(self.norm_value, self.norm_unit, self.fgs_num)
+            if countrate * self.countrate_factor > GUIDE_STAR_MAX_COUNTRATE:
+                old_factor = self.countrate_factor
+                self.countrate_factor = GUIDE_STAR_MAX_COUNTRATE / countrate
+                self.log.info('Segment Guiding: Count rate factor is too high given the count rate of the star. '
+                              f'Updating count rate factor from {old_factor} to {self.countrate_factor}')
+        elif self.override_type == "POF":
+            self.log.warning('Segment Guiding: Cannot check count rate factor due to missing normalization '
+                             'information. This may cause the override file to fail.')
+
         # Determine what the commands should be:
         if obs_num_list is None:
             obs_list = [None]
@@ -410,7 +440,7 @@ class SegmentGuidingCalculator:
                 orientations = list(self.selected_segment_ids)  # use these numbers to pull the data
                 file_orientations = list(self.selected_file_ids)  # use these numbers to label the data
                 guide_segments = [s[0] for s in orientations]
-                all_selected_segs = list(dict.fromkeys(np.concatenate(orientations))) # make a set but preseve order
+                all_selected_segs = list(dict.fromkeys(np.concatenate(orientations))) # make a set but preserve order
                 all_selected_segs_file_id = list(dict.fromkeys(np.concatenate(file_orientations)))
 
                 if self._refonly:
@@ -425,8 +455,7 @@ class SegmentGuidingCalculator:
                         orientations.append(new_seg)
                         file_orientations.append(new_seg_file_id)
 
-                # If countrates were included in the input file, use them!
-                rate = self.countrate_array_flat
+                # Set uncertainties
                 uncertainty = np.array(self.countrate_array_flat) * self.threshold_factor
 
                 # Write the commands for each orientation
@@ -443,10 +472,19 @@ class SegmentGuidingCalculator:
                             label = 'ref_only'
                             seg = i_o + 1 - n_guide_segments
 
+                    # Check the count rates for the guide vs ref stars and truncate if needed for override file
+                    countrate = self.countrate_array_flat[guide_seg_id]
+                    cr_max_value = GUIDE_STAR_MAX_COUNTRATE if label == 'star' else REF_STAR_MAX_COUNTRATE
+                    if countrate > cr_max_value:
+                        countrate = cr_max_value
+                        self.log.info(f'Segment Guiding:The count rate for star {guide_star_file_id} is too high for '
+                                      f'the override file. Updating count rate for from '
+                                      f'{self.countrate_array_flat[guide_seg_id]} to {countrate}')
+
                     # Format segment properties (ID, RA, Dec, countrate, uncertainty)
                     star_string = f' -{label}{seg} = {guide_star_file_id}, ' \
                                   f'{self.seg_ra_flat[guide_seg_id]:.6f}, {self.seg_dec_flat[guide_seg_id]:.6f}, ' \
-                                  f'{rate[guide_seg_id]:.1f}, {uncertainty[guide_seg_id]:.1f}'
+                                  f'{countrate:.1f}, {uncertainty[guide_seg_id]:.1f}'
 
                     if not self._refonly or (self._refonly and label == 'star'):
                         # Add list of segment IDs for all reference stars
@@ -524,7 +562,7 @@ class SegmentGuidingCalculator:
                           -self.x_idl_segs_flat[guide_seg_id], self.y_idl_segs_flat[guide_seg_id],
                           self.x_segs_flat[guide_seg_id], self.y_segs_flat[guide_seg_id]]
 
-                row_string_to_format = '{:<13s}| ' + '{:<13d}| '* 2 +  '{:<13f}| '* (len(values) - 3)
+                row_string_to_format = '{:<13s}| ' + '{:<13d}| '* 2 + '{:<13f}| '* (len(values) - 3)
                 row_string = row_string_to_format[:-2].format(*values) + '\n'
                 f.write(row_string)
 
@@ -543,7 +581,7 @@ class SegmentGuidingCalculator:
         y_seg_n : float
             Y position of the center of pointing
         """
-        # Calculate attidude matrix (v2/v3 + boresight_offset is the center of pointing in the tel frame)
+        # Calculate attitude matrix (v2/v3 + boresight_offset is the center of pointing in the tel frame)
         v2_seg_n, v3_seg_n = coordinate_transforms.raw2tel(x_seg_n, y_seg_n, self.fgs_num)
         attitude = rotations.attitude(v2_seg_n + self.v2_boff,
                                       v3_seg_n + self.v3_boff,
@@ -1170,6 +1208,7 @@ def generate_segment_override_file(segment_infile_list, guider,
 
 
 def generate_photometry_override_file(root, program_id, observation_num, visit_num,
+                                      guider, norm_value=None, norm_unit=None,
                                       countrate_factor=None,
                                       countrate_uncertainty_factor=None,
                                       out_dir=None, parameter_dialog=True,
@@ -1188,6 +1227,14 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         Observation number
     visit_num : str
         Visit number
+    guider : int
+        Which guider is being used: 1 or 2
+    norm_value: float, optional
+        The value to be used for normalization (depends on norm_unit). Used to check
+        count rate values in POF
+    norm_unit: str, optional
+        The unit to be used for normalization (expecting "FGS Counts" or "FGS Magnitude")
+        Used to check count rate values in POF
     countrate_factor : float, optional
         The factor by which countrates are multiplied by to simulate
         diffuse PSFs (e.g. in MIMF).
@@ -1240,8 +1287,9 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
 
         # Set up guiding calculator object
         sg = SegmentGuidingCalculator(
-            "POF", program_id, observation_num, visit_num, root, out_dir,
-            countrate_factor=countrate_factor, countrate_uncertainty_factor=countrate_uncertainty_factor, log=log
+            "POF", program_id, observation_num, visit_num, root, out_dir, guider,
+            countrate_factor=countrate_factor, countrate_uncertainty_factor=countrate_uncertainty_factor,
+            norm_value=norm_value, norm_unit=norm_unit, log=log
         )
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params("POF")
