@@ -74,6 +74,7 @@ PACKAGE_PATH = os.path.split(__location__)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 
 # Define maximum count rate values for the override files
+# This is a flight requirement limit and higher count rates will cause issues upstream during commissioning
 GUIDE_STAR_MAX_COUNTRATE = 1e7
 REF_STAR_MAX_COUNTRATE = 2e7
 

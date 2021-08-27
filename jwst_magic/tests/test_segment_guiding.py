@@ -723,7 +723,8 @@ def test_center_of_pointing(test_directory, infile, selected_segs_list, center_p
 def test_resetting_SOF_count_rates(test_directory):
     """Test that when SOF count rate results in values that
     are too high for the override files to handle, the
-    values will be truncated accordingly
+    values will be truncated accordingly.
+    These max count rate values are a flight requirement.
     """
     # Test SOF - running bright data
     guide_star_params_dict = {'v2_boff': 0.1,
@@ -759,7 +760,8 @@ def test_resetting_SOF_count_rates(test_directory):
 def test_resetting_POF_count_rate_factors(test_directory):
     """Test that when POF count rate factor results in values that
     are too high for the override files to handle, the
-    values will be truncated accordingly
+    values will be truncated accordingly.
+    These max count rate values are a flight requirement.
     """
     cr_factor = 0.6
     generate_photometry_override_file(
