@@ -623,7 +623,6 @@ class MasterGui(QMainWindow):
 
         # Check for commissioning naming usage not matching intended use case
         if self.radioButton_name_commissioning.isChecked():
-            print(input_image, norm_unit)
             check_cases = [not (input_image.endswith('_cal.fits') or input_image.endswith('_cal_full_frame.fits')),
                            norm_unit == 'FGS countrate']
             if True in check_cases and pre_existing_im is False:
