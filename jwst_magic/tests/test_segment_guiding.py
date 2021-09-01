@@ -404,6 +404,9 @@ def test_no_image_needed_for_pof(qtbot, master_gui):
     assert master_gui.textEdit_out.toPlainText() == __location__
     assert master_gui.buttonGroup_guider.checkedButton().text() == '1'
 
+    # Set normalization parameters
+    qtbot.keyClicks(master_gui.lineEdit_normalize, 'S4FM000115')
+
     master_gui.groupBox_imageConverter.setChecked(False)
     master_gui.groupBox_starSelector.setChecked(False)
     master_gui.groupBox_fileWriter.setChecked(False)

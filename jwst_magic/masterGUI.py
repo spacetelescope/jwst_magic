@@ -621,6 +621,23 @@ class MasterGui(QMainWindow):
             return
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+        # Check for commissioning naming usage not matching intended use case
+        if self.radioButton_name_commissioning.isChecked():
+            check_cases = [not (input_image.endswith('_cal.fits') or input_image.endswith('_cal_full_frame.fits')),
+                           norm_unit == 'FGS countrate']
+            if True in check_cases and pre_existing_im is False:
+                if check_cases[0]:
+                    errmsg1 = 'read in a file that is not a cal.fits file or a padded trk image ' \
+                               '(ending in cal_full_frame.fits)'
+                    errmsg2 = 'change the file'
+                elif check_cases[1]:
+                    errmsg1 = 'set the normalization to FGS Countrate'
+                    errmsg2 = 'reset the normalization unit'
+                raise ValueError("Given the current inputs, MAGIC cannot be run with commissioning naming. "
+                                 "MAGIC's commissioning naming is meant to be used for the nominal commissioning case, "
+                                 f"but the user has {errmsg1}. Either {errmsg2}, or switch to manual naming.")
+
+        # Run MAGIC
         if convert_im or star_selection or file_writer:
             run_magic.run_all(input_image, guider,
                               root=root,

@@ -44,6 +44,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 DATA_DIRECTORY = os.path.join(__location__, 'data', ROOT)
 INPUT_IMAGE = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
+INPUT_IMAGE2 = os.path.join(__location__, 'data', 'nircam_mimf_cal.fits')
 COMMAND_FILE = os.path.join(__location__, 'data', 'guiding_selections_test_master_G1.txt')
 
 # Only needed if computer is on SOGS (directory in SOGS_PATH = '/data/jwst/wss/guiding/')
@@ -555,3 +556,45 @@ def test_shifted_data(master_gui):
                   range(master_gui.comboBox_showcommandsshifted.count())]
     assert len(shift_cmds) == 1
     assert shift_cmds[0] == 'Command 1: ' + shifted_file
+
+
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
+def test_commissioning_naming_input_errors(qtbot, master_gui):
+    """Test that the correct errors come up when bad inputs are loaded in commissioning naming"""
+
+    # Initialize main window
+    qtbot.addWidget(master_gui)
+
+    # Set general input
+    qtbot.mouseClick(master_gui.buttonGroup_name.buttons()[0], QtCore.Qt.LeftButton)  # set naming method
+    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)  # set to guider 2
+    master_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
+    master_gui.comboBox_car.setCurrentText('OTE-13')
+    master_gui.lineEdit_obs.setText('01')
+
+    # Set up file name issue (with a good normalization)
+    master_gui.lineEdit_inputImage.setText(INPUT_IMAGE)
+    master_gui.comboBox_normalize.setCurrentText('FGS Magnitude')
+    master_gui.lineEdit_normalize.setText('14')
+    master_gui.pushButton_delbackgroundStars.click()
+
+    with qtbot.capture_exceptions() as exceptions:
+        qtbot.mouseClick(master_gui.pushButton_run, QtCore.Qt.LeftButton, delay=1)
+
+    expected_err = "but the user has read in a file that is not a cal.fits file or a padded trk image"
+    assert expected_err in str(exceptions[0][1]), \
+        f"Wrong error captured. Caught: '{str(exceptions[0][1])}', Expected: '{expected_err}'"
+
+    # Set up count rate issue (with a good image)
+    master_gui.lineEdit_inputImage.setText(INPUT_IMAGE2)
+    master_gui.comboBox_normalize.setCurrentText('FGS countrate')
+    master_gui.lineEdit_normalize.setText('4000000')
+    master_gui.pushButton_delbackgroundStars.click()
+
+    with qtbot.capture_exceptions() as exceptions:
+        qtbot.mouseClick(master_gui.pushButton_run, QtCore.Qt.LeftButton, delay=1)
+
+    expected_err = "but the user has set the normalization to FGS Countrate"
+    assert expected_err in str(exceptions[0][1]), \
+        f"Wrong error captured. Caught: '{str(exceptions[0][1])}', Expected: '{expected_err}'"
