@@ -29,6 +29,7 @@ The following are ways to run convert_image:
 """
 
 import os
+import shutil
 import yaml
 
 from astropy.io import ascii as asc
@@ -54,6 +55,29 @@ SEGMENT_INFILE = os.path.join(__location__, 'data', 'all_found_psfs_test_select_
 PARAMETRIZED_DATA = parametrized_data()['test_convert_image']
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 
+
+@pytest.fixture()
+def test_directory(test_dir=TEST_DIRECTORY):
+    """Create a test directory for permission management.
+
+    Parameters
+    ----------
+    test_dir : str
+        Path to directory used for testing
+
+    Yields
+    -------
+    test_dir : str
+        Path to directory used for testing
+    """
+    utils.ensure_dir_exists(test_dir)  # creates directory with default mode=511
+
+    yield test_dir
+    print("teardown test directory")
+    if os.path.isdir(test_dir):
+        shutil.rmtree(test_dir)
+
+
 norm_parameters = [
     (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 2052.138207909823),
     (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6445.04162318262),
@@ -64,7 +88,7 @@ norm_parameters = [
     (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.9196477208)  # non-ITM FGS image - tests ped
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
-def test_convert_im_normalization(image, guider, nircam, norm_value, norm_unit, itm, data_max):
+def test_convert_im_normalization(test_directory, image, guider, nircam, norm_value, norm_unit, itm, data_max):
     """
     Test how the normalization is done with  in terms of the interface with the
     fgscountrate module
@@ -91,7 +115,7 @@ norm_parameters = [
     ('N13I000018', 'FGS countrate', TypeError, 'Mismatch: Normalization value for unit of')
 ]
 @pytest.mark.parametrize('value, unit, error, error_text', norm_parameters)
-def test_convert_im_normalization_error(value, unit, error, error_text):
+def test_convert_im_normalization_error(test_directory, value, unit, error, error_text):
     with pytest.raises(error) as excinfo:
         data, _, _, _ = convert_image_to_raw_fgs.convert_im(NIRCAM_IM, 1, ROOT, nircam=True,
                                                             nircam_det=None, normalize=True,
@@ -159,7 +183,7 @@ def test_transform_nircam_raw_to_fgs_raw():
         'Incorrect transformation from raw NRCB1 (thus also A2, A4, B3, B5) frame to raw FGS2 frame'
 
 
-def test_psf_center_file():
+def test_psf_center_file(test_directory):
     """ Test that the right files for the MIMF case are written out and contain the correct data
     """
     image = NIRCAM_MIMF_IM
@@ -189,7 +213,7 @@ def test_psf_center_file():
     assert guiding_selections_contents != no_smooth_contents
 
 
-def test_read_in_all_found_psfs_file():
+def test_read_in_all_found_psfs_file(test_directory):
     """Test reading in an all found psfs file into the convert_im function
     """
     image = NIRCAM_IM
