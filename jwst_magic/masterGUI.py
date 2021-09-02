@@ -575,7 +575,7 @@ class MasterGui(QMainWindow):
                     center_pointing_files = [self.all_found_psfs_file.replace('unshifted_all_found_psfs_',
                                                                               'center_pointing_')] * len(guiding_files)
 
-                LOGGER.info('Pulling center of pointing information from same location as guiding files')
+                LOGGER.info('Master GUI: Pulling center of pointing information from same location as guiding files')
 
                 # Load selected guiding_selections*.txt
                 if len(self.comboBox_guidingcommands.checkedItems()) == 0:
@@ -1244,7 +1244,6 @@ class MasterGui(QMainWindow):
             else:
                 return True
 
-
     def update_guiding_selections(self, new_selections=None):
         """
         Update guiding selections in the converted preview combobox, the shifted preview combobox,
@@ -1306,7 +1305,6 @@ class MasterGui(QMainWindow):
                 self.comboBox_showcommandsshifted.addItem(item)
 
         self.update_checkable_combobox()
-
 
     def update_checkable_combobox(self):
         if self.groupBox_segmentGuiding.isChecked():
