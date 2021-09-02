@@ -1694,10 +1694,10 @@ class MasterGui(QMainWindow):
 
             # Set log if not already set (for first file created with MAGIC)
             if self.log is None:
-                self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-            # If root is changed, need to create a new log file
-            if root != self.log_filename.split('/')[-1].split('masterGUI_')[-1].split('.log')[0]:
-                self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+                self.log, self.log_filename = utils.create_logger_from_yaml('magic', root=root, level='DEBUG')
+            # If path has changed, need to create a new log file
+            if root_dir != os.path.dirname(self.log_filename):
+                self.log, self.log_filename = utils.create_logger_from_yaml('magic', root=root, level='DEBUG')
 
             # Note: maintaining if statements and "old" file names for backwards compatibility
             txt_files = glob.glob(os.path.join(root_dir, "**/*.txt"), recursive=True)
