@@ -472,7 +472,6 @@ def find_peaks(data, box_size, npeaks=np.inf, threshold=None, return_threshold=F
     return (sources, threshold) if return_threshold else sources
 
 
-
 def get_guider(header, guider=None, log=None):
     """Read the guider information from the FITS header"""
     try:

@@ -148,7 +148,7 @@ class SegmentGuidingCalculator:
             The unit to be used for normalization (expecting "FGS Counts" or "FGS Magnitude")
             Used to check count rate values in POF
         log : logger object
-            Pass a logger object (output of tils.create_logger_from_yaml) or a new log
+            Pass a logger object (output of utils.create_logger_from_yaml) or a new log
             will be created
         """
 
@@ -1250,7 +1250,7 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         If parameter_dialog is True, can pass a pre-set dialog object or
         re-create it if dialog_obj=None
     log : logger object
-        Pass a logger object (output of tils.create_logger_from_yaml) or a new log
+        Pass a logger object (output of utils.create_logger_from_yaml) or a new log
         will be created
     """
 
