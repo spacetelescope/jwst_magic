@@ -68,6 +68,9 @@ from jwst_magic.convert_image import renormalize
 from jwst_magic.convert_image.convert_image_to_raw_fgs import FGS1_SCALE, FGS2_SCALE
 from jwst_magic.utils import coordinate_transforms, utils
 
+# Start logger
+LOGGER = logging.getLogger(__name__)
+
 # Establish segment guiding files directory
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.split(__location__)[0]
@@ -168,9 +171,9 @@ class SegmentGuidingCalculator:
 
         # Start logger
         if log is None:
-            self.log = logging.getLogger(__name__)
-        else:
-            self.log = log
+            out_dir_root = utils.make_out_dir(out_dir, OUT_PATH, root)
+            utils.ensure_dir_exists(out_dir_root)
+            utils.create_logger_from_yaml(__name__, out_dir_root=out_dir_root, root=root, level='DEBUG')
 
         # Initialize other attributes
         # Will the override file be written out using the 'ref-only' syntax? Should be yes.
@@ -319,7 +322,7 @@ class SegmentGuidingCalculator:
                 out_file += "_1"
                 if self.visit_num is not None:
                     if int(self.visit_num) != 1:
-                        self.log.warning('Visit number set to 001. You cannot specify '
+                        LOGGER.warning('Visit number set to 001. You cannot specify '
                                          'visit numbers if specifying multiple observations.')
                 self.visit_num = 1
 
@@ -379,7 +382,7 @@ class SegmentGuidingCalculator:
                     V2/V3 Boresight offset: ({self.v2_boff}, {self.v3_boff}) arc-sec
                     Guide star RA & Dec: ({self.ra}, {self.dec}) degrees
                     Position angle: {self.pa} degrees"""
-                self.log.info(f'Segment Guiding: {summary_output}')
+                LOGGER.info(f'Segment Guiding: {summary_output}')
 
                 all_segments = 'All Segment Locations'
                 all_segments += '\n                Segment     xIdl   yIdl     RA         Dec         xRaw     yRaw'
@@ -388,7 +391,7 @@ class SegmentGuidingCalculator:
                                      f'{self.x_idl_segs_flat[p]:6.2f} {self.y_idl_segs_flat[p]:6.2f}  '
                                      f'{self.seg_ra_flat[p]:10.6f} {self.seg_dec_flat[p]:10.6f}  '
                                      f'{self.x_segs_flat[p]:8.2f} {self.y_segs_flat[p]:8.2f}')
-                self.log.info('Segment Guiding: ' + all_segments)
+                LOGGER.info('Segment Guiding: ' + all_segments)
 
         # Check the count rate factor of the guide star and reset if needed for override file
         if self.override_type == "POF" and None not in (self.norm_value, self.norm_unit):
@@ -396,11 +399,11 @@ class SegmentGuidingCalculator:
             if countrate * self.countrate_factor > GUIDE_STAR_MAX_COUNTRATE:
                 old_factor = self.countrate_factor
                 self.countrate_factor = GUIDE_STAR_MAX_COUNTRATE / countrate
-                self.log.info('Segment Guiding: Count rate factor is too high given the count rate of the star. '
-                              f'Updating count rate factor from {old_factor} to {self.countrate_factor}')
+                LOGGER.info('Segment Guiding: Count rate factor is too high given the count rate of the star. '
+                            f'Updating count rate factor from {old_factor} to {self.countrate_factor}')
         elif self.override_type == "POF":
-            self.log.warning('Segment Guiding: Cannot check count rate factor due to missing normalization '
-                             'information. This may cause the override file to fail.')
+            LOGGER.warning('Segment Guiding: Cannot check count rate factor due to missing normalization '
+                           'information. This may cause the override file to fail.')
 
         # Determine what the commands should be:
         if obs_num_list is None:
@@ -477,7 +480,7 @@ class SegmentGuidingCalculator:
                     cr_max_value = GUIDE_STAR_MAX_COUNTRATE if label == 'star' else REF_STAR_MAX_COUNTRATE
                     if countrate > cr_max_value:
                         countrate = cr_max_value
-                        self.log.info(f'Segment Guiding:The count rate for star {guide_star_file_id} is too high for '
+                        LOGGER.info(f'Segment Guiding:The count rate for star {guide_star_file_id} is too high for '
                                       f'the override file. Updating count rate for from '
                                       f'{self.countrate_array_flat[guide_seg_id]} to {countrate}')
 
@@ -512,10 +515,10 @@ class SegmentGuidingCalculator:
             f.write(out_string)
 
             if verbose:
-                self.log.info('Segment Guiding: Guide Star Override: ' +
-                              out_string.replace('-star', '\n                -star').replace(
-                                  '-ref_only', '\n                -ref_only'))
-                self.log.info('Segment Guiding: Saved override command to {}'.format(out_file))
+                LOGGER.info('Segment Guiding: Guide Star Override: ' +
+                            out_string.replace('-star', '\n                -star').replace(
+                                '-ref_only', '\n                -ref_only'))
+                LOGGER.info('Segment Guiding: Saved override command to {}'.format(out_file))
 
     def write_override_report(self, filename, orientations, file_orientations, n_guide_segments, obs_list_name):
         """Write a report.txt file to supplement the override file.
@@ -649,8 +652,8 @@ class SegmentGuidingCalculator:
                 if len(self.center_of_pointing) == 1 and len(selected_segs_list) != 1:
                     self.center_of_pointing *= len(selected_segs_list)
                 else:
-                    self.log.warning('Segment Guiding: Center of pointing information is of '
-                                     'mismatched length to guiding selections length.')
+                    LOGGER.warning('Segment Guiding: Center of pointing information is of '
+                                   'mismatched length to guiding selections length.')
         elif isinstance(self.center_of_pointing, int):
             self.center_of_pointing = [self.center_of_pointing]
             self.center_of_pointing *= len(selected_segs_list)
@@ -701,8 +704,7 @@ class SegmentGuidingCalculator:
 
             self._num_infiles += 1
 
-            self.log.info(
-                'Segment Guiding: {} segment coordinates read from {}'.format(n_segs, segment_infile))
+            LOGGER.info(f'Segment Guiding: {n_segs} segment coordinates read from {segment_infile}')
 
     def get_selected_segs(self, selected_segs):
         """If a file of selected segments has been provided, get their
@@ -724,7 +726,7 @@ class SegmentGuidingCalculator:
 
         # If the selected segments are an array of lists
         if isinstance(selected_segs, np.ndarray):
-            self.log.info('Segment Guiding: Guiding on an array of segments')
+            LOGGER.info('Segment Guiding: Guiding on an array of segments')
             # If there is more than one orientation provided
             if isinstance(selected_segs[0], list):
                 self.selected_segment_ids = []
@@ -774,10 +776,7 @@ class SegmentGuidingCalculator:
         try:
             read_selected_segs = asc.read(selected_segs)
             column_names = read_selected_segs.colnames
-            self.log.info(
-                'Segment Guiding: Selected segment coordinates read from {}'.
-                format(selected_segs)
-            )
+            LOGGER.info(f'Segment Guiding: Selected segment coordinates read from {selected_segs}')
         except:
             raise TypeError('Incompatible guiding_selections*.txt type: ', selected_segs)
 
@@ -1105,7 +1104,7 @@ def generate_segment_override_file(segment_infile_list, guider,
     utils.ensure_dir_exists(out_dir)
 
     # Start logging
-    if not log:
+    if log is None:
         utils.create_logger_from_yaml(__name__, out_dir_root=out_dir, root=root, level='DEBUG')
 
     try:
@@ -1113,7 +1112,7 @@ def generate_segment_override_file(segment_infile_list, guider,
         if parameter_dialog:
             if dialog_obj is None:
                 dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
-                    "SOF", guider, program_id, observation_num, visit_num, ra, dec, log=log
+                    "SOF", guider, program_id, observation_num, visit_num, ra, dec, log=LOGGER
                 )
             accepted = dialog_obj.exec()
             params = dialog_obj.get_dialog_parameters() if accepted else None
@@ -1129,8 +1128,8 @@ def generate_segment_override_file(segment_infile_list, guider,
                 # Will have multiple files for shifted case, 1 file for unshifted case
                 for center_pointing_file in center_pointing_list:
                     if os.path.exists(center_pointing_file):
-                        log.info(
-                            'Segment Guiding: Pulling center of pointing information from {}'.format(center_pointing_file))
+                        LOGGER.info(
+                            f'Segment Guiding: Pulling center of pointing information from {center_pointing_file}')
                         in_table = asc.read(center_pointing_file, format='commented_header', delimiter=',')
                         col = 'center_of_pointing' if 'center_of_pointing' in in_table.colnames else 'segnum'
                         try:
@@ -1138,16 +1137,16 @@ def generate_segment_override_file(segment_infile_list, guider,
                         except ValueError:
                             cp_list.append([float(i) for i in in_table[col][0].split(' ')])
                     else:
-                        log.warning(
-                            "Segment Guiding: Couldn't find center of pointing file {}. Assuming the center of pointing "
-                            "is the mean of all segments (center_of_pointing = 0)".format(center_pointing_file))
+                        LOGGER.warning(
+                            f"Segment Guiding: Couldn't find center of pointing file {center_pointing_file}. "
+                            "Assuming the center of pointing is the mean of all segments (center_of_pointing = 0)")
                 if len(cp_list) == 0:
                     # If none of the paths passed are valid
-                    utils.write_cols_to_file(center_pointing_file, labels=['center_of_pointing'], cols=[0], log=log)
-                    log.warning(
-                        "Segment Guiding: Couldn't find center of pointing file {}. "
+                    utils.write_cols_to_file(center_pointing_file, labels=['center_of_pointing'], cols=[0], log=LOGGER)
+                    LOGGER.warning(
+                        f"Segment Guiding: Couldn't find center of pointing file {center_pointing_file}. "
                         "Assuming the center of pointing is the mean of all segments (center_of_pointing = 0) and "
-                        "writing out the file.".format(center_pointing_file, root, guider))
+                        "writing out the file.")
                     cp_list = [0] * len(selected_segs_list)
 
                 if len(cp_list) == 1:
@@ -1157,7 +1156,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                 guide_star_params_dict['center_of_pointing'] = cp_list
 
             else:
-                log.warning('Segment Guiding: SOF creation cancelled.')
+                LOGGER.warning('Segment Guiding: SOF creation cancelled.')
                 return
 
         elif guide_star_params_dict is None:
@@ -1171,7 +1170,7 @@ def generate_segment_override_file(segment_infile_list, guider,
         # Check if there is an existing file with the same prog/obs/visit
         if not JENKINS:
             overwrite_existing_file = SegmentGuidingGUI.check_override_overwrite(
-                out_dir, program_id, observation_num, visit_num, logger=log
+                out_dir, program_id, observation_num, visit_num, logger=LOGGER
             )
             if overwrite_existing_file:
                 return
@@ -1191,7 +1190,7 @@ def generate_segment_override_file(segment_infile_list, guider,
             segment_infile_list=segment_infile_list,
             guide_star_params_dict=guide_star_params_dict,
             selected_segs_list=selected_segs_list, threshold_factor=threshold_factor,
-            log=log
+            log=LOGGER
         )
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params("SOF")
@@ -1207,7 +1206,7 @@ def generate_segment_override_file(segment_infile_list, guider,
             sg.plot_segments()  # Save .pngs of plots
 
     except Exception as e:
-        log.exception(f'{repr(e)}: {e}')
+        LOGGER.exception(f'{repr(e)}: {e}')
         raise
 
 
@@ -1262,7 +1261,7 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
     utils.ensure_dir_exists(out_dir)
 
     # Start logging
-    if not log:
+    if log is None:
         utils.create_logger_from_yaml(__name__, out_dir_root=out_dir, root=root, level='DEBUG')
 
     try:
@@ -1270,7 +1269,7 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         if parameter_dialog:
             if dialog_obj is None:
                 dialog_obj = SegmentGuidingGUI.SegmentGuidingDialog(
-                    "POF", None, program_id, observation_num, visit_num, log=log
+                    "POF", None, program_id, observation_num, visit_num, log=LOGGER
                 )
             accepted = dialog_obj.exec()
             params = dialog_obj.get_dialog_parameters() if accepted else None
@@ -1296,7 +1295,7 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         sg = SegmentGuidingCalculator(
             "POF", program_id, observation_num, visit_num, root, out_dir, guider,
             countrate_factor=countrate_factor, countrate_uncertainty_factor=countrate_uncertainty_factor,
-            norm_value=norm_value, norm_unit=norm_unit, log=log
+            norm_value=norm_value, norm_unit=norm_unit, log=LOGGER
         )
         # Verify all guidestar parameters are valid
         sg.check_guidestar_params("POF")
@@ -1305,5 +1304,5 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         sg.write_override_file()
 
     except Exception as e:
-        log.exception(f'{repr(e)}: {e}')
+        LOGGER.exception(f'{repr(e)}: {e}')
         raise
