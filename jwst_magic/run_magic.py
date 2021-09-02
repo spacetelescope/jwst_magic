@@ -66,7 +66,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             bkgrdstars_hdr=None, out_dir=None, convert_im=True,
             star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False):
+            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False,
+            logger_passed=False):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -131,18 +132,20 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     use_oss_defaults : bool
         Populate the DHAS files with the default numbers OSS would use. Should
         only be True when testing photometry override files
+    logger_passed : bool, optional
+        Denotes if a logger object has already been generated.
     """
 
     # Determine filename root
     root = utils.make_root(root, image)
 
-    # Set up logging
-    utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-
     # Determine output directory
     out_dir_root = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir_root)
 
+    # Set up logging
+    if not logger_passed:
+        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
     LOGGER.info("Package directory: {}".format(PACKAGE_PATH))
     LOGGER.info("Processing request for {}.".format(root))
     LOGGER.info("All data will be saved in: {}".format(out_dir_root))

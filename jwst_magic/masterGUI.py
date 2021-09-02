@@ -666,6 +666,7 @@ class MasterGui(QMainWindow):
                               shift_id_attitude=shift_id_attitude,
                               thresh_factor=threshold,
                               use_oss_defaults=use_oss_defaults,
+                              logger_passed=LOGGER,
                               )
 
             # Update converted image preview
