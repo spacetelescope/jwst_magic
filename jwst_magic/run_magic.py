@@ -145,7 +145,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Set up logging
     if not logger_passed:
-        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+        utils.create_logger_from_yaml(__name__, out_dir_root=out_dir_root, root=root, level='DEBUG')
+
     LOGGER.info("Package directory: {}".format(PACKAGE_PATH))
     LOGGER.info("Processing request for {}.".format(root))
     LOGGER.info("All data will be saved in: {}".format(out_dir_root))

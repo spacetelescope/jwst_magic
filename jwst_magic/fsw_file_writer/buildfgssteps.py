@@ -84,7 +84,8 @@ class BuildFGSSteps(object):
         """
         # Set up logger
         if not logger_passed:
-            utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+            out_dir_root = out_dir.split(root)[0] + root
+            utils.create_logger_from_yaml(__name__, out_dir_root=out_dir_root, root=root, level='DEBUG')
 
         try:
             # Initialize attributes
@@ -598,7 +599,8 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     """
     # Set up logger
     if not logger_passed:
-        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+        out_dir_root = out_dir.split(root)[0] + root
+        utils.create_logger_from_yaml(__name__, out_dir_root=out_dir_root, root=root, level='DEBUG')
 
     if isinstance(image, str):
         image = fits.getdata(image)

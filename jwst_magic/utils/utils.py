@@ -64,8 +64,8 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
-                            level=logging.DEBUG):
+def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, out_dir_root='',
+                            root='', level=logging.DEBUG):
     """Set up logger using YAML file
 
     References
@@ -75,7 +75,7 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
     https://docs.python.org/2/howto/logging.html
     """
     # Ensure the logs directory exists
-    log_path = determine_log_path()
+    log_path = determine_log_path(out_dir_root)
 
     # Parse logging level input
     if type(level) != int:
@@ -126,17 +126,19 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, root='',
     return logger, logfile
 
 
-def determine_log_path():
+def determine_log_path(out_dir_path):
     """Determine whether to save log files in a shared log directory on
     SOGS, or in the default ``logs`` directory in the package directory.
     Ensure the chosen log directory exists.
     """
-    if on_sogs_network():
-        log_path = "***REMOVED***/guiding/MAGIC_logs/"
+    if os.path.exists(out_dir_path):
+        log_path = out_dir_path
     else:
-        log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
-
-    ensure_dir_exists(log_path)
+        if on_sogs_network():
+            log_path = "***REMOVED***/guiding/MAGIC_logs/"
+        else:
+            log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
+        ensure_dir_exists(log_path)
 
     return log_path
 

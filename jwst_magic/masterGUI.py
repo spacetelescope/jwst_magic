@@ -1692,12 +1692,17 @@ class MasterGui(QMainWindow):
                 root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
                 root_dir = self.textEdit_name_preview.toPlainText()
 
+            # Create root directory if it doesn't exist
+            utils.ensure_dir_exists(root_dir)
+
             # Set log if not already set (for first file created with MAGIC)
             if self.log is None:
-                self.log, self.log_filename = utils.create_logger_from_yaml('magic', root=root, level='DEBUG')
+                self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
+                                                                            root=root, level='DEBUG')
             # If path has changed, need to create a new log file
             if root_dir != os.path.dirname(self.log_filename):
-                self.log, self.log_filename = utils.create_logger_from_yaml('magic', root=root, level='DEBUG')
+                self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
+                                                                            root=root, level='DEBUG')
 
             # Note: maintaining if statements and "old" file names for backwards compatibility
             txt_files = glob.glob(os.path.join(root_dir, "**/*.txt"), recursive=True)
