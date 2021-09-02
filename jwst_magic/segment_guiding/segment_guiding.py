@@ -1099,10 +1099,14 @@ def generate_segment_override_file(segment_infile_list, guider,
     """
 
     root = utils.make_root(root, segment_infile_list[0])  # pull the root from the 0th all psfs file
-    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
 
-    if log is None:
-        log = logging.getLogger(__name__)
+    # Set up out dir(s)
+    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+    utils.ensure_dir_exists(out_dir)
+
+    # Start logging
+    if not log:
+        utils.create_logger_from_yaml(__name__, out_dir_root=out_dir, root=root, level='DEBUG')
 
     try:
         # Get the guide star parameters
@@ -1253,10 +1257,13 @@ def generate_photometry_override_file(root, program_id, observation_num, visit_n
         Pass a logger object (output of utils.create_logger_from_yaml) or a new log
         will be created
     """
-
-    if log is None:
-        log = logging.getLogger(__name__)
+    # Set up out dir(s)
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+    utils.ensure_dir_exists(out_dir)
+
+    # Start logging
+    if not log:
+        utils.create_logger_from_yaml(__name__, out_dir_root=out_dir, root=root, level='DEBUG')
 
     try:
         # Get the program parameters and countrate factor

@@ -82,6 +82,9 @@ class BuildFGSSteps(object):
                  shift_id_attitude=True, use_oss_defaults=False, catalog_countrate=None):
         """Initialize the class and call build_fgs_steps().
         """
+        # Check path exists
+        utils.ensure_dir_exists(out_dir)
+
         # Set up logger
         if not logger_passed:
             out_dir_root = out_dir.split(root)[0] + root
