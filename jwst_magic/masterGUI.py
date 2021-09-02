@@ -160,7 +160,7 @@ class MasterGui(QMainWindow):
         self.converted_im_circles = []
         self.shifted_im_circles = []
         self.bkgd_stars = None
-        self.bkgrdstars_hdr = None
+        self.bkgrdstars_hdr = {}
         self._bkgdstars_dialog = None
         self.itm = itm
         self.program_id = ''
@@ -765,7 +765,7 @@ class MasterGui(QMainWindow):
         # Determine which infile is being edited
         if self.sender() == self.pushButton_regfileStarSelector:
             filename_list = self.open_filename_dialog('In/Reg file(s)', multiple_files=True,
-                                                 file_type="Input file (*.txt *.incat);;All files (*.*)")
+                                                      file_type="Input file (*.txt *.incat);;All files (*.*)")
 
             self.update_regfile_starselector_combobox(filename_list)
             self.update_guiding_selections(new_selections=filename_list)
@@ -851,7 +851,7 @@ class MasterGui(QMainWindow):
         method_adverb = {'random': 'randomly',
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}
-        self.bkgrdstars_hdr = {}
+
         self.bkgrdstars_hdr['BACKMETH'] = method
         if method == 'catalog':
             self.bkgrdstars_hdr['BACK_RA'] = self._bkgdstars_dialog.ra_gs
