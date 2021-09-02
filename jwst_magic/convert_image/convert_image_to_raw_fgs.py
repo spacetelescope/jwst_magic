@@ -981,13 +981,13 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     ValueError
         An input NIRCam file has an obstruction in the pupil.
     """
-    # Start logging
-    if not logger_passed:
-        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-
     # Set up out dir(s)
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir)
+
+    # Start logging
+    if not logger_passed:
+        utils.create_logger_from_yaml(__name__, out_dir_root=out_dir, root=root, level='DEBUG')
 
     # Set up hdr_dict to add header information to
     fgs_hdr_dict = {}

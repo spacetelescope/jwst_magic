@@ -629,13 +629,13 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
         Path to unshifted_psf_center_{root}_G{guider}.txt file, which is only written for
         smoothing='low', MIMF case.
     """
+    out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
+    utils.ensure_dir_exists(out_dir)
+
     if not logger_passed:
-        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
+        utils.create_logger_from_yaml(__name__, out_root_dir=out_dir, root=root, level='DEBUG')
 
     try:
-        out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
-        utils.ensure_dir_exists(out_dir)
-
         # Read in image (check if it is a filename)
         if isinstance(data, str):
             data = fits.getdata(data)
