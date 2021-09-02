@@ -359,8 +359,8 @@ class BackgroundStarsDialog(QDialog):
         self.clear_plot()
 
         # Read position angle from GUI
-        position_angle = self.lineEdit_PA.text()
-        if position_angle == '':
+        self.position_angle = self.lineEdit_PA.text()
+        if self.position_angle == '':
             no_PA_dialog = QMessageBox()
             no_PA_dialog.setText('No PA entered' + ' ' * 50)
             no_PA_dialog.setInformativeText(
@@ -370,7 +370,7 @@ class BackgroundStarsDialog(QDialog):
             no_PA_dialog.exec()
             return
         else:
-            position_angle = float(position_angle)
+            self.position_angle = float(self.position_angle)
 
         # Query guide star catalog (GSC) to find stars around given pointing
         # Convert from RA & Dec to pixel coordinates
@@ -379,7 +379,10 @@ class BackgroundStarsDialog(QDialog):
         unit_Dec = u.deg
         coordinates = SkyCoord(self.lineEdit_RA.text(), self.lineEdit_Dec.text(),
                                unit=(unit_RA, unit_Dec))
-        queried_catalog = self.query_gsc(coordinates, self.guider, position_angle)
+        # Parse RA and Dec
+        self.ra_gs = coordinates.ra.degree
+        self.dec_gs = coordinates.dec.degree
+        queried_catalog = self.query_gsc(self.ra_gs, self.dec_gs, self.guider, self.position_angle)
 
         # Plot every star
         mask = np.array([m == 0 for m in self.fgs_mags])
@@ -489,7 +492,7 @@ class BackgroundStarsDialog(QDialog):
                 except ValueError:
                     print('could not remove')
 
-    def query_gsc(self, coordinates, guider, position_angle):
+    def query_gsc(self, ra_gs, dec_gs, guider, position_angle):
         """Create and parse a web query to newest GSC to determine the
         positions and magnitudes of objects around the guide star.
 
@@ -498,10 +501,6 @@ class BackgroundStarsDialog(QDialog):
             For information about GSC 2:
                 https://outerspace.stsci.edu/display/GC
         """
-        # Parse RA and Dec
-        ra_gs = coordinates.ra.degree
-        dec_gs = coordinates.dec.degree
-
         # Set radius around ra and dec and query default (newest) GSC
         radius = 1.6 / 60  # 1.6 arcmin in degrees
         df = fgscountrate.query_gsc(ra=ra_gs, dec=dec_gs, cone_radius=radius)
