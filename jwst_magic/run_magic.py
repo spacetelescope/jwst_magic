@@ -102,7 +102,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         Add background stars to the image?
     bkgrdstars_hdr : dict, optional
         Header information about the background stars to be added to the
-        header of the pequdo-FGS image
+        header of the pseudo-FGS image
     out_dir : str, optional
         Where output FGS image(s) will be saved. If not provided, the
         image(s) will be saved to ../out/{root}.
