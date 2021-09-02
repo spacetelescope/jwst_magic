@@ -667,6 +667,7 @@ class MasterGui(QMainWindow):
                               thresh_factor=threshold,
                               use_oss_defaults=use_oss_defaults,
                               logger_passed=LOGGER,
+                              log_filename=self.log_filename
                               )
 
             # Update converted image preview
