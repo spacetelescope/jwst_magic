@@ -989,6 +989,9 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir)
 
+    # Set up hdr_dict to add header information to
+    fgs_hdr_dict = {}
+
     try:
         LOGGER.info("Image Conversion: " +
                     "Beginning image conversion to guider {} FGS image".format(guider))
@@ -1179,14 +1182,28 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             else:
                 raise TypeError(str(e))
 
+        # Update header information
+        fgs_hdr_dict['IN_INSTR'] = 'NIRCAM' if nircam else 'FGS'
+        fgs_hdr_dict['IN_DET'] = nircam_det if nircam else f'FGS' # input FGS detector not defined
+        fgs_hdr_dict['OUT_DET'] = f'GUIDER{guider}'
+        fgs_hdr_dict['DISTORT'] = distortion
+        fgs_hdr_dict['SMOOTHIN'] = smoothing
+        if normalize:
+            fgs_hdr_dict['NORMUNIT'] = norm_unit
+            fgs_hdr_dict['NORMVALU'] = norm_value
+            if norm_unit.lower() == 'guide star id':
+                ra, dec = renormalize.query_guide_star_catalog(gs_id=norm_value)
+                fgs_hdr_dict['GS_RA'] = ra
+                fgs_hdr_dict['GS_DEC'] = dec
+
     except Exception as e:
         LOGGER.exception(f'{repr(e)}: {e}')
         raise
 
-    return data, all_found_psfs_path, psf_center_path, distortion
+    return data, all_found_psfs_path, psf_center_path, fgs_hdr_dict
 
 
-def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
+def write_fgs_im(data, out_dir, root, guider, hdr_dict=None, fgsout_path=None):
     """Writes an array of FGS data to the appropriate file:
     {out_dir}/out/{root}/FGS_imgs/{root}_G{guider}.fits
 
@@ -1202,8 +1219,8 @@ def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
         Name used to create the output directory, {out_dir}/out/{root}
     guider : int
         Guider number (1 or 2)
-    distortion : bool
-        True if the image still has distortion, False if it does not.
+    hdr_dict : dict, optional
+        Dictionary of header information to
     fgsout_path : str, optional
         Alternate directory in which to save the FGS files. If not
         provided, the FGS images will be saved to
@@ -1227,8 +1244,10 @@ def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
     header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
     hdr = fits.getheader(header_file, ext=0)
 
-    # Add distortion information to header
-    hdr['DISTORT'] = str(distortion)
+    # Add header information
+    if hdr_dict is not None:
+        for key, value in hdr_dict.items():
+            hdr[key] = value
 
     header_list = [hdr, None]
     data_list = [None, data]
