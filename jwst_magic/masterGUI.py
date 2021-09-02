@@ -254,6 +254,7 @@ class MasterGui(QMainWindow):
         self.buttonGroup_guider.buttonClicked.connect(self.check_guider_against_apt)
         self.lineEdit_root.editingFinished.connect(self.update_filepreview)
         self.pushButton_root.clicked.connect(self.on_click_root)
+        self.pushButton_defaultout.clicked.connect(self.on_click_default_out)
         self.pushButton_out.clicked.connect(self.on_click_out)
         self.textEdit_out.installEventFilter(self)
         self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
@@ -778,6 +779,13 @@ class MasterGui(QMainWindow):
         self.lineEdit_root.setText(root)
         self.update_filepreview()
         return root
+
+    def on_click_default_out(self):
+        """ Using the Set Default Out Dir button"""
+        out_dir = OUT_PATH
+        self.textEdit_out.setText(out_dir)
+        self.update_filepreview()
+        return out_dir
 
     def on_click_bkgdstars(self):
         if self.lineEdit_inputImage.text() == "":
