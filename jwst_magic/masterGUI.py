@@ -845,6 +845,7 @@ class MasterGui(QMainWindow):
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}
         self.bkgrdstars_hdr = {}
+        self.bkgrdstars_hdr['BACKMETH'] = method
         if method == 'catalog':
             self.bkgrdstars_hdr['BACK_RA'] = self._bkgdstars_dialog.ra_gs
             self.bkgrdstars_hdr['BACK_DEC'] = self._bkgdstars_dialog.dec_gs
