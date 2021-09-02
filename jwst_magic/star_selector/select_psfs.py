@@ -633,7 +633,7 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
     utils.ensure_dir_exists(out_dir)
 
     if not logger_passed:
-        utils.create_logger_from_yaml(__name__, out_root_dir=out_dir, root=root, level='DEBUG')
+        utils.create_logger_from_yaml(__name__, out_dir_root=out_dir, root=root, level='DEBUG')
 
     try:
         # Read in image (check if it is a filename)
