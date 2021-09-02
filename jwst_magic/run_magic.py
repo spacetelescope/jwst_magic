@@ -67,7 +67,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
             shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False,
-            logger_passed=False):
+            logger_passed=False, log_filename=None):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -134,6 +134,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         only be True when testing photometry override files
     logger_passed : bool, optional
         Denotes if a logger object has already been generated.
+    log_filename : str, optional
+        File name for logger object, used to go into pseudo-FGS image header
     """
 
     # Determine filename root
@@ -145,7 +147,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Set up logging
     if not logger_passed:
-        utils.create_logger_from_yaml(__name__, out_dir_root=out_dir_root, root=root, level='DEBUG')
+        _, log_filename = utils.create_logger_from_yaml(__name__, out_dir_root=out_dir_root, root=root, level='DEBUG')
 
     LOGGER.info("Package directory: {}".format(PACKAGE_PATH))
     LOGGER.info("Processing request for {}.".format(root))
@@ -174,6 +176,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                 jitter_rate_arcsec=jitter_rate_arcsec,
                                                 logger_passed=True,
                                                 itm=itm)
+
+        # Add logging information to fgs image header
+        fgs_hdr_dict['LOG_FILE'] = os.path.basename(log_filename)
 
         if bkgd_stars:
             if not normalize and not itm:
