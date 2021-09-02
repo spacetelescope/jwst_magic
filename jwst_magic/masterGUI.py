@@ -160,7 +160,7 @@ class MasterGui(QMainWindow):
         self.converted_im_circles = []
         self.shifted_im_circles = []
         self.bkgd_stars = None
-        self.bakgrdstars_hdr = None
+        self.bkgrdstars_hdr = None
         self._bkgdstars_dialog = None
         self.itm = itm
         self.program_id = ''
@@ -414,7 +414,7 @@ class MasterGui(QMainWindow):
         coarse_point = self.checkBox_coarsePointing.isChecked()
         jitter_rate_arcsec = float(self.lineEdit_coarsePointing.text())
         bkgd_stars = self.bkgd_stars
-        bakgrdstars_hdr = self.bakgrdstars_hdr
+        bkgrdstars_hdr = self.bkgrdstars_hdr
         itm = self.itm
 
         # Handle the case where we want to use a pre-existing converted image
@@ -651,7 +651,7 @@ class MasterGui(QMainWindow):
                               steps=steps,
                               guiding_selections_file=in_file,
                               bkgd_stars=bkgd_stars,
-                              bakgrdstars_hdr=bakgrdstars_hdr,
+                              bkgrdstars_hdr=bkgrdstars_hdr,
                               out_dir=out_dir,
                               convert_im=convert_im,
                               star_selection=star_selection,
@@ -844,11 +844,11 @@ class MasterGui(QMainWindow):
         method_adverb = {'random': 'randomly',
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}
-        self.bakgrdstars_hdr = {}
+        self.bkgrdstars_hdr = {}
         if method == 'catalog':
-            self.bakgrdstars_hdr['BACK_RA'] = self._bkgdstars_dialog.ra_gs
-            self.bakgrdstars_hdr['BACK_DEC'] = self._bkgdstars_dialog.dec_gs
-            self.bakgrdstars_hdr['BACK_PA'] = self._bkgdstars_dialog.position_angle
+            self.bkgrdstars_hdr['BACK_RA'] = self._bkgdstars_dialog.ra_gs
+            self.bkgrdstars_hdr['BACK_DEC'] = self._bkgdstars_dialog.dec_gs
+            self.bkgrdstars_hdr['BACK_PA'] = self._bkgdstars_dialog.position_angle
 
         if isinstance(self.bkgd_stars, dict) and method is not None:
             self.textEdit_backgroundStars.setText('{} background stars added {}'.
@@ -857,7 +857,7 @@ class MasterGui(QMainWindow):
     def on_click_del_bkgrdstars(self):
         """Reset background stars information"""
         self.bkgd_stars = None
-        self.bakgrdstars_hdr = None
+        self.bkgrdstars_hdr = None
         self.textEdit_backgroundStars.setText('No background stars added')
 
     def on_click_showstars(self, show):

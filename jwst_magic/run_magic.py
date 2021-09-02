@@ -63,7 +63,7 @@ LOGGER = logging.getLogger(__name__)
 def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             nircam_det=None, nircam=True, smoothing='default', steps=None,
             guiding_selections_file=None, bkgd_stars=False,
-            bakgrdstars_hdr=None, out_dir=None, convert_im=True,
+            bkgrdstars_hdr=None, out_dir=None, convert_im=True,
             star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
             shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False):
@@ -99,7 +99,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         If this image comes with an incat or reg file, the file path
     bkgd_stars : boolean, optional
         Add background stars to the image?
-    bakgrdstars_hdr : dict, optional
+    bkgrdstars_hdr : dict, optional
         Header information about the background stars to be added to the
         header of the pequdo-FGS image
     out_dir : str, optional
@@ -179,7 +179,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                            norm_value, norm_unit,
                                                            guider, save_file=True,
                                                            root=root, out_dir=out_dir)
-            for key, value in bakgrdstars_hdr.items():
+            for key, value in bkgrdstars_hdr.items():
                 fgs_hdr_dict[key] = value
 
         # Write converted image
