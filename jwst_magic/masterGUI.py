@@ -1831,18 +1831,11 @@ class MasterGui(QMainWindow):
         shutil.rmtree(apt_file_path)
 
         # Use Guide Star ID to get RA/DEC using default GSC in fgscountrate module
-        data_frame = fgscountrate.query_gsc(gs_id=gs_id)
-
-        # Check there's only 1 line in the GSC with this GS ID
-        if len(data_frame) == 1:
-            gsc_series = data_frame.iloc[0]
-        else:
+        try:
+            ra, dec = renormalize.query_guide_star_catalog(gs_id=gs_id)
+        except ValueError as err:
             self.lineEdit_normalize.setText('')
-            raise ValueError("This Guide Star ID points to multiple lines in catalog")
-
-        # Pull RA and DEC
-        ra = gsc_series['ra']
-        dec = gsc_series['dec']
+            raise ValueError(str(err))
 
         LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra,
                                                                                                                 dec))
