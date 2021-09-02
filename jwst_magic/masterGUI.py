@@ -149,7 +149,7 @@ class EmittingStream(QtCore.QObject):
 class MasterGui(QMainWindow):
     def __init__(self, root=None, norm_value=12.0, norm_units='FGS Magnitude',
                  nircam_det=None, nircam=True, smoothing='default',
-                 steps=None, in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
+                 steps=None, in_file=None, bkgd_stars=False, out_dir='', convert_im=True,
                  star_selection=True, star_selection_gui=True, file_writer=True,
                  segment_guiding=False, app=None, itm=False):
 
@@ -723,13 +723,11 @@ class MasterGui(QMainWindow):
             if not os.path.exists(filename):
                 raise FileNotFoundError('Input image {} does not exist.'.format(filename))
 
-        # Derive the root from the filename and assume the default output
-        # directory (OUT_PATH)
+        # Derive the root from the filename and confirm a blank output directory
         if self.radioButton_name_manual.isChecked():
             if self.textEdit_out.toPlainText() == "":
                 self.textEdit_out.setEnabled(True)
-                self.textEdit_out.setText(OUT_PATH)
-            if self.textEdit_out.toPlainText() == OUT_PATH:
+            if self.textEdit_out.toPlainText() == '':
                 self.textEdit_out.setEnabled(True)
 
         # Update the example filepath (and converted image preview, if possible)
@@ -918,7 +916,7 @@ class MasterGui(QMainWindow):
             self.stackedWidget.setCurrentIndex(1)
             if self.textEdit_out.toPlainText() == "":
                 self.textEdit_out.setEnabled(True)
-                self.textEdit_out.setText(OUT_PATH)
+                self.textEdit_out.setText('')
         elif self.radioButton_name_commissioning.isChecked():
             self.stackedWidget.setCurrentIndex(0)
 
@@ -1867,7 +1865,7 @@ class MasterGui(QMainWindow):
 
 def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_det=None,
                   nircam=True, smoothing='default', steps=None, in_file=None,
-                  bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
+                  bkgd_stars=False, out_dir='', convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
                   segment_guiding=False, itm=False):
     # RUN GUI
