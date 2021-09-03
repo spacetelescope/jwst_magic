@@ -393,8 +393,8 @@ class MasterGui(QMainWindow):
                          os.walk(os.path.join(out_dir, 'out', root))]
         list_of_files = [item for sublist in list_of_files for item in sublist]
         opposite_guider = [2 if guider == 1 else 1][0]
-        if True in [True if ('_G{}_'.format(opposite_guider) in file  or '_G{}.'.format(opposite_guider) in
-                file) else False for file in list_of_files]:
+        if True in [True if ('_G{}_'.format(opposite_guider) in file or '_G{}.'.format(opposite_guider) in
+                             file) else False for file in list_of_files]:
 
             raise ValueError('Data from GUIDER {} found in the root path: {}, which does not match the chosen '
                              'GUIDER {}. Delete all contents from this directory before writing data with a new '
@@ -431,7 +431,7 @@ class MasterGui(QMainWindow):
             if normalize and norm_value == '':
                 raise ValueError('Image Normalization box checked, but no value given.')
 
-       # Set smoothing
+        # Set smoothing
         if self.checkBox_globalAlignment.isChecked():
             smoothing = 'high'
         elif self.checkBox_noSmoothing.isChecked():
@@ -516,9 +516,9 @@ class MasterGui(QMainWindow):
 
             # Run the select stars GUI to determine the new orientation
             inds_list, center_of_pointing = run_SelectStars(data, x, y, 20, guider,
-                                                out_dir=out_path,
-                                                print_output=False,
-                                                masterGUIapp=self.app)
+                                                            out_dir=out_path,
+                                                            print_output=False,
+                                                            masterGUIapp=self.app)
 
             # Print indices of each guiding configuration
             for i in range(len(inds_list)):
