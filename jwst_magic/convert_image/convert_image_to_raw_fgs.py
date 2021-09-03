@@ -1183,18 +1183,18 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                 raise TypeError(str(e))
 
         # Update header information
-        fgs_hdr_dict['IN_INSTR'] = 'NIRCAM' if nircam else 'FGS'
-        fgs_hdr_dict['IN_DET'] = nircam_det if nircam else f'FGS' # input FGS detector not defined
-        fgs_hdr_dict['OUT_DET'] = f'GUIDER{guider}'
-        fgs_hdr_dict['DISTORT'] = distortion
-        fgs_hdr_dict['SMOOTHIN'] = smoothing
+        fgs_hdr_dict['IN_INSTR'] = ('NIRCAM' if nircam else 'FGS', 'Input instrument')
+        fgs_hdr_dict['IN_DET'] = (nircam_det if nircam else f'FGS', 'Input detector')
+        fgs_hdr_dict['OUT_DET'] = (f'GUIDER{guider}', 'Output guider')
+        fgs_hdr_dict['DISTORT'] = (distortion, 'Is the image distorted')
+        fgs_hdr_dict['SMOOTHIN'] = (smoothing, 'Smoothing used')
         if normalize:
-            fgs_hdr_dict['NORMUNIT'] = norm_unit
-            fgs_hdr_dict['NORMVALU'] = norm_value
+            fgs_hdr_dict['NORMUNIT'] = (norm_unit, 'Normalization unit')
+            fgs_hdr_dict['NORMVALU'] = (norm_value, 'Normalization value')
             if norm_unit.lower() == 'guide star id':
                 ra, dec = renormalize.query_guide_star_catalog(gs_id=norm_value)
-                fgs_hdr_dict['GS_RA'] = ra
-                fgs_hdr_dict['GS_DEC'] = dec
+                fgs_hdr_dict['GS_RA'] = (ra, 'RA of guide star')
+                fgs_hdr_dict['GS_DEC'] = (dec, 'DEC of guide star')
 
     except Exception as e:
         LOGGER.exception(f'{repr(e)}: {e}')

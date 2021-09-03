@@ -178,7 +178,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                 itm=itm)
 
         # Add logging information to fgs image header
-        fgs_hdr_dict['LOG_FILE'] = os.path.basename(log_filename)
+        fgs_hdr_dict['LOG_FILE'] = (os.path.basename(log_filename), 'Log filename')
 
         if bkgd_stars:
             if not normalize and not itm:

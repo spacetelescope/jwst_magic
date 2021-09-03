@@ -853,11 +853,11 @@ class MasterGui(QMainWindow):
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}
 
-        self.bkgrdstars_hdr['BACKMETH'] = method
+        self.bkgrdstars_hdr['BACKMETH'] = (method, 'Method used to add background stars')
         if method == 'catalog':
-            self.bkgrdstars_hdr['BACK_RA'] = self._bkgdstars_dialog.ra_gs
-            self.bkgrdstars_hdr['BACK_DEC'] = self._bkgdstars_dialog.dec_gs
-            self.bkgrdstars_hdr['BACK_PA'] = self._bkgdstars_dialog.position_angle
+            self.bkgrdstars_hdr['BACK_RA'] = (self._bkgdstars_dialog.ra_gs, 'RA from background stars gui')
+            self.bkgrdstars_hdr['BACK_DEC'] = (self._bkgdstars_dialog.dec_gs, 'DEC from background stars gui')
+            self.bkgrdstars_hdr['BACK_PA'] = (self._bkgdstars_dialog.position_angle, 'V3PA from background stars gui')
 
         if isinstance(self.bkgd_stars, dict) and method is not None:
             self.textEdit_backgroundStars.setText('{} background stars added {}'.
