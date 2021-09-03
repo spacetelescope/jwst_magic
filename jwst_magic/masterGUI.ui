@@ -1508,8 +1508,8 @@ QPushButton:pressed {
                  <widget class="QPushButton" name="pushButton_out">
                   <property name="geometry">
                    <rect>
-                    <x>700</x>
-                    <y>50</y>
+                    <x>592</x>
+                    <y>55</y>
                     <width>75</width>
                     <height>32</height>
                    </rect>
@@ -1526,7 +1526,7 @@ QPushButton:pressed {
                    <rect>
                     <x>592</x>
                     <y>8</y>
-                    <width>141</width>
+                    <width>113</width>
                     <height>32</height>
                    </rect>
                   </property>
@@ -1534,7 +1534,7 @@ QPushButton:pressed {
                    <string>Use the prefix of the input image name as the root</string>
                   </property>
                   <property name="text">
-                   <string>Use Default Root</string>
+                   <string>Use Default</string>
                   </property>
                  </widget>
                  <widget class="QLineEdit" name="lineEdit_root">
@@ -1713,19 +1713,6 @@ QPushButton:pressed {
                    <string>Query APT</string>
                   </property>
                  </widget>
-                 <widget class="QPushButton" name="pushButton_defaultout">
-                  <property name="geometry">
-                   <rect>
-                    <x>590</x>
-                    <y>50</y>
-                    <width>111</width>
-                    <height>32</height>
-                   </rect>
-                  </property>
-                  <property name="text">
-                   <string>Default Path</string>
-                  </property>
-                 </widget>
                  <zorder>label_root</zorder>
                  <zorder>lineEdit_root</zorder>
                  <zorder>pushButton_root</zorder>
@@ -1738,7 +1725,6 @@ QPushButton:pressed {
                  <zorder>label_manualid</zorder>
                  <zorder>label_manualobs</zorder>
                  <zorder>pushButton_manualid</zorder>
-                 <zorder>pushButton_defaultout</zorder>
                 </widget>
                </widget>
               </item>

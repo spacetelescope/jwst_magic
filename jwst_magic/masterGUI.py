@@ -149,7 +149,7 @@ class EmittingStream(QtCore.QObject):
 class MasterGui(QMainWindow):
     def __init__(self, root=None, norm_value=12.0, norm_units='FGS Magnitude',
                  nircam_det=None, nircam=True, smoothing='default',
-                 steps=None, in_file=None, bkgd_stars=False, out_dir='', convert_im=True,
+                 steps=None, in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                  star_selection=True, star_selection_gui=True, file_writer=True,
                  segment_guiding=False, app=None, itm=False):
 
@@ -254,7 +254,6 @@ class MasterGui(QMainWindow):
         self.buttonGroup_guider.buttonClicked.connect(self.check_guider_against_apt)
         self.lineEdit_root.editingFinished.connect(self.update_filepreview)
         self.pushButton_root.clicked.connect(self.on_click_root)
-        self.pushButton_defaultout.clicked.connect(self.on_click_default_out)
         self.pushButton_out.clicked.connect(self.on_click_out)
         self.textEdit_out.installEventFilter(self)
         self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
@@ -725,11 +724,12 @@ class MasterGui(QMainWindow):
             if not os.path.exists(filename):
                 raise FileNotFoundError('Input image {} does not exist.'.format(filename))
 
-        # Derive the root from the filename and confirm a blank output directory
+        # Derive the root from the filename and assume the default output
         if self.radioButton_name_manual.isChecked():
             if self.textEdit_out.toPlainText() == "":
                 self.textEdit_out.setEnabled(True)
-            if self.textEdit_out.toPlainText() == '':
+                self.textEdit_out.setText(OUT_PATH)
+            if self.textEdit_out.toPlainText() == OUT_PATH:
                 self.textEdit_out.setEnabled(True)
 
         # Update the example filepath (and converted image preview, if possible)
@@ -779,13 +779,6 @@ class MasterGui(QMainWindow):
         self.lineEdit_root.setText(root)
         self.update_filepreview()
         return root
-
-    def on_click_default_out(self):
-        """ Using the Set Default Out Dir button"""
-        out_dir = OUT_PATH
-        self.textEdit_out.setText(out_dir)
-        self.update_filepreview()
-        return out_dir
 
     def on_click_bkgdstars(self):
         if self.lineEdit_inputImage.text() == "":
@@ -918,7 +911,7 @@ class MasterGui(QMainWindow):
             self.stackedWidget.setCurrentIndex(1)
             if self.textEdit_out.toPlainText() == "":
                 self.textEdit_out.setEnabled(True)
-                self.textEdit_out.setText('')
+                self.textEdit_out.setText(OUT_PATH)
         elif self.radioButton_name_commissioning.isChecked():
             self.stackedWidget.setCurrentIndex(0)
 
@@ -1870,7 +1863,7 @@ class MasterGui(QMainWindow):
 
 def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_det=None,
                   nircam=True, smoothing='default', steps=None, in_file=None,
-                  bkgd_stars=False, out_dir='', convert_im=True,
+                  bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
                   segment_guiding=False, itm=False):
     # RUN GUI
