@@ -380,13 +380,21 @@ class MasterGui(QMainWindow):
         if self.radioButton_name_manual.isChecked():
             root = self.lineEdit_root.text()
             out_dir = self.textEdit_out.toPlainText().rstrip()
+            root_dir = os.path.join(out_dir, 'out', root)
         elif self.radioButton_name_commissioning.isChecked():
             root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
             out_dir = os.path.join(SOGS_PATH,
                                    self.comboBox_practice.currentText(),
                                    self.comboBox_car.currentText().lower().replace('-', ''),
                                    )
+            root_dir = self.textEdit_name_preview.toPlainText()
         copy_original = True
+
+        # Set Up Log
+        if self.log is None:
+            utils.ensure_dir_exists(root_dir)
+            self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
+                                                                        root=root, level='DEBUG')
 
         # Check for mis-matched guider
         list_of_files = [[os.path.join(dirpath, file) for file in filenames] for (dirpath, _, filenames) in
@@ -399,6 +407,10 @@ class MasterGui(QMainWindow):
             raise ValueError('Data from GUIDER {} found in the root path: {}, which does not match the chosen '
                              'GUIDER {}. Delete all contents from this directory before writing data with a new '
                              'guider.'.format(opposite_guider, os.path.join(out_dir, 'out', root), guider))
+
+        # Log the APT file and observation that were queried
+        if self.gs_ra is not '' and self.gs_dec is not '':
+            LOGGER.info(f"Master GUI: Queried Program ID {self.program_id} and Obs #{self.observation_num}")
 
         # Convert image
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1685,18 +1697,6 @@ class MasterGui(QMainWindow):
             else:
                 root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
                 root_dir = self.textEdit_name_preview.toPlainText()
-
-            # Create root directory if it doesn't exist
-            utils.ensure_dir_exists(root_dir)
-
-            # Set log if not already set (for first file created with MAGIC)
-            if self.log is None:
-                self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
-                                                                            root=root, level='DEBUG')
-            # If path has changed, need to create a new log file
-            if root_dir != os.path.dirname(self.log_filename):
-                self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
-                                                                            root=root, level='DEBUG')
 
             # Note: maintaining if statements and "old" file names for backwards compatibility
             txt_files = glob.glob(os.path.join(root_dir, "**/*.txt"), recursive=True)
