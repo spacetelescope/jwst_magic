@@ -387,7 +387,7 @@ class MasterGui(QMainWindow):
                                    self.comboBox_practice.currentText(),
                                    self.comboBox_car.currentText().lower().replace('-', ''),
                                    )
-            root_dir = self.textEdit_name_preview.toPlainText()
+            root_dir = os.path.join(out_dir, 'out', root)
         copy_original = True
 
         # Set Up Log
