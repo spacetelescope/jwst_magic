@@ -65,6 +65,7 @@ Notes
 
 # Standard Library Imports
 import copy
+import datetime
 import itertools
 import logging
 import os
@@ -1183,6 +1184,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                 raise TypeError(str(e))
 
         # Update header information
+        fgs_hdr_dict['IN_FILE'] = (os.path.basename(input_im), 'Input image')
         fgs_hdr_dict['IN_INSTR'] = ('NIRCAM' if nircam else 'FGS', 'Input instrument')
         fgs_hdr_dict['IN_DET'] = (nircam_det if nircam else f'FGS', 'Input detector')
         fgs_hdr_dict['OUT_DET'] = (f'GUIDER{guider}', 'Output guider')
@@ -1240,14 +1242,20 @@ def write_fgs_im(data, out_dir, root, guider, hdr_dict=None, fgsout_path=None):
         fgsout_path = os.path.join(output_path_save, 'FGS_imgs')
     fgsout_file = os.path.join(fgsout_path, 'unshifted_{}_G{}.fits'.format(root, guider))
 
-    # Load header file
+    # Load header file needed for DHAS
     header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
     hdr = fits.getheader(header_file, ext=0)
+    hdr.add_blank('DHAS-Required Header Information', before='DATE')
+    hdr.add_blank('', before='DATE')
 
-    # Add header information
+    # Add MAGIC-related header information
     if hdr_dict is not None:
-        for key, value in hdr_dict.items():
-            hdr[key] = value
+        for key, (value, comment) in hdr_dict.items():
+            hdr.set(key, value=value, comment=comment, before='NAXIS')
+    hdr.add_history('This pseudo-FGS image was created by MAGIC on '
+                    f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
+    hdr.add_blank('MAGIC Information', before='IN_FILE')
+    hdr.add_blank('', before='IN_FILE')
 
     header_list = [hdr, None]
     data_list = [None, data]
