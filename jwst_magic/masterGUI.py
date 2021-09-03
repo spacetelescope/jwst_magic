@@ -391,8 +391,11 @@ class MasterGui(QMainWindow):
         copy_original = True
 
         # Set Up Log
+        utils.ensure_dir_exists(root_dir)
         if self.log is None:
-            utils.ensure_dir_exists(root_dir)
+            self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
+                                                                        root=root, level='DEBUG')
+        if root_dir != os.path.dirname(self.log_filename):
             self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
                                                                         root=root, level='DEBUG')
 
@@ -871,7 +874,7 @@ class MasterGui(QMainWindow):
     def on_click_del_bkgrdstars(self):
         """Reset background stars information"""
         self.bkgd_stars = None
-        self.bkgrdstars_hdr = None
+        self.bkgrdstars_hdr = {}
         self.textEdit_backgroundStars.setText('No background stars added')
 
     def on_click_showstars(self, show):
