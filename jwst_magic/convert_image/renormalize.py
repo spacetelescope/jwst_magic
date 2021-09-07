@@ -81,3 +81,24 @@ def convert_to_countrate_fgsmag(value, unit, guider, gs_catalog=None):
         fgs_countrate, _, fgs_mag, _ = fgs.query_fgs_countrate_magnitude(catalog=gs_catalog)
 
     return fgs_countrate, fgs_mag
+
+
+def query_guide_star_catalog(gs_id, gs_catalog=None):
+    """Query the quide star catalog using a
+    guide star ID and return the RA and DEC of the
+    guide star
+    """
+    # Use Guide Star ID to get RA/DEC using default GSC in fgscountrate module
+    data_frame = fgscountrate.query_gsc(gs_id=gs_id, catalog=gs_catalog)
+
+    # Check there's only 1 line in the GSC with this GS ID
+    if len(data_frame) == 1:
+        gsc_series = data_frame.iloc[0]
+    else:
+        raise ValueError("This Guide Star ID points to multiple lines in catalog")
+
+    # Pull RA and DEC
+    ra = gsc_series['ra']
+    dec = gsc_series['dec']
+
+    return ra, dec

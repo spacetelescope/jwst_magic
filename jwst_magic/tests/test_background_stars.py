@@ -12,6 +12,7 @@ Use
         pytest test_background_stars.py
 """
 import os
+import shutil
 import sys
 
 import numpy as np
@@ -37,6 +38,29 @@ ROOT = 'test_background_stars'
 import pathlib
 __location__ = str(pathlib.Path(__file__).parent.absolute())
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
+TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
+
+
+@pytest.fixture()
+def test_directory(test_dir=TEST_DIRECTORY):
+    """Create a test directory for permission management.
+
+    Parameters
+    ----------
+    test_dir : str
+        Path to directory used for testing
+
+    Yields
+    -------
+    test_dir : str
+        Path to directory used for testing
+    """
+    utils.ensure_dir_exists(test_dir)  # creates directory with default mode=511
+
+    yield test_dir
+    print("teardown test directory")
+    if os.path.isdir(test_dir):
+        shutil.rmtree(test_dir)
 
 
 @pytest.fixture()
@@ -52,6 +76,7 @@ def master_gui():
 
     return master_gui
 
+
 @pytest.fixture()
 def bkgdstars_dialog():
     """Set up QApplication object for the Master GUI"""
@@ -59,7 +84,7 @@ def bkgdstars_dialog():
     guider = 1
     fgs_mag = 12
 
-    #global app
+    # global app
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
@@ -93,7 +118,7 @@ def test_init_background_stars(bkgdstars_dialog):
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
-def test_run_background_stars_gui_populated(qtbot, master_gui):
+def test_run_background_stars_gui_populated(test_directory, qtbot, master_gui):
     """Test that the RA and DEC information from APT get passed through and
     correctly populated in the background stars GUI.
     """

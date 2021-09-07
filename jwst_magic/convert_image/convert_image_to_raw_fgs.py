@@ -65,6 +65,7 @@ Notes
 
 # Standard Library Imports
 import copy
+import datetime
 import itertools
 import logging
 import os
@@ -981,13 +982,16 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     ValueError
         An input NIRCam file has an obstruction in the pupil.
     """
-    # Start logging
-    if not logger_passed:
-        utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-
     # Set up out dir(s)
     out_dir = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir)
+
+    # Start logging
+    if not logger_passed:
+        utils.create_logger_from_yaml(__name__, out_dir_root=out_dir, root=root, level='DEBUG')
+
+    # Set up hdr_dict to add header information to
+    fgs_hdr_dict = {}
 
     try:
         LOGGER.info("Image Conversion: " +
@@ -1179,14 +1183,29 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             else:
                 raise TypeError(str(e))
 
+        # Update header information
+        fgs_hdr_dict['IN_FILE'] = (os.path.basename(input_im), 'Input image')
+        fgs_hdr_dict['IN_INSTR'] = ('NIRCAM' if nircam else 'FGS', 'Input instrument')
+        fgs_hdr_dict['IN_DET'] = (nircam_det if nircam else f'FGS', 'Input detector')
+        fgs_hdr_dict['OUT_DET'] = (f'GUIDER{guider}', 'Output guider')
+        fgs_hdr_dict['DISTORT'] = (distortion, 'Is the image distorted')
+        fgs_hdr_dict['SMOOTHIN'] = (smoothing, 'Smoothing used')
+        if normalize:
+            fgs_hdr_dict['NORMUNIT'] = (norm_unit, 'Normalization unit')
+            fgs_hdr_dict['NORMVALU'] = (norm_value, 'Normalization value')
+            if norm_unit.lower() == 'guide star id':
+                ra, dec = renormalize.query_guide_star_catalog(gs_id=norm_value)
+                fgs_hdr_dict['GS_RA'] = (ra, 'RA of guide star')
+                fgs_hdr_dict['GS_DEC'] = (dec, 'DEC of guide star')
+
     except Exception as e:
         LOGGER.exception(f'{repr(e)}: {e}')
         raise
 
-    return data, all_found_psfs_path, psf_center_path, distortion
+    return data, all_found_psfs_path, psf_center_path, fgs_hdr_dict
 
 
-def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
+def write_fgs_im(data, out_dir, root, guider, hdr_dict=None, fgsout_path=None):
     """Writes an array of FGS data to the appropriate file:
     {out_dir}/out/{root}/FGS_imgs/{root}_G{guider}.fits
 
@@ -1202,8 +1221,8 @@ def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
         Name used to create the output directory, {out_dir}/out/{root}
     guider : int
         Guider number (1 or 2)
-    distortion : bool
-        True if the image still has distortion, False if it does not.
+    hdr_dict : dict, optional
+        Dictionary of header information to
     fgsout_path : str, optional
         Alternate directory in which to save the FGS files. If not
         provided, the FGS images will be saved to
@@ -1223,12 +1242,20 @@ def write_fgs_im(data, out_dir, root, guider, distortion, fgsout_path=None):
         fgsout_path = os.path.join(output_path_save, 'FGS_imgs')
     fgsout_file = os.path.join(fgsout_path, 'unshifted_{}_G{}.fits'.format(root, guider))
 
-    # Load header file
+    # Load header file needed for DHAS
     header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
     hdr = fits.getheader(header_file, ext=0)
+    hdr.add_blank('DHAS-Required Header Information', before='DATE')
+    hdr.add_blank('', before='DATE')
 
-    # Add distortion information to header
-    hdr['DISTORT'] = str(distortion)
+    # Add MAGIC-related header information
+    if hdr_dict is not None:
+        for key, (value, comment) in hdr_dict.items():
+            hdr.set(key, value=value, comment=comment, before='NAXIS')
+    hdr.add_history('This pseudo-FGS image was created by MAGIC on '
+                    f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
+    hdr.add_blank('MAGIC Information', before='IN_FILE')
+    hdr.add_blank('', before='IN_FILE')
 
     header_list = [hdr, None]
     data_list = [None, data]

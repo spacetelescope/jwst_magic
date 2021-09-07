@@ -62,10 +62,12 @@ LOGGER = logging.getLogger(__name__)
 
 def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             nircam_det=None, nircam=True, smoothing='default', steps=None,
-            guiding_selections_file=None, bkgd_stars=False, out_dir=None, convert_im=True,
+            guiding_selections_file=None, bkgd_stars=False,
+            bkgrdstars_hdr=None, out_dir=None, convert_im=True,
             star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False):
+            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False,
+            logger_passed=False, log_filename=None):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
     to run the image through the DHAS or other FGS FSW simulator. If no incat or
@@ -98,6 +100,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         If this image comes with an incat or reg file, the file path
     bkgd_stars : boolean, optional
         Add background stars to the image?
+    bkgrdstars_hdr : dict, optional
+        Header information about the background stars to be added to the
+        header of the pseudo-FGS image
     out_dir : str, optional
         Where output FGS image(s) will be saved. If not provided, the
         image(s) will be saved to ../out/{root}.
@@ -127,17 +132,22 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     use_oss_defaults : bool
         Populate the DHAS files with the default numbers OSS would use. Should
         only be True when testing photometry override files
+    logger_passed : bool, optional
+        Denotes if a logger object has already been generated.
+    log_filename : str, optional
+        File name for logger object, used to go into pseudo-FGS image header
     """
 
     # Determine filename root
     root = utils.make_root(root, image)
 
-    # Set up logging
-    utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-
     # Determine output directory
     out_dir_root = utils.make_out_dir(out_dir, OUT_PATH, root)
     utils.ensure_dir_exists(out_dir_root)
+
+    # Set up logging
+    if not logger_passed:
+        _, log_filename = utils.create_logger_from_yaml(__name__, out_dir_root=out_dir_root, root=root, level='DEBUG')
 
     LOGGER.info("Package directory: {}".format(PACKAGE_PATH))
     LOGGER.info("Processing request for {}.".format(root))
@@ -153,7 +163,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
     # Either convert provided NIRCam image to an FGS image...
     if convert_im:
-        fgs_im, all_found_psfs_file, psf_center_file, distortion = \
+        fgs_im, all_found_psfs_file, psf_center_file, fgs_hdr_dict = \
             convert_image_to_raw_fgs.convert_im(image, guider, root,
                                                 out_dir=out_dir,
                                                 nircam=nircam,
@@ -167,6 +177,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                 logger_passed=True,
                                                 itm=itm)
 
+        # Add logging information to fgs image header
+        fgs_hdr_dict['LOG_FILE'] = (os.path.basename(log_filename), 'Log filename')
+
         if bkgd_stars:
             if not normalize and not itm:
                 norm_value = np.sum(fgs_im[fgs_im > np.median(fgs_im)])
@@ -175,9 +188,11 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                            norm_value, norm_unit,
                                                            guider, save_file=True,
                                                            root=root, out_dir=out_dir)
+            for key, value in bkgrdstars_hdr.items():
+                fgs_hdr_dict[key] = value
 
         # Write converted image
-        convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider, distortion)
+        convert_image_to_raw_fgs.write_fgs_im(fgs_im, out_dir, root, guider, fgs_hdr_dict)
         LOGGER.info("*** Image Conversion COMPLETE ***")
     # Or, if an FGS image was provided, use it!
     else:

@@ -160,6 +160,7 @@ class MasterGui(QMainWindow):
         self.converted_im_circles = []
         self.shifted_im_circles = []
         self.bkgd_stars = None
+        self.bkgrdstars_hdr = {}
         self._bkgdstars_dialog = None
         self.itm = itm
         self.program_id = ''
@@ -379,25 +380,40 @@ class MasterGui(QMainWindow):
         if self.radioButton_name_manual.isChecked():
             root = self.lineEdit_root.text()
             out_dir = self.textEdit_out.toPlainText().rstrip()
+            root_dir = os.path.join(out_dir, 'out', root)
         elif self.radioButton_name_commissioning.isChecked():
             root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
             out_dir = os.path.join(SOGS_PATH,
                                    self.comboBox_practice.currentText(),
                                    self.comboBox_car.currentText().lower().replace('-', ''),
                                    )
+            root_dir = os.path.join(out_dir, 'out', root)
         copy_original = True
+
+        # Set Up Log
+        utils.ensure_dir_exists(root_dir)
+        if self.log is None:
+            self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
+                                                                        root=root, level='DEBUG')
+        if root_dir != os.path.dirname(self.log_filename):
+            self.log, self.log_filename = utils.create_logger_from_yaml('magic', out_dir_root=root_dir,
+                                                                        root=root, level='DEBUG')
 
         # Check for mis-matched guider
         list_of_files = [[os.path.join(dirpath, file) for file in filenames] for (dirpath, _, filenames) in
                          os.walk(os.path.join(out_dir, 'out', root))]
         list_of_files = [item for sublist in list_of_files for item in sublist]
         opposite_guider = [2 if guider == 1 else 1][0]
-        if True in [True if ('_G{}_'.format(opposite_guider) in file  or '_G{}.'.format(opposite_guider) in
-                file) else False for file in list_of_files]:
+        if True in [True if ('_G{}_'.format(opposite_guider) in file or '_G{}.'.format(opposite_guider) in
+                             file) else False for file in list_of_files]:
 
             raise ValueError('Data from GUIDER {} found in the root path: {}, which does not match the chosen '
                              'GUIDER {}. Delete all contents from this directory before writing data with a new '
                              'guider.'.format(opposite_guider, os.path.join(out_dir, 'out', root), guider))
+
+        # Log the APT file and observation that were queried
+        if self.gs_ra is not '' and self.gs_dec is not '':
+            LOGGER.info(f"Master GUI: Queried Program ID {self.program_id} and Obs #{self.observation_num}")
 
         # Convert image
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -413,6 +429,7 @@ class MasterGui(QMainWindow):
         coarse_point = self.checkBox_coarsePointing.isChecked()
         jitter_rate_arcsec = float(self.lineEdit_coarsePointing.text())
         bkgd_stars = self.bkgd_stars
+        bkgrdstars_hdr = self.bkgrdstars_hdr
         itm = self.itm
 
         # Handle the case where we want to use a pre-existing converted image
@@ -429,7 +446,7 @@ class MasterGui(QMainWindow):
             if normalize and norm_value == '':
                 raise ValueError('Image Normalization box checked, but no value given.')
 
-       # Set smoothing
+        # Set smoothing
         if self.checkBox_globalAlignment.isChecked():
             smoothing = 'high'
         elif self.checkBox_noSmoothing.isChecked():
@@ -514,9 +531,9 @@ class MasterGui(QMainWindow):
 
             # Run the select stars GUI to determine the new orientation
             inds_list, center_of_pointing = run_SelectStars(data, x, y, 20, guider,
-                                                out_dir=out_path,
-                                                print_output=False,
-                                                masterGUIapp=self.app)
+                                                            out_dir=out_path,
+                                                            print_output=False,
+                                                            masterGUIapp=self.app)
 
             # Print indices of each guiding configuration
             for i in range(len(inds_list)):
@@ -572,7 +589,7 @@ class MasterGui(QMainWindow):
                     center_pointing_files = [self.all_found_psfs_file.replace('unshifted_all_found_psfs_',
                                                                               'center_pointing_')] * len(guiding_files)
 
-                LOGGER.info('Pulling center of pointing information from same location as guiding files')
+                LOGGER.info('Master GUI: Pulling center of pointing information from same location as guiding files')
 
                 # Load selected guiding_selections*.txt
                 if len(self.comboBox_guidingcommands.checkedItems()) == 0:
@@ -649,6 +666,7 @@ class MasterGui(QMainWindow):
                               steps=steps,
                               guiding_selections_file=in_file,
                               bkgd_stars=bkgd_stars,
+                              bkgrdstars_hdr=bkgrdstars_hdr,
                               out_dir=out_dir,
                               convert_im=convert_im,
                               star_selection=star_selection,
@@ -662,6 +680,8 @@ class MasterGui(QMainWindow):
                               shift_id_attitude=shift_id_attitude,
                               thresh_factor=threshold,
                               use_oss_defaults=use_oss_defaults,
+                              logger_passed=LOGGER,
+                              log_filename=self.log_filename
                               )
 
             # Update converted image preview
@@ -720,7 +740,6 @@ class MasterGui(QMainWindow):
                 raise FileNotFoundError('Input image {} does not exist.'.format(filename))
 
         # Derive the root from the filename and assume the default output
-        # directory (OUT_PATH)
         if self.radioButton_name_manual.isChecked():
             if self.textEdit_out.toPlainText() == "":
                 self.textEdit_out.setEnabled(True)
@@ -762,7 +781,7 @@ class MasterGui(QMainWindow):
         # Determine which infile is being edited
         if self.sender() == self.pushButton_regfileStarSelector:
             filename_list = self.open_filename_dialog('In/Reg file(s)', multiple_files=True,
-                                                 file_type="Input file (*.txt *.incat);;All files (*.*)")
+                                                      file_type="Input file (*.txt *.incat);;All files (*.*)")
 
             self.update_regfile_starselector_combobox(filename_list)
             self.update_guiding_selections(new_selections=filename_list)
@@ -842,6 +861,12 @@ class MasterGui(QMainWindow):
                          'user-defined': 'as defined by the user',
                          'catalog': 'from a GSC query'}
 
+        self.bkgrdstars_hdr['BACKMETH'] = (method, 'Method used to add background stars')
+        if method == 'catalog':
+            self.bkgrdstars_hdr['BACK_RA'] = (self._bkgdstars_dialog.ra_gs, 'RA from background stars gui')
+            self.bkgrdstars_hdr['BACK_DEC'] = (self._bkgdstars_dialog.dec_gs, 'DEC from background stars gui')
+            self.bkgrdstars_hdr['BACK_PA'] = (self._bkgdstars_dialog.position_angle, 'V3PA from background stars gui')
+
         if isinstance(self.bkgd_stars, dict) and method is not None:
             self.textEdit_backgroundStars.setText('{} background stars added {}'.
                                                   format(len(self.bkgd_stars['x']), method_adverb[method]))
@@ -849,6 +874,7 @@ class MasterGui(QMainWindow):
     def on_click_del_bkgrdstars(self):
         """Reset background stars information"""
         self.bkgd_stars = None
+        self.bkgrdstars_hdr = {}
         self.textEdit_backgroundStars.setText('No background stars added')
 
     def on_click_showstars(self, show):
@@ -1228,7 +1254,6 @@ class MasterGui(QMainWindow):
             else:
                 return True
 
-
     def update_guiding_selections(self, new_selections=None):
         """
         Update guiding selections in the converted preview combobox, the shifted preview combobox,
@@ -1290,7 +1315,6 @@ class MasterGui(QMainWindow):
                 self.comboBox_showcommandsshifted.addItem(item)
 
         self.update_checkable_combobox()
-
 
     def update_checkable_combobox(self):
         if self.groupBox_segmentGuiding.isChecked():
@@ -1677,13 +1701,6 @@ class MasterGui(QMainWindow):
                 root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
                 root_dir = self.textEdit_name_preview.toPlainText()
 
-            # Set log if not already set (for first file created with MAGIC)
-            if self.log is None:
-                self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-            # If root is changed, need to create a new log file
-            if root != self.log_filename.split('/')[-1].split('masterGUI_')[-1].split('.log')[0]:
-                self.log, self.log_filename = utils.create_logger_from_yaml(__name__, root=root, level='DEBUG')
-
             # Note: maintaining if statements and "old" file names for backwards compatibility
             txt_files = glob.glob(os.path.join(root_dir, "**/*.txt"), recursive=True)
             fits_files = glob.glob(os.path.join(root_dir, "**/*.fits"), recursive=True)
@@ -1831,18 +1848,11 @@ class MasterGui(QMainWindow):
         shutil.rmtree(apt_file_path)
 
         # Use Guide Star ID to get RA/DEC using default GSC in fgscountrate module
-        data_frame = fgscountrate.query_gsc(gs_id=gs_id)
-
-        # Check there's only 1 line in the GSC with this GS ID
-        if len(data_frame) == 1:
-            gsc_series = data_frame.iloc[0]
-        else:
+        try:
+            ra, dec = renormalize.query_guide_star_catalog(gs_id=gs_id)
+        except ValueError as err:
             self.lineEdit_normalize.setText('')
-            raise ValueError("This Guide Star ID points to multiple lines in catalog")
-
-        # Pull RA and DEC
-        ra = gsc_series['ra']
-        dec = gsc_series['dec']
+            raise ValueError(str(err))
 
         LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra,
                                                                                                                 dec))

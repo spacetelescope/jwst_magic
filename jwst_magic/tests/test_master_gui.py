@@ -81,7 +81,7 @@ def test_directory(test_dir=TEST_DIRECTORY):
 @pytest.fixture()
 def master_gui():
     """Set up QApplication object for the Master GUI"""
-    #global app
+    # global app
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
@@ -112,7 +112,7 @@ def test_change_practice_commissioning(master_gui):
     with patch.object(master_gui, 'update_apt_gs_values') as mock:
         master_gui.comboBox_practice.setCurrentIndex(1)
 
-    assert not mock.called, 'method should not have been called'''
+    assert not mock.called, 'method should not have been called'
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
