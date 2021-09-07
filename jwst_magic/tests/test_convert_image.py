@@ -115,9 +115,10 @@ norm_parameters = [
     ('N13I000018', 'FGS countrate', TypeError, 'Mismatch: Normalization value for unit of')
 ]
 @pytest.mark.parametrize('value, unit, error, error_text', norm_parameters)
-def test_convert_im_normalization_error(test_directory, value, unit, error, error_text):
+def test_convert_im_error(test_directory, value, unit, error, error_text):
     with pytest.raises(error) as excinfo:
         data, _, _, _ = convert_image_to_raw_fgs.convert_im(NIRCAM_IM, 1, ROOT, nircam=True,
+                                                            out_dir=__location__,
                                                             nircam_det=None, normalize=True,
                                                             norm_value=value, norm_unit=unit,
                                                             coarse_pointing=False,
