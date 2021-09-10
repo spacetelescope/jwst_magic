@@ -300,7 +300,7 @@ class BackgroundStarsDialog(QDialog):
                 elif self.tableWidget.item(i_row, i_col).text() == '':
                     return
                 elif not self.tableWidget.item(i_row, i_col).text().replace('.','',1).isdigit():
-                    LOGGER.warning('Background Stars: There is a cell with non-numeric contents. Ending star plotting.')
+                    LOGGER.error('Background Stars: There is a cell with non-numeric contents. Cannot plot stars.')
                     return
 
         # Alert user if the coordinates are out of bounds
