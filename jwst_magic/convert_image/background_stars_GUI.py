@@ -225,12 +225,14 @@ class BackgroundStarsDialog(QDialog):
                 new_order = ['x', 'y', 'fgs_mag']
                 tab = tab[new_order]
 
+            self.tableWidget.blockSignals(True)
             for i_row, row in enumerate(tab):
                 if i_row + 1 > self.tableWidget.rowCount():
                     self.tableWidget.insertRow(i_row)
                 for i_col, value in enumerate(row):
                     item = QTableWidgetItem(str(value))
                     self.tableWidget.setItem(i_row, i_col, item)
+            self.tableWidget.blockSignals(False)
             self.draw_defined_stars()
 
             return filename
@@ -298,7 +300,7 @@ class BackgroundStarsDialog(QDialog):
                 elif self.tableWidget.item(i_row, i_col).text() == '':
                     return
                 elif not self.tableWidget.item(i_row, i_col).text().replace('.','',1).isdigit():
-                    LOGGER.warning('Background Stars: There is a cell with non-numeric contents')
+                    LOGGER.warning('Background Stars: There is a cell with non-numeric contents. Ending star plotting.')
                     return
 
         # Alert user if the coordinates are out of bounds
