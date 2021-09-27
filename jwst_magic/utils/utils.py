@@ -710,3 +710,59 @@ def setup_yaml():
     """
     represent_dict_order = lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
     yaml.add_representer(OrderedDict, represent_dict_order)
+
+
+def convert_nircam_bad_pixel_mask(filepath):
+    """
+    Converts a NIRCam bad pixel mask to a format MAGIC can use,
+    switching from bit values to 1s and 0s, where 0s are good and
+    1s are bad. Pixels counted as bad in teh new mask were originally
+    do_not_use, saturated, dead, hot, telegraph, bad_ref_pix, and RC.
+    """
+    # Pixels to include
+    pix_dict = {
+        'do_not_use': 1,
+        'saturated': 2,
+        'dead': 1024,
+        'hot': 2048,
+        'telegraph': 32768,
+        'bad_ref_pix': 131072,
+        'rc': 16384,
+    }
+
+    # Read in file
+    with fits.open(filepath) as bad_pix_hdu:
+        bad_pix_hdr = bad_pix_hdu[0].header
+        bad_pix_data = bad_pix_hdu[1].data
+        bad_pix_values = bad_pix_hdu[2].data['VALUE']
+
+    # Update file to be only 1s and 0s to match FGS
+    data = np.zeros_like(bad_pix_data, dtype=np.uint8)
+    for i, j in itertools.product(range(len(bad_pix_data[0])), range(len(bad_pix_data[0]))):
+        pix = bad_pix_data[i, j]
+
+        # if the pixel has a value, check the value
+        if pix != 0:
+            contents = []
+            for value in bad_pix_values[::-1]:
+                if pix < value:
+                    continue
+                else:
+                    pix -= value
+                    contents.append(value)
+
+            # if the pixel contains a bad value, set the location to 1
+            # do_not_use, saturated, dead, hot, telegraph, bad_ref_pix, rc
+            if set(pix_dict.values()) & set(contents) != set():
+                data[i, j] = 1
+
+    # Write header
+    bad_pix_hdr['ORIGFILE'] = os.path.basename(filepath)
+    bad_pix_hdr['HISTORY'] = 'This file was updated by jwst_magic software to compose of only 1s and 0s. ' \
+                             'Pixels marked as bad (set to 1) were originally marked as containing the following ' \
+                             f'bad pixel attributes: {", ".join(pix_dict.keys())}.'
+
+    # Save out file
+    det = bad_pix_hdr['DETECTOR']
+    filepath_new = os.path.join(os.path.dirname(filepath), f'nircam_dq_{det.lower()}.fits')
+    write_fits(filepath_new, [data], header=[bad_pix_hdr], log=LOGGER)
