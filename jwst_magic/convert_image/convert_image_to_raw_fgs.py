@@ -69,6 +69,7 @@ import datetime
 import itertools
 import logging
 import os
+import yaml
 
 # Third Party Imports
 from astropy.io import ascii as asc
@@ -84,6 +85,7 @@ import pysiaf
 from scipy import signal
 from scipy import ndimage
 from scipy.ndimage.filters import gaussian_filter
+from scipy.signal import medfilt2d
 
 # Local Imports
 from jwst_magic.convert_image import renormalize
@@ -94,6 +96,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 PACKAGE_PATH = os.path.split(__location__)[0]
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
+BAD_PIXEL_MAP_YAML = os.path.join(PACKAGE_PATH, 'data', 'bad_pixel_mask.yaml')
 
 # Constants
 NIRCAM_SW_SCALE = 0.0311  # NIRCam SW pixel scale (arcsec/pixel)
@@ -138,107 +141,67 @@ def apply_coarse_pointing_filter(data, jitter_rate_arcsec, pixel_scale):
     return data_gauss
 
 
-def bad_pixel_correction(data, bp_thresh):
-    """Finds bad pixels that are above a threshold; smooths them with a
-    3-pixel median filter.
+def bad_pixel_correction(data, nircam, detector, dq_array=None):
+    """Finds bad pixels using bad pixel map, and replace them
+    with the median of the surrounding pixels
 
     Parameters
     ----------
     data : 2-D numpy array
         Image data
-    bp_thresh : int
-        Threshold above which pixels are considered "bad" and smoothed
+    nircam : bool
+        True if image is from NIRCam, False if from FGS
+    detector : str
+        Name of detector
+    dq_array : 2-D numpy array, optional
+        The DQ extension from the input image, convert to 1s and 0s
 
     Returns
     -------
     data : 2-D numpy array
         Image data with pixel correction applied
     """
-    # apply median filter
-    smooth = signal.medfilt(data, 3)
+    # Pull bad pixel map
+    if dq_array is not None:
+        bad_pix_data = dq_array
+    else:
+        with open(BAD_PIXEL_MAP_YAML) as f:
+            bad_pixel_map_yaml = yaml.safe_load(f.read())
 
-    # set negative values to zero
-    j = smooth.copy()
-    j[j < 0] = 0
+        instr = 'NIRCAM' if nircam else 'FGS'
+        bad_pixel_mask_file = os.path.join(DATA_PATH, bad_pixel_map_yaml[instr.upper()][detector.upper()])
+        with fits.open(bad_pixel_mask_file) as bad_pix_hdu:
+            bad_pix_data = bad_pix_hdu[0].data
 
-    # difference between image and smoothed image; leaves the background behind
-    delta = data - smooth
+    # Now, use data
+    m, n = data.shape
+    new_data = copy.deepcopy(data)
+    for i, j in itertools.product(range(m), range(n)):
+        # If the bad pixel is flagged, need to replace it
+        if bad_pix_data[i, j] == 1:
+            # For each surrounding pixel
+            vals = []
+            for k, h in itertools.product([i + 1, i, i - 1], [j + 1, j, j - 1]):
+                # Does the surrounding pixel exist on the array - if not, ignore it
+                if k < 0 or k >= m:
+                    pass
+                elif h < 0 or h >= n:
+                    pass
+                # Is the surrounding pixel also bad - ignore it
+                elif bad_pix_data[k, h] == 1:
+                    pass
+                # If it passes those tests, include it
+                else:
+                    vals.append(new_data[k, h])
 
-    # Locating the bad pixels.
-    j = np.where(delta > bp_thresh)
+            if len(vals) == 0:
+                # If pix is surrounded by all bad pixels, set it's value to 0
+                new_data[i, j] = 0
+            else:
+                # Take the median value
+                new_data[i, j] = np.median(vals)
 
-    # using location of the bad pixels, replace the bpix value with median value
-    # of the smoothed image
-    data[j] = np.median(smooth)
-
-    # clip any over saturated/hot pixels left, replace with integer form of
-    # median value of smoothed image
-    data = utils.correct_image(data, upper_threshold=50000, upper_limit=np.median(smooth))
-    # recast as unsigned integers
-    data = np.uint16(data)
-
-    return data
-
-
-def correct_nircam_dq(image, dq_array, bit_arr=None):
-    """Apply a data quality array correction to an input NIRCam image.
-
-    Parameters
-    ----------
-    image : 2-D numpy array
-        Image data
-    dq_array : 2-D numpy array
-        Data quality array
-    bit_arr : list, optional
-        List of DQ flags that indicate pixels that should be fixed (see Notes)
-
-    Returns
-    -------
-    im_copy : 2-D numpy array
-        Image data with DQ array corrections applied
-
-    Notes
-    -----
-    Based on a conversation with Alicia Canipe on the NIRCam team on 02/09/2018,
-    try focusing on these flags:
-
-    Bit  Value     Name             Description
-    --   -----     ----             -----------
-    0    1         DO_NOT_USE       Bad pixel. Do not use.
-    9    512       NON_SCIENCE      Pixel not on science portion of detector
-    10   1024      DEAD             Dead pixel
-    13   8192      LOW_QE           Low quantum efficiency
-    16   65536     NONLINEAR        Pixel highly nonlinear
-    19   524288    NO_GAIN_VALUE    Gain cannot be measured
-    20   1048576   NO_LIN_CORR      Linearity correction not available
-    21   2097152   NO_SAT_CHECK     Saturation check not available
-    """
-
-    # Convert bits into values
-    if bit_arr is None:
-        bit_arr = [0, 9, 13, 16, 19, 20, 21]
-
-    flags = [2**x for x in bit_arr]
-    # Find all combinations of bits
-    flag_combinations = [seq for i in range(len(flags), 0, -1)
-                         for seq in itertools.combinations(flags, i)]
-
-    inds = []
-    for flag_comb in flag_combinations:
-        # Add all combinations together to find all values we care about
-        flag = (np.sum(flag_comb))
-        # Now create DQ array that just flags the pixels with values that we care about
-        ind = list(zip(*np.where(dq_array == flag)))
-        if ind:
-            inds.extend(ind)
-
-    # Fix bad pixel by taking median value in 3x3 box
-    im_copy = np.copy(image)
-    for ind in inds:
-        im_copy[ind] = np.median(image[ind[0] - 2:ind[0] + 2,
-                                       ind[1] - 2:ind[1] + 2])
-
-    return im_copy
+    return new_data
 
 
 def transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector):
@@ -866,13 +829,6 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default', psf_size
         cutout = Cutout2D(data, position, size)
         postage_stamps.append(cutout)
 
-    # Sigma clip postage stamps # TODO: Figure out plan to remove bad pixels
-    # clipped_stamps = []
-    # for cutout in postage_stamps:
-    #     clipped_data = sigma_clip(cutout.data, sigma=3, cenfunc='mean', masked=True, copy=False, axis=[0, 1])
-    #     cutout.data = clipped_data
-    #     clipped_stamps.append(cutout)
-
     # Find the median of the background (without the postage stamps) and subtract it from the postage stamps
     old_bkgrd = data.copy()
     for stamp in postage_stamps:
@@ -1030,14 +986,40 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             if 'DATAMODL' in hdr:
                 datamodel = hdr['DATAMODL']
 
+            if 'DETECTOR' in hdr:
+                detector = hdr['DETECTOR']  # e.g. 'NRCA3'
+            elif nircam and isinstance(nircam_det, str):
+                detector = 'NRC'+nircam_det
+
+        # Remove bad pixels from input images if possible. If not, we'll use the bad pixel masks
+            # NIRCam -> use dq array is available, use CRDS file 2nd
+            # FGS Full Frame -> use dq array is available (but no saturated flags), use DHAS mask 2nd
+            # Padded TRK image -> have to use DHAS file (no dq array; TRK box is confirmed to be in the right spot)
+        try:
+            sat = True if nircam else False  # include saturation flag only for NIRCam files
+            dq_array = fits.getdata(input_im, extname='DQ')
+            dq_array, _ = utils.convert_bad_pixel_mask_data(dq_array, include_saturation=sat)
+        except KeyError:
+            dq_array = None
+
+        try:
+            detector  # check if variable exists
+            data = bad_pixel_correction(data, nircam, detector, dq_array)
+        except NameError:
+            LOGGER.warning("Image Conversion: Data not run through bad pixel removal step. Unable to pull "
+                           "necessary detector information from input image.")
+
         # Remove distortion from NIRCam or FGS cal data, but not from padded TRK data nor rate images
         # as they cannot be run through the pipeline without lots of extra steps
         distortion = True  # is there distortion in the image
         try:
             if datamodel != 'GuiderCalModel' and input_unit == 'mjy/sr':
                 LOGGER.info("Image Conversion: Removing distortion from data using the JWST Pipeline's Resample step.")
-                with ImageModel(input_im, skip_fits_update=False) as model:
-                    result = ResampleStep.call(model, save_results=False)
+                # Update HDUList object and read it into the image model
+                with fits.open(input_im) as hdulist:
+                    hdulist['SCI'].data = data
+                    with ImageModel(hdulist, skip_fits_update=False) as model:
+                        result = ResampleStep.call(model, save_results=False)
 
                 # Crop data back to (2048, 2048), cutting out the top and right to keep the origin
                 LOGGER.info(f"Image Conversion: Cutting undistorted data from {result.data.shape} to (2048, 2048)")
@@ -1088,14 +1070,6 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                     )
             except KeyError:
                 pass
-
-            # Pull out DQ array for this image
-            try:
-                dq_arr = fits.getdata(input_im, extname='DQ')
-                if not dq_arr.min() == 1 and not dq_arr.max() == 1:
-                    data = correct_nircam_dq(data, dq_arr)
-            except KeyError:
-                LOGGER.warning("Image Conversion: No DQ extension found; DQ correction cannot be performed.")
 
             # Rotate the NIRCAM image into FGS frame
             nircam_scale, data = transform_nircam_image(data, guider, nircam_det, header)
