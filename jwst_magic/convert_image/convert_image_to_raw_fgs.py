@@ -1005,6 +1005,8 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         try:
             detector  # check if variable exists
             data = bad_pixel_correction(data, nircam, detector, dq_array)
+            LOGGER.info(f"Image Conversion: Bad pixels removed from image using "
+                        f"{'DQ array from image' if dq_array is not None else 'Bad Pixel Mask'}.")
         except NameError:
             LOGGER.warning("Image Conversion: Data not run through bad pixel removal step. Unable to pull "
                            "necessary detector information from input image.")
