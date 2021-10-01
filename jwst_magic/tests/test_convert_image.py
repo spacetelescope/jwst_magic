@@ -184,7 +184,7 @@ def test_transform_nircam_raw_to_fgs_raw():
         'Incorrect transformation from raw NRCB1 (thus also A2, A4, B3, B5) frame to raw FGS2 frame'
 
 
-def test_psf_center_file(test_directory):
+def test_create_psf_center_file(test_directory):
     """ Test that the right files for the MIMF case are written out and contain the correct data
     """
     image = NIRCAM_MIMF_IM
