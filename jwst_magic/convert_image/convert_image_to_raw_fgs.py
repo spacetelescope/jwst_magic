@@ -1003,7 +1003,8 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             dq_array = None
 
         try:
-            detector  # check if variable exists
+            if dq_array is None:
+                detector  # check if variable exists, needed to pull mask file
             data = bad_pixel_correction(data, nircam, detector, dq_array)
             LOGGER.info(f"Image Conversion: Bad pixels removed from image using "
                         f"{'DQ array from image' if dq_array is not None else 'Bad Pixel Mask'}.")
