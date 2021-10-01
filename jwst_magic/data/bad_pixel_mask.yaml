@@ -11,5 +11,5 @@ NIRCAM:
   NRCB5: nircam_bad_pixel_masks/nircam_dq_nrcblong.fits
 
 FGS:
-  GUDIER1: fgs_dq_G1.fits
+  GUIDER1: fgs_dq_G1.fits
   GUIDER2: fgs_dq_G2.fits
