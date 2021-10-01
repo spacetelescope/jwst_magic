@@ -1,14 +1,14 @@
 NIRCAM:
-  A1: nircam_bad_pixel_masks/nircam_dq_nrca1.fits
-  A2: nircam_bad_pixel_masks/nircam_dq_nrca2.fits
-  A3: nircam_bad_pixel_masks/nircam_dq_nrca3.fits
-  A4: nircam_bad_pixel_masks/nircam_dq_nrca4.fits
-  A5: nircam_bad_pixel_masks/nircam_dq_nrcalong.fits
-  B1: nircam_bad_pixel_masks/nircam_dq_nrcb1.fits
-  B2: nircam_bad_pixel_masks/nircam_dq_nrcb2.fits
-  B3: nircam_bad_pixel_masks/nircam_dq_nrcb3.fits
-  B4: nircam_bad_pixel_masks/nircam_dq_nrcb4.fits
-  B5: nircam_bad_pixel_masks/nircam_dq_nrcblong.fits
+  NRCA1: nircam_bad_pixel_masks/nircam_dq_nrca1.fits
+  NRCA2: nircam_bad_pixel_masks/nircam_dq_nrca2.fits
+  NRCA3: nircam_bad_pixel_masks/nircam_dq_nrca3.fits
+  NRCA4: nircam_bad_pixel_masks/nircam_dq_nrca4.fits
+  NRCA5: nircam_bad_pixel_masks/nircam_dq_nrcalong.fits
+  NRCB1: nircam_bad_pixel_masks/nircam_dq_nrcb1.fits
+  NRCB2: nircam_bad_pixel_masks/nircam_dq_nrcb2.fits
+  NRCB3: nircam_bad_pixel_masks/nircam_dq_nrcb3.fits
+  NRCB4: nircam_bad_pixel_masks/nircam_dq_nrcb4.fits
+  NRCB5: nircam_bad_pixel_masks/nircam_dq_nrcblong.fits
 
 FGS:
   GUDIER1: fgs_dq_G1.fits
