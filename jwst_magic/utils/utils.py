@@ -710,3 +710,81 @@ def setup_yaml():
     """
     represent_dict_order = lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
     yaml.add_representer(OrderedDict, represent_dict_order)
+
+
+def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, include_saturation=True):
+    """
+    Converts a DQ data array from bit values to 1s and 0s. Pixels counted as bad
+    in the new mask were originally do_not_use, saturated, dead, hot, telegraph,
+    bad_ref_pix, and RC.
+
+    bad_pix_data: 2D DQ array
+    bad_pix_values: list of bit values
+    include_saturation: bool to include saturation flag in new bad pixel mask
+    """
+    # If bad_pix_values not passed, assume the CRDS system
+    if bad_pix_values is None:
+        bad_pix_values = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536,
+                          131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864,
+                          134217728, 268435456, 536870912, 1073741824, 2147483648]
+
+    # Pixels to include
+    pix_dict = {
+        'dead': 1024,
+        'hot': 2048,
+        'telegraph': 32768,
+        'bad_ref_pix': 131072,
+        'rc': 16384,
+    }
+    if include_saturation:
+        pix_dict['saturated'] = 2
+
+    # Update file to be only 1s and 0s to match FGS
+    data = np.zeros_like(bad_pix_data, dtype=np.uint8)
+    for i, j in itertools.product(range(len(bad_pix_data[0])), range(len(bad_pix_data[0]))):
+        pix = bad_pix_data[i, j]
+
+        # if the pixel has a value, check the value
+        if pix != 0:
+            contents = []
+            for value in bad_pix_values[::-1]:
+                if pix < value:
+                    continue
+                else:
+                    pix -= value
+                    contents.append(value)
+
+            # if the pixel contains a bad value, set the location to 1
+            # do_not_use, saturated, dead, hot, telegraph, bad_ref_pix, rc
+            if set(pix_dict.values()) & set(contents) != set():
+                data[i, j] = 1
+
+    return data, pix_dict
+
+
+def convert_nircam_bad_pixel_mask_files(filepath):
+    """
+    Converts a NIRCam bad pixel mask file to a format MAGIC can use,
+    switching from bit values to 1s and 0s, where 0s are good and
+    1s are bad. Pixels counted as bad in the new mask were originally
+    do_not_use, saturated, dead, hot, telegraph, bad_ref_pix, and RC.
+    """
+    # Read in file
+    with fits.open(filepath) as bad_pix_hdu:
+        bad_pix_hdr = bad_pix_hdu[0].header
+        bad_pix_data = bad_pix_hdu[1].data
+        bad_pix_values = bad_pix_hdu[2].data['VALUE']
+
+    # Update file to be only 1s and 0s to match FGS
+    data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, include_saturation=True)
+
+    # Write header
+    bad_pix_hdr['ORIGFILE'] = os.path.basename(filepath)
+    bad_pix_hdr['HISTORY'] = 'This file was updated by jwst_magic software to compose of only 1s and 0s. ' \
+                             'Pixels marked as bad (set to 1) were originally marked as containing the following ' \
+                             f'bad pixel attributes: {", ".join(pix_dict.keys())}.'
+
+    # Save out file
+    det = bad_pix_hdr['DETECTOR']
+    filepath_new = os.path.join(os.path.dirname(filepath), f'nircam_dq_{det.lower()}.fits')
+    write_fits(filepath_new, [data], header=[bad_pix_hdr], log=LOGGER)

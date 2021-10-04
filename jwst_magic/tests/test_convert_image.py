@@ -84,7 +84,7 @@ norm_parameters = [
     (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1807.6700590566643),
     (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 6150.282570907751),
     (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6445.041623182621),  # uses fgs_mag = 12 by default
-    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 73691.17850191628),  # NRC contains TEST keyword - tests ped
+    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 73724.73784118591),  # NRC contains TEST keyword - tests ped
     (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.9196477208)  # non-ITM FGS image - tests ped
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
@@ -184,7 +184,7 @@ def test_transform_nircam_raw_to_fgs_raw():
         'Incorrect transformation from raw NRCB1 (thus also A2, A4, B3, B5) frame to raw FGS2 frame'
 
 
-def test_psf_center_file(test_directory):
+def test_create_psf_center_file(test_directory):
     """ Test that the right files for the MIMF case are written out and contain the correct data
     """
     image = NIRCAM_MIMF_IM
