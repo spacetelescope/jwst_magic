@@ -135,8 +135,9 @@ class FGSDetectorEffects:
 
     def add_ktc_noise(self):
         """Add kTc noise, which imprints at reset, to the bias.
+        KTC is a Gaussian with a std of around 40 DN
         """
-        ktc = 10. * np.random.random_sample((self.nramps, self.imgsize, self.imgsize))
+        ktc = np.random.normal(loc=0, scale=40, size=(self.nramps, self.imgsize, self.imgsize))
         # Repeat the KTC for all reads
         ktc_full = np.repeat(ktc, self.nreads, axis=0)
         self.bias += ktc_full
@@ -219,11 +220,8 @@ class FGSDetectorEffects:
         array_size = self.imgsize if self.imgsize != 43 else 32
         read_noise = read_noise_dict['guider{}'.format(self.guider)][array_size]
 
-        # Add normally distributed read noise to the bias
-        # *** What should the standard deviation be??? ***
-        std_dev = read_noise * 0.05
-        self.bias += np.random.normal(loc=read_noise, scale=std_dev,
-                                      size=np.shape(self.bias)).astype(int)
+        # Add normally distributed read noise to the bias, with a mean value = 0 and STD = read noise
+        self.bias += np.random.normal(loc=0, scale=read_noise, size=np.shape(self.bias)).astype(int)
 
     def add_zeroth_read_bias(self):
         """Add zeroth read bias structure to every frame.
