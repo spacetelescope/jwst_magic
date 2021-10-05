@@ -438,7 +438,7 @@ def create_strips(image, imgsize, nstrips, nramps, nreads, strip_height, yoffset
     return strips
 
 
-def create_cds(arr, step, config_ini, fix_saturated_pix=True):
+def create_cds(arr, fix_saturated_pix=True):
     """Create CDS image: Subtract the first read from the second read.
     Option to handle saturated pixels in CDS.
 
@@ -446,10 +446,6 @@ def create_cds(arr, step, config_ini, fix_saturated_pix=True):
     ----------
     arr : 3-D numpy array
         Image data
-    step : str
-        Name of step within the config file ('{step}_dict')
-    config_ini : obj
-        Object containing all parameters from the given configfile
     fix_saturated_pix : boolean, optional
         Apply a fix to saturated pixels in the CDS array? Default is True.
 
@@ -465,41 +461,13 @@ def create_cds(arr, step, config_ini, fix_saturated_pix=True):
 
     if fix_saturated_pix:
         # Determine which pixels are saturated in each read
-        saturated_read_2 = second_reads >= 65000
-        saturated_read_1 = first_reads >= 65000
+        saturated_read_2 = second_reads >= 55000
+        saturated_read_1 = first_reads >= 55000
 
-        # For pixels that are saturated in the second read, calculate their
-        # expected CDS value using the count rate from the first read and
-        # assuming linearity.
-        n_drops_before_first_read = int(config_ini.getfloat(step, 'ndrops1'))
-        n_frametimes_in_first_read = n_drops_before_first_read + 1
-        time_first_read = config_ini.getfloat(step, 'tframe') * n_frametimes_in_first_read  # seconds
-        first_read_countrates = first_reads / time_first_read  # counts / second
-
-        n_drops_before_second_read = int(config_ini.getfloat(step, 'ndrops2'))
-        n_frametimes_in_cds_read = n_drops_before_second_read + 1
-        time_cds_read = config_ini.getfloat(step, 'tframe') * n_frametimes_in_cds_read  # seconds
-
-        # If the calculated CDS value is less than saturation, set that
-        # as the pixel value. Otherwise, set the pixel value to 65000.
-        cds_counts = first_read_countrates * time_cds_read  # counts
-        cds_counts[cds_counts > 65000] = 65000
-        cds_arr[saturated_read_2] = cds_counts[saturated_read_2]
-
-        # n_sat_2 = len([p for p in saturated_read_2[0].flatten() if p])
-        n_sat_2 = len(saturated_read_2[0][saturated_read_2[0] == True].flatten())
-        if n_sat_2 > 0:
-            LOGGER.info('FSW File Writing: Adjusting {} pixels that are saturated in read 2.'.format(n_sat_2))
-
-        # For pixels that are saturated in both reads, set their CDS
-        # value to the saturated value (65000).
-        saturated_both_reads = saturated_read_1 * saturated_read_2
-        cds_arr[saturated_both_reads] = 65000
-
-        # n_sat_both = len([p for p in saturated_both_reads[0].flatten() if p])
-        n_sat_both = len(saturated_both_reads[0][saturated_both_reads[0] == True].flatten())
-        if n_sat_both > 0:
-            LOGGER.info('FSW File Writing: Adjusting {} pixels that are saturated in both reads.'.format(n_sat_both))
+        # any pixel that saturates in either read should have a CDS value of 25K assigned
+        #join saturated_read_1 and saturated_read_2
+        saturated = saturated_read_2 | saturated_read_1
+        cds_arr[saturated] = 25000
 
     return cds_arr
 
