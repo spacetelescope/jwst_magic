@@ -310,20 +310,22 @@ class BuildFGSSteps(object):
 
             # Take the bias and add a noisy version of the input image
             # (specifically Poisson noise), adding signal over each read
-            image = np.copy(self.bias)
+            image = np.zeros_like(self.bias)
             signal_cube = [self.time_normed_im] * nramps
             positive_signal_cube = np.copy(signal_cube)
             positive_signal_cube[positive_signal_cube < 0] = 0
 
             # Add signal to every first read
-            i_read = 0
+            i_read1 = 0
             ndrop1 = int(config_ini.getfloat(step, 'ndrops1'))
-            image[i_read::self.nreads] += np.random.poisson((ndrop1 + 1) * positive_signal_cube * gain)/gain
+            image[i_read1::self.nreads] += self.bias[i_read1::self.nreads] + np.random.poisson(
+                (ndrop1 + 1) * positive_signal_cube * gain) / gain
 
             # Add signal to every second read
-            i_read = 1
+            i_read2 = 1
             ndrop2 = int(config_ini.getfloat(step, 'ndrops2'))
-            image[i_read::self.nreads] += np.random.poisson((ndrop2 + 1) * positive_signal_cube * gain) / gain
+            image[i_read2::self.nreads] = image[i_read1::self.nreads] + np.random.poisson(
+                (ndrop2 + 1) * positive_signal_cube * gain) / gain
 
             # Set pixels in the image to 0 when flagged as bad in the DQ array
             image = self.add_fgs_dq(image, self.nreads, nramps, det_eff.array_bounds)
