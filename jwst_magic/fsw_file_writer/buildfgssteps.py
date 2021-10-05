@@ -325,6 +325,9 @@ class BuildFGSSteps(object):
             ndrop2 = int(config_ini.getfloat(step, 'ndrops2'))
             image[i_read::self.nreads] += np.random.poisson((ndrop2 + 1) * positive_signal_cube * gain) / gain
 
+            # Set pixels in the image to 0 when flagged as bad in the DQ array
+            image = self.add_fgs_dq(image, det_eff.array_bounds)
+
         else:
             # In the case of LOSTRK, just return one frame with one
             # frame readout worth of signal
@@ -361,6 +364,19 @@ class BuildFGSSteps(object):
 
             # Normalize to a count sum of 1000
             image = image / np.sum(image) * 1000
+
+        return image
+
+    def add_fgs_dq(self, image, array_bounds):
+        """Set the bias to 0 where the DQ Array is flagged
+        as bad (where it equals 1)
+        """
+        dq_file = os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(self.guider))
+        dq_arr = np.copy(fits.getdata(dq_file))
+
+        xlow, xhigh, ylow, yhigh = array_bounds
+        dq_arr = dq_arr[xlow:xhigh, ylow:yhigh]
+        image[dq_arr == 1] = 0
 
         return image
 
