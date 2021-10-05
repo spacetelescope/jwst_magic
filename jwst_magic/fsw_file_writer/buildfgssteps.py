@@ -326,7 +326,7 @@ class BuildFGSSteps(object):
             image[i_read::self.nreads] += np.random.poisson((ndrop2 + 1) * positive_signal_cube * gain) / gain
 
             # Set pixels in the image to 0 when flagged as bad in the DQ array
-            image = self.add_fgs_dq(image, det_eff.array_bounds)
+            image = self.add_fgs_dq(image, self.nreads, nramps, det_eff.array_bounds)
 
         else:
             # In the case of LOSTRK, just return one frame with one
@@ -367,15 +367,27 @@ class BuildFGSSteps(object):
 
         return image
 
-    def add_fgs_dq(self, image, array_bounds):
+    def add_fgs_dq(self, image, nreads, nramps, array_bounds):
         """Set the bias to 0 where the DQ Array is flagged
         as bad (where it equals 1)
+
+        image :
+            The time-normalized image with all noise
+            already applied
+        nreads : int
+            Number of reads in the ramp
+        nramps : int
+            Number of ramps in the integration
+        array_bounds : list, tuple
+            The subarray location of the step
         """
         dq_file = os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(self.guider))
         dq_arr = np.copy(fits.getdata(dq_file))
 
+        # Cut and duplicate DQ to match shape of bias file
         xlow, xhigh, ylow, yhigh = array_bounds
         dq_arr = dq_arr[xlow:xhigh, ylow:yhigh]
+        dq_arr = np.stack([dq_arr] * nramps * nreads, axis=0)
         image[dq_arr == 1] = 0
 
         return image
