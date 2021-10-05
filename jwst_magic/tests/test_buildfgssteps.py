@@ -190,6 +190,8 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
     assert np.isclose(np.max(open_image), 15693.34), 'Incorrect input data max - changed your file?'
 
     # Run the code
+    np.random.seed(100)
+
     fgs_im, guiding_selections_file, _ = shift_to_id_attitude(
         open_image, ROOT, guider, TEST_DIRECTORY, guiding_selections_file=SELECTED_SEGS_CMIMF_OLD,
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=CENTER_POINTING_1,
@@ -235,8 +237,8 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
             assert abs(correct_data_dict['strips'][1] - np.max(BFS.strips)) < assertion_range, \
                 'ID strips counts out of expected range.'
 
-        # Final step product
-        assert abs(correct_data_dict[step][0] - np.min(BFS.image)) < assertion_range, \
+        # Final step product (check min ignoring 0s from bad pixels)
+        assert abs(correct_data_dict[step][0] - np.min(BFS.image[np.nonzero(BFS.image)])) < assertion_range, \
             '{} counts out of expected range.'.format(step)
         assert abs(correct_data_dict[step][1] - np.max(BFS.image)) < assertion_range, \
             '{} counts out of expected range.'.format(step)
