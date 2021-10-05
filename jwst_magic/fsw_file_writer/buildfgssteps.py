@@ -340,7 +340,7 @@ class BuildFGSSteps(object):
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
         if config_ini.getboolean(step, 'cdsimg'):
-            self.cds = create_cds(image, step, config_ini)
+            self.cds = create_cds(image)
         else:
             self.cds = None
 
