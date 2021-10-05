@@ -67,6 +67,8 @@ OSS_TRIGGER = 474608.4  # ADU/sec
 COUNTRATE_CONVERSION = 0.65
 DIM_STAR_THRESHOLD_FACTOR = 0.30
 BRIGHT_STAR_THRESHOLD_ADDEND = 332226
+GAIN_G1 = 1.74
+GAIN_G2 = 1.57
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN CLASS
@@ -296,6 +298,8 @@ class BuildFGSSteps(object):
 
         # Add the bias, and build the array of reads with noisy data
         if config_ini.getboolean(step, 'bias'):
+            gain = GAIN_G1 if self.guider == 1 else GAIN_G2
+
             # Get the bias ramp
             nramps = config_ini.getint(step, 'nramps')
             det_eff = detector_effects.FGSDetectorEffects(
@@ -311,23 +315,15 @@ class BuildFGSSteps(object):
             positive_signal_cube = np.copy(signal_cube)
             positive_signal_cube[positive_signal_cube < 0] = 0
 
-            # First read
-            # Calculate how much signal should be in the first read
-            i_read = 0
-            n_drops_before_first_read = int(config_ini.getfloat(step, 'ndrops1'))
-            n_frametimes_in_first_read = n_drops_before_first_read + 1
             # Add signal to every first read
-            noisy_signal_cube = np.random.poisson(positive_signal_cube)
-            image[i_read::self.nreads] += n_frametimes_in_first_read * noisy_signal_cube
+            i_read = 0
+            ndrop1 = int(config_ini.getfloat(step, 'ndrops1'))
+            image[i_read::self.nreads] += np.random.poisson((ndrop1 + 1) * positive_signal_cube * gain)/gain
 
-            # Second read
-            # Calculate how much signal should be in the second read
-            i_read = 1
-            n_drops_before_second_read = int(config_ini.getfloat(step, 'ndrops2'))
-            n_frametimes_in_second_read = n_frametimes_in_first_read + n_drops_before_second_read + 1
             # Add signal to every second read
-            noisy_signal_cube = np.random.poisson(positive_signal_cube)
-            image[i_read::self.nreads] += n_frametimes_in_second_read * noisy_signal_cube
+            i_read = 1
+            ndrop2 = int(config_ini.getfloat(step, 'ndrops2'))
+            image[i_read::self.nreads] += np.random.poisson((ndrop2 + 1) * positive_signal_cube * gain) / gain
 
         else:
             # In the case of LOSTRK, just return one frame with one
