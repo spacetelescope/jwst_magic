@@ -447,3 +447,42 @@ def test_star_thresholds(test_directory, use_oss_defaults, guide_star_countrate,
         assert np.isclose(int(catalog_countrate * COUNTRATE_CONVERSION * DIM_STAR_THRESHOLD_FACTOR), star_data[0][4])
     else:
         assert np.isclose(int(guide_star_countrate * thresh_factor), star_data[0][4])
+
+
+test_list = [('ACQ1', True), ('ACQ1', False), ('ACQ2', True), ('ACQ2', False),
+             ('TRK', True), ('TRK', False), ('LOSTRK', True), ('LOSTRK', False)]
+@pytest.mark.parametrize('step, shifted', test_list)
+def test_subarray_size(test_directory, step, shifted):
+    """Test that the output image sizes for the subarray cases are correct"""
+    # Delete path if it exists
+    if os.path.isdir(TEST_DIRECTORY):
+        shutil.rmtree(TEST_DIRECTORY)
+
+    # Define basic inputs
+    image = fits.getdata(CONVERTED_NIRCAM_IM_MIMF)
+    guider = 1
+    guiding_selections_file = SELECTED_SEGS_MIMF
+
+    # Set the threshold factor variable
+    thresh_factor = 0.5
+
+    # Run buildfgssteps
+    out_fsw = os.path.join(TEST_DIRECTORY, 'guiding_config_1')
+    bfs = BuildFGSSteps(image, guider, ROOT, step,
+                        guiding_selections_file=guiding_selections_file,
+                        out_dir=out_fsw, thresh_factor=thresh_factor,
+                        shift_id_attitude=shifted,
+                        use_oss_defaults=False)
+
+    if step == 'ACQ1':
+        assert bfs.input_im.shape == (128, 128)
+        assert bfs.image.shape == (12, 128, 128)
+    elif step == 'ACQ2':
+        assert bfs.input_im.shape == (32, 32)
+        assert bfs.image.shape == (10, 32, 32)
+    elif step == 'TRK':
+        assert bfs.input_im.shape == (32, 32)
+        assert bfs.image.shape == (10000, 32, 32)
+    elif step == 'LOSTRK':
+        assert bfs.input_im.shape == (43, 43)
+        assert bfs.image.shape == (255, 255)
