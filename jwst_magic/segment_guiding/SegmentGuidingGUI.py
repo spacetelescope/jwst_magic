@@ -86,6 +86,7 @@ class SegmentGuidingDialog(QDialog):
         self.ra = ra
         self.dec = dec
         self.detector = detector if detector is not None else 'A3'
+        threshold = None if threshold == '' else threshold
 
         # Start logger
         if log is None:

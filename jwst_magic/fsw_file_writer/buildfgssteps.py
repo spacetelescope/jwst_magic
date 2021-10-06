@@ -211,13 +211,15 @@ class BuildFGSSteps(object):
                 raise ValueError('When creating FSW files with the OSS defaults (use_oss_defaults=True), you'
                                  'must pass in the catalog_countrate of the guide star as well.')
 
+                #TODO: put len error back in
+
             countrate_3x3 = self.catalog_countrate * COUNTRATE_CONVERSION
             self.countrate = np.asarray([countrate_3x3])
 
         self.threshold, self.thresh_factor = bright_guiding_check(self.countrate,
                                                                   self.thresh_factor,
-                                                                  normal_ops=self.use_oss_defaults)
-        LOGGER.warning(f"****** {self.threshold} *** {self.thresh_factor} ******")
+                                                                  normal_ops=self.use_oss_defaults,
+                                                                  override_bright_guiding=self.override_bright_guiding)
 
         # TODO: Add case that extracts countrates from input_im and the x/y
         # coords/inds so this module is no longer dependent on ALLpsfs
@@ -724,13 +726,13 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     # Write new FITS files
     # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
     # saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
-    saved_shifted_image = np.uint16(saved_shifted_image)
-    utils.write_fits(shifted_FGS_img, [None, saved_shifted_image], header=[hdr, None], log=LOGGER)
+    # saved_shifted_image = np.uint16(shifted_image)
+    utils.write_fits(shifted_FGS_img, [None, shifted_image], header=[hdr, None], log=LOGGER)
 
     return shifted_image, shifted_guiding_selections, psf_center_file
 
 
-def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False):
+def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, override_bright_guiding=False):
     """
     Check the 3x3 count rate to see if it is above the OSS trigger, if so, adjust
     the threshold accordingly. Returns list of thresholds and a new threshold factor
@@ -744,9 +746,7 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False):
         This is the user defined threshold factor
     normal_ops: boolean
         Whether this is normal operations. This is used during OTE commissioning
-        when Use Oss Defaults is selected for making a POF
-
-
+        when Use OSS Defaults is selected for making a POF
     """
     # If we want to match the normal operations behavior of OSS
     if normal_ops:
@@ -755,7 +755,7 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False):
         dim_star_threshold_factor = threshold_factor
 
     # Check if the 3x3 count rate of the guide star is above the OSS trigger value
-    if countrate_list[0] < OSS_TRIGGER:
+    if (countrate_list[0] < OSS_TRIGGER) or override_bright_guiding:
         threshold = countrate_list * dim_star_threshold_factor
     else:
         threshold = countrate_list - BRIGHT_STAR_THRESHOLD_ADDEND
