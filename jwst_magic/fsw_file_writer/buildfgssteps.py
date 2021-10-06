@@ -539,12 +539,8 @@ def create_im_subarray(image, xcoord, ycoord, imgsize, show_fig=False):
     img : 2-D numpy array
         Subarray of image data around guide star coordinates
     """
-    if imgsize % 2 == 1:
-        xlow = int(xcoord - (imgsize // 2 + 1))
-        ylow = int(ycoord - (imgsize // 2 + 1))
-    else:
-        xlow = int(xcoord - imgsize / 2)
-        ylow = int(ycoord - imgsize / 2)
+    xlow = int(xcoord - imgsize / 2)
+    ylow = int(ycoord - imgsize / 2)
 
     xhigh = int(xcoord + imgsize / 2)
     yhigh = int(ycoord + imgsize / 2)
