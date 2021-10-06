@@ -263,3 +263,5 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
 
     LOGGER.info("*** Run COMPLETE ***")
+
+    return fgs_files_obj.thresh_factor
