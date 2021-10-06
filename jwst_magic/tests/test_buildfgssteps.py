@@ -212,34 +212,33 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
         assert np.isclose(correct_data_dict[step][1], np.max(BFS.image)), \
             'Incorrect {} counts.'.format(step)
 
-    # For other steps/data types, assert within a range, to account for
-    # randomness introduced by detector effects
+    # For other steps/data types, assert within a small range
     else:
 
         # Bias
-        assert np.isclose(correct_data_dict['bias'][0], np.min(BFS.bias)), \
+        assert np.isclose(correct_data_dict['bias'][0], np.min(BFS.bias), atol=10), \
             '{} bias image counts out of expected range.'.format(step)
-        assert np.isclose(correct_data_dict['bias'][1], np.max(BFS.bias)), \
+        assert np.isclose(correct_data_dict['bias'][1], np.max(BFS.bias), atol=10), \
             '{} bias image counts out of expected range.'.format(step)
 
         # CDS
         if 'TRK' not in step:
-            assert np.isclose(correct_data_dict['cds'][0], np.min(BFS.cds)), \
+            assert np.isclose(correct_data_dict['cds'][0], np.min(BFS.cds), atol=10), \
                 '{} CDS counts out of expected range.'.format(step)
-            assert np.isclose(correct_data_dict['cds'][1], np.max(BFS.cds)), \
+            assert np.isclose(correct_data_dict['cds'][1], np.max(BFS.cds), atol=10), \
                 '{} CDS counts out of expected range.'.format(step)
 
         # Strips
         if step == 'ID':
-            assert np.isclose(correct_data_dict['strips'][0], np.min(BFS.strips)), \
+            assert np.isclose(correct_data_dict['strips'][0], np.min(BFS.strips), atol=10), \
                 'ID strips counts out of expected range.'
-            assert np.isclose(correct_data_dict['strips'][1], np.max(BFS.strips)), \
+            assert np.isclose(correct_data_dict['strips'][1], np.max(BFS.strips), atol=10), \
                 'ID strips counts out of expected range.'
 
         # Final step product (check min ignoring 0s from bad pixels)
-        assert np.isclose(correct_data_dict[step][0], np.min(BFS.image[np.nonzero(BFS.image)])), \
+        assert np.isclose(correct_data_dict[step][0], np.min(BFS.image), atol=10), \
             '{} counts out of expected range.'.format(step)
-        assert np.isclose(correct_data_dict[step][1], np.max(BFS.image)), \
+        assert np.isclose(correct_data_dict[step][1], np.max(BFS.image), atol=10), \
             '{} counts out of expected range.'.format(step)
 
     # Assert exact count rates
