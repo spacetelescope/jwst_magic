@@ -387,7 +387,7 @@ def pad_data(data, padding, fgs_pix):
     padded_data[padding:padding + size, padding:padding + size] = data
 
     # Correct high or low pixels
-    padded_data = utils.correct_image(padded_data, 65000, 0)
+    # padded_data = utils.correct_image(padded_data, 65000, 0)
 
     return padded_data
 
@@ -1210,7 +1210,7 @@ def write_fgs_im(data, out_dir, root, guider, hdr_dict=None, fgsout_path=None):
     fgsout_path : str
         Filepath for the output FGS image
     """
-    data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
+    #data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
 
     # Define output path
     output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)
