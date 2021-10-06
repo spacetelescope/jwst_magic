@@ -210,17 +210,11 @@ class BuildFGSSteps(object):
             if self.catalog_countrate is None:
                 raise ValueError('When creating FSW files with the OSS defaults (use_oss_defaults=True), you'
                                  'must pass in the catalog_countrate of the guide star as well.')
-            if len(self.xarr) != 1:
-                raise ValueError('Trying to apply OSS defaults to non-POF case (with multiple star selections)')
 
             countrate_3x3 = self.catalog_countrate * COUNTRATE_CONVERSION
             self.countrate = np.asarray([countrate_3x3])
-            if countrate_3x3 < OSS_TRIGGER:
-                self.threshold = countrate_3x3 * DIM_STAR_THRESHOLD_FACTOR
-            else:
-                self.threshold = countrate_3x3 - BRIGHT_STAR_THRESHOLD_ADDEND
-        else:
-            self.threshold = self.countrate * self.thresh_factor
+
+        self.threshold = bright_guiding_check(self.countrate, self.thresh_factor)
 
         # TODO: Add case that extracts countrates from input_im and the x/y
         # coords/inds so this module is no longer dependent on ALLpsfs
@@ -731,3 +725,36 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     utils.write_fits(shifted_FGS_img, [None, saved_shifted_image], header=[hdr, None], log=LOGGER)
 
     return shifted_image, shifted_guiding_selections, psf_center_file
+
+
+def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False):
+    """
+    Check the 3x3 count rate to see if it is above the OSS trigger, if so, adjust
+    the threshold accordingly
+
+    Parameters
+    ----------
+    countrate_3x3: array
+        Array of all 3x3 count
+    threshold_factor: float between 0 and 1
+        This is the user defined threshold factor
+    normal_ops: boolean
+        Whether this is normal operations. This parameter has been added so that
+        this function can be used correctly during normal operations. During OTE
+        Commissioning, it should be set to False.
+    """
+    countrate_3x3 = countrate_list[0]
+
+    if len(countrate_list) == 1 or normal_ops:
+        dim_star_threshold_factor = DIM_STAR_THRESHOLD_FACTOR
+    else:
+        dim_star_threshold_factor = threshold_factor
+
+    # Check if the 3x3 count rate of the guide star is above the OSS trigger value
+    if countrate_3x3 < OSS_TRIGGER:
+        threshold = countrate_3x3 * dim_star_threshold_factor
+    else:
+        threshold = countrate_3x3 - BRIGHT_STAR_THRESHOLD_ADDEND
+        log.info("The selected guide star triggers bright guiding so the user-defined threshold factor has been overwritten")
+
+    return threshold
