@@ -704,7 +704,7 @@ class StarSelectorWindow(QDialog):
             self.canvas_profile.axes.plot(x, y, c='cornflowerblue')
             self.canvas_profile.axes.set_xlim(int(np.floor(event.xdata - self.epsilon)),
                                               int(np.ceil(event.xdata + self.epsilon)))
-            self.canvas_profile.axes.axhline(65535, c='red')
+            #self.canvas_profile.axes.axhline(65535, c='red')
 
             # Update countrate indicator
             countrate = np.sum(self.data[int(event.ydata) - 1:int(event.ydata) + 2,
