@@ -723,7 +723,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
 
     # Write new FITS files
     # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
-    saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
+    # saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
     saved_shifted_image = np.uint16(saved_shifted_image)
     utils.write_fits(shifted_FGS_img, [None, saved_shifted_image], header=[hdr, None], log=LOGGER)
 
@@ -761,4 +761,5 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False):
         threshold = countrate_list - BRIGHT_STAR_THRESHOLD_ADDEND
         LOGGER.info("The selected guide star triggers bright guiding so the user-defined threshold factor has been overwritten")
 
-    return threshold, np.round(threshold/countrate_list[0], 3)
+    # Based the count rate factor off of the guide star
+    return threshold, np.round(threshold[0]/countrate_list[0], 3)
