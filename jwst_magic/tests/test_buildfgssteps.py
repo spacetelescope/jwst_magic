@@ -302,14 +302,15 @@ def test_oss_defaults(test_directory, data, use_oss_defaults, selected_segs, psf
     if use_oss_defaults:
         dim_star_threshold_factor = DIM_STAR_THRESHOLD_FACTOR
     else:
-        dim_star_threshold_factor = fileobj.threshold_factor
+        dim_star_threshold_factor = fileobj.thresh_factor
 
-    assert fileobj.countrate == catalog_countrate * COUNTRATE_CONVERSION
+    if use_oss_defaults:
+        assert fileobj.countrate == catalog_countrate * COUNTRATE_CONVERSION
 
-    if catalog_countrate < OSS_TRIGGER or override_bright_guiding:
-        assert fileobj.threshold == fileobj.countrate * dim_star_threshold_factor
+    if fileobj.countrate[0] < OSS_TRIGGER or override_bright_guiding:
+        assert fileobj.threshold[0] == fileobj.countrate[0] * dim_star_threshold_factor
     else:
-        assert fileobj.threshold == fileobj.countrate - BRIGHT_STAR_THRESHOLD_ADDEND
+        assert fileobj.threshold[0] == fileobj.countrate[0] - BRIGHT_STAR_THRESHOLD_ADDEND
 
 
 def test_rewrite_prc(open_image, test_directory):
