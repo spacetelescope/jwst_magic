@@ -37,8 +37,8 @@ test_buildfgssteps:
                 TRK: [6270.0, 17050.0]
             LOSTRK:
                 countrates: [65596.0]
-                time_normed_im: [0.0059055714, 152.88527]
-                LOSTRK: [6.60739e-05, 1.7105417]
+                time_normed_im: [0.00661816, 152.88527]
+                LOSTRK: [7.41947e-05, 1.7139624]
         guider2:
             CAL:
                 countrates: [65596.0, 91475.0, 91549.0, 95731.0, 95747.0]
@@ -72,8 +72,8 @@ test_buildfgssteps:
                 TRK: [0.0, 21370.0]
             LOSTRK:
                 countrates: [65596.0]
-                time_normed_im: [0.0059055714, 152.88527]
-                LOSTRK: [6.60739e-05, 1.7105417]
+                time_normed_im: [0.00661816, 152.88527]
+                LOSTRK: [7.41947e-05, 1.7139624]
 
     test_shift_to_id_attitude:
         guiding_selections_coords:
