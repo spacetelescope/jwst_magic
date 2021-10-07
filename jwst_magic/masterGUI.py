@@ -504,6 +504,9 @@ class MasterGui(QMainWindow):
         # For the POF case, create DHAS files using the default OSS numbers
         use_oss_defaults = self.checkBox_OSS.isChecked()
 
+        # For the case where, regardless of the brightness of the PSF, we want to use the user-defined threshold
+        override_bright_guiding = self.checkBox_forcethreshold.isChecked()
+
         # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
             # If use_oss_numbers if also checked, raise an error (needs catalog countrate information)
@@ -680,6 +683,7 @@ class MasterGui(QMainWindow):
                                                       shift_id_attitude=shift_id_attitude,
                                                       thresh_factor=threshold,
                                                       use_oss_defaults=use_oss_defaults,
+                                                      override_bright_guiding=override_bright_guiding,
                                                       logger_passed=LOGGER,
                                                       log_filename=self.log_filename
                                                       )

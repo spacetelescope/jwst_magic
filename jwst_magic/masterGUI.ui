@@ -943,7 +943,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="3" colspan="3">
+           <item row="2" column="3" colspan="3">
             <widget class="QCheckBox" name="checkBox_rewritePRC">
              <property name="enabled">
               <bool>true</bool>
@@ -955,7 +955,14 @@ p, li { white-space: pre-wrap; }
               <string>Only write prcs, ACQ/TRK fits, and guiding_selections*.txt</string>
              </property>
             </widget>
-           </item>
+          </item>
+          <item row="0" column="3" colspan="2">
+           <widget class="QCheckBox" name="checkBox_forcethreshold">
+            <property name="text">
+             <string>Don't allow threshold to be overwritten when a bright star</string>
+            </property>
+           </widget>
+          </item>
            <item row="2" column="0" colspan="3">
             <widget class="QCheckBox" name="checkBox_id_attitude">
              <property name="text">

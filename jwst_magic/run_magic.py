@@ -66,7 +66,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             bkgrdstars_hdr=None, out_dir=None, convert_im=True,
             star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False,
+            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False, override_bright_guiding=False,
             logger_passed=False, log_filename=None):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
@@ -256,6 +256,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                     psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
                     use_oss_defaults=use_oss_defaults, catalog_countrate=fgs_countrate,
+                    override_bright_guiding=override_bright_guiding
                 )
                 write_files.write_all(fgs_files_obj)
             LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i+1))
