@@ -354,7 +354,7 @@ def test_SOF_parameters_dialog():
     )
 
 
-pof_dialog_parameters = [('1142', '8', '2', None, None, (None, '1142', '8', '2', None, 0.0, 0.01)),
+pof_dialog_parameters = [('1142', '8', '2', None, None, (None, '1142', '8', '2', None, 0.0, 0.6)),
                          ('1142', '8', '2', 0.0123, 0.50, (None, '1142', '8', '2', None, 0.0123, 0.50))]
 @pytest.mark.parametrize('program_id, obs_num, visit_num, countrate_factor, countrate_uncertainty_factor, out_params', pof_dialog_parameters)
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
