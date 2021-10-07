@@ -108,13 +108,16 @@ class SegmentGuidingDialog(QDialog):
         self.lineEdit_observationNumber.setText(str(observation_num))
         self.lineEdit_visitNumber.setText(str(visit_num))
 
-        # Setting only for SOF, not POF
         try:
+            # Setting only for SOF, not POF
             self.lineEdit_RA.setText(str(ra if ra is not None else ''))
             self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
             self.lineEdit_countrateUncertainty.setText(str(threshold if threshold is not None else 0.6))
             index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
             self.comboBox_detector.setCurrentIndex(index)
+
+            # Setting for POFs
+            self.doubleSpinBox_countrateUncertaintyFactor.setValue(threshold if threshold is not None else 0.6)
         except AttributeError:
             pass
 

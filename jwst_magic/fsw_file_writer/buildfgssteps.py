@@ -81,7 +81,8 @@ class BuildFGSSteps(object):
     """
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
                  out_dir=None, thresh_factor=0.6, logger_passed=False, psf_center_file=None,
-                 shift_id_attitude=True, use_oss_defaults=False, catalog_countrate=None):
+                 shift_id_attitude=True, use_oss_defaults=False, catalog_countrate=None,
+                 override_bright_guiding=False):
         """Initialize the class and call build_fgs_steps().
         """
         # Check path exists
@@ -104,6 +105,7 @@ class BuildFGSSteps(object):
             self.use_oss_defaults = use_oss_defaults
             self.catalog_countrate = catalog_countrate
             self.threshold = None
+            self.override_bright_guiding = override_bright_guiding
             if 'config' in guiding_selections_file:
                 self.config = guiding_selections_file.split('/')[-1].split('.txt')[0].split('config')[-1]
             else:
@@ -211,10 +213,15 @@ class BuildFGSSteps(object):
                 raise ValueError('When creating FSW files with the OSS defaults (use_oss_defaults=True), you'
                                  'must pass in the catalog_countrate of the guide star as well.')
 
-                #TODO: put len error back in
-
             countrate_3x3 = self.catalog_countrate * COUNTRATE_CONVERSION
             self.countrate = np.asarray([countrate_3x3])
+
+        if len(self.xarr) != 1 and self.use_oss_defaults:
+            raise ValueError('Trying to apply OSS defaults to non-POF case (with multiple star selections)')
+        else:
+            # If we are using a POF and NOT using use OSS defaults, we want to make sure that the user-defined
+            # threshold is used
+            self.override_bright_guiding = True
 
         self.threshold, self.thresh_factor = bright_guiding_check(self.countrate,
                                                                   self.thresh_factor,
@@ -724,9 +731,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     shifted_FGS_img = os.path.join(out_dir, 'FGS_imgs', 'shifted_' + file_root + '.fits')
 
     # Write new FITS files
-    # Correcting image the same was as in write_fgs_im() so the un-shifted and shifted FGS images match
-    # saved_shifted_image = utils.correct_image(shifted_image, upper_threshold=65535, upper_limit=65535)
-    # saved_shifted_image = np.uint16(shifted_image)
     utils.write_fits(shifted_FGS_img, [None, shifted_image], header=[hdr, None], log=LOGGER)
 
     return shifted_image, shifted_guiding_selections, psf_center_file
