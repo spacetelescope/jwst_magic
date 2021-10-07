@@ -76,7 +76,7 @@ class SegmentGuidingDialog(QDialog):
         countrate_factor)
     """
     def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None,
-                 log=None, threshold=None, detector=None):
+                 log=None, threshold=0.6, detector=None):
         # Initialize attributes
         self.override_type = override_type
         self.guider = guider
@@ -86,7 +86,8 @@ class SegmentGuidingDialog(QDialog):
         self.ra = ra
         self.dec = dec
         self.detector = detector if detector is not None else 'A3'
-        threshold = None if threshold == '' else threshold
+        if threshold in ['', None]:
+            threshold = 0.6
 
         # Start logger
         if log is None:
@@ -108,18 +109,25 @@ class SegmentGuidingDialog(QDialog):
         self.lineEdit_observationNumber.setText(str(observation_num))
         self.lineEdit_visitNumber.setText(str(visit_num))
 
-        try:
-            # Setting only for SOF, not POF
-            self.lineEdit_RA.setText(str(ra if ra is not None else ''))
-            self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
-            self.lineEdit_countrateUncertainty.setText(str(threshold if threshold is not None else 0.6))
-            index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
-            self.comboBox_detector.setCurrentIndex(index)
+        # Setting for POFs
+        if override_type == "SOF":
+            try:
+                # Setting only for SOF, not POF
+                self.lineEdit_RA.setText(str(ra if ra is not None else ''))
+                self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
+                self.lineEdit_countrateUncertainty.setText(str(threshold))
+                index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
+                self.comboBox_detector.setCurrentIndex(index)
 
-            # Setting for POFs
-            self.doubleSpinBox_countrateUncertaintyFactor.setValue(threshold if threshold is not None else 0.6)
-        except AttributeError:
-            pass
+            except AttributeError:
+                pass
+
+        # Setting for POFs
+        elif override_type == "POF":
+            try:
+                self.lineEdit_countrateUncertaintyFactor.setText(str(threshold))
+            except AttributeError:
+                pass
 
     def get_dialog_parameters(self):
         """Parses the user input into the segment guiding dialog box, differentiating
@@ -186,7 +194,7 @@ class SegmentGuidingDialog(QDialog):
 
         elif self.override_type == "POF":
             countrate_factor = float(self.doubleSpinBox_countrateFactor.value())
-            countrate_uncertainty_factor = float(self.doubleSpinBox_countrateUncertaintyFactor.value())
+            countrate_uncertainty_factor = float(self.lineEdit_countrateUncertaintyFactor.text())
             threshold_factor = None
             guide_star_params_dict = None
 
