@@ -731,7 +731,9 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     shifted_FGS_img = os.path.join(out_dir, 'FGS_imgs', 'shifted_' + file_root + '.fits')
 
     # Write new FITS files
-    utils.write_fits(shifted_FGS_img, [None, shifted_image], header=[hdr, None], log=LOGGER)
+    # Get rid of any artifacts from shifting
+    saved_shifted_image = shifted_image[shifted_image < 1e-8] = 0.
+    utils.write_fits(shifted_FGS_img, [None, saved_shifted_image], header=[hdr, None], log=LOGGER)
 
     return shifted_image, shifted_guiding_selections, psf_center_file
 
