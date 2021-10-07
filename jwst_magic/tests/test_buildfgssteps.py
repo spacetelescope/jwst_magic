@@ -274,29 +274,42 @@ def test_psf_center_file(test_directory):
     assert fileobj_acq1.countrate == fileobj_trk.countrate
 
 
-oss_defaults_parameters = [100000, 1000000]
-@pytest.mark.parametrize('catalog_countrate', oss_defaults_parameters)
-def test_oss_defaults(test_directory, catalog_countrate):
+oss_defaults_parameters = [(CONVERTED_NIRCAM_IM_MIMF, True, SELECTED_SEGS_MIMF, PSF_CENTER_MIMF, 100000, False),
+                           (CONVERTED_NIRCAM_IM_MIMF, True, SELECTED_SEGS_MIMF, PSF_CENTER_MIMF, 1000000, False),
+                           (CONVERTED_NIRCAM_IM_MIMF, False, SELECTED_SEGS_MIMF, PSF_CENTER_MIMF, 100000, False),
+                           (FGS_CMIMF_IM, False, SELECTED_SEGS_CMIMF, None, None, True),
+                           (FGS_CMIMF_IM, False, SELECTED_SEGS_CMIMF, None, None, False)]
+@pytest.mark.parametrize('data, use_oss_defaults, selected_segs ,psf_center, catalog_countrate,    override_bright_guiding',
+                         oss_defaults_parameters)
+def test_oss_defaults(test_directory, data, use_oss_defaults, selected_segs, psf_center, catalog_countrate,
+                      override_bright_guiding):
     """Test that when use_oss_defaults is set to True, the attributes
     of the file object (which will be used when writing out all FSW files)
     are set appropriatly.
     """
-    image = fits.getdata(CONVERTED_NIRCAM_IM_MIMF, 0)
+    image = fits.getdata(data, 0)
     guider = 1
-    use_oss_defaults = True
 
     fileobj = BuildFGSSteps(
-        image, guider, ROOT, step='ID', guiding_selections_file=SELECTED_SEGS_MIMF,
-        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=False,
-        use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
+        image, guider, ROOT, step='ID', guiding_selections_file=selected_segs,
+        out_dir=TEST_DIRECTORY, psf_center_file=psf_center, shift_id_attitude=False,
+        use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate,
+        override_bright_guiding=override_bright_guiding)
 
+    if len(fileobj.xarr) == 1:
+        override_bright_guiding = True
     # Compare the countrate and threshold to what's expected
+    if use_oss_defaults:
+        dim_star_threshold_factor = DIM_STAR_THRESHOLD_FACTOR
+    else:
+        dim_star_threshold_factor = fileobj.threshold_factor
+
     assert fileobj.countrate == catalog_countrate * COUNTRATE_CONVERSION
 
-    if catalog_countrate < OSS_TRIGGER:
-        assert fileobj.threshold == catalog_countrate * COUNTRATE_CONVERSION * DIM_STAR_THRESHOLD_FACTOR
+    if catalog_countrate < OSS_TRIGGER or override_bright_guiding:
+        assert fileobj.threshold == fileobj.countrate * dim_star_threshold_factor
     else:
-        assert fileobj.threshold == (catalog_countrate * COUNTRATE_CONVERSION) - BRIGHT_STAR_THRESHOLD_ADDEND
+        assert fileobj.threshold == fileobj.countrate - BRIGHT_STAR_THRESHOLD_ADDEND
 
 
 def test_rewrite_prc(open_image, test_directory):
