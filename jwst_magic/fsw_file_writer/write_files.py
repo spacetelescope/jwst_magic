@@ -234,23 +234,28 @@ def write_image(obj):
         # Create "full-frame" (rather than strips) image
         location = obj.stsci_dir
         filetype = 'ff.fits'
+        image = obj.image
     elif obj.step == 'LOSTRK':
         # Place the FITS file in stsci/, as it is just for reference
         # to the LOSTRK.dat file
         location = obj.stsci_dir
         filetype = '.fits'
+        # Cut any pixels over saturation or under zero
+        image = utils.correct_image(obj.image, upper_threshold=65535, upper_limit=65535)
     else:
         location = obj.dhas_dir
         filetype = '.fits'
+        # Cut any pixels over saturation or under zero
+        image = utils.correct_image(obj.image, upper_threshold=65535, upper_limit=65535)
 
     # Create image fits file
     filename = os.path.join(obj.out_dir, location,
                             obj.filename_root + filetype)
 
     if obj.step == 'LOSTRK':
-        utils.write_fits(filename, obj.image, log=LOGGER) # Don't make it np.uint16
+        utils.write_fits(filename, image, log=LOGGER) # Don't make it np.uint16
     else:
-        utils.write_fits(filename, np.uint16(obj.image), log=LOGGER)
+        utils.write_fits(filename, np.uint16(image), log=LOGGER)
 
 
 def write_strips(obj):
@@ -274,7 +279,9 @@ def write_strips(obj):
     filename_hdr = os.path.join(DATA_PATH,
                                 'newG{}magicHdrImg.fits'.format(obj.guider))
     hdr0 = fits.getheader(filename_hdr, ext=0)
-    utils.write_fits(filename_id_strips, np.uint16(obj.strips), header=hdr0,
+
+    strips = utils.correct_image(obj.strips, upper_threshold=65535, upper_limit=65535)
+    utils.write_fits(filename_id_strips, np.uint16(strips), header=hdr0,
                      log=LOGGER)
 
 
@@ -378,6 +385,8 @@ def write_dat(obj):
         filename = '{}_G{}_{}.dat'.format(obj.root, obj.guider, obsmode)
     filename = os.path.join(out_dir, filename)
 
+    # Cut any pixels over saturation or under zero
+    data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
     flat = data.flatten()
 
     # Write out TRK/LOSTRK files in ASCII float format

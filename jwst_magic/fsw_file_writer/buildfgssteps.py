@@ -342,8 +342,8 @@ class BuildFGSSteps(object):
             self.bias = None
             image = self.time_normed_im
 
-        # Cut any pixels over saturation or under zero
-        image = utils.correct_image(image, upper_threshold=65535, upper_limit=65535)
+        # # Cut any pixels under zero
+        image = utils.correct_image(image)
 
         # Create the CDS image by subtracting the first read from the second
         # read, for each ramp
