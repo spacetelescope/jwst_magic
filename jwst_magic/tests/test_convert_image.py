@@ -79,13 +79,13 @@ def test_directory(test_dir=TEST_DIRECTORY):
 
 
 norm_parameters = [
-    (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 2052.138207909823),
-    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6445.04162318262),
-    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1807.6700590566643),
-    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 6150.282570907751),
-    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6445.041623182621),  # uses fgs_mag = 12 by default
-    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 141800.48459784302),  # NRC contains TEST keyword - tests ped
-    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.9196477208)  # non-ITM FGS image - tests ped
+    (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 2084.),
+    (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6545.),
+    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1836.),
+    (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 6150.),
+    (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6545.),  # uses fgs_mag = 12 by default
+    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 141800.), # NRC contains TEST keyword - tests ped
+    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.), # non-ITM FGS image - tests ped
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
 def test_convert_im_normalization(test_directory, image, guider, nircam, norm_value, norm_unit, itm, data_max):
@@ -106,7 +106,7 @@ def test_convert_im_normalization(test_directory, image, guider, nircam, norm_va
 
     assert os.path.exists(all_found_psfs_file)
     assert psf_center_file is None
-    assert np.isclose(data.max(), data_max)
+    assert np.isclose(data.max(), data_max, atol=1.)
 
 
 norm_parameters = [
