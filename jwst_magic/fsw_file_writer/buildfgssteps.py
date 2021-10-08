@@ -772,7 +772,7 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
         threshold = countrate_list * dim_star_threshold_factor
     else:
         threshold = countrate_list - BRIGHT_STAR_THRESHOLD_ADDEND
-        LOGGER.warning(f"The selected guide star triggers bright guiding so the user-defined threshold factor is being overwritten to {np.round(threshold[0]/countrate_list[0], 3}")
+        LOGGER.warning(f"The selected guide star triggers bright guiding so the user-defined threshold factor is being overwritten to {np.round(threshold[0]/countrate_list[0], 3)}")
 
     # Based the count rate factor off of the guide star
     return threshold, np.round(threshold[0]/countrate_list[0], 3)

@@ -560,7 +560,7 @@ class MasterGui(QMainWindow):
                 self.program_id, self.observation_num, self.visit_num = '', '', ''
             if not all(hasattr(self, attr) for attr in ["gs_id", "gs_ra", "gs_dec"]):
                 self.gs_id, self.gs_ra, self.gs_dec= '', '', '', ''
-            if not all(hasattr(self, "threshold_factor"):
+            if not hasattr(self, "threshold_factor"):
                 self.threshold_factor = ''
 
             # Check if this is a photometry only override file or segment override file

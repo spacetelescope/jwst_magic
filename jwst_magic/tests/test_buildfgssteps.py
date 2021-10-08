@@ -296,7 +296,7 @@ def test_oss_defaults(test_directory, data, use_oss_defaults, selected_segs, psf
         use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate,
         override_bright_guiding=override_bright_guiding)
 
-    if len(fileobj.xarr) == 1:
+    if len(fileobj.xarr) == 1 and not use_oss_defaults:
         override_bright_guiding = True
     # Compare the countrate and threshold to what's expected
     if use_oss_defaults:
