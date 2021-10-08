@@ -263,6 +263,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
 
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
 
-    LOGGER.info("*** Run COMPLETE ***")
 
-    return fgs_files_obj.thresh_factor
+    LOGGER.info("*** Run COMPLETE ***")
+    try:
+        return fgs_files_obj.thresh_factor
+    except UnboundLocalError:
+        return None
