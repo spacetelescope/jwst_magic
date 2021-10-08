@@ -178,7 +178,7 @@ for guider in [1, 2]:
     for step in ['CAL', 'ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']:
         g = 'guider{}'.format(guider)
         correct_count_rate_parameters.append((guider, step,
-                                                  test_data[g][step]))
+                                              test_data[g][step]))
 @pytest.mark.parametrize('guider, step, correct_data_dict', correct_count_rate_parameters)
 def test_correct_count_rate(open_image, test_directory, guider, step, correct_data_dict):
     """Check that image data is being generated with counts and count
