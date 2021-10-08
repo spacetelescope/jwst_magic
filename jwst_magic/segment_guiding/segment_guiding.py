@@ -896,6 +896,12 @@ class SegmentGuidingCalculator:
                 else:
                     self.pa = float(self.pa)
 
+            if self.threshold_factor is not None:
+                errcode = self.checkout(self.threshold_factor, 0.01, 1.0, low_inclusive=True)
+                if errcode != 0:
+                    error = "{} for threshold_factor. Expecting between 0.01 (inclusive) and 1.0.".format(msg[errcode])
+                    raise ValueError(error)
+
             for val in ['observation_num', 'visit_num']:
                 attr = getattr(self, val)
                 if attr is not None:

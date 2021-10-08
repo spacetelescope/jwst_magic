@@ -218,9 +218,10 @@ class BuildFGSSteps(object):
 
         if len(self.xarr) != 1 and self.use_oss_defaults:
             raise ValueError('Trying to apply OSS defaults to non-POF case (with multiple star selections)')
-        else:
-            # If we are using a POF and NOT using use OSS defaults, we want to make sure that the user-defined
-            # threshold is used
+
+        if len(self.xarr) == 1 and not self.use_oss_defaults:
+            # If we are making a POF and NOT using use OSS defaults, we want to make sure that the
+            # user-defined threshold is used
             self.override_bright_guiding = True
 
         self.threshold, self.thresh_factor = bright_guiding_check(self.countrate,
@@ -733,7 +734,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     # Write new FITS files
     # Get rid of any artifacts from shifting
     saved_shifted_image = np.copy(shifted_image)
-    saved_shifted_image[saved_shifted_image < 1e-8] = 0.  # Take care of artifacts from shifting the image
+    saved_shifted_image[saved_shifted_image < 1e-8] = 0.
     utils.write_fits(shifted_FGS_img, [None, saved_shifted_image], header=[hdr, None], log=LOGGER)
 
     return shifted_image, shifted_guiding_selections, psf_center_file
@@ -754,6 +755,11 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
     normal_ops: boolean
         Whether this is normal operations. This is used during OTE commissioning
         when Use OSS Defaults is selected for making a POF
+    override_bright_guiding: boolean
+        If the user wants to guarentee that their provided threshold factor will be used,
+        regardless of the 3x3 count rate, they will set this parameter to True. When set
+        to False, if the 3x3 count rate is above the OSS trigger, the threshold and threshold
+        factors will be replaced.
     """
     # If we want to match the normal operations behavior of OSS
     if normal_ops:
@@ -766,7 +772,7 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
         threshold = countrate_list * dim_star_threshold_factor
     else:
         threshold = countrate_list - BRIGHT_STAR_THRESHOLD_ADDEND
-        LOGGER.info("The selected guide star triggers bright guiding so the user-defined threshold factor has been overwritten")
+        LOGGER.warning(f"The selected guide star triggers bright guiding so the user-defined threshold factor is being overwritten to {np.round(threshold[0]/countrate_list[0], 3}")
 
     # Based the count rate factor off of the guide star
     return threshold, np.round(threshold[0]/countrate_list[0], 3)

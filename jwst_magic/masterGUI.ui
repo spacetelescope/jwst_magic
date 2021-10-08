@@ -956,10 +956,10 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
           </item>
-          <item row="0" column="3" colspan="2">
+          <item row="0" column="3" colspan="3">
            <widget class="QCheckBox" name="checkBox_forcethreshold">
             <property name="text">
-             <string>Don't allow threshold to be overwritten when a bright star</string>
+             <string>Don't allow threshold to be overwritten for a bright star</string>
             </property>
            </widget>
           </item>
