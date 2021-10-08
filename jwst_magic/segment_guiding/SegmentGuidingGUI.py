@@ -87,8 +87,8 @@ class SegmentGuidingDialog(QDialog):
         self.dec = dec
         self.detector = detector if detector is not None else 'A3'
         if threshold_factor in ['', None]:
-            # If we don't have this value from somewhere else, pull it from the GUI
-            threshold_factor = self.lineEdit_threshold.text()
+            # If we don't have this value from somewhere else, default to 0.6
+            threshold_factor = 0.6
 
         # Start logger
         if log is None:
