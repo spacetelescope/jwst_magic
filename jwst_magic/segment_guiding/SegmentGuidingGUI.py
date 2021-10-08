@@ -76,7 +76,7 @@ class SegmentGuidingDialog(QDialog):
         countrate_factor)
     """
     def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None,
-                 log=None, threshold=0.6, detector=None):
+                 log=None, threshold_factor=None, detector=None):
         # Initialize attributes
         self.override_type = override_type
         self.guider = guider
@@ -86,9 +86,9 @@ class SegmentGuidingDialog(QDialog):
         self.ra = ra
         self.dec = dec
         self.detector = detector if detector is not None else 'A3'
-        if threshold in ['', None]:
+        if threshold_factor in ['', None]:
             # If we don't have this value from somewhere else, pull it from the GUI
-            threshold = self.lineEdit_threshold.text()
+            threshold_factor = self.lineEdit_threshold.text()
 
         # Start logger
         if log is None:
@@ -116,7 +116,7 @@ class SegmentGuidingDialog(QDialog):
                 # Setting only for SOF, not POF
                 self.lineEdit_RA.setText(str(ra if ra is not None else ''))
                 self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
-                self.lineEdit_countrateUncertainty.setText(str(threshold))
+                self.lineEdit_countrateUncertainty.setText(str(threshold_factor))
                 index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
                 self.comboBox_detector.setCurrentIndex(index)
 
@@ -126,7 +126,7 @@ class SegmentGuidingDialog(QDialog):
         # Setting for POFs
         elif override_type == "POF":
             try:
-                self.lineEdit_countrateUncertaintyFactor.setText(str(threshold))
+                self.lineEdit_countrateUncertaintyFactor.setText(str(threshold_factor))
             except AttributeError:
                 pass
 
@@ -275,8 +275,8 @@ def check_override_overwrite(out_dir, program_id, observation_num, visit_num,
         # Compare integers if only 1 (or no) obs
         if not plural_obs_num and not plural_obs_num_match:
             match = (int(prog) == int(program_id) and
-                    int(obs) == int(observation_num) and
-                    int(visit) == int(visit_num))
+                     int(obs) == int(observation_num) and
+                     int(visit) == int(visit_num))
         # Compare the observation string if more than one obs specified
         else:
             match = (int(prog) == int(program_id) and

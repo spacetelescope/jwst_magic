@@ -32,7 +32,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
       1. For general guiding, this includes all of the operational steps: ID, ACQ, and TRK. (These are the default selections.)
       2. For calibration observations, add the CAL step.
    4. If you want to shift your image so that the selected guide star is moved to the center of the image, ensure the **Place the guide star at the ID attitude** box is checked. This will place the guide star at the ID attitude at (Ideal X, Ideal Y) = (0, 0).
-   5. If you are testing data for a possible photometry override file and you want the data written to the FSW products to be the default values OSS would use if there were no POF submitted, check the **Use Default OSS Numbers** box. Be sure to have guide star information populated in the Image Conversion section, even if you keep the **Normalize** box unchecked.
+   5. If you are testing data for a possible photometry override file and you want the data written to the FSW products to be the default values OSS would use if there were no POF submitted, check the **Use Default OSS Numbers** box. However, if you have only selected a guide star with no reference stars, and do *not* check the **Use OSS Defaults** box, but the 3x3 count rate of the PSF is above the bright star trigger, the code will *not* override the user-defined threshold. Be sure to have guide star information populated in the Image Conversion section, even if you keep the **Normalize** box unchecked.
 
 3. Run the tool
 
