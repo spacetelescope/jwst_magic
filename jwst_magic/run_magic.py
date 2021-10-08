@@ -232,7 +232,9 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             fgs_countrate = None
 
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
-        for i, guiding_selections_file in enumerate(guiding_selections_path_list):
+        threshold_factor_per_config = []
+        fgs_files_objs = []
+        for guiding_selections_file in guiding_selections_path_list:
 
             # Change out_dir to write data to guiding_config_#/ sub-directory next to the selections file
             if 'guiding_config' in guiding_selections_file:
@@ -262,14 +264,24 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                     use_oss_defaults=use_oss_defaults, catalog_countrate=fgs_countrate,
                     override_bright_guiding=override_bright_guiding
                 )
-                write_files.write_all(fgs_files_obj)
-            LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i+1))
+                threshold_factor_per_config.append(fgs_files_obj.thresh_factor)
+                fgs_files_objs.append(fgs_files_obj)
+
+        # Loop through thresholds for multiple configs and pick largest
+        max_thresh_factor = np.max(threshold_factor_per_config)
+        if len(np.unique(threshold_factor_per_config)) != 1:
+            LOGGER.info(f"FSW File Writing: The selections provided, had more than one required threshold factor. Using the largest threshold factor: {max_thresh_factor}")
+
+        # Write out the files with the new count rate threshold
+        for fgs_files_obj in fgs_files_objs:
+            fgs_files_obj.threshold = max_thresh_factor * fgs_files_obj.countrate
+            write_files.write_all(fgs_files_obj)
+        LOGGER.info(f"*** Finished FSW File Writing for {len(guiding_selections_path_list)} selections ***")
 
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
 
-
     LOGGER.info("*** Run COMPLETE ***")
     try:
-        return fgs_files_obj.thresh_factor
+        return max_thresh_factor
     except UnboundLocalError:
         return None

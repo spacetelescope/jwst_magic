@@ -571,7 +571,7 @@ class MasterGui(QMainWindow):
 
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
-                                       "POF", None, self.program_id, self.observation_num, self.visit_num, threshold=threshold_factor, log=None
+                                       "POF", None, self.program_id, self.observation_num, self.visit_num, threshold_factor=threshold_factor, log=None
                 )
                 # Generate the file
                 segment_guiding.generate_photometry_override_file(
@@ -623,7 +623,7 @@ class MasterGui(QMainWindow):
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
                     "SOF", guider, self.program_id, self.observation_num, self.visit_num,
-                    ra=self.gs_ra, dec=self.gs_dec, threshold=threshold_factor,
+                    ra=self.gs_ra, dec=self.gs_dec, threshold_factor=threshold_factor,
                     detector=str(self.comboBox_detector.currentText())[:2], log=None
                 )
 
@@ -691,7 +691,7 @@ class MasterGui(QMainWindow):
 
             # Update converted image preview
             self.update_filepreview(new_guiding_selections=True)
-            if self.threshold_factor is not None:
+            if threshold_factor is not None:
                 self.lineEdit_threshold.setText(str(threshold_factor))
 
     def update_groupBox_fileWriter(self):
