@@ -733,7 +733,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     # Write new FITS files
     # Get rid of any artifacts from shifting
     saved_shifted_image = np.copy(shifted_image)
-    saved_shifted_image[saved_shifted_image < 1e-8] = 0.
+    saved_shifted_image[saved_shifted_image < 1e-8] = 0.  # Take care of artifacts from shifting the image
     utils.write_fits(shifted_FGS_img, [None, saved_shifted_image], header=[hdr, None], log=LOGGER)
 
     return shifted_image, shifted_guiding_selections, psf_center_file
