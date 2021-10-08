@@ -132,6 +132,10 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     use_oss_defaults : bool
         Populate the DHAS files with the default numbers OSS would use. Should
         only be True when testing photometry override files
+    override_bright_guiding: bool
+        If the user wants to guarentee that their provided threshold factor will be used, regardless of the
+        3x3 count rate, they will set this parameter to True. When set to False, if the 3x3 count rate is
+        above the OSS trigger, the threshold and threshold factors will be replaced.
     logger_passed : bool, optional
         Denotes if a logger object has already been generated.
     log_filename : str, optional

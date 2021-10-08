@@ -386,8 +386,8 @@ def pad_data(data, padding, fgs_pix):
     # Replace center of array with real data
     padded_data[padding:padding + size, padding:padding + size] = data
 
-    # Correct high or low pixels
-    # padded_data = utils.correct_image(padded_data, 65000, 0)
+    # Correct any negative pixels
+    padded_data = utils.correct_image(padded_data)
 
     return padded_data
 
@@ -1121,6 +1121,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             fgs_countrate, fgs_mag = renormalize.convert_to_countrate_fgsmag(norm_value, norm_unit, guider, gs_catalog)
 
             # Normalize the data
+            data = utils.correct_image(data) # Correct any negative or inf values before normalizing
             data = normalize_data(data, fgs_countrate)
             LOGGER.info("Image Conversion: Normalizing to {} FGS Countrate (FGS Mag: {})".format(fgs_countrate,
                                                                                                  fgs_mag))
@@ -1179,8 +1180,6 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         LOGGER.exception(f'{repr(e)}: {e}')
         raise
 
-    data = utils.correct_image(data) # Correct any negative or inf values
-
     return data, all_found_psfs_path, psf_center_path, fgs_hdr_dict
 
 
@@ -1212,7 +1211,8 @@ def write_fgs_im(data, out_dir, root, guider, hdr_dict=None, fgsout_path=None):
     fgsout_path : str
         Filepath for the output FGS image
     """
-    #data = utils.correct_image(data, upper_threshold=65535, upper_limit=65535)
+    # Correct any negative values in the data
+    data = utils.correct_image(data)
 
     # Define output path
     output_path_save = utils.make_out_dir(out_dir, OUT_PATH, root)

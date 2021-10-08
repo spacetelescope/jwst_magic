@@ -558,8 +558,10 @@ class MasterGui(QMainWindow):
             # If Id/Obs/Visit and/or GS info hasn't already been set by parse_header() or commissioning section
             if not all(hasattr(self, attr) for attr in ["program_id", "observation_num", "visit_num"]):
                 self.program_id, self.observation_num, self.visit_num = '', '', ''
-            if not all(hasattr(self, attr) for attr in ["gs_id", "gs_ra", "gs_dec", "threshold_factor"]):
-                self.gs_id, self.gs_ra, self.gs_dec, self.threshold_factor = '', '', '', ''
+            if not all(hasattr(self, attr) for attr in ["gs_id", "gs_ra", "gs_dec"]):
+                self.gs_id, self.gs_ra, self.gs_dec= '', '', '', ''
+            if not all(hasattr(self, "threshold_factor"):
+                self.threshold_factor = ''
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():

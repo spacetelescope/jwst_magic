@@ -88,8 +88,6 @@ class SegmentGuidingDialog(QDialog):
         self.detector = detector if detector is not None else 'A3'
         if threshold in ['', None]:
             threshold = 0.6
-        if threshold < 0.01 or threshold > 1.0:
-            raise ValueError("The threshold factor is out of range for count_rate_uncertainty_factor")
 
         # Start logger
         if log is None:
