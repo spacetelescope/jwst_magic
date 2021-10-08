@@ -1179,6 +1179,8 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
         LOGGER.exception(f'{repr(e)}: {e}')
         raise
 
+    data = utils.correct_image(data) # Correct any negative or inf values
+
     return data, all_found_psfs_path, psf_center_path, fgs_hdr_dict
 
 
