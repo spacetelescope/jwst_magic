@@ -287,7 +287,7 @@ def test_oss_defaults(test_directory, data, use_oss_defaults, selected_segs, psf
     of the file object (which will be used when writing out all FSW files)
     are set appropriatly.
     """
-    image = fits.getdata(data, 0)
+    image = fits.getdata(data)
     guider = 1
 
     fileobj = BuildFGSSteps(
