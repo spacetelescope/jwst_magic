@@ -560,8 +560,7 @@ class MasterGui(QMainWindow):
                 self.program_id, self.observation_num, self.visit_num = '', '', ''
             if not all(hasattr(self, attr) for attr in ["gs_id", "gs_ra", "gs_dec"]):
                 self.gs_id, self.gs_ra, self.gs_dec= '', '', '', ''
-            if not hasattr(self, "threshold_factor"):
-                self.threshold_factor = ''
+            threshold_factor = self.lineEdit_threshold.text()
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():
@@ -572,7 +571,7 @@ class MasterGui(QMainWindow):
 
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
-                                       "POF", None, self.program_id, self.observation_num, self.visit_num, threshold=self.threshold_factor, log=None
+                                       "POF", None, self.program_id, self.observation_num, self.visit_num, threshold=threshold_factor, log=None
                 )
                 # Generate the file
                 segment_guiding.generate_photometry_override_file(
@@ -624,7 +623,7 @@ class MasterGui(QMainWindow):
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
                     "SOF", guider, self.program_id, self.observation_num, self.visit_num,
-                    ra=self.gs_ra, dec=self.gs_dec, threshold=self.threshold_factor,
+                    ra=self.gs_ra, dec=self.gs_dec, threshold=threshold_factor,
                     detector=str(self.comboBox_detector.currentText())[:2], log=None
                 )
 
@@ -661,37 +660,39 @@ class MasterGui(QMainWindow):
 
         # Run MAGIC
         if convert_im or star_selection or file_writer:
-            self.threshold_factor = run_magic.run_all(input_image, guider,
-                                                      root=root,
-                                                      norm_value=norm_value,
-                                                      norm_unit=norm_unit,
-                                                      nircam_det=nircam_det,
-                                                      nircam=nircam,
-                                                      smoothing=smoothing,
-                                                      steps=steps,
-                                                      guiding_selections_file=in_file,
-                                                      bkgd_stars=bkgd_stars,
-                                                      bkgrdstars_hdr=bkgrdstars_hdr,
-                                                      out_dir=out_dir,
-                                                      convert_im=convert_im,
-                                                      star_selection=star_selection,
-                                                      file_writer=file_writer,
-                                                      masterGUIapp=self.app,
-                                                      copy_original=copy_original,
-                                                      normalize=normalize,
-                                                      coarse_pointing=coarse_point,
-                                                      jitter_rate_arcsec=jitter_rate_arcsec,
-                                                      itm=itm,
-                                                      shift_id_attitude=shift_id_attitude,
-                                                      thresh_factor=threshold,
-                                                      use_oss_defaults=use_oss_defaults,
-                                                      override_bright_guiding=override_bright_guiding,
-                                                      logger_passed=LOGGER,
-                                                      log_filename=self.log_filename
-                                                      )
+            threshold_factor = run_magic.run_all(input_image, guider,
+                                                 root=root,
+                                                 norm_value=norm_value,
+                                                 norm_unit=norm_unit,
+                                                 nircam_det=nircam_det,
+                                                 nircam=nircam,
+                                                 smoothing=smoothing,
+                                                 steps=steps,
+                                                 guiding_selections_file=in_file,
+                                                 bkgd_stars=bkgd_stars,
+                                                 bkgrdstars_hdr=bkgrdstars_hdr,
+                                                 out_dir=out_dir,
+                                                 convert_im=convert_im,
+                                                 star_selection=star_selection,
+                                                 file_writer=file_writer,
+                                                 masterGUIapp=self.app,
+                                                 copy_original=copy_original,
+                                                 normalize=normalize,
+                                                 coarse_pointing=coarse_point,
+                                                 jitter_rate_arcsec=jitter_rate_arcsec,
+                                                 itm=itm,
+                                                 shift_id_attitude=shift_id_attitude,
+                                                 thresh_factor=threshold,
+                                                 use_oss_defaults=use_oss_defaults,
+                                                 override_bright_guiding=override_bright_guiding,
+                                                 logger_passed=LOGGER,
+                                                 log_filename=self.log_filename
+                                                 )
 
             # Update converted image preview
             self.update_filepreview(new_guiding_selections=True)
+            if self.threshold_factor is not None:
+                self.lineEdit_threshold.setText(str(threshold_factor))
 
     def update_groupBox_fileWriter(self):
         """Enable/disable items in FSW group box"""
