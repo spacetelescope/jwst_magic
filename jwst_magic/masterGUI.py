@@ -506,6 +506,8 @@ class MasterGui(QMainWindow):
 
         # For the case where, regardless of the brightness of the PSF, we want to use the user-defined threshold
         override_bright_guiding = self.checkBox_forcethreshold.isChecked()
+        if use_oss_defaults and override_bright_guiding:
+            raise ValueError('Cannot use Default OSS Numbers and overwrite the bright guiding functionality at the same time. Please check only one, or neither, button.')
 
         # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():

@@ -749,7 +749,7 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
     Parameters
     ----------
     countrate_3x3: array
-        Array of all 3x3 count
+        Array of all 3x3 count rates of each selected PSF
     threshold_factor: float between 0 and 1
         This is the user defined threshold factor
     normal_ops: boolean
@@ -762,7 +762,9 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
         factors will be replaced.
     """
     # If we want to match the normal operations behavior of OSS
-    if normal_ops:
+    if normal_ops and override_bright_guiding:
+        raise ValueError('Cannot use normal ops functionality and and overwrite the bright guiding functionality at the same time. Please use only one, or neither, flag.')
+    elif normal_ops:
         dim_star_threshold_factor = DIM_STAR_THRESHOLD_FACTOR
     else:
         dim_star_threshold_factor = threshold_factor

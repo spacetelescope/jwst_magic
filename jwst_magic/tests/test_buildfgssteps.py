@@ -279,7 +279,7 @@ oss_defaults_parameters = [(CONVERTED_NIRCAM_IM_MIMF, True, SELECTED_SEGS_MIMF, 
                            (CONVERTED_NIRCAM_IM_MIMF, False, SELECTED_SEGS_MIMF, PSF_CENTER_MIMF, 100000, False),
                            (FGS_CMIMF_IM, False, SELECTED_SEGS_CMIMF, None, None, True),
                            (FGS_CMIMF_IM, False, SELECTED_SEGS_CMIMF, None, None, False)]
-@pytest.mark.parametrize('data, use_oss_defaults, selected_segs ,psf_center, catalog_countrate,    override_bright_guiding',
+@pytest.mark.parametrize('data, use_oss_defaults, selected_segs ,psf_center, catalog_countrate, override_bright_guiding',
                          oss_defaults_parameters)
 def test_oss_defaults(test_directory, data, use_oss_defaults, selected_segs, psf_center, catalog_countrate,
                       override_bright_guiding):
