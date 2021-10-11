@@ -63,7 +63,7 @@ class SegmentGuidingDialog(QDialog):
         RA of guide star
     dec :  optional, float
         DEC of guide star
-    threshold : optional, float
+    threshold_factor : optional, float
         Count rate uncertainty factor
     detector : optional, str
         NIRCam detector used for default combobox
@@ -110,7 +110,7 @@ class SegmentGuidingDialog(QDialog):
         self.lineEdit_observationNumber.setText(str(observation_num))
         self.lineEdit_visitNumber.setText(str(visit_num))
 
-        # Setting for POFs
+        # Setting for SOFs
         if override_type == "SOF":
             try:
                 # Setting only for SOF, not POF

@@ -133,9 +133,10 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         Populate the DHAS files with the default numbers OSS would use. Should
         only be True when testing photometry override files
     override_bright_guiding: bool
-        If the user wants to guarentee that their provided threshold factor will be used, regardless of the
-        3x3 count rate, they will set this parameter to True. When set to False, if the 3x3 count rate is
-        above the OSS trigger, the threshold and threshold factors will be replaced.
+        If the user wants to guarantee that their provided threshold factor will be used,
+        regardless of the 3x3 count rate, they will set this parameter to True. When set
+        to False, if the 3x3 count rate is above the OSS trigger, the threshold and
+        threshold factors will be replaced.
     logger_passed : bool, optional
         Denotes if a logger object has already been generated.
     log_filename : str, optional
@@ -270,7 +271,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         # Loop through thresholds for multiple configs and pick largest
         max_thresh_factor = np.max(threshold_factor_per_config)
         if len(np.unique(threshold_factor_per_config)) != 1:
-            LOGGER.info(f"FSW File Writing: The selections provided, had more than one required threshold factor. Using the largest threshold factor: {max_thresh_factor}")
+            LOGGER.info(f"FSW File Writing: The selections provided had more than one required threshold factor. Using the largest threshold factor: {max_thresh_factor}")
 
         # Write out the files with the new count rate threshold
         for fgs_files_obj in fgs_files_objs:
