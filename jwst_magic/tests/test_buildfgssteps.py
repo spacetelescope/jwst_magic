@@ -331,6 +331,7 @@ def test_rewrite_prc(open_image, test_directory):
     thresh_factor = 0.5
     shifted = True
     step = 'ACQ1'
+    override_bright_guiding = True
 
     # Copy file for testing
     os.makedirs(os.path.join(TEST_DIRECTORY, 'FGS_imgs'))
@@ -360,7 +361,8 @@ def test_rewrite_prc(open_image, test_directory):
         buildsteps_prc = file.read()
 
     # Run rewrite_prc
-    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted)
+    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted,
+                override_bright_guiding)
 
     # Check for output files
     shifted_guiding_selections2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2',

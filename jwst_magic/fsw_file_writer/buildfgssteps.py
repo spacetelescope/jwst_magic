@@ -189,7 +189,7 @@ class BuildFGSSteps(object):
             self.xarr, self.yarr = np.loadtxt(guiding_selections_file)
             self.countrate = []
             for xa, ya, in zip(self.xarr, self.yarr):
-                self.countrate.append(utils.countrate_3x3(xa, ya, self.input_im))
+                self.countrate.append(utils.get_countrate_3x3(xa, ya, self.input_im))
         else:
             self.yarr, self.xarr, self.countrate = np.loadtxt(guiding_selections_file,
                                                               delimiter=' ',
@@ -209,6 +209,9 @@ class BuildFGSSteps(object):
 
         # Overwrite threshold with OSS default values for the POF case
         if self.use_oss_defaults:
+            if len(self.xarr) != 1:
+                raise ValueError('Trying to apply OSS defaults to non-POF case (with multiple star selections)')
+
             if self.catalog_countrate is None:
                 raise ValueError('When creating FSW files with the OSS defaults (use_oss_defaults=True), you'
                                  'must pass in the catalog_countrate of the guide star as well.')
@@ -216,15 +219,12 @@ class BuildFGSSteps(object):
             countrate_3x3 = self.catalog_countrate * COUNTRATE_CONVERSION
             self.countrate = np.asarray([countrate_3x3])
 
-        if len(self.xarr) != 1 and self.use_oss_defaults:
-            raise ValueError('Trying to apply OSS defaults to non-POF case (with multiple star selections)')
-
         if len(self.xarr) == 1 and not self.use_oss_defaults:
             # If we are making a POF and NOT using use OSS defaults, we want to make sure that the
             # user-defined threshold is used
             self.override_bright_guiding = True
 
-        self.threshold, self.thresh_factor = bright_guiding_check(self.countrate,
+        self.threshold, self.thresh_factor = bright_guiding_check(np.asarray(self.countrate),
                                                                   self.thresh_factor,
                                                                   normal_ops=self.use_oss_defaults,
                                                                   override_bright_guiding=self.override_bright_guiding)
