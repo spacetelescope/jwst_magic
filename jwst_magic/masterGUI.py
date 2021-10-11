@@ -547,8 +547,10 @@ class MasterGui(QMainWindow):
                                                                                  ', '.join([str(c) for c in ind[1:]])))
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold=threshold,
-                                    shifted=shift_id_attitude)
+            threshold_factor = float(self.lineEdit_threshold.text())
+            rewrite_prc.rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir,
+                                    thresh_factor=threshold_factor, shifted=shift_id_attitude,
+                                    override_bright_guiding=override_bright_guiding)
 
             # Update converted image preview
             self.update_filepreview(new_guiding_selections=True)
