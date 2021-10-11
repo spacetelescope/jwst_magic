@@ -183,10 +183,10 @@ class Mkproc(object):
 
             file_out.write('@IFGS_GUIDESTAR {0}, DFT, {1:12.4f}, {2:12.4f}, \
                             {3:12.4f}, {4:12.4f}'.format(self.guider,
-                                                    xangle[0],
-                                                    yangle[0],
-                                                    float(count_rates[0]),
-                                                    float(threshold[0])))
+                                                         xangle[0],
+                                                         yangle[0],
+                                                         float(count_rates[0]),
+                                                         float(threshold[0])))
             file_out.write(eol)
 
             self.write_from_template(self.template_b, file_out)
@@ -201,11 +201,11 @@ class Mkproc(object):
                 for istar in range(1, nref):
                     file_out.write('@IFGS_REFSTAR {0}, {1:5d}, {2:12.6f}, \
                                    {3:12.6f}, {4:12.4f}, {5:12.4f}'.format(self.guider,
-                                                                     int(istar),
-                                                                     xangle[istar],
-                                                                     yangle[istar],
-                                                                     float(count_rates[istar]),
-                                                                     float(threshold[istar])))
+                                                                           int(istar),
+                                                                           xangle[istar],
+                                                                           yangle[istar],
+                                                                           float(count_rates[istar]),
+                                                                           float(threshold[istar])))
                     file_out.write(eol)
                     self.write_from_template(self.template_d, file_out)
 
@@ -213,11 +213,11 @@ class Mkproc(object):
                 # written outside of the for loop
                 file_out.write('@IFGS_REFSTAR {0}, {1:5d}, {2:12.6f}, {3:12.6f}, \
                                {4:12.4f},{5:12.4f}'.format(self.guider,
-                                                     int(nref),
-                                                     xangle[nref],
-                                                     yangle[nref],
-                                                     float(counts[nref]),
-                                                     float(threshold[nref])))
+                                                           int(nref),
+                                                           xangle[nref],
+                                                           yangle[nref],
+                                                           float(count_rates[nref]),
+                                                           float(threshold[nref])))
                 file_out.write(eol)
 
                 self.write_from_template(self.template_e, file_out)
@@ -282,8 +282,8 @@ class Mkproc(object):
             # Write guide star coordinates
             file_out.write('@IFGS_GUIDESTAR {0}, 2, {1:12.4f}, {2:12.4f}, \
                            {3:12.4f}, {4:12.4f}'.format(self.guider, float(gs_xangle),
-                                                     float(gs_yangle), float(count_rates),
-                                                     float(threshold)))
+                                                        float(gs_yangle), float(count_rates),
+                                                        float(threshold)))
 
             self.write_from_template(self.template_b, file_out)
 
@@ -312,7 +312,7 @@ class Mkproc(object):
                      os.path.join(self.out_dir, self.ground_system_dir))
         LOGGER.info("Successfully wrote: {}".format(os.path.join(
             self.out_dir, self.ground_system_dir, '{0}_G{1}_ACQ.prc'.format(root,
-                                                                     guider)
+                                                                            guider)
         )
         ))
 

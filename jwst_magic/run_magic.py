@@ -233,10 +233,12 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             fgs_countrate = None
 
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
-        threshold_factor_per_config = []
-        fgs_files_objs = []
-        for guiding_selections_file in guiding_selections_path_list:
+        if steps is None:
+            steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
 
+        threshold_factor_per_config = []
+        fgs_files_objs = [] #np.empty((len(guiding_selections_path_list), len(steps)))
+        for i, guiding_selections_file in enumerate(guiding_selections_path_list):
             # Change out_dir to write data to guiding_config_#/ sub-directory next to the selections file
             if 'guiding_config' in guiding_selections_file:
                 out_dir_fsw = os.path.join(out_dir, 'guiding_config_{}'.format(
@@ -254,10 +256,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                 guiding_selections_file_fsw = guiding_selections_file
                 psf_center_file_fsw = psf_center_file
 
-            if steps is None:
-                steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
-
-            for step in steps:
+            for j, step in enumerate(steps):
                 fgs_files_obj = buildfgssteps.BuildFGSSteps(
                     fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, thresh_factor=thresh_factor,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
@@ -274,10 +273,14 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             LOGGER.info(f"FSW File Writing: The selections provided had more than one required threshold factor. Using the largest threshold factor: {max_thresh_factor}")
 
         # Write out the files with the new count rate threshold
-        for fgs_files_obj in fgs_files_objs:
-            fgs_files_obj.threshold = max_thresh_factor * fgs_files_obj.countrate
-            write_files.write_all(fgs_files_obj)
-        LOGGER.info(f"*** Finished FSW File Writing for {len(guiding_selections_path_list)} selections ***")
+        k = 0
+        for i, guiding_selections_file in enumerate(guiding_selections_path_list):
+            for step in steps:
+                fgs_files_obj = fgs_files_objs[k]
+                fgs_files_obj.threshold = max_thresh_factor * fgs_files_obj.countrate
+                write_files.write_all(fgs_files_obj)
+                k += 1
+            LOGGER.info(f"*** Finished FSW File Writing for Selection #{i+1} ***")
 
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
 
