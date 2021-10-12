@@ -27,12 +27,12 @@ One of the main features of MAGIC is that it allows the user to determine the gu
    ![Flight Software file writer section for the Main GUI](./figs/figure8_main_fsw_write.png)
 
    1. Ensure the **Flight Software (FSW) File Writer** box is checked.
-   2. Enter in the threshold (i.e. count rate uncertainty factor) which is the degree of uncertainty in the count rate of each segment For example, an uncertainty factor of 0.9 for a star with a count rate of 1,000 writes an uncertainty of 900.
+   2. Enter in the threshold (i.e. count rate uncertainty factor) which is the degree of uncertainty in the count rate of each segment For example, an uncertainty factor of 0.9 for a star with a count rate of 1,000 writes an uncertainty of 900. Not that if the 3x3 count rate of the guide star PSF is greater that the currently accepted bright guiding limit, then the count rate threshold factor will be overwritten by a calculated threshold factor that allow the selection to pass through ID and ACQ. For multiple guiding selections, the largest threshold factor will be selected. If the user does not want their threshold value to be overwritten, they can check the **Don't allow threshold to be overwritten for a bright star** box.
    3. Check that all of the *necessary FGS steps* are selected.
       1. For general guiding, this includes all of the operational steps: ID, ACQ, and TRK. (These are the default selections.)
       2. For calibration observations, add the CAL step.
    4. If you want to shift your image so that the selected guide star is moved to the center of the image, ensure the **Place the guide star at the ID attitude** box is checked. This will place the guide star at the ID attitude at (Ideal X, Ideal Y) = (0, 0).
-   5. If you are testing data for a possible photometry override file and you want the data written to the FSW products to be the default values OSS would use if there were no POF submitted, check the **Use Default OSS Numbers** box. Be sure to have guide star information populated in the Image Conversion section, even if you keep the **Normalize** box unchecked.
+   5. If you are testing data for a possible photometry override file and you want the data written to the FSW products to be the default values OSS would use if there were no POF submitted, check the **Use Default OSS Numbers** box. However, if you have only selected one guide star with no reference stars, and do *not* check the **Use OSS Defaults** box, even if the guide star is above the bright star trigger, the code will still not overwrite the user-defined threshold, since it assumes the threshold was confirmed via DHAS testing. Be sure to have guide star information populated in the Image Conversion section, even if you keep the **Normalize** box unchecked.
 
 3. Run the tool
 
@@ -57,6 +57,8 @@ One of the main features of MAGIC is that it allows the user to determine the gu
    8. When you are happy with your selections, click **Done**  
 
    The output files will be located in the specified out directory, including the `guiding_selections` file that will include X/Y pixel coordinates and the 3x3 count rate sum around the bright pixel in the selected PSFs.
+
+   All of the .fits and .dat files that are written to the `dhas_` and `ground_system_` directories have had the counts in those images capped at 65,535. All .fits files in the `stsci_` directory have not had such a cap applied (with the singular exception of the LOSTRK.fits file).
 
 ---------------------------------
 

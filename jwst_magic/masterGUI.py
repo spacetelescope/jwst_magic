@@ -504,6 +504,11 @@ class MasterGui(QMainWindow):
         # For the POF case, create DHAS files using the default OSS numbers
         use_oss_defaults = self.checkBox_OSS.isChecked()
 
+        # For the case where, regardless of the brightness of the PSF, we want to use the user-defined threshold
+        override_bright_guiding = self.checkBox_forcethreshold.isChecked()
+        if use_oss_defaults and override_bright_guiding:
+            raise ValueError('Cannot use Default OSS Numbers and overwrite the bright guiding functionality at the same time. Please check only one, or neither, button.')
+
         # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
             # If use_oss_numbers if also checked, raise an error (needs catalog countrate information)
@@ -542,8 +547,10 @@ class MasterGui(QMainWindow):
                                                                                  ', '.join([str(c) for c in ind[1:]])))
 
             # Rewrite the id.prc and acq.prc files
-            rewrite_prc.rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold=threshold,
-                                    shifted=shift_id_attitude)
+            threshold_factor = float(self.lineEdit_threshold.text())
+            rewrite_prc.rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir,
+                                    thresh_factor=threshold_factor, shifted=shift_id_attitude,
+                                    override_bright_guiding=override_bright_guiding)
 
             # Update converted image preview
             self.update_filepreview(new_guiding_selections=True)
@@ -556,7 +563,8 @@ class MasterGui(QMainWindow):
             if not all(hasattr(self, attr) for attr in ["program_id", "observation_num", "visit_num"]):
                 self.program_id, self.observation_num, self.visit_num = '', '', ''
             if not all(hasattr(self, attr) for attr in ["gs_id", "gs_ra", "gs_dec"]):
-                self.gs_id, self.gs_ra, self.gs_dec = '', '', ''
+                self.gs_id, self.gs_ra, self.gs_dec= '', '', '', ''
+            threshold_factor = self.lineEdit_threshold.text()
 
             # Check if this is a photometry only override file or segment override file
             if self.radioButton_photometryOverride.isChecked():
@@ -567,7 +575,7 @@ class MasterGui(QMainWindow):
 
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
-                                       "POF", None, self.program_id, self.observation_num, self.visit_num, log=None
+                                       "POF", None, self.program_id, self.observation_num, self.visit_num, threshold_factor=threshold_factor, log=None
                 )
                 # Generate the file
                 segment_guiding.generate_photometry_override_file(
@@ -619,7 +627,7 @@ class MasterGui(QMainWindow):
                 # Initialize the dialog
                 self._test_sg_dialog = segment_guiding.SegmentGuidingGUI.SegmentGuidingDialog(
                     "SOF", guider, self.program_id, self.observation_num, self.visit_num,
-                    ra=self.gs_ra, dec=self.gs_dec, threshold=float(self.lineEdit_threshold.text()),
+                    ra=self.gs_ra, dec=self.gs_dec, threshold_factor=threshold_factor,
                     detector=str(self.comboBox_detector.currentText())[:2], log=None
                 )
 
@@ -656,36 +664,39 @@ class MasterGui(QMainWindow):
 
         # Run MAGIC
         if convert_im or star_selection or file_writer:
-            run_magic.run_all(input_image, guider,
-                              root=root,
-                              norm_value=norm_value,
-                              norm_unit=norm_unit,
-                              nircam_det=nircam_det,
-                              nircam=nircam,
-                              smoothing=smoothing,
-                              steps=steps,
-                              guiding_selections_file=in_file,
-                              bkgd_stars=bkgd_stars,
-                              bkgrdstars_hdr=bkgrdstars_hdr,
-                              out_dir=out_dir,
-                              convert_im=convert_im,
-                              star_selection=star_selection,
-                              file_writer=file_writer,
-                              masterGUIapp=self.app,
-                              copy_original=copy_original,
-                              normalize=normalize,
-                              coarse_pointing=coarse_point,
-                              jitter_rate_arcsec=jitter_rate_arcsec,
-                              itm=itm,
-                              shift_id_attitude=shift_id_attitude,
-                              thresh_factor=threshold,
-                              use_oss_defaults=use_oss_defaults,
-                              logger_passed=LOGGER,
-                              log_filename=self.log_filename
-                              )
+            threshold_factor = run_magic.run_all(input_image, guider,
+                                                 root=root,
+                                                 norm_value=norm_value,
+                                                 norm_unit=norm_unit,
+                                                 nircam_det=nircam_det,
+                                                 nircam=nircam,
+                                                 smoothing=smoothing,
+                                                 steps=steps,
+                                                 guiding_selections_file=in_file,
+                                                 bkgd_stars=bkgd_stars,
+                                                 bkgrdstars_hdr=bkgrdstars_hdr,
+                                                 out_dir=out_dir,
+                                                 convert_im=convert_im,
+                                                 star_selection=star_selection,
+                                                 file_writer=file_writer,
+                                                 masterGUIapp=self.app,
+                                                 copy_original=copy_original,
+                                                 normalize=normalize,
+                                                 coarse_pointing=coarse_point,
+                                                 jitter_rate_arcsec=jitter_rate_arcsec,
+                                                 itm=itm,
+                                                 shift_id_attitude=shift_id_attitude,
+                                                 thresh_factor=threshold,
+                                                 use_oss_defaults=use_oss_defaults,
+                                                 override_bright_guiding=override_bright_guiding,
+                                                 logger_passed=LOGGER,
+                                                 log_filename=self.log_filename
+                                                 )
 
             # Update converted image preview
             self.update_filepreview(new_guiding_selections=True)
+            if threshold_factor is not None:
+                self.lineEdit_threshold.setText(str(threshold_factor))
 
     def update_groupBox_fileWriter(self):
         """Enable/disable items in FSW group box"""
@@ -1676,7 +1687,7 @@ class MasterGui(QMainWindow):
 
     def update_filepreview(self, new_guiding_selections=False):
         """
-        If either: 
+        If either:
           1) manual naming is selected and the root, out_dir, and guider have been defined, or
           2) commissioning naming is selected and the practice, CAR, and observation have
               been selected

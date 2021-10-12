@@ -354,7 +354,7 @@ def test_SOF_parameters_dialog():
     )
 
 
-pof_dialog_parameters = [('1142', '8', '2', None, None, (None, '1142', '8', '2', None, 0.0, 0.01)),
+pof_dialog_parameters = [('1142', '8', '2', None, None, (None, '1142', '8', '2', None, 0.0, 0.6)),
                          ('1142', '8', '2', 0.0123, 0.50, (None, '1142', '8', '2', None, 0.0123, 0.50))]
 @pytest.mark.parametrize('program_id, obs_num, visit_num, countrate_factor, countrate_uncertainty_factor, out_params', pof_dialog_parameters)
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -370,7 +370,7 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     if countrate_factor is not None:
         segment_guiding_dialog.doubleSpinBox_countrateFactor.setValue(countrate_factor)
     if countrate_uncertainty_factor is not None:
-        segment_guiding_dialog.doubleSpinBox_countrateUncertaintyFactor.setValue(countrate_uncertainty_factor)
+        segment_guiding_dialog.lineEdit_countrateUncertaintyFactor.setText(str(countrate_uncertainty_factor))
 
     # Schedule press of "Ok" button
     ok_button = segment_guiding_dialog.buttonBox.button(QDialogButtonBox.Ok)
@@ -467,14 +467,14 @@ Guide Star RA : 90.970800
 Guide Star Dec: -67.357800
 V3 PA @ GS    : 157.123400
 
-  Star Name  |    File ID   |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |     Raw X    |     Raw Y    
+  Star Name  |    File ID   |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |     Raw X    |     Raw Y
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-star1        | 1            | 1            | 90.987859    | -67.354849   | 12.575468    | -22.523923   | -12.575468   | -22.523923   | 1345.000000  | 840.000000   
-star2        | 4            | 4            | 90.986049    | -67.361953   | -0.034266    | 0.035029     | 0.034266     | 0.035029     | 1023.000000  | 1024.000000  
-ref_only1    | 2            | 2            | 90.986954    | -67.358401   | 6.270601     | -11.244447   | -6.270601    | -11.244447   | 1184.000000  | 932.000000   
-ref_only2    | 3            | 3            | 90.980300    | -67.352779   | 6.133539     | -33.733341   | -6.133539    | -33.733341   | 1505.000000  | 934.000000   
-ref_only3    | 5            | 18           | 90.954105    | -67.360775   | -38.274653   | -22.173629   | 38.274653    | -22.173629   | 1340.000000  | 1582.000000  
-ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -19.291522   | -33.663282   | 19.291522    | -33.663282   | 1504.000000  | 1305.000000  
+star1        | 1            | 1            | 90.987859    | -67.354849   | 12.575468    | -22.523923   | -12.575468   | -22.523923   | 1345.000000  | 840.000000
+star2        | 4            | 4            | 90.986049    | -67.361953   | -0.034266    | 0.035029     | 0.034266     | 0.035029     | 1023.000000  | 1024.000000
+ref_only1    | 2            | 2            | 90.986954    | -67.358401   | 6.270601     | -11.244447   | -6.270601    | -11.244447   | 1184.000000  | 932.000000
+ref_only2    | 3            | 3            | 90.980300    | -67.352779   | 6.133539     | -33.733341   | -6.133539    | -33.733341   | 1505.000000  | 934.000000
+ref_only3    | 5            | 18           | 90.954105    | -67.360775   | -38.274653   | -22.173629   | 38.274653    | -22.173629   | 1340.000000  | 1582.000000
+ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -19.291522   | -33.663282   | 19.291522    | -33.663282   | 1504.000000  | 1305.000000
 '''.split('\n')
 
     with open(report_file) as f:

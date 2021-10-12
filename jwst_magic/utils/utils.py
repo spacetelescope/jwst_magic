@@ -380,13 +380,14 @@ def find_dist_between_points(coords):
     return dists
 
 
-def correct_image(image, upper_threshold=65000, upper_limit=65000):
+def correct_image(image, upper_threshold=None, upper_limit=None):
     """
     Correct image for negative and saturated pixels
     """
     img = np.copy(image)
     img[img < 0] = 0.            # neg pixs -> 0
-    img[img >= upper_threshold] = upper_limit    # sat'd pixs -> 65K
+    if (upper_threshold is not None) and (upper_limit is not None):
+        img[img >= upper_threshold] = upper_limit
     img[np.isfinite(img) == 0] = 0.
 
     return img
@@ -447,8 +448,6 @@ def get_countrate_3x3(x, y, data):
     Using the coordinates of each PSF, place a 3x3 box around center pixel and sum
     the countrate of the pixels in this box.
     """
-    data = correct_image(data)
-    data = np.uint16(data)
     x = int(x)
     y = int(y)
 

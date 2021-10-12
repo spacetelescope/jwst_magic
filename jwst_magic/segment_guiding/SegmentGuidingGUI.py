@@ -63,7 +63,7 @@ class SegmentGuidingDialog(QDialog):
         RA of guide star
     dec :  optional, float
         DEC of guide star
-    threshold : optional, float
+    threshold_factor : optional, float
         Count rate uncertainty factor
     detector : optional, str
         NIRCam detector used for default combobox
@@ -76,7 +76,7 @@ class SegmentGuidingDialog(QDialog):
         countrate_factor)
     """
     def __init__(self, override_type, guider, program_id, observation_num, visit_num, ra=None, dec=None,
-                 log=None, threshold=None, detector=None):
+                 log=None, threshold_factor=None, detector=None):
         # Initialize attributes
         self.override_type = override_type
         self.guider = guider
@@ -86,6 +86,9 @@ class SegmentGuidingDialog(QDialog):
         self.ra = ra
         self.dec = dec
         self.detector = detector if detector is not None else 'A3'
+        if threshold_factor in ['', None]:
+            # If we don't have this value from somewhere else, default to 0.6
+            threshold_factor = 0.6
 
         # Start logger
         if log is None:
@@ -107,15 +110,25 @@ class SegmentGuidingDialog(QDialog):
         self.lineEdit_observationNumber.setText(str(observation_num))
         self.lineEdit_visitNumber.setText(str(visit_num))
 
-        # Setting only for SOF, not POF
-        try:
-            self.lineEdit_RA.setText(str(ra if ra is not None else ''))
-            self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
-            self.lineEdit_countrateUncertainty.setText(str(threshold if threshold is not None else 0.6))
-            index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
-            self.comboBox_detector.setCurrentIndex(index)
-        except AttributeError:
-            pass
+        # Setting for SOFs
+        if override_type == "SOF":
+            try:
+                # Setting only for SOF, not POF
+                self.lineEdit_RA.setText(str(ra if ra is not None else ''))
+                self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
+                self.lineEdit_countrateUncertainty.setText(str(threshold_factor))
+                index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
+                self.comboBox_detector.setCurrentIndex(index)
+
+            except AttributeError:
+                pass
+
+        # Setting for POFs
+        elif override_type == "POF":
+            try:
+                self.lineEdit_countrateUncertaintyFactor.setText(str(threshold_factor))
+            except AttributeError:
+                pass
 
     def get_dialog_parameters(self):
         """Parses the user input into the segment guiding dialog box, differentiating
@@ -182,7 +195,7 @@ class SegmentGuidingDialog(QDialog):
 
         elif self.override_type == "POF":
             countrate_factor = float(self.doubleSpinBox_countrateFactor.value())
-            countrate_uncertainty_factor = float(self.doubleSpinBox_countrateUncertaintyFactor.value())
+            countrate_uncertainty_factor = float(self.lineEdit_countrateUncertaintyFactor.text())
             threshold_factor = None
             guide_star_params_dict = None
 
@@ -262,8 +275,8 @@ def check_override_overwrite(out_dir, program_id, observation_num, visit_num,
         # Compare integers if only 1 (or no) obs
         if not plural_obs_num and not plural_obs_num_match:
             match = (int(prog) == int(program_id) and
-                    int(obs) == int(observation_num) and
-                    int(visit) == int(visit_num))
+                     int(obs) == int(observation_num) and
+                     int(visit) == int(visit_num))
         # Compare the observation string if more than one obs specified
         else:
             match = (int(prog) == int(program_id) and

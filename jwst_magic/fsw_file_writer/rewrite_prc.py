@@ -54,7 +54,7 @@ from jwst_magic.utils import utils
 LOGGER = logging.getLogger(__name__)
 
 
-def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold, shifted):
+def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, thresh_factor, shifted, override_bright_guiding):
     """For a given dataset, rewrite the PRC and guiding_selections*.txt to select a
     new commanded guide star and reference stars
 
@@ -73,8 +73,8 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
         jwst_magic/
-    threshold : float
-        Threshold to use in prc files
+    thresh_factor : float
+        thresh_factor used to determine the threshold uses in star/prc files
     shifted : bool
         If the image has been chosen to be shifted to the ID attitude
 
@@ -168,9 +168,10 @@ def rewrite_prc(inds_list, center_of_pointing, guider, root, out_dir, threshold,
         # Rewrite CECIL proc file
         for step in ['ID', 'ACQ1', 'ACQ2', 'TRK']:
             fgs_files_obj = buildfgssteps.BuildFGSSteps(
-                fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, thresh_factor=threshold,
+                fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, thresh_factor=thresh_factor,
                 logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                 psf_center_file=psf_center_file_fsw, shift_id_attitude=shifted,
+                override_bright_guiding=override_bright_guiding
             )
 
             filename_root = '{}_G{}_{}'.format(root, guider, step)
