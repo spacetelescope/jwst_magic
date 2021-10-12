@@ -178,7 +178,7 @@ for guider in [1, 2]:
     for step in ['CAL', 'ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']:
         g = 'guider{}'.format(guider)
         correct_count_rate_parameters.append((guider, step,
-                                                  test_data[g][step]))
+                                              test_data[g][step]))
 @pytest.mark.parametrize('guider, step, correct_data_dict', correct_count_rate_parameters)
 def test_correct_count_rate(open_image, test_directory, guider, step, correct_data_dict):
     """Check that image data is being generated with counts and count
@@ -274,29 +274,43 @@ def test_psf_center_file(test_directory):
     assert fileobj_acq1.countrate == fileobj_trk.countrate
 
 
-oss_defaults_parameters = [100000, 1000000]
-@pytest.mark.parametrize('catalog_countrate', oss_defaults_parameters)
-def test_oss_defaults(test_directory, catalog_countrate):
+oss_defaults_parameters = [(CONVERTED_NIRCAM_IM_MIMF, True, SELECTED_SEGS_MIMF, PSF_CENTER_MIMF, 100000, False),
+                           (CONVERTED_NIRCAM_IM_MIMF, True, SELECTED_SEGS_MIMF, PSF_CENTER_MIMF, 1000000, False),
+                           (CONVERTED_NIRCAM_IM_MIMF, False, SELECTED_SEGS_MIMF, PSF_CENTER_MIMF, 100000, False),
+                           (FGS_CMIMF_IM, False, SELECTED_SEGS_CMIMF, None, None, True),
+                           (FGS_CMIMF_IM, False, SELECTED_SEGS_CMIMF, None, None, False)]
+@pytest.mark.parametrize('data, use_oss_defaults, selected_segs ,psf_center, catalog_countrate, override_bright_guiding',
+                         oss_defaults_parameters)
+def test_oss_defaults(test_directory, data, use_oss_defaults, selected_segs, psf_center, catalog_countrate,
+                      override_bright_guiding):
     """Test that when use_oss_defaults is set to True, the attributes
     of the file object (which will be used when writing out all FSW files)
     are set appropriatly.
     """
-    image = fits.getdata(CONVERTED_NIRCAM_IM_MIMF, 0)
+    image = fits.getdata(data)
     guider = 1
-    use_oss_defaults = True
 
     fileobj = BuildFGSSteps(
-        image, guider, ROOT, step='ID', guiding_selections_file=SELECTED_SEGS_MIMF,
-        out_dir=TEST_DIRECTORY, psf_center_file=PSF_CENTER_MIMF, shift_id_attitude=False,
-        use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate)
+        image, guider, ROOT, step='ID', guiding_selections_file=selected_segs,
+        out_dir=TEST_DIRECTORY, psf_center_file=psf_center, shift_id_attitude=False,
+        use_oss_defaults=use_oss_defaults, catalog_countrate=catalog_countrate,
+        override_bright_guiding=override_bright_guiding)
 
+    if len(fileobj.xarr) == 1 and not use_oss_defaults:
+        override_bright_guiding = True
     # Compare the countrate and threshold to what's expected
-    assert fileobj.countrate == catalog_countrate * COUNTRATE_CONVERSION
-
-    if catalog_countrate < OSS_TRIGGER:
-        assert fileobj.threshold == catalog_countrate * COUNTRATE_CONVERSION * DIM_STAR_THRESHOLD_FACTOR
+    if use_oss_defaults:
+        dim_star_threshold_factor = DIM_STAR_THRESHOLD_FACTOR
     else:
-        assert fileobj.threshold == (catalog_countrate * COUNTRATE_CONVERSION) - BRIGHT_STAR_THRESHOLD_ADDEND
+        dim_star_threshold_factor = fileobj.thresh_factor
+
+    if use_oss_defaults:
+        assert fileobj.countrate == catalog_countrate * COUNTRATE_CONVERSION
+
+    if fileobj.countrate[0] < OSS_TRIGGER or override_bright_guiding:
+        assert fileobj.threshold[0] == fileobj.countrate[0] * dim_star_threshold_factor
+    else:
+        assert fileobj.threshold[0] == fileobj.countrate[0] - BRIGHT_STAR_THRESHOLD_ADDEND
 
 
 def test_rewrite_prc(open_image, test_directory):
@@ -317,6 +331,7 @@ def test_rewrite_prc(open_image, test_directory):
     thresh_factor = 0.5
     shifted = True
     step = 'ACQ1'
+    override_bright_guiding = True
 
     # Copy file for testing
     os.makedirs(os.path.join(TEST_DIRECTORY, 'FGS_imgs'))
@@ -346,7 +361,8 @@ def test_rewrite_prc(open_image, test_directory):
         buildsteps_prc = file.read()
 
     # Run rewrite_prc
-    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted)
+    rewrite_prc(inds_list, center_of_pointing, guider, ROOT, __location__, thresh_factor, shifted,
+                override_bright_guiding)
 
     # Check for output files
     shifted_guiding_selections2 = os.path.join(TEST_DIRECTORY, 'guiding_config_2',

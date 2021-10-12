@@ -66,7 +66,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             bkgrdstars_hdr=None, out_dir=None, convert_im=True,
             star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
-            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False,
+            shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False, override_bright_guiding=False,
             logger_passed=False, log_filename=None):
     """
     This function will take any FGS or NIRCam image and create the outputs needed
@@ -132,6 +132,11 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     use_oss_defaults : bool
         Populate the DHAS files with the default numbers OSS would use. Should
         only be True when testing photometry override files
+    override_bright_guiding: bool
+        If the user wants to guarantee that their provided threshold factor will be used,
+        regardless of the 3x3 count rate, they will set this parameter to True. When set
+        to False, if the 3x3 count rate is above the OSS trigger, the threshold and
+        threshold factors will be replaced.
     logger_passed : bool, optional
         Denotes if a logger object has already been generated.
     log_filename : str, optional
@@ -228,8 +233,12 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             fgs_countrate = None
 
         # Shift the image and write out new fgs_im, guiding_selections, all_found_psfs, and psf_center files
-        for i, guiding_selections_file in enumerate(guiding_selections_path_list):
+        if steps is None:
+            steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
 
+        threshold_factor_per_config = []
+        fgs_files_objs = [] #np.empty((len(guiding_selections_path_list), len(steps)))
+        for i, guiding_selections_file in enumerate(guiding_selections_path_list):
             # Change out_dir to write data to guiding_config_#/ sub-directory next to the selections file
             if 'guiding_config' in guiding_selections_file:
                 out_dir_fsw = os.path.join(out_dir, 'guiding_config_{}'.format(
@@ -247,19 +256,36 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                 guiding_selections_file_fsw = guiding_selections_file
                 psf_center_file_fsw = psf_center_file
 
-            if steps is None:
-                steps = ['ID', 'ACQ1', 'ACQ2', 'LOSTRK']
-
-            for step in steps:
+            for j, step in enumerate(steps):
                 fgs_files_obj = buildfgssteps.BuildFGSSteps(
                     fgs_im_fsw, guider, root, step, out_dir=out_dir_fsw, thresh_factor=thresh_factor,
                     logger_passed=True, guiding_selections_file=guiding_selections_file_fsw,
                     psf_center_file=psf_center_file_fsw, shift_id_attitude=shift_id_attitude,
                     use_oss_defaults=use_oss_defaults, catalog_countrate=fgs_countrate,
+                    override_bright_guiding=override_bright_guiding
                 )
+                threshold_factor_per_config.append(fgs_files_obj.thresh_factor)
+                fgs_files_objs.append(fgs_files_obj)
+
+        # Loop through thresholds for multiple configs and pick largest
+        max_thresh_factor = np.max(threshold_factor_per_config)
+        if len(np.unique(threshold_factor_per_config)) != 1:
+            LOGGER.info(f"FSW File Writing: The selections provided had more than one required threshold factor. Using the largest threshold factor: {max_thresh_factor}")
+
+        # Write out the files with the new count rate threshold
+        k = 0
+        for i, guiding_selections_file in enumerate(guiding_selections_path_list):
+            for step in steps:
+                fgs_files_obj = fgs_files_objs[k]
+                fgs_files_obj.threshold = max_thresh_factor * fgs_files_obj.countrate
                 write_files.write_all(fgs_files_obj)
-            LOGGER.info("*** Finished FSW File Writing for Selection #{} ***".format(i+1))
+                k += 1
+            LOGGER.info(f"*** Finished FSW File Writing for Selection #{i+1} ***")
 
         LOGGER.info("*** FSW File Writing: COMPLETE ***")
 
     LOGGER.info("*** Run COMPLETE ***")
+    try:
+        return max_thresh_factor
+    except UnboundLocalError:
+        return None
