@@ -763,18 +763,27 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
     """
     # If we want to match the normal operations behavior of OSS
     if normal_ops and override_bright_guiding:
-        raise ValueError('Cannot use normal ops functionality and and overwrite the bright guiding functionality at the same time. Please use only one, or neither, flag.')
-    elif normal_ops:
+        raise ValueError('Cannot use normal ops functionality and and overwrite the bright guiding functionality at the same time. Please use only one, or neither')
+
+    if normal_ops:
         dim_star_threshold_factor = DIM_STAR_THRESHOLD_FACTOR
     else:
         dim_star_threshold_factor = threshold_factor
 
     # Check if the 3x3 count rate of the guide star is above the OSS trigger value
-    if (countrate_list[0] < OSS_TRIGGER) or override_bright_guiding:
+    if (countrate_list[0] < OSS_TRIGGER):
         threshold = countrate_list * dim_star_threshold_factor
     else:
-        threshold = countrate_list - BRIGHT_STAR_THRESHOLD_ADDEND
-        LOGGER.warning(f"The selected guide star triggers bright guiding so the user-defined threshold factor is being overwritten to {np.round(threshold[0]/countrate_list[0], 3)}")
+        bright_threshold = countrate_list - BRIGHT_STAR_THRESHOLD_ADDEND
+        # If the user wants to use their threshold no matter what
+        if override_bright_guiding:
+            threshold = countrate_list * threshold_factor
+            msg = f" but the user has forced a threshold factor of {threshold_factor}"
+        else:
+            msg = ""
+            threshold = bright_threshold
+
+        LOGGER.warning(f"The selected guide star triggers bright guiding. A successful threshold factor would be greater than or equal to {np.round(bright_threshold[0]/countrate_list[0], 3)}{msg}")
 
     # Based the count rate factor off of the guide star
     return threshold, np.round(threshold[0]/countrate_list[0], 3)
