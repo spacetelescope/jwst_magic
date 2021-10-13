@@ -234,7 +234,6 @@ def write_image(obj):
         # Create "full-frame" (rather than strips) image
         location = obj.stsci_dir
         filetype = 'ff.fits'
-        image = obj.image
     elif obj.step == 'LOSTRK':
         # Place the FITS file in stsci/, as it is just for reference
         # to the LOSTRK.dat file
@@ -243,7 +242,7 @@ def write_image(obj):
     else:
         location = obj.dhas_dir
         filetype = '.fits'
-        
+
     # Cut any pixels over saturation or under zero
     image = utils.correct_image(obj.image, upper_threshold=65535, upper_limit=65535)
 
