@@ -13,3 +13,5 @@ NIRCAM:
 FGS:
   GUIDER1: fgs_dq_G1.fits
   GUIDER2: fgs_dq_G2.fits
+  FGS1: fgs_dq_G1.fits
+  FGS2: fgs_dq_G2.fits
