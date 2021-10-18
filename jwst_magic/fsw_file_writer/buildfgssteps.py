@@ -775,10 +775,16 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
         threshold = countrate_list * dim_star_threshold_factor
     else:
         bright_threshold = countrate_list - BRIGHT_STAR_THRESHOLD_ADDEND
+        user_threshold = countrate_list * threshold_factor
+
         # If the user wants to use their threshold no matter what
         if override_bright_guiding:
-            threshold = countrate_list * threshold_factor
+            threshold = user_threshold
             msg = f" but the user has forced a threshold factor of {threshold_factor}"
+        # Check that the bright threshold is larger than user supplied threshold
+        elif user_threshold > bright_threshold:
+            threshold = user_threshold
+            msg =f". The user supplied a threshold that is larger than the suggestion, so a threshold of {threshold} will be applied."
         else:
             msg = ""
             threshold = bright_threshold
@@ -786,4 +792,4 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
         LOGGER.warning(f"The selected guide star triggers bright guiding. A successful threshold factor would be greater than or equal to {np.round(bright_threshold[0]/countrate_list[0], 3)}{msg}")
 
     # Based the count rate factor off of the guide star
-    return threshold, np.round(threshold[0]/countrate_list[0], 3)
+    return threshold, threshold[0]/countrate_list[0]
