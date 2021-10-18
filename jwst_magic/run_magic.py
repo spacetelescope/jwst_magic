@@ -277,8 +277,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         for i, guiding_selections_file in enumerate(guiding_selections_path_list):
             for step in steps:
                 fgs_files_obj = fgs_files_objs[k]
-                # For non-OSS cases ONLY, re-write threshold for each
-                if not use_oss_defaults:
+                # For cases where the threshold factor is allowed to change from one config to the next
+                if (not use_oss_defaults) or (not override_bright_guiding):
                     fgs_files_obj.threshold = max_thresh_factor * fgs_files_obj.countrate
                     fgs_files_obj.thresh_factor = max_thresh_factor
                 write_files.write_all(fgs_files_obj)
