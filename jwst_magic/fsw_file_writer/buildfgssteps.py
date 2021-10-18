@@ -784,7 +784,7 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
         # Check that the bright threshold is larger than user supplied threshold
         elif user_threshold > bright_threshold:
             threshold = user_threshold
-            msg =f". The user supplied a threshold that is larger than the suggestion, so a threshold of {threshold} will be applied."
+            msg = f". The user supplied a threshold that is larger than the suggestion, so a threshold of {threshold} will be applied."
         else:
             msg = ""
             threshold = bright_threshold
