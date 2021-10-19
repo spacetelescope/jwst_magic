@@ -31,6 +31,7 @@ import os
 # Third Party Imports
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+import numpy as np
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QDialog, QMessageBox, QWidget)
@@ -116,7 +117,7 @@ class SegmentGuidingDialog(QDialog):
                 # Setting only for SOF, not POF
                 self.lineEdit_RA.setText(str(ra if ra is not None else ''))
                 self.lineEdit_Dec.setText(str(dec if dec is not None else ''))
-                self.lineEdit_countrateUncertainty.setText(str(threshold_factor))
+                self.lineEdit_countrateUncertainty.setText(str(np.round(float(threshold_factor), 7)))
                 index = self.comboBox_detector.findText(f'NRC{self.detector}', Qt.MatchFixedString)
                 self.comboBox_detector.setCurrentIndex(index)
 
