@@ -219,11 +219,6 @@ class BuildFGSSteps(object):
             countrate_3x3 = self.catalog_countrate * COUNTRATE_CONVERSION
             self.countrate = np.asarray([countrate_3x3])
 
-        if len(self.xarr) == 1 and not self.use_oss_defaults:
-            # If we are making a POF and NOT using use OSS defaults, we want to make sure that the
-            # user-defined threshold is used
-            self.override_bright_guiding = True
-
         self.threshold, self.thresh_factor = bright_guiding_check(np.asarray(self.countrate),
                                                                   self.thresh_factor,
                                                                   normal_ops=self.use_oss_defaults,
@@ -775,15 +770,21 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
         threshold = countrate_list * dim_star_threshold_factor
     else:
         bright_threshold = countrate_list - BRIGHT_STAR_THRESHOLD_ADDEND
+        user_threshold = countrate_list * threshold_factor
+
         # If the user wants to use their threshold no matter what
         if override_bright_guiding:
-            threshold = countrate_list * threshold_factor
+            threshold = user_threshold
             msg = f" but the user has forced a threshold factor of {threshold_factor}"
+        # Check that the bright threshold is larger than user supplied threshold
+        elif user_threshold[0] > bright_threshold[0] and not normal_ops:
+            threshold = user_threshold
+            msg = f". The user supplied a threshold that is larger than the suggestion, so the user-supplied threshold factor of {threshold_factor} will be applied."
         else:
-            msg = ""
+            msg = ", which will be written out to the file"
             threshold = bright_threshold
 
-        LOGGER.warning(f"The selected guide star triggers bright guiding. A successful threshold factor would be greater than or equal to {np.round(bright_threshold[0]/countrate_list[0], 3)}{msg}")
+        LOGGER.warning(f"The selected guide star triggers bright guiding. A successful threshold factor was calculated to be greater than or equal to {np.round(bright_threshold[0]/countrate_list[0], 3)}{msg}")
 
     # Based the count rate factor off of the guide star
-    return threshold, np.round(threshold[0]/countrate_list[0], 3)
+    return threshold, threshold[0]/countrate_list[0]
