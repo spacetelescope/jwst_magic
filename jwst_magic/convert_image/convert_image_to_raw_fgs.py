@@ -996,9 +996,8 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             # FGS Full Frame -> use dq array is available (but no saturated flags), use DHAS mask 2nd
             # Padded TRK image -> have to use DHAS file (no dq array; TRK box is confirmed to be in the right spot)
         try:
-            sat = True if nircam else False  # include saturation flag only for NIRCam files
             dq_array = fits.getdata(input_im, extname='DQ')
-            dq_array, _ = utils.convert_bad_pixel_mask_data(dq_array, include_saturation=sat)
+            dq_array, _ = utils.convert_bad_pixel_mask_data(dq_array, nircam=nircam)
         except KeyError:
             dq_array = None
 

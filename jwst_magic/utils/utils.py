@@ -711,7 +711,7 @@ def setup_yaml():
     yaml.add_representer(OrderedDict, represent_dict_order)
 
 
-def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, include_saturation=True):
+def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
     """
     Converts a DQ data array from bit values to 1s and 0s. Pixels counted as bad
     in the new mask were originally do_not_use, saturated, dead, hot, telegraph,
@@ -719,7 +719,7 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, include_satur
 
     bad_pix_data: 2D DQ array
     bad_pix_values: list of bit values
-    include_saturation: bool to include saturation flag in new bad pixel mask
+    nircam: bool for if NIRCam data. True includes the do not use flag
     """
     # If bad_pix_values not passed, assume the CRDS system
     if bad_pix_values is None:
@@ -735,8 +735,8 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, include_satur
         'bad_ref_pix': 131072,
         'rc': 16384,
     }
-    if include_saturation:
-        pix_dict['saturated'] = 2
+    if nircam:
+        pix_dict['do_not_use'] = 1
 
     # Update file to be only 1s and 0s to match FGS
     data = np.zeros_like(bad_pix_data, dtype=np.uint8)
@@ -754,7 +754,7 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, include_satur
                     contents.append(value)
 
             # if the pixel contains a bad value, set the location to 1
-            # do_not_use, saturated, dead, hot, telegraph, bad_ref_pix, rc
+            # do_not_use (if nircam), dead, hot, telegraph, bad_ref_pix, rc
             if set(pix_dict.values()) & set(contents) != set():
                 data[i, j] = 1
 
@@ -766,7 +766,7 @@ def convert_nircam_bad_pixel_mask_files(filepath):
     Converts a NIRCam bad pixel mask file to a format MAGIC can use,
     switching from bit values to 1s and 0s, where 0s are good and
     1s are bad. Pixels counted as bad in the new mask were originally
-    do_not_use, saturated, dead, hot, telegraph, bad_ref_pix, and RC.
+    do_not_use, dead, hot, telegraph, bad_ref_pix, and RC.
     """
     # Read in file
     with fits.open(filepath) as bad_pix_hdu:
@@ -775,7 +775,7 @@ def convert_nircam_bad_pixel_mask_files(filepath):
         bad_pix_values = bad_pix_hdu[2].data['VALUE']
 
     # Update file to be only 1s and 0s to match FGS
-    data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, include_saturation=True)
+    data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, nircam=True)
 
     # Write header
     bad_pix_hdr['ORIGFILE'] = os.path.basename(filepath)
