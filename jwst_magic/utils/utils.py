@@ -711,7 +711,7 @@ def setup_yaml():
     yaml.add_representer(OrderedDict, represent_dict_order)
 
 
-def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, include_saturation=True):
+def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
     """
     Converts a DQ data array from bit values to 1s and 0s. Pixels counted as bad
     in the new mask were originally do_not_use, saturated, dead, hot, telegraph,
@@ -719,7 +719,7 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, include_satur
 
     bad_pix_data: 2D DQ array
     bad_pix_values: list of bit values
-    include_saturation: bool to include saturation flag in new bad pixel mask
+    nircam: bool for if NIRCam data. True includes saturation and do not use flag
     """
     # If bad_pix_values not passed, assume the CRDS system
     if bad_pix_values is None:
@@ -735,8 +735,9 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, include_satur
         'bad_ref_pix': 131072,
         'rc': 16384,
     }
-    if include_saturation:
+    if nircam:
         pix_dict['saturated'] = 2
+        pix_dict['do_not_use'] = 1
 
     # Update file to be only 1s and 0s to match FGS
     data = np.zeros_like(bad_pix_data, dtype=np.uint8)
@@ -775,7 +776,7 @@ def convert_nircam_bad_pixel_mask_files(filepath):
         bad_pix_values = bad_pix_hdu[2].data['VALUE']
 
     # Update file to be only 1s and 0s to match FGS
-    data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, include_saturation=True)
+    data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, nircam=True)
 
     # Write header
     bad_pix_hdr['ORIGFILE'] = os.path.basename(filepath)
