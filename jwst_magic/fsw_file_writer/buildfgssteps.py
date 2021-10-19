@@ -779,10 +779,11 @@ def bright_guiding_check(countrate_list, threshold_factor, normal_ops=False, ove
 
         # If the user wants to use their threshold no matter what
         if override_bright_guiding:
+
             threshold = user_threshold
             msg = f" but the user has forced a threshold factor of {threshold_factor}"
         # Check that the bright threshold is larger than user supplied threshold
-        elif user_threshold > bright_threshold:
+        elif user_threshold > bright_threshold and not normal_ops:
             threshold = user_threshold
             msg = f". The user supplied a threshold that is larger than the suggestion, so a threshold of {threshold} will be applied."
         else:
