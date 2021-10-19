@@ -719,7 +719,7 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
 
     bad_pix_data: 2D DQ array
     bad_pix_values: list of bit values
-    nircam: bool for if NIRCam data. True includes saturation and do not use flag
+    nircam: bool for if NIRCam data. True includes the do not use flag
     """
     # If bad_pix_values not passed, assume the CRDS system
     if bad_pix_values is None:
@@ -736,7 +736,6 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
         'rc': 16384,
     }
     if nircam:
-        pix_dict['saturated'] = 2
         pix_dict['do_not_use'] = 1
 
     # Update file to be only 1s and 0s to match FGS
@@ -755,7 +754,7 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
                     contents.append(value)
 
             # if the pixel contains a bad value, set the location to 1
-            # do_not_use, saturated, dead, hot, telegraph, bad_ref_pix, rc
+            # do_not_use (if nircam), dead, hot, telegraph, bad_ref_pix, rc
             if set(pix_dict.values()) & set(contents) != set():
                 data[i, j] = 1
 
@@ -767,7 +766,7 @@ def convert_nircam_bad_pixel_mask_files(filepath):
     Converts a NIRCam bad pixel mask file to a format MAGIC can use,
     switching from bit values to 1s and 0s, where 0s are good and
     1s are bad. Pixels counted as bad in the new mask were originally
-    do_not_use, saturated, dead, hot, telegraph, bad_ref_pix, and RC.
+    do_not_use, dead, hot, telegraph, bad_ref_pix, and RC.
     """
     # Read in file
     with fits.open(filepath) as bad_pix_hdu:
