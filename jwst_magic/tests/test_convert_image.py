@@ -81,7 +81,7 @@ def test_directory(test_dir=TEST_DIRECTORY):
 norm_parameters = [
     (NIRCAM_IM, 1, True, 2000000, 'FGS countrate', True, 2052.),
     (NIRCAM_IM, 2, True, 12, 'FGS Magnitude', True, 6445.),
-    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1812.),
+    (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1807.),
     (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 5770.),
     (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6445.),  # uses fgs_mag = 12 by default
     (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 141800.), # NRC contains TEST keyword - tests ped
