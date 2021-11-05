@@ -19,6 +19,7 @@ Use
         x_idl, y_idl = raw2idl(x_raw, y_raw)
 """
 
+from astropy import units as u
 import pysiaf
 
 # Open SIAF with pysiaf
@@ -226,3 +227,27 @@ def raw2sci(x_raw, y_raw, guider):
     y_sci -= 1
 
     return x_sci, y_sci
+
+
+def convert_sky_to_idl(gs_ra, gs_dec, pa, ra_list, dec_list, guider, oss=False):
+    """
+    Convert
+    """
+    detector = f'FGS{guider}_FULL_OSS' if oss else f'FGS{guider}_FULL'
+    fgs = pysiaf.Siaf('FGS')[detector]
+
+    # Guide segment information
+    gs_ra *= u.deg
+    gs_dec *= u.deg
+    pa *= u.deg
+
+    # The v2/v3 location of the guide segment on the detector - in the middle
+    v2 = fgs.V2Ref * u.arcsec
+    v3 = fgs.V3Ref * u.arcsec
+
+    attitude = pysiaf.rotations.attitude_matrix(v2, v3, gs_ra, gs_dec, pa)
+    fgs.set_attitude_matrix(attitude)
+
+    idl_x, idl_y = fgs.sky_to_idl(ra_list * u.deg, dec_list * u.deg)
+
+    return idl_x.round(decimals=7), idl_y.round(decimals=7)

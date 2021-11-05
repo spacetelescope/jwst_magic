@@ -13,11 +13,12 @@ Use
 import numpy as np
 import pytest
 
+from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.utils import coordinate_transforms
 
 PIXEL_COORDS = (1743.3, 241.9)
 ANGLE_COORDS = (-55.736935, 8.139518)
-
+PARAMETRIZED_DATA = parametrized_data()['test_segment_guiding']
 
 def test_idl2dhas():
     x_dhas, y_dhas = coordinate_transforms.idl2dhas(*ANGLE_COORDS)
@@ -65,3 +66,29 @@ def test_convert_boresight_to_v2v3():
         "V2 value does not match expected value for boresight offset."
     assert np.isclose(v2v3_offset[1], -4.4203823924000005), \
         "V3 value does not match expected value for boresight offset."
+
+
+def test_convert_sky_to_idl_function():
+    """Test the conversion of RA and Dec to Idl X and Y
+    as done in the segment guiding code for the guide
+    star REPORT.txt file
+    """
+    ra_seg = np.array([71.329352, 71.329352, 71.329352, 71.368611,
+                       71.390103, 71.350521, 71.382983, 71.358393])
+    dec_seg = np.array([-78.62446, -78.62446, -78.62446, -78.614016,
+                        -78.619765, -78.61443, -78.62308, -78.626784])
+    pa = 323
+
+    idl_x, idl_y = coordinate_transforms.convert_sky_to_idl(ra_seg[0], dec_seg[0], pa,
+                                            ra_list=ra_seg, dec_list=dec_seg,
+                                            guider=1, oss=False)
+
+    # Check that the 3 guide stars have the equivalent position to (0,0)
+    np.testing.assert_array_almost_equal(idl_x[0:3], np.zeros(3), decimal=6)
+    np.testing.assert_array_almost_equal(idl_y[0:3], np.zeros(3), decimal=6)
+
+    truth_x = PARAMETRIZED_DATA['test_convert_sky_to_idl_function'][0]
+    truth_y = PARAMETRIZED_DATA['test_convert_sky_to_idl_function'][1]
+
+    np.testing.assert_array_almost_equal(idl_x, truth_x, decimal=6)
+    np.testing.assert_array_almost_equal(idl_y, truth_y, decimal=6)

@@ -287,10 +287,11 @@ class SegmentGuidingCalculator:
             ra_segs, dec_segs = radec_list.T[0], radec_list.T[1]
 
             # Convert from RA and Dec to ideal frame
-            ind = self.selected_segment_ids[i][0] # pull the guide star
-            x_idl_segs, y_idl_segs = utils.convert_sky_to_idl(gs_ra=ra_segs[ind], gs_dec=dec_segs[ind], pa=self.pa,
-                                                              ra_list=ra_segs, dec_list=dec_segs,
-                                                              guider=self.fgs_num, oss=False)
+            ind = self.selected_segment_ids[i][0]  # pull the guide star
+            x_idl_segs, y_idl_segs = coordinate_transforms.convert_sky_to_idl(gs_ra=ra_segs[ind], gs_dec=dec_segs[ind],
+                                                                              pa=self.pa, ra_list=ra_segs,
+                                                                              dec_list=dec_segs, guider=self.fgs_num,
+                                                                              oss=False)
 
             # Check to make sure all the computed segment locations are within the needed FOV
             self.check_segments_inside_fov(ra_segs, dec_segs, self.x_seg_n[i], self.y_seg_n[i])
