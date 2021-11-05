@@ -68,7 +68,7 @@ import pytest
 
 # Local Imports
 from jwst_magic.tests.utils import parametrized_data
-from jwst_magic.utils import utils
+from jwst_magic.utils import utils, coordinate_transforms
 from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file, SegmentGuidingCalculator,
                                                         generate_photometry_override_file, GUIDE_STAR_MAX_COUNTRATE,
                                                         REF_STAR_MAX_COUNTRATE)
@@ -787,3 +787,67 @@ def test_resetting_POF_count_rate_factors(test_directory):
     # Check the count rate factor has changed
     count_rate_factor = photometry_override_command.split(' ')[3].split('=')[-1][:-1]
     assert float(count_rate_factor) < cr_factor
+
+
+def test_convert_sky_to_idl_function(test_directory):
+    """Test the conversion of RA and Dec to Idl X and Y
+    as done in the segment guiding code for the guide
+    star REPORT.txt file
+    """
+    ra_seg = np.array([71.329352, 71.329352, 71.329352, 71.368611,
+                       71.390103, 71.350521, 71.382983, 71.358393])
+    dec_seg = np.array([-78.62446, -78.62446, -78.62446, -78.614016,
+                        -78.619765, -78.61443, -78.62308, -78.626784])
+    pa = 323
+
+    idl_x, idl_y = utils.convert_sky_to_idl(ra_seg[0], dec_seg[0], pa,
+                                            ra_list=ra_seg, dec_list=dec_seg,
+                                            guider=1, oss=False)
+
+    # Check that the 3 guide stars have the equivalent position to (0,0)
+    np.testing.assert_array_almost_equal(idl_x[0:3], np.zeros(3), decimal=6)
+    np.testing.assert_array_almost_equal(idl_y[0:3], np.zeros(3), decimal=6)
+
+    truth_x = PARAMETRIZED_DATA['test_convert_sky_to_idl_function'][0]
+    truth_y = PARAMETRIZED_DATA['test_convert_sky_to_idl_function'][1]
+
+    np.testing.assert_array_almost_equal(idl_x, truth_x, decimal=6)
+    np.testing.assert_array_almost_equal(idl_y, truth_y, decimal=6)
+
+
+def test_convert_sky_to_idl_in_segment_guiding(test_directory):
+    """Test the conversion of RA and Dec to Idl X and Y
+    as done in the segment guiding code for the guide
+    star REPORT.txt file
+    """
+    # Define the input file locations and parameters
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': 1,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'center_of_pointing': 0}
+
+    sg = SegmentGuidingCalculator(
+        "SOF", PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, ROOT, __location__,
+        segment_infile_list=[SEGMENT_INFILE],
+        guide_star_params_dict=guide_star_params_dict,
+        selected_segs_list=[SELECTED_SEGS]
+    )
+
+    # Determine the V2/V3 of the pointing center
+    sg.get_center_pointing()
+
+    # Calculate the RA/Dec of each segment
+    sg.calculate_effective_ra_dec()
+
+    # Check that the guide segment is approximately 0,0
+    guide_seg_id = sg.selected_segment_ids[0][0]
+    assert np.isclose(sg.x_idl_segs[0][guide_seg_id], 0)
+    assert np.isclose(sg.y_idl_segs[0][guide_seg_id], 0)
+
+    # Check that the other segments are similar to converting straight from raw to idl
+    x_idl_segs, y_idl_segs = coordinate_transforms.raw2idl(np.array(sg.x_seg_array), np.array(sg.y_seg_array), 1)
+    np.testing.assert_array_almost_equal(sg.x_idl_segs, x_idl_segs, decimal=0)
+    np.testing.assert_array_almost_equal(sg.y_idl_segs, y_idl_segs, decimal=0)
