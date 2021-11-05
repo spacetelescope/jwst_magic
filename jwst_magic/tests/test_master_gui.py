@@ -141,10 +141,10 @@ def test_change_car_and_obs_commissioning(master_gui):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'S4FM000115'
-    assert master_gui.gs_id == 'S4FM000115'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 102.43992218415, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, -62.0214206990925, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'N4EJ000427'
+    assert master_gui.gs_id == 'N4EJ000427'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 267.812553, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 63.111531, decimal=4)
 
     # Re-set CAR & OBS
     master_gui.comboBox_car.setCurrentText('OTE-13')
@@ -156,10 +156,10 @@ def test_change_car_and_obs_commissioning(master_gui):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'S0VR118570'
-    assert master_gui.gs_id == 'S0VR118570'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 81.24507, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, -73.81053, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'N4LO000097'
+    assert master_gui.gs_id == 'N4LO000097'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 254.326768, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 68.856895, decimal=4)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -188,10 +188,10 @@ def test_update_apt_button_commissioning(master_gui):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'S4FM000115'
-    assert master_gui.gs_id == 'S4FM000115'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 102.43992218415, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, -62.0214206990925, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'N4EJ000427'
+    assert master_gui.gs_id == 'N4EJ000427'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 267.812553, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 63.111531, decimal=4)
 
     # Re-set APT number and press button
     master_gui.lineEdit_commid.setText('1148')
@@ -203,10 +203,10 @@ def test_update_apt_button_commissioning(master_gui):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'S0VR118570'
-    assert master_gui.gs_id == 'S0VR118570'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 81.24507, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, -73.81053, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'N4LO000097'
+    assert master_gui.gs_id == 'N4LO000097'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 254.326768, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 68.856895, decimal=4)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
