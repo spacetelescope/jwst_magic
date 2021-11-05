@@ -230,10 +230,10 @@ def test_use_apt_button_manual(master_gui, test_directory):
     assert master_gui.observation_num == 1
     assert master_gui.visit_num == 1
 
-    assert master_gui.lineEdit_normalize.text() == 'S4FM000115'
-    assert master_gui.gs_id == 'S4FM000115'
-    np.testing.assert_almost_equal(master_gui.gs_ra, 102.43992218415, decimal=4)
-    np.testing.assert_almost_equal(master_gui.gs_dec, -62.0214206990925, decimal=4)
+    assert master_gui.lineEdit_normalize.text() == 'N4EJ000427'
+    assert master_gui.gs_id == 'N4EJ000427'
+    np.testing.assert_almost_equal(master_gui.gs_ra, 267.812553, decimal=4)
+    np.testing.assert_almost_equal(master_gui.gs_dec, 63.111531, decimal=4)
 
     # Reset to blank
     master_gui.lineEdit_manualid.setText('')
