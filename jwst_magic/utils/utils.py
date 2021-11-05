@@ -29,11 +29,9 @@ import yaml
 
 # Third Party
 from astropy.io import fits
-from astropy import units as u
 import numpy as np
 import pandas as pd
 import photutils
-import pysiaf
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
@@ -789,27 +787,3 @@ def convert_nircam_bad_pixel_mask_files(filepath):
     det = bad_pix_hdr['DETECTOR']
     filepath_new = os.path.join(os.path.dirname(filepath), f'nircam_dq_{det.lower()}.fits')
     write_fits(filepath_new, [data], header=[bad_pix_hdr], log=LOGGER)
-
-
-def convert_sky_to_idl(gs_ra, gs_dec, pa, ra_list, dec_list, guider, oss=False):
-    """
-    Convert
-    """
-    detector = f'FGS{guider}_FULL_OSS' if oss else f'FGS{guider}_FULL'
-    fgs = pysiaf.Siaf('FGS')[detector]
-
-    # Guide segment information
-    gs_ra *= u.deg
-    gs_dec *= u.deg
-    pa *= u.deg
-
-    # The v2/v3 location of the guide segment on the detector - in the middle
-    v2 = fgs.V2Ref * u.arcsec
-    v3 = fgs.V3Ref * u.arcsec
-
-    attitude = pysiaf.rotations.attitude_matrix(v2, v3, gs_ra, gs_dec, pa)
-    fgs.set_attitude_matrix(attitude)
-
-    idl_x, idl_y = fgs.sky_to_idl(ra_list * u.deg, dec_list * u.deg)
-
-    return idl_x.round(decimals=7), idl_y.round(decimals=7)
