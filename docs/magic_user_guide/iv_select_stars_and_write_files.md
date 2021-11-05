@@ -60,6 +60,8 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
    All of the .fits and .dat files that are written to the `dhas_` and `ground_system_` directories have had the counts in those images capped at 65,535. All .fits files in the `stsci_` directory have not had such a cap applied (with the singular exception of the LOSTRK.fits file).
 
+   Due to the constraints of converting from raw pixels to ideal arcseconds, the ideal coordinates in the star and prc files in the `dhas_` and `ground_system_` directories may be less exact, by up to 0.5 arcseconds.
+
 ---------------------------------
 
 #### Next
