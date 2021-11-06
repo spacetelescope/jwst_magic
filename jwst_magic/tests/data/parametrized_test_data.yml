@@ -248,6 +248,12 @@ test_segment_guiding:
           'sts -gs_select 01141005001, 01141007001, 01141010001, 01141011001, 01141012001 -count_rate_factor=0.7000 -count_rate_uncertainty_factor=0.5000'
       ]
 
+    test_convert_sky_to_idl_function:
+        [
+            [0., 0., 0., -45.1830768, -44.3399983, -34.1675821, -32.9741624, -11.0076693],
+            [0., 0., 0., 12.2450225, -13.4614398, 19.0397457, -19.6914047, -19.3381229]
+        ]
+
 test_select_psfs:
     test_select_psfs_without_file:
         non-ga: |

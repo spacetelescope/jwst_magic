@@ -68,7 +68,7 @@ import pytest
 
 # Local Imports
 from jwst_magic.tests.utils import parametrized_data
-from jwst_magic.utils import utils
+from jwst_magic.utils import utils, coordinate_transforms
 from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file, SegmentGuidingCalculator,
                                                         generate_photometry_override_file, GUIDE_STAR_MAX_COUNTRATE,
                                                         REF_STAR_MAX_COUNTRATE)
@@ -469,12 +469,12 @@ V3 PA @ GS    : 157.123400
 
   Star Name  |    File ID   |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |     Raw X    |     Raw Y
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-star1        | 1            | 1            | 90.987859    | -67.354849   | 12.575468    | -22.523923   | -12.575468   | -22.523923   | 1345.000000  | 840.000000
-star2        | 4            | 4            | 90.986049    | -67.361953   | -0.034266    | 0.035029     | 0.034266     | 0.035029     | 1023.000000  | 1024.000000
-ref_only1    | 2            | 2            | 90.986954    | -67.358401   | 6.270601     | -11.244447   | -6.270601    | -11.244447   | 1184.000000  | 932.000000
-ref_only2    | 3            | 3            | 90.980300    | -67.352779   | 6.133539     | -33.733341   | -6.133539    | -33.733341   | 1505.000000  | 934.000000
-ref_only3    | 5            | 18           | 90.954105    | -67.360775   | -38.274653   | -22.173629   | 38.274653    | -22.173629   | 1340.000000  | 1582.000000
-ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -19.291522   | -33.663282   | 19.291522    | -33.663282   | 1504.000000  | 1305.000000
+star1        | 1            | 1            | 90.987859    | -67.354849   | 0.000000     | -0.000000    | -0.000000    | -0.000000    | 1345.000000  | 840.000000   
+star2        | 4            | 4            | 90.986049    | -67.361953   | -12.743294   | 22.314882    | 12.743294    | 22.314882    | 1023.000000  | 1024.000000  
+ref_only1    | 2            | 2            | 90.986954    | -67.358401   | -6.371648    | 11.157441    | 6.371648     | 11.157441    | 1184.000000  | 932.000000   
+ref_only2    | 3            | 3            | 90.980300    | -67.352779   | -6.516346    | -11.084610   | 6.516346     | -11.084610   | 1505.000000  | 934.000000   
+ref_only3    | 5            | 18           | 90.954105    | -67.360775   | -51.413376   | 0.360593     | 51.413376    | 0.360593     | 1340.000000  | 1582.000000  
+ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -32.223067   | -11.008252   | 32.223067    | -11.008252   | 1504.000000  | 1305.000000  
 '''.split('\n')
 
     with open(report_file) as f:
@@ -787,3 +787,41 @@ def test_resetting_POF_count_rate_factors(test_directory):
     # Check the count rate factor has changed
     count_rate_factor = photometry_override_command.split(' ')[3].split('=')[-1][:-1]
     assert float(count_rate_factor) < cr_factor
+
+
+def test_convert_sky_to_idl_in_segment_guiding(test_directory):
+    """Test the conversion of RA and Dec to Idl X and Y
+    as done in the segment guiding code for the guide
+    star REPORT.txt file
+    """
+    # Define the input file locations and parameters
+    guide_star_params_dict = {'v2_boff': 0.1,
+                              'v3_boff': 0.2,
+                              'fgs_num': 1,
+                              'ra': 90.9708,
+                              'dec': -67.3578,
+                              'pa': 157.1234,
+                              'center_of_pointing': 0}
+
+    sg = SegmentGuidingCalculator(
+        "SOF", PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM, ROOT, __location__,
+        segment_infile_list=[SEGMENT_INFILE],
+        guide_star_params_dict=guide_star_params_dict,
+        selected_segs_list=[SELECTED_SEGS]
+    )
+
+    # Determine the V2/V3 of the pointing center
+    sg.get_center_pointing()
+
+    # Calculate the RA/Dec of each segment
+    sg.calculate_effective_ra_dec()
+
+    # Check that the guide segment is approximately 0,0
+    guide_seg_id = sg.selected_segment_ids[0][0]
+    assert np.isclose(sg.x_idl_segs[0][guide_seg_id], 0)
+    assert np.isclose(sg.y_idl_segs[0][guide_seg_id], 0)
+
+    # Check that the other segments are similar to converting straight from raw to idl
+    x_idl_segs, y_idl_segs = coordinate_transforms.raw2idl(np.array(sg.x_seg_array), np.array(sg.y_seg_array), 1)
+    np.testing.assert_array_almost_equal(sg.x_idl_segs, x_idl_segs, decimal=0)
+    np.testing.assert_array_almost_equal(sg.y_idl_segs, y_idl_segs, decimal=0)

@@ -279,17 +279,19 @@ class SegmentGuidingCalculator:
             w.wcs.cunit = ['deg', 'deg']
             pc1_1, pc1_2, pc2_1, pc2_2 = calc_rotation_matrix(np.radians(self.pa), np.radians(self.v3_idl_yangle),
                                                               self.v_idl_parity)
-            w.wcs.pc = [[pc1_1, pc1_2],[pc2_1, pc2_2]]
+            w.wcs.pc = [[pc1_1, pc1_2], [pc2_1, pc2_2]]
 
             # Calculate list of effective ra and decs for each segment
             pixcoord_list = list(zip(x_seg_array_sci, y_seg_array_sci))
             radec_list = w.wcs_pix2world(pixcoord_list, 0)
             ra_segs, dec_segs = radec_list.T[0], radec_list.T[1]
 
-            # Convert from undistorted raw to ideal frame (already undistorted so only an origin change)
-            x_idl_segs, y_idl_segs = coordinate_transforms.raw2idl(np.array(self.x_seg_array[i]),
-                                                                   np.array(self.y_seg_array[i]),
-                                                                   self.fgs_num)
+            # Convert from RA and Dec to ideal frame
+            ind = self.selected_segment_ids[i][0]  # pull the guide star
+            x_idl_segs, y_idl_segs = coordinate_transforms.convert_sky_to_idl(gs_ra=ra_segs[ind], gs_dec=dec_segs[ind],
+                                                                              pa=self.pa, ra_list=ra_segs,
+                                                                              dec_list=dec_segs, guider=self.fgs_num,
+                                                                              oss=False)
 
             # Check to make sure all the computed segment locations are within the needed FOV
             self.check_segments_inside_fov(ra_segs, dec_segs, self.x_seg_n[i], self.y_seg_n[i])
