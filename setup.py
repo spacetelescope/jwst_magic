@@ -31,7 +31,7 @@ INSTALL_REQUIRES = [
     'fgscountrate',
     'matplotlib>=3.3',
     'notebook',
-    'pysiaf>=0.7.1',
+    'pysiaf>=0.12.0',
     'pyyaml',
     'requests',
     'pytest',
