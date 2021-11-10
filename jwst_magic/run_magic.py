@@ -61,8 +61,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
-            nircam_det=None, nircam=True, smoothing='default', steps=None,
-            guiding_selections_file=None, bkgd_stars=False,
+            nircam_det=None, nircam=True, smoothing='default', detection_threshold='standard-deviation',
+            steps=None, guiding_selections_file=None, bkgd_stars=False,
             bkgrdstars_hdr=None, out_dir=None, convert_im=True,
             star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
@@ -94,6 +94,10 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), or "default" for medium smoothing for other cases
+    detection_threshold: str, optional
+        Used in detecting stars in the convert_image section. Options are "standard-deviation"
+        to set threshold=median + (3 * std) or "pixel-wise" to use photutils' detect_threshold()
+        function (used only for normal operations)
     steps: list of strings, optional
         List of the steps to be completed
     guiding_selections_file: list of str, optional
@@ -177,6 +181,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
                                                 norm_value=norm_value,
                                                 norm_unit=norm_unit,
                                                 smoothing=smoothing,
+                                                detection_threshold=detection_threshold,
                                                 coarse_pointing=coarse_pointing,
                                                 jitter_rate_arcsec=jitter_rate_arcsec,
                                                 logger_passed=True,

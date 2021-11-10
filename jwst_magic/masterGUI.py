@@ -454,6 +454,12 @@ class MasterGui(QMainWindow):
         else:
             smoothing = 'default'
 
+        # Set detection threshold
+        if self.checkBox_detectionThreshold.isChecked():
+            detection_threshold = 'pixel-wise'
+        else:
+            detection_threshold = 'standard-deviation'
+
         # Star selection
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         star_selection = self.groupBox_starSelector.isChecked()
@@ -507,7 +513,8 @@ class MasterGui(QMainWindow):
         # For the case where, regardless of the brightness of the PSF, we want to use the user-defined threshold
         override_bright_guiding = self.checkBox_forcethreshold.isChecked()
         if use_oss_defaults and override_bright_guiding:
-            raise ValueError('Cannot use Default OSS Numbers and overwrite the bright guiding functionality at the same time. Please check only one, or neither, button.')
+            raise ValueError('Cannot use Default OSS Numbers and overwrite the bright guiding functionality '
+                             'at the same time. Please check only one, or neither, button.')
 
         # Rewrite .prc and guiding_selections*.txt ONLY
         if self.checkBox_rewritePRC.isChecked():
@@ -531,8 +538,8 @@ class MasterGui(QMainWindow):
                 y = all_rows['y'].data
             else:
                 raise FileNotFoundError('Cannot find an all found PSFs file in this directory {}. '
-                             'This file can be created by running the star selection section '
-                             'of the GUI.'.format(out_path))
+                                        'This file can be created by running the star selection section '
+                                        'of the GUI.'.format(out_path))
 
             # Run the select stars GUI to determine the new orientation
             inds_list, center_of_pointing = run_SelectStars(data, x, y, 20, guider,
@@ -563,7 +570,7 @@ class MasterGui(QMainWindow):
             if not all(hasattr(self, attr) for attr in ["program_id", "observation_num", "visit_num"]):
                 self.program_id, self.observation_num, self.visit_num = '', '', ''
             if not all(hasattr(self, attr) for attr in ["gs_id", "gs_ra", "gs_dec"]):
-                self.gs_id, self.gs_ra, self.gs_dec= '', '', '', ''
+                self.gs_id, self.gs_ra, self.gs_de = '', '', '', ''
             threshold_factor = self.lineEdit_threshold.text()
 
             # Check if this is a photometry only override file or segment override file
@@ -671,6 +678,7 @@ class MasterGui(QMainWindow):
                                                  nircam_det=nircam_det,
                                                  nircam=nircam,
                                                  smoothing=smoothing,
+                                                 detection_threshold=detection_threshold,
                                                  steps=steps,
                                                  guiding_selections_file=in_file,
                                                  bkgd_stars=bkgd_stars,
