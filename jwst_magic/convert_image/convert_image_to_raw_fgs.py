@@ -607,7 +607,7 @@ def choose_threshold(smoothed_data, gauss_sigma):
         raise ValueError('User rejection of identified PSFs.')
 
 
-def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, choose=False):
+def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, detection_threshold='standard-deviation', choose=False):
     """Use utils.find_peaks, which is a wrapper around photutils.find_peaks, to count how many PSFS
     are present in the data.
 
@@ -619,6 +619,10 @@ def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, choose=False):
         The sigma of the Gaussian smoothing filter
     npeaks : int or np.inf
         Number of peaks to choose with photutils.find_peaks
+    detection_threshold: str, optional
+        Options are "standard-deviation" to set threshold=median + (3 * std) or
+        "pixel-wise" to use photutils' detect_threshold() function (used only
+        for normal operations)
     choose : bool, optional
         Prompt the user to choose which method to use to select the
         threshold
@@ -638,20 +642,27 @@ def count_psfs(smoothed_data, gauss_sigma, npeaks=np.inf, choose=False):
 
     else:
         # Find PSFs
-        sources, threshold = utils.find_peaks(smoothed_data, box_size=gauss_sigma, npeaks=npeaks, return_threshold=True)
+        sources, threshold = utils.find_peaks(smoothed_data, box_size=gauss_sigma, npeaks=npeaks,
+                                              threshold=detection_threshold, return_threshold=True)
         num_psfs = len(sources)
         if num_psfs == 0:
             raise ValueError("You have no sources in your data.")
         coords = sources['x_peak', 'y_peak']
         coords = [(x, y) for [x, y] in coords]
 
+        if isinstance(threshold, np.ndarray):
+            print_threshold = f'a pixel-wise array with mean={np.mean(threshold)}'
+        else:
+            print_threshold = threshold
+
         LOGGER.info('Image Conversion: {} PSFs detected in Gaussian-smoothed data '
-                    '(threshold = {}; sigma = {})'.format(num_psfs, threshold, gauss_sigma))
+                    '(threshold = {}; sigma = {})'.format(num_psfs, print_threshold, gauss_sigma))
 
     return num_psfs, coords, threshold
 
 
-def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default', save=True):
+def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
+                               detection_threshold='standard-deviation', save=True):
     """Take input column information and save out the all_found_psfs_file
 
     Parameters
@@ -667,7 +678,12 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
-        or "choose center" for finding the center of a MIMF PSF
+        "fgs" for medium smoothing+lowered threhsold, or "choose center" for
+        finding the center of a MIMF PSF
+    detection_threshold: str, optional
+        Options are "standard-deviation" to set threshold=median + (3 * std) or
+        "pixel-wise" to use photutils' detect_threshold() function (used only
+        for normal operations)
     save : bool, optional
         Save out all found psfs file
 
@@ -679,6 +695,7 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
         y positions of segments
     """
     # Use smoothing to identify the segments of the foreground star
+    threshold = None
     if smoothing == 'high':
         gauss_sigma = 26
         npeaks = np.inf
@@ -696,7 +713,8 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
     smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
 
     # Use photutils.find_peaks to locate all PSFs in image
-    num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, npeaks=npeaks, choose=False)
+    num_psfs, coords, threshold = count_psfs(smoothed_data, gauss_sigma, npeaks=npeaks,
+                                             detection_threshold=detection_threshold, choose=False)
     x_list, y_list = map(list, zip(*coords))
 
     # Use labeling to map locations of objects in array
@@ -767,7 +785,8 @@ def save_psf_center_file(center_cols, guider, root, out_dir):
     return psf_center_path
 
 
-def create_seed_image(data, guider, root, out_dir, smoothing='default', psf_size=None, all_found_psfs_file=None):
+def create_seed_image(data, guider, root, out_dir, smoothing='default',
+                      detection_threshold='standard-deviation', psf_size=None, all_found_psfs_file=None):
     """Create a seed image leaving only the foreground star by removing
     the background and any background stars, and setting the background
     to zero.
@@ -785,7 +804,12 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default', psf_size
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
-        or "choose center" for finding the center of a MIMF PSF
+        "fgs" for medium smoothing+lowered threhsold, or "choose center" for
+        finding the center of a MIMF PSF
+    detection_threshold: str, optional
+        Options are "standard-deviation" to set threshold=median + (3 * std) or
+        "pixel-wise" to use photutils' detect_threshold() function (used only
+        for normal operations)
     psf_size: int, optional
         Set the size of the stamps to use when cutting out PSFs from the image.
         Input is the edge of the square size in pixels (e.g. if 100, the stamp
@@ -815,7 +839,8 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default', psf_size
 
     if all_found_psfs_file is None:
         # Generate PSF locations from original data; don't save out here
-        x_list, y_list, _, _ = create_all_found_psfs_file(data, guider, root, out_dir, smoothing, save=False)
+        x_list, y_list, _, _ = create_all_found_psfs_file(data, guider, root, out_dir, smoothing,
+                                                          detection_threshold, save=False)
     else:
         # Read in file
         in_table = asc.read(all_found_psfs_file)
@@ -860,6 +885,7 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default', psf_size
 def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                nircam_det=None, normalize=True, norm_value=12.0,
                norm_unit="FGS Magnitude", smoothing='default',
+               detection_threshold='standard-deviation',
                psf_size=None, all_found_psfs_file=None, gs_catalog=None,
                coarse_pointing=False, jitter_rate_arcsec=None,
                logger_passed=False, itm=False):
@@ -898,7 +924,12 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
-        or "choose center" for finding the center of a MIMF PSF
+        "fgs" for medium smoothing+lowered threhsold, or "choose center" for
+        finding the center of a MIMF PSF
+    detection_threshold: str, optional
+        Options are "standard-deviation" to set threshold=median + (3 * std)
+        or "pixel-wise" to use photutils' detect_threshold() function (used
+        only for normal operations)
     psf_size: int, optional
         Set the size of the stamps to use when cutting out PSFs from the image.
         Input is the edge of the square size in pixels (e.g. if 100, the stamp
@@ -1113,7 +1144,8 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
 
         if normalize or itm:
             # Remove the background and background stars and output a seed image with just the foreground stars
-            data = create_seed_image(data, guider, root, out_dir, smoothing, psf_size, all_found_psfs_file)
+            data = create_seed_image(data, guider, root, out_dir, smoothing,
+                                     detection_threshold, psf_size, all_found_psfs_file)
 
             # Convert magnitude/countrate to FGS countrate using new count rate module
             # Take norm_value and norm_unit to pass to count rate module
@@ -1129,7 +1161,9 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             if all_found_psfs_file is None:
                 # Save out all found PSFs file once the data has been normalized
                 x_list, y_list, cr_list, all_found_psfs_path = create_all_found_psfs_file(data, guider, root, out_dir,
-                                                                                          smoothing, save=True)
+                                                                                          smoothing,
+                                                                                          detection_threshold,
+                                                                                          save=True)
             else:
                 # Write the same file out in the correct directory with the correct name
                 table = asc.read(all_found_psfs_file)
@@ -1144,7 +1178,9 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
                     "Image Conversion: No smoothing chosen for MIMF case, so calculating PSF center")
 
                 x_center, y_center, cr_center, _ = create_all_found_psfs_file(data, guider, root, out_dir,
-                                                                              smoothing='choose center', save=False)
+                                                                              smoothing='choose center',
+                                                                              detection_threshold=detection_threshold,
+                                                                              save=False)
                 psf_center_path = save_psf_center_file([[y_center[0], x_center[0], cr_center[0]]], guider, root, out_dir)
 
                 LOGGER.info("Image Conversion: PSF center y,x,cr = {}, {}, {} vs Guiding knot y,x,cr = {}, {}, {}".format(

@@ -465,7 +465,10 @@ def find_peaks(data, box_size, npeaks=np.inf, threshold=None, return_threshold=F
 
     This function is a wrapper around photutils.find_peaks
     """
-    if not threshold:
+
+    if threshold == 'pixel-wise':
+        threshold = photutils.detect_threshold(data, nsigma=box_size)
+    else:
         median = np.median(data)
         std = np.std(data)
         threshold = median + (3 * std)
