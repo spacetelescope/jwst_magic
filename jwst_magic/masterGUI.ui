@@ -468,6 +468,9 @@ Image:</string>
                <height>16777215</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>Change the star-finding algorithm to deal with de-focused MIMF PSFs where we need to find the brightest knot on the doughnut</string>
+             </property>
              <property name="text">
               <string>No Smoothing (MIMF)</string>
              </property>
@@ -480,6 +483,9 @@ Image:</string>
                <width>600</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>Change the star-finding algorithm to use a pixel-wise detection threshold that is necessary for finding stars in normal operations images</string>
              </property>
              <property name="text">
               <string>Pixel-wise detection threshold (Normal Ops)</string>
