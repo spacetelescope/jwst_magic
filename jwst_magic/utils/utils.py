@@ -428,12 +428,15 @@ def count_rate_total(data, objects, num_objects, x, y, countrate_3x3=True):
         im[objects == i] = True
 
         if countrate_3x3:
-            image_window = 40 # This should be more than large enough to get the core of the PSF
-            sources = find_peaks(data[int(y_old)-image_window:int(y_old)+image_window,
-                                      int(x_old)-image_window:int(x_old)+image_window],
+            image_window = 40  # This should be more than large enough to get the core of the PSF
+            min_x = (int(x_old) - image_window) if (int(x_old) - image_window) >= 0 else 0
+            min_y = (int(y_old) - image_window) if (int(y_old) - image_window) >= 0 else 0
+            max_x = int(x_old) + image_window
+            max_y = int(y_old) + image_window
+            sources = find_peaks(data[min_y:max_y, min_x:max_x],
                                  box_size=1, npeaks=1)
-            x_new = sources['x_peak'][0] + x_old - image_window # find new x value
-            y_new = sources['y_peak'][0] + y_old - image_window # find new y value
+            x_new = sources['x_peak'][0] + x_old - image_window  # find new x value
+            y_new = sources['y_peak'][0] + y_old - image_window  # find new y value
             # Get the 3x3 count rate
             countrate.append(get_countrate_3x3(x_new, y_new, np.array(data)))
         else:
