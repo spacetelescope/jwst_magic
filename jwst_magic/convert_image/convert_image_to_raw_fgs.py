@@ -678,8 +678,7 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
-        "fgs" for medium smoothing+lowered threhsold, or "choose center" for
-        finding the center of a MIMF PSF
+        or "choose center" for finding the center of a MIMF PSF
     detection_threshold: str, optional
         Options are "standard-deviation" to set threshold=median + (3 * std) or
         "pixel-wise" to use photutils' detect_threshold() function (used only
@@ -804,8 +803,7 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default',
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
-        "fgs" for medium smoothing+lowered threhsold, or "choose center" for
-        finding the center of a MIMF PSF
+        or "choose center" for finding the center of a MIMF PSF
     detection_threshold: str, optional
         Options are "standard-deviation" to set threshold=median + (3 * std) or
         "pixel-wise" to use photutils' detect_threshold() function (used only
@@ -924,8 +922,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     smoothing: str, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
-        "fgs" for medium smoothing+lowered threhsold, or "choose center" for
-        finding the center of a MIMF PSF
+        or "choose center" for finding the center of a MIMF PSF
     detection_threshold: str, optional
         Options are "standard-deviation" to set threshold=median + (3 * std)
         or "pixel-wise" to use photutils' detect_threshold() function (used
