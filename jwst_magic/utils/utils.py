@@ -434,7 +434,7 @@ def count_rate_total(data, objects, num_objects, x, y, countrate_3x3=True):
             max_x = int(x_old) + image_window
             max_y = int(y_old) + image_window
             sources = find_peaks(data[min_y:max_y, min_x:max_x],
-                                 box_size=1, npeaks=1)
+                                 box_size=1, npeaks=1, threshold='standard-deviation')
             x_new = sources['x_peak'][0] + x_old - image_window  # find new x value
             y_new = sources['y_peak'][0] + y_old - image_window  # find new y value
             # Get the 3x3 count rate
@@ -459,7 +459,7 @@ def get_countrate_3x3(x, y, data):
     return countrate
 
 
-def find_peaks(data, box_size, npeaks=np.inf, threshold=None, return_threshold=False):
+def find_peaks(data, box_size, npeaks=np.inf, threshold=None, nsigma_threshold=5, return_threshold=False):
     """
     Find a number of peak pixels (npeaks) in a array (data).
 
@@ -467,7 +467,7 @@ def find_peaks(data, box_size, npeaks=np.inf, threshold=None, return_threshold=F
     """
 
     if threshold == 'pixel-wise':
-        threshold = photutils.detect_threshold(data, nsigma=box_size)
+        threshold = photutils.detect_threshold(data, nsigma=nsigma_threshold)
     else:
         median = np.median(data)
         std = np.std(data)
