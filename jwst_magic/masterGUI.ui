@@ -408,35 +408,6 @@ Image:</string>
            <bool>false</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="6" column="3" colspan="2">
-            <widget class="QCheckBox" name="checkBox_noSmoothing">
-             <property name="maximumSize">
-              <size>
-               <width>600</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>No Smoothing (For MIMF)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="1" colspan="2">
-            <widget class="QCheckBox" name="checkBox_globalAlignment">
-             <property name="maximumSize">
-              <size>
-               <width>700</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Change the star-finding algorithm to account for the more diffused segments that appear in early commissioning stages</string>
-             </property>
-             <property name="text">
-              <string>High Smoothing (For Early Commissioning)</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="1">
             <widget class="QCheckBox" name="checkBox_coarsePointing">
              <property name="toolTip">
@@ -447,7 +418,7 @@ Image:</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="3" colspan="2">
+           <item row="4" column="4" colspan="1">
             <widget class="QLineEdit" name="lineEdit_normalize">
              <property name="enabled">
               <bool>true</bool>
@@ -469,7 +440,55 @@ Image:</string>
               </size>
              </property>
              <property name="text">
-              <string>Change Smoothing (optional):</string>
+              <string>Star Detection (optional):</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1" colspan="2">
+            <widget class="QCheckBox" name="checkBox_globalAlignment">
+             <property name="maximumSize">
+              <size>
+               <width>700</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Change the star-finding algorithm to account for the more diffused segments that appear in early commissioning stages</string>
+             </property>
+             <property name="text">
+              <string>High Smoothing (Diffuse PSFs)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="3" colspan="1">
+            <widget class="QCheckBox" name="checkBox_noSmoothing">
+             <property name="maximumSize">
+              <size>
+               <width>600</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Change the star-finding algorithm to deal with de-focused MIMF PSFs where we need to find the brightest knot on the doughnut</string>
+             </property>
+             <property name="text">
+              <string>No Smoothing (MIMF)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="4" colspan="2">
+            <widget class="QCheckBox" name="checkBox_detectionThreshold">
+             <property name="maximumSize">
+              <size>
+               <width>600</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Change the star-finding algorithm to use a pixel-wise detection threshold that is necessary for finding stars in normal operations images</string>
+             </property>
+             <property name="text">
+              <string>Pixel-wise detection threshold (Normal Ops)</string>
              </property>
             </widget>
            </item>
