@@ -239,3 +239,32 @@ def test_read_in_all_found_psfs_file(test_directory):
     input_table = asc.read(input_all_found_psfs)
     output_table = asc.read(all_found_psfs_file)
     assert all(input_table == output_table)
+
+
+detection_parameters = [
+    ('high', 'standard-deviation', 18),  # high smoothing checked
+    ('low', 'standard-deviation', 1),  # no smoothing checked
+    ('default', 'pixel-wise', 636),  # pixel-wise threshold checked
+    ('high', 'pixel-wise', 28),  # high smoothing and pixel-wise threshold checked
+]
+@pytest.mark.parametrize('smoothing, detection_threshold, correct_number_of_psfs', detection_parameters)
+def test_psf_detection_methods(test_directory, smoothing, detection_threshold, correct_number_of_psfs):
+    """Test the different options for detecting PSFs"""
+    image = NIRCAM_IM
+    guider = 1
+    data, all_found_psfs_file, \
+    psf_center_file, _ = convert_image_to_raw_fgs.convert_im(image, guider, ROOT, nircam=True,
+                                                             out_dir=__location__, smoothing=smoothing,
+                                                             detection_threshold=detection_threshold,
+                                                             nircam_det=None, normalize=True,
+                                                             norm_value=12,
+                                                             norm_unit='FGS Magnitude',
+                                                             all_found_psfs_file=None,
+                                                             gs_catalog='GSC242',
+                                                             coarse_pointing=False,
+                                                             jitter_rate_arcsec=None,
+                                                             logger_passed=False, itm=False)
+
+    # Check the saved out all_found_psfs_file
+    in_table = asc.read(all_found_psfs_file)
+    assert len(in_table) == correct_number_of_psfs
