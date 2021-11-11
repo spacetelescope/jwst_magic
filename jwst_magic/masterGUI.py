@@ -263,6 +263,8 @@ class MasterGui(QMainWindow):
         self.pushButton_delbackgroundStars.clicked.connect(self.on_click_del_bkgrdstars)
         self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
         self.lineEdit_coarsePointing.editingFinished.connect(self.on_change_jitter)
+        self.checkBox_globalAlignment.toggled.connect(self.on_psf_detection_checkbox_change)
+        self.checkBox_noSmoothing.toggled.connect(self.on_psf_detection_checkbox_change)
 
         # Star selector widgets
         self.pushButton_regfileStarSelector.clicked.connect(self.on_click_infile)
@@ -570,7 +572,7 @@ class MasterGui(QMainWindow):
             if not all(hasattr(self, attr) for attr in ["program_id", "observation_num", "visit_num"]):
                 self.program_id, self.observation_num, self.visit_num = '', '', ''
             if not all(hasattr(self, attr) for attr in ["gs_id", "gs_ra", "gs_dec"]):
-                self.gs_id, self.gs_ra, self.gs_de = '', '', '', ''
+                self.gs_id, self.gs_ra, self.gs_dec = '', '', ''
             threshold_factor = self.lineEdit_threshold.text()
 
             # Check if this is a photometry only override file or segment override file
@@ -919,6 +921,16 @@ class MasterGui(QMainWindow):
         """
         if self.sender() == self.comboBox_regfileStarSelector:
             self.comboBox_regfileStarSelector.setCurrentIndex(0)
+
+    def on_psf_detection_checkbox_change(self):
+        """
+        Only allow one of the 3 PSF detection checkboxes to be chosen at a time
+        """
+        # If a box is the sender and it is now checked, uncheck the other boxes
+        if self.sender() == self.checkBox_globalAlignment and self.checkBox_globalAlignment.isChecked():
+            self.checkBox_noSmoothing.setChecked(False)
+        elif self.sender() == self.checkBox_noSmoothing and self.checkBox_noSmoothing.isChecked():
+            self.checkBox_globalAlignment.setChecked(False)
 
     def toggle_convert_im(self):
         # TODO: it's unclear why I (KJB) set this to false. but we want to be able
