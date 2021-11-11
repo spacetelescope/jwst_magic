@@ -694,7 +694,6 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
         y positions of segments
     """
     # Use smoothing to identify the segments of the foreground star
-    threshold = None
     if smoothing == 'high':
         gauss_sigma = 26
         npeaks = np.inf
