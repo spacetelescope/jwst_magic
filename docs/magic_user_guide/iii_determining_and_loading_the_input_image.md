@@ -115,6 +115,7 @@ If MAGIC is given a NIRCam or FGS cal.fits image, it will have its distortion re
         - For the low smoothing option, the flag applies very little smoothing to better find the bright knot on doughnut PSFs like in MIMF rather than finding the center of the PSF. This flag must be used for MIMF images in order for our DHAS files to be made correctly.
         - For the pixel-wise detection threshold option, setting the flag triggers MAGIC to calculate the pixel-wise threshold at which a PSF with an SNR of at least 5 would be detected. The sigma=5 can be adjusted in the `utils.find_peaks()` function. This is tailored to normal operations PSFs and will likely not work well for commissioning images. 
         - Note: While we have found that these flags are best set for certain image types, if the user finds that the code isn't finding the locations of stars correctly, they can feel free to play around with these star detection options.
+        - If these options do not provide enough flexibility, use the "Create pseudo-fgs image with more options" jupyter notebook in the notebooks/ folder of the repository which will let you set the PSF box size and smoothing sigma value directly. 
 
 
 #### Next
