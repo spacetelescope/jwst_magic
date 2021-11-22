@@ -1527,7 +1527,7 @@ class MasterGui(QMainWindow):
             else:
                 for line in self.converted_im_circles:
                     line[0].set_visible(False)
-                self.canvas_converted.peaks.set_visible(False)
+                self.canvas_converted.peaks.set_visible(True)
 
                 self.canvas_converted.draw()
 
