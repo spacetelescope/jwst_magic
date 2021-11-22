@@ -259,6 +259,7 @@ class MasterGui(QMainWindow):
         self.pushButton_manualid.clicked.connect(self.update_apt_gs_values)
 
         # Image converter widgets
+        self.checkBox_useConvertedImage.clicked.connect(self.on_click_use_converted_image)
         self.pushButton_backgroundStars.clicked.connect(self.on_click_bkgdstars)
         self.pushButton_delbackgroundStars.clicked.connect(self.on_click_del_bkgrdstars)
         self.horizontalSlider_coarsePointing.sliderReleased.connect(self.on_change_jitter)
@@ -914,6 +915,14 @@ class MasterGui(QMainWindow):
             self.canvas_shifted.peaks.set_visible(show)
 
             self.canvas_shifted.draw()
+
+    def on_click_use_converted_image(self):
+        """Handle NIRCam detector drop down when use existing converted
+        image checkbox is toggled
+        """
+        if self.sender() == self.checkBox_useConvertedImage and self.checkBox_useConvertedImage.isChecked() is False:
+            if self.radioButton_FGS.isChecked():
+                self.comboBox_detector.setEnabled(False)
 
     def on_combobox_change(self):
         """
