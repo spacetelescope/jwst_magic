@@ -277,7 +277,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             max_thresh_factor = np.max(threshold_factor_per_config)
         except ValueError:
             # If we are not writing out files, use the default thresh_factor value
-            max_thresh_factor = [thresh_factor]
+            max_thresh_factor = thresh_factor
         if len(np.unique(threshold_factor_per_config)) != 1:
             LOGGER.info(f"FSW File Writing: The selections provided had more than one required threshold factor. Using the largest threshold factor: {max_thresh_factor}")
 
