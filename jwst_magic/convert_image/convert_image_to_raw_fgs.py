@@ -860,8 +860,12 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default',
         old_bkgrd[stamp.slices_original[0], stamp.slices_original[1]] = np.full_like(stamp.data, np.nan)
 
     # Do 2x sigma clipping with sigma = 3 (returning an array where clipped data are nans)
-    old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
-    old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
+    import warnings
+    from astropy.utils.exceptions import AstropyUserWarning
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=AstropyUserWarning)
+        old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
+        old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
     med = np.nanmedian(old_bkgrd)
 
     final_stamps = []
