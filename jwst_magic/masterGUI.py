@@ -1828,7 +1828,7 @@ class MasterGui(QMainWindow):
         if not isinstance(obs_number, int):
             obs_number = int(obs_number)
 
-        LOGGER.info("Master GUI: Checking Program ID {} and Obs #{}".format(program_id, obs_number))
+        LOGGER.info(f"Master GUI: Checking Program ID {program_id} and Obs #{obs_number}")
 
         # Build temporary directory
         apt_file_path = os.path.join(__location__, 'data', 'temp_apt')
@@ -1838,13 +1838,13 @@ class MasterGui(QMainWindow):
 
         # Download the APT file (.aptx file) from online using the program ID
         urllib.request.urlretrieve(
-            'http://www.stsci.edu/jwst/phase2-public/{}.aptx'.format(program_id),
-            '{}/{}.aptx'.format(apt_file_path,program_id)
+            f'http://www.stsci.edu/jwst/phase2-public/{program_id}.aptx',
+            f'{apt_file_path}/{program_id}.aptx'
         )
 
         # Pull XML data from APT file
-        with zipfile.ZipFile('{}/{}.aptx'.format(apt_file_path,program_id), 'r') as zf:
-            data = zf.read('{}.xml'.format(program_id))
+        with zipfile.ZipFile(f'{apt_file_path}/{program_id}.aptx', 'r') as zf:
+            data = zf.read(f'{program_id}.xml')
         tree = etree.parse(io.BytesIO(data))
 
         # Pull: List of Observations for the CAR > Specific Obs > Special Requirements Info (sr)
@@ -1858,7 +1858,7 @@ class MasterGui(QMainWindow):
                 break
             if i == len(observation_list) - 1:  # if you get to the end of the list and don't find a matching obs number
                 shutil.rmtree(apt_file_path)
-                raise ValueError("This program doesn't have an observation {}".format(obs_number))
+                raise ValueError(f"This program doesn't have an observation {obs_number}")
         observation = observation_list[i]
         if int([x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "Number"][0].text) \
                 != obs_number:
@@ -1882,7 +1882,7 @@ class MasterGui(QMainWindow):
         if not isinstance(guider, int):
             guider = guider.lower().replace(' ', '').split('guider')[1]
 
-        LOGGER.info('Master GUI: APT has been queried and found guide star {} and guider {}'.format(gs_id, guider))
+        LOGGER.info(f'Master GUI: APT has been queried and found guide star {gs_id} and guider {guider}')
 
         # Tear down temporary directory
         shutil.rmtree(apt_file_path)
@@ -1894,8 +1894,7 @@ class MasterGui(QMainWindow):
             self.lineEdit_normalize.setText('')
             raise ValueError(str(err))
 
-        LOGGER.info('Master GUI: The Guide Star Catalog have been queried and found RA of {} and DEC of {} '.format(ra,
-                                                                                                                dec))
+        LOGGER.info(f'Master GUI: The Guide Star Catalog have been queried and found RA of {ra} and DEC of {dec}')
 
         return gs_id, guider, ra, dec
 
