@@ -144,18 +144,20 @@ def match_psf_params_to_segment(info_dictionary, matching_dictionary):
     return seg_location_dictionary
 
 
-def add_segment_to_dict(info_dictionary, matching_dictionary):
+def add_segment_to_df(info_df, matching_dictionary):
     """
-    Match the location and other PSF parameters to the segment based on the matching
-    dictionary. Also calculate the distance from each segment to the boresight
+    Add the Segment ID to the dataframe based on the matching in matching_dictionary
     """
-    for k in info_dictionary.keys():
-        try:
-            info_dictionary[k]['seg_id'] = matching_dictionary[k]
-        except KeyError:
-            info_dictionary[k]['seg_id'] = None
+    segments = []
 
-    return info_dictionary
+    for i in range(len(info_df)):
+        try:
+            segments.append(matching_dictionary[i])
+        except KeyError:
+            segments.append('Unknown')
+
+    info_df['segment'] = segments
+    return info_df
 
 
 def grab_vmin_vmax(param):
@@ -177,13 +179,19 @@ def grab_vmin_vmax(param):
     return vmin, vmax, cmap
 
 
-def plot_mosaic_with_psfs(mosaic, car, x_list=None, y_list=None, est_target_location=None,
+def plot_mosaic_with_psfs(mosaic, car, info_df, est_target_location=None,
                           xlim=None, ylim=None, label_color='white'):
     """
     Plot out the mosaic image with the identified PSFs and estimated target location plotted
     """
-    plt.figure(figsize=(14, 14))
+    x_list = info_df['x']
+    y_list = info_df['y']
+    try:
+        seg_list = info_df['segment']
+    except KeyError:
+        seg_list = None
 
+    plt.figure(figsize=(14, 14))
     plt.imshow(mosaic, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
     if est_target_location is not None:
         plt.scatter(est_target_location[0], est_target_location[1], s=500, marker='*', c='white',
@@ -191,7 +199,9 @@ def plot_mosaic_with_psfs(mosaic, car, x_list=None, y_list=None, est_target_loca
         plt.legend()
     if x_list is not None and y_list is not None:
         for j, (x, y) in enumerate(zip(x_list, y_list)):
-            plt.annotate(j, xy=(x, y), xytext=(x-75, y), c=label_color, fontsize=14, weight='bold')
+            name = seg_list[j] if seg_list is not None else j
+            plt.annotate(name, xy=(x, y), xytext=(x-75, y), c=label_color, fontsize=14,
+                         weight='bold')
         if xlim is not None:
             plt.xlim(xlim)
         if ylim is not None:
@@ -201,12 +211,18 @@ def plot_mosaic_with_psfs(mosaic, car, x_list=None, y_list=None, est_target_loca
     plt.show()
 
 
-def plot_each_identified_segment_psf(image, x_list, y_list, window_size=200, num_psf_per_row=6,
-                                     seg_list=None):
+def plot_each_identified_segment_psf(image, info_df, window_size=200, num_psf_per_row=6):
     """
     Cut each segment out of the mosaic/image provided based on the x and y locations given with
     x_list, and y_list
     """
+    x_list = info_df['x'].values
+    y_list = info_df['y'].values
+    try:
+        seg_list = info_df['segment'].values
+    except KeyError:
+        seg_list = np.arange(len(x_list))
+
     radius = window_size//2
 
     rows = len(x_list)//num_psf_per_row+1
@@ -220,8 +236,7 @@ def plot_each_identified_segment_psf(image, x_list, y_list, window_size=200, num
                 cutout = image[int(y_list[i])-radius:int(y_list[i])+radius,
                                int(x_list[i])-radius:int(x_list[i])+radius]
                 ax[j, k].imshow(cutout, origin='lower', norm=LogNorm(vmin=1))
-                ind = seg_list[i] if seg_list else i
-                ax[j, k].set_title(f'PSF {ind}')
+                ax[j, k].set_title(f'PSF {seg_list[i]}')
                 i += 1
             except IndexError:
                 ax[j, k].axis('off')
@@ -262,34 +277,50 @@ def plot_multiple_parameters(parameters, info_df, xs=None, ys=None, xlim=None, y
         print('Requested parameters are not in the povided data frame. Nothing to plot')
     else:
         fig, ax = plt.subplots(1, len(parameters), figsize=(6*len(parameters), 8))
+
         try:
-            segs = info_df['seg_id'].values
+            segs = info_df['segment'][info_df['segment'] != 'Unknown'].values
         except KeyError:
             segs = np.arange(len(info_df))
+
         if xs is None and ys is None:
             xs = info_df['x'].values
             ys = info_df['y'].values
+
         for i, param in enumerate(parameters):
-            values = info_df[param].values
+            ax = ax if len(parameters) == 1 else ax[i]
+
             for seg, x, y in zip(segs, xs, ys):
-                try:
-                    ax[i].annotate(seg, (x, y), (x+15, y+15))
-                except TypeError:
-                    ax.annotate(seg, (x, y), (x+15, y+15))
+                ax.annotate(seg, (x, y), (x+15, y+15))
+
             vmin, vmax, cmap = grab_vmin_vmax(param)
+
             try:
-                pl = ax[i].scatter(xs, ys, marker='o', s=100, c=values, cmap=cmap,
-                                   vmin=vmin, vmax=vmax)
-                fig.colorbar(pl, ax=ax[i], orientation='horizontal')
-                ax[i].set_title(f"{param} for each PSF in the image")
-            except TypeError:
-                pl = ax.scatter(xs, ys, marker='o', s=100, c=values, cmap=cmap,
-                                vmin=vmin, vmax=vmax)
-                fig.colorbar(pl, ax=ax, orientation='horizontal')
-                ax.set_title(f"{param} for each PSF in the image")
+                values = info_df[param][info_df['segment'] != 'Unknown'].values
+            except KeyError:
+                values = info_df[param].values
+
+            pl = ax.scatter(xs, ys, marker='o', s=100, c=values, cmap=cmap,
+                            vmin=vmin, vmax=vmax)
+            fig.colorbar(pl, ax=ax, orientation='horizontal')
+            ax.set_title(f"{param} for each PSF in the image")
+
             if xlim and ylim:
                 plt.xlim(xlim)
                 plt.ylim(ylim)
+
+
+def separate_nircam_images(all_images_list):
+    nrca_images = []
+    nrcb_images = []
+    for fi in all_images_list:
+        instrument = fi.split('/')[-1].split('_')[3]
+        if 'a' in instrument:
+            nrca_images.append(fi)
+        elif 'b' in instrument:
+            nrcb_images.append(fi)
+
+    return sorted(nrca_images), sorted(nrcb_images)
 
 
 def get_nrc_data_from_list(nrc_file_list):
@@ -374,7 +405,7 @@ def create_basic_mosaic(nrca_data_list, nrcb_data_list):
     return big_image
 
 
-def create_image_array(image, seg_location_dictionary, window_size=60):
+def create_image_array(image, info_df, window_size=60):
     """
     Cut out postage stamps of an image and using the locations of each PSF and it's assumed
     segment ID, place it in a large image array.
@@ -384,29 +415,39 @@ def create_image_array(image, seg_location_dictionary, window_size=60):
 
     ga_xs = []
     ga_ys = []
-    for seg in seg_location_dictionary.keys():
-        mosaic_x = seg_location_dictionary[seg]['x']
-        mosaic_y = seg_location_dictionary[seg]['y']
-        psf = image[mosaic_y-window_size:mosaic_y+window_size,
-                    mosaic_x-window_size:mosaic_x+window_size]
-        ga_x, ga_y = GA_PSF_LOCATIONS[seg]
-        ga_xs.append(ga_x)
-        ga_ys.append(ga_y)
-        large_image_array[ga_y-window_size: ga_y+window_size,
-                          ga_x-window_size:ga_x+window_size] = psf
+    x_list = info_df['x'].values
+    y_list = info_df['y'].values
+    try:
+        seg_list = info_df['segment'].values
 
-    large_image_array = correct_pixel_values(large_image_array)
+        for mosaic_x, mosaic_y, seg in zip(x_list, y_list, seg_list):
+            if seg != 'Unknown':
+                psf = image[mosaic_y-window_size:mosaic_y+window_size,
+                            mosaic_x-window_size:mosaic_x+window_size]
+                ga_x, ga_y = GA_PSF_LOCATIONS[seg]
+                ga_xs.append(ga_x)
+                ga_ys.append(ga_y)
+                large_image_array[ga_y-window_size: ga_y+window_size,
+                                  ga_x-window_size:ga_x+window_size] = psf
 
-    return large_image_array, ga_xs, ga_ys
+        large_image_array = correct_pixel_values(large_image_array)
+        return large_image_array, ga_xs, ga_ys
+
+    except KeyError:
+        print('No segment list. Cannot make pseudo large image array')
+        return
 
 
-def list_good_psfs(info_dictionary, fwhm_limit, ellipse_limit):
+def list_good_psfs(info_df, fwhm_limit, ellipse_limit, seg_list=None):
     """
+    Determine which PSFs are "good" based on their FWHM and ellipticity values
     """
     good_inds = []
-    for key in info_dictionary.keys():
-        if info_dictionary[key]['fwhm'] < fwhm_limit and \
-           info_dictionary[key]['ellipse'] > ellipse_limit:
-            good_inds.append(key)
+    for i, (fwhm, ellipse) in enumerate(zip(info_df['fwhm'], info_df['ellipse'])):
+        if fwhm < fwhm_limit and ellipse > ellipse_limit:
+            if seg_list:
+                good_inds.append(seg_list[i])
+            else:
+                good_inds.append(i)
 
     return good_inds
