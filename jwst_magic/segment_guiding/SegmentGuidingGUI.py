@@ -150,8 +150,14 @@ class SegmentGuidingDialog(QDialog):
                 detector = str(self.comboBox_detector.currentText())
                 x_offset = float(self.lineEdit_boresightX.text())
                 y_offset = float(self.lineEdit_boresightY.text())
-                v2_offset, v3_offset = nrcpixel_offset_to_v2v3_offset(x_offset, y_offset,
-                                                                      detector=detector)
+                if detector != '':
+                    v2_offset, v3_offset = nrcpixel_offset_to_v2v3_offset(x_offset, y_offset,
+                                                                          detector=detector)
+                elif detector == '' and (x_offset, y_offset) == (0, 0):
+                    v2_offset, v3_offset = 0, 0
+                else:
+                    raise ValueError('Segment Guiding: Detector used for boresight offset not set in the SOF pop up box.')
+
                 self.log.info(
                     'Segment Guiding: Applying boresight offset of {}, {} arcsec (Converted from {}, {} {} pixels)'.
                         format(v2_offset, v3_offset, x_offset, y_offset, detector)
