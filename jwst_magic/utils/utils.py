@@ -542,14 +542,14 @@ def get_data_and_header(filename):
     return data, header
 
 
-def read_ascii_file_qt(filename):
+def read_ascii_file_qt(filename, **kwargs):
     """Read in an ASCII file using PyQT5 QFile class. This should
     be used in GUIs where OS operations as best done using PyQT5
     functionality.
     """
     file = QFile(filename)
     if file.open(QFile.ReadOnly):
-        table = asc.read(filename)
+        table = asc.read(filename, **kwargs)
         file.close()
 
     return table
@@ -558,7 +558,10 @@ def read_ascii_file_qt(filename):
 def join_path_qt(*args):
     """Join a list of paths like os.path.join, but using the
     PyQT5 QDir class. This should be used in GUIs where OS
-    operations as best done using PyQT5 functionality."""
+    operations as best done using PyQT5 functionality.
+
+    Returns a string
+    """
     list_of_paths = list(args)
     s = '/'.join(list_of_paths)
     return QDir.cleanPath(s)

@@ -76,7 +76,7 @@ import matplotlib.pyplot as plt
 from PyQt5 import QtCore, uic
 from PyQt5.QtWidgets import (QApplication, QDialog, QMessageBox, QSizePolicy,
                              QTableWidgetItem, QWidget, QFileDialog, QGridLayout, QLabel)
-from PyQt5.QtCore import pyqtSlot, QSize, Qt
+from PyQt5.QtCore import pyqtSlot, QSize, Qt, QFile
 from PyQt5.QtGui import QIcon, QPixmap
 
 from jwst_magic.utils import utils
@@ -789,7 +789,7 @@ class StarSelectorWindow(QDialog):
         # Move the guide star icon
         self.tableWidget_selectedStars.setItem(ind_of_old_guide_star, 0,
                                                QTableWidgetItem(''))
-        icon = QIcon(os.path.join(__location__, 'gs_icon.png'))
+        icon = QIcon(utils.join_path_qt(__location__, 'gs_icon.png'))
         self.tableWidget_selectedStars.setItem(guide_ind, 0,
                                                QTableWidgetItem(icon, ''))
 
@@ -838,7 +838,7 @@ class StarSelectorWindow(QDialog):
             self.circles[self.gs_ind].set_markeredgecolor('yellow')
 
             # Move the guide star icon
-            icon = QIcon(os.path.join(__location__, 'gs_icon.png'))
+            icon = QIcon(utils.join_path_qt(__location__, 'gs_icon.png'))
             self.tableWidget_selectedStars.setItem(self.gs_ind, 0,
                                                    QTableWidgetItem(icon, ''))
 
@@ -919,7 +919,7 @@ class StarSelectorWindow(QDialog):
             self.wss_popup.setLayout(layout)
 
             # Move dialog to the side near the pseudo-FGS image
-            point  = self.frame_canvas.rect().topRight()
+            point = self.frame_canvas.rect().topRight()
             global_point = self.frame_canvas.mapToGlobal(point)
             self.wss_popup.move(global_point - QtCore.QPoint(self.width(), 0))
 
@@ -942,10 +942,11 @@ class StarSelectorWindow(QDialog):
         in a previous guiding selections file
         """
         # Read in yaml file containing previously made selections (if it exists)
-        out_yaml = os.path.join(self.out_dir, 'all_guiding_selections.yaml')
-        if os.path.exists(out_yaml):
-            with open(out_yaml, 'r') as stream:
-                data_loaded = yaml.safe_load(stream)
+        out_yaml = QFile(utils.join_path_qt(self.out_dir, 'all_guiding_selections.yaml'))
+        if out_yaml.exists():
+            if out_yaml.open(QtCore.QFile.ReadOnly):
+                data_loaded = yaml.safe_load(out_yaml)
+                out_yaml.close()
 
             # handle an accidentally made empty file
             if data_loaded is None:
@@ -1392,7 +1393,7 @@ class StarSelectorWindow(QDialog):
                       str(int(self.y[ind])), str(int(countrate))]
             for i_col, value in enumerate(values):
                 if gs and i_col == 0:
-                    item = QTableWidgetItem(QIcon(os.path.join(__location__, 'gs_icon.png')), '')
+                    item = QTableWidgetItem(QIcon(utils.join_path_qt(__location__, 'gs_icon.png')), '')
                 else:
                     item = QTableWidgetItem(value)
                 item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
@@ -1557,7 +1558,7 @@ def run_SelectStars(data, x, y, dist, guider, out_dir, print_output=True, master
     # ind numbers in yaml will match what is seen in the GUI, not what's in inds variable
     if len(inds) != 0:
         utils.setup_yaml()
-        out_yaml = os.path.join(out_dir, 'all_guiding_selections.yaml')
+        out_yaml = utils.join_path_qt(out_dir, 'all_guiding_selections.yaml')
         if os.path.exists(out_yaml):
             append_write = 'a'  # append if already exists
             with open(out_yaml, 'r') as stream:
