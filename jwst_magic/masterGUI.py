@@ -534,28 +534,26 @@ class MasterGui(QMainWindow):
 
             # Open all_found_psfs*.txt (list of all identified segments)
             all_psfs = self.all_found_psfs_file
-            out_path = utils.join_path_qt(out_dir, 'out', self.lineEdit_root.text())
 
             if self.all_found_psfs_file != '':
                 all_rows = utils.read_ascii_file_qt(all_psfs)
                 x = all_rows['x'].data
                 y = all_rows['y'].data
             else:
-                raise FileNotFoundError('Cannot find an all found PSFs file in this directory {}. '
+                raise FileNotFoundError(f'Cannot find an all found PSFs file in this directory {root_dir.absolutePath()}. '
                                         'This file can be created by running the star selection section '
-                                        'of the GUI.'.format(out_path))
+                                        'of the GUI.')
 
             # Run the select stars GUI to determine the new orientation
             inds_list, center_of_pointing = run_SelectStars(data, x, y, 20, guider,
-                                                            out_dir=out_path,
+                                                            out_dir=root_dir.absolutePath(),
                                                             print_output=False,
                                                             masterGUIapp=self.app)
 
             # Print indices of each guiding configuration
             for i in range(len(inds_list)):
                 ind = inds_list[i]
-                LOGGER.info('Master GUI: Guiding Configuration {} - GS = {}, RS = {}'.format(i, ind[0],
-                                                                                 ', '.join([str(c) for c in ind[1:]])))
+                LOGGER.info(f'Master GUI: Guiding Configuration {i} - GS = {ind[0]}, RS = {", ".join([str(c) for c in ind[1:]])}')
 
             # Rewrite the id.prc and acq.prc files
             threshold_factor = float(self.lineEdit_threshold.text())
