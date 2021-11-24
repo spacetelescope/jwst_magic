@@ -29,9 +29,11 @@ import yaml
 
 # Third Party
 from astropy.io import fits
+from astropy.io import ascii as asc
 import numpy as np
 import pandas as pd
 import photutils
+from PyQt5.QtCore import QFile, QDir
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
@@ -525,15 +527,41 @@ def get_guider(header, guider=None, log=None):
 def get_data_and_header(filename):
     """Open a FITS file, get the data from either the SCI or PRIMARY
     extension, and get the header from the PRIMARY extension.
+    Uses PyQt5.QtCore.QFile to run faster in the GUI
     """
-    with fits.open(filename) as hdulist:
-        if len(hdulist) > 1:
-            data = hdulist[1].data
-        else:
-            data = hdulist[0].data
-        header = hdulist[0].header
+    file = QFile(filename)
+    if file.open(QFile.ReadOnly):
+        with fits.open(filename) as hdulist:
+            if len(hdulist) > 1:
+                data = hdulist[1].data
+            else:
+                data = hdulist[0].data
+            header = hdulist[0].header
+        file.close()
 
     return data, header
+
+
+def read_ascii_file_qt(filename):
+    """Read in an ASCII file using PyQT5 QFile class. This should
+    be used in GUIs where OS operations as best done using PyQT5
+    functionality.
+    """
+    file = QFile(filename)
+    if file.open(QFile.ReadOnly):
+        table = asc.read(filename)
+        file.close()
+
+    return table
+
+
+def join_path_qt(*args):
+    """Join a list of paths like os.path.join, but using the
+    PyQT5 QDir class. This should be used in GUIs where OS
+    operations as best done using PyQT5 functionality."""
+    list_of_paths = list(args)
+    s = '/'.join(list_of_paths)
+    return QDir.cleanPath(s)
 
 
 def make_root(root, filename):
