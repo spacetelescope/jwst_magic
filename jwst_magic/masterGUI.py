@@ -386,10 +386,10 @@ class MasterGui(QMainWindow):
             root_dir = QDir(utils.join_path_qt(out_dir, 'out', root))
         elif self.radioButton_name_commissioning.isChecked():
             root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
-            out_dir = QDir(utils.join_path_qt(SOGS_PATH,
-                                              self.comboBox_practice.currentText(),
-                                              self.comboBox_car.currentText().lower().replace('-', ''),
-                                              ))
+            out_dir = utils.join_path_qt(SOGS_PATH,
+                                         self.comboBox_practice.currentText(),
+                                         self.comboBox_car.currentText().lower().replace('-', ''),
+                                         )
             root_dir = QDir(utils.join_path_qt(out_dir, 'out', root))
         copy_original = True
 
