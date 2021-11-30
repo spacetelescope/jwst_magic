@@ -630,7 +630,7 @@ class MasterGui(QMainWindow):
 
                 # Verify that the all_found_psfs*.txt file(s) exist
                 if False in [QFile.exists(path) for path in segment_infile_list]:
-                    raise OSError('Missing all founds psfs file(s) {}.'.format(segment_infile_list))
+                    raise OSError(f'Missing all founds psfs file(s) {segment_infile_list}.')
 
                 # Run the tool and generate the file
                 # Initialize the dialog
@@ -758,7 +758,7 @@ class MasterGui(QMainWindow):
         # Only continue if the entered image path actually exists:
         if filename is not None and filename != '':
             if not QFile.exists(filename):
-                raise FileNotFoundError('Input image {} does not exist.'.format(filename))
+                raise FileNotFoundError(f'Input image {filename} does not exist.')
 
         # Derive the root from the filename and assume the default output
         if self.radioButton_name_manual.isChecked():
@@ -793,7 +793,7 @@ class MasterGui(QMainWindow):
             self.textEdit_out.setText(dirname)
 
             if not QDir(dirname).exists():
-                raise FileNotFoundError('Output directory {} does not exist.'.format(dirname))
+                raise FileNotFoundError(f'Output directory {dirname} does not exist.')
 
             self.update_filepreview(new_guiding_selections=True)
 
@@ -889,8 +889,7 @@ class MasterGui(QMainWindow):
             self.bkgrdstars_hdr['BACK_PA'] = (self._bkgdstars_dialog.position_angle, 'V3PA from background stars gui')
 
         if isinstance(self.bkgd_stars, dict) and method is not None:
-            self.textEdit_backgroundStars.setText('{} background stars added {}'.
-                                                  format(len(self.bkgd_stars['x']), method_adverb[method]))
+            self.textEdit_backgroundStars.setText(f'{len(self.bkgd_stars["x"])} background stars added {method_adverb[method]}')
 
     def on_click_del_bkgrdstars(self):
         """Reset background stars information"""
@@ -1113,14 +1112,12 @@ class MasterGui(QMainWindow):
         """ Dialog box for opening a NIRCam of FGS image"""
         # options = QFileDialog.Options()
         if multiple_files==False:
-            fileName, _ = QFileDialog.getOpenFileName(self, "Open {}".format(title),
-                                                      "", file_type)
+            fileName, _ = QFileDialog.getOpenFileName(self, f"Open {title}", "", file_type)
             # options=options)
             if fileName:
                 return fileName
         else:
-            fileName_list, _ = QFileDialog.getOpenFileNames(self, "Open {}".format(title),
-                                                      "", file_type)
+            fileName_list, _ = QFileDialog.getOpenFileNames(self, f"Open {title}", "", file_type)
             # options=options)
             if fileName_list:
                 return fileName_list
@@ -1204,7 +1201,7 @@ class MasterGui(QMainWindow):
         # Otherwise, show nothing
         else:
             # Update textbox showing filepath
-            self.textEdit_showingInput.setText('No input image found at {}.'.format(filename))
+            self.textEdit_showingInput.setText(f'No input image found at {filename}.')
             self.textEdit_showingInput.setEnabled(False)
 
             # Update plot to not show anything
@@ -1342,7 +1339,7 @@ class MasterGui(QMainWindow):
         if len(self.comboBox_showcommandsconverted) == 1 and "Guiding Command" in \
                 self.comboBox_showcommandsconverted.currentText():
             for i, command_file in enumerate(self.guiding_selections_file_list):
-                item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                item = f"Command {i + 1}: {command_file.split('/')[-1]}"
                 self.comboBox_showcommandsconverted.addItem(item)
 
         # Add chosen files to shifted image combobox to choose from
@@ -1350,7 +1347,7 @@ class MasterGui(QMainWindow):
                 self.comboBox_showcommandsshifted.currentText():
             self.comboBox_showcommandsshifted.clear()
             for i, command_file in enumerate(self.shifted_guiding_selections_file_list):
-                item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                item = f"Command {i + 1}: {command_file.split('/')[-1]}"
                 self.comboBox_showcommandsshifted.addItem(item)
 
         self.update_checkable_combobox()
@@ -1417,8 +1414,8 @@ class MasterGui(QMainWindow):
                     i = 0
                     for command_file in guiding_selections:
                         # If the wrong guider number is present in the name, don't list the file
-                        if '_G{}_'.format([2 if self.buttonGroup_guider.checkedButton().text() == '1' else 1][0]) not in command_file:
-                            item = "Command {}: {}".format(i + 1, command_file.split('/')[-1])
+                        if f'_G{[2 if self.buttonGroup_guider.checkedButton().text() == "1" else 1][0]}_' not in command_file:
+                            item = f"Command {i + 1}: {command_file.split('/')[-1]}"
                             self.comboBox_guidingcommands.addItem(item)
                             item = self.comboBox_guidingcommands.model().item(i, 0)
                             item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
@@ -1534,8 +1531,7 @@ class MasterGui(QMainWindow):
         else:
             # Update textbox showing filepath
             self.textEdit_showingConverted.setText(
-                'No converted guider {} image found at {}.'.format(self.buttonGroup_guider.checkedButton().text(),
-                                                                   self.converted_im_file))
+                f'No converted guider {self.buttonGroup_guider.checkedButton().text()} image found at {self.converted_im_file}.')
             self.textEdit_showingConverted.setEnabled(False)
 
             # Clear and reset 0th index in shifted combo box
