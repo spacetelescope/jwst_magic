@@ -30,6 +30,7 @@ import yaml
 # Third Party
 from astropy.io import fits
 from astropy.io import ascii as asc
+from astropy.nddata import bitmask
 import numpy as np
 import pandas as pd
 import photutils
@@ -776,24 +777,8 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
         pix_dict['do_not_use'] = 1
 
     # Update file to be only 1s and 0s to match FGS
-    data = np.zeros_like(bad_pix_data, dtype=np.uint8)
-    for i, j in itertools.product(range(len(bad_pix_data[0])), range(len(bad_pix_data[0]))):
-        pix = bad_pix_data[i, j]
-
-        # if the pixel has a value, check the value
-        if pix != 0:
-            contents = []
-            for value in bad_pix_values[::-1]:
-                if pix < value:
-                    continue
-                else:
-                    pix -= value
-                    contents.append(value)
-
-            # if the pixel contains a bad value, set the location to 1
-            # do_not_use (if nircam), dead, hot, telegraph, bad_ref_pix, rc
-            if set(pix_dict.values()) & set(contents) != set():
-                data[i, j] = 1
+    ignore_flags = [flag for flag in bad_pix_values if flag not in pix_dict.values()]
+    data = bitmask.bitfield_to_boolean_mask(bad_pix_data.astype(int), dtype=np.uint8, ignore_flags=ignore_flags)
 
     return data, pix_dict
 
@@ -810,6 +795,9 @@ def convert_nircam_bad_pixel_mask_files(filepath):
         bad_pix_hdr = bad_pix_hdu[0].header
         bad_pix_data = bad_pix_hdu[1].data
         bad_pix_values = bad_pix_hdu[2].data['VALUE']
+
+    # Remove 0 from the bad pixel values options
+    bad_pix_values = np.delete(bad_pix_values, np.where(bad_pix_values == 0))
 
     # Update file to be only 1s and 0s to match FGS
     data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, nircam=True)
