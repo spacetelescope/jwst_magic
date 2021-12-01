@@ -675,14 +675,16 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
         Name used to create the output directory, {out_dir}/out/{root}
     out_dir : str
         Where output files will be saved.
-    smoothing: str, optional
+    smoothing: str or float, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
         or "choose center" for finding the center of a MIMF PSF
     detection_threshold: str, optional
         Options are "standard-deviation" to set threshold=median + (3 * std) or
         "pixel-wise" to use photutils' detect_threshold() function (used only
-        for normal operations)
+        for normal operations). User can also pass a float which will be used
+        as the sigma value in ndimage.gaussian_filter." to the smoothing
+        parameter description
     save : bool, optional
         Save out all found psfs file
 
@@ -706,6 +708,9 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
     elif smoothing == 'choose center':
         gauss_sigma = 26
         npeaks = 1
+    elif isinstance(smoothing, (float, int)):
+        gauss_sigma = smoothing
+        npeaks = np.inf
 
     data = data.astype(float)
     smoothed_data = ndimage.gaussian_filter(data, sigma=gauss_sigma)
@@ -799,7 +804,7 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default',
         Name used to create the output directory, {out_dir}/out/{root}
     out_dir : str
         Where output files will be saved.
-    smoothing: str, optional
+    smoothing: str or float, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
         or "choose center" for finding the center of a MIMF PSF
@@ -857,8 +862,12 @@ def create_seed_image(data, guider, root, out_dir, smoothing='default',
         old_bkgrd[stamp.slices_original[0], stamp.slices_original[1]] = np.full_like(stamp.data, np.nan)
 
     # Do 2x sigma clipping with sigma = 3 (returning an array where clipped data are nans)
-    old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
-    old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
+    import warnings
+    from astropy.utils.exceptions import AstropyUserWarning
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=AstropyUserWarning)
+        old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
+        old_bkgrd = sigma_clip(old_bkgrd, sigma=3, cenfunc='mean', masked=False, copy=False, axis=[0, 1])
     med = np.nanmedian(old_bkgrd)
 
     final_stamps = []
@@ -918,10 +927,11 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     norm_unit : str, optional
         Specifies the unit of norm_value ("FGS Magnitude", "FGS countrate",
         or "Guide Star ID")
-    smoothing: str, optional
+    smoothing: str or float, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
-        or "choose center" for finding the center of a MIMF PSF
+        or "choose center" for finding the center of a MIMF PSF. User can also
+        pass a float which will be used as the sigma value in ndimage.gaussian_filter.
     detection_threshold: str, optional
         Options are "standard-deviation" to set threshold=median + (3 * std)
         or "pixel-wise" to use photutils' detect_threshold() function (used

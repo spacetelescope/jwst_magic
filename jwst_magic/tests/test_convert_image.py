@@ -246,6 +246,7 @@ detection_parameters = [
     ('low', 'standard-deviation', 1),  # no smoothing checked
     ('default', 'pixel-wise', 636),  # pixel-wise threshold checked
     ('high', 'pixel-wise', 28),  # high smoothing and pixel-wise threshold checked
+    (26, 'standard-deviation', 18),  # gauss sigma of 26 (same as high smoothing)
 ]
 @pytest.mark.parametrize('smoothing, detection_threshold, correct_number_of_psfs', detection_parameters)
 def test_psf_detection_methods(test_directory, smoothing, detection_threshold, correct_number_of_psfs):

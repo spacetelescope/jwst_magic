@@ -29,9 +29,12 @@ import yaml
 
 # Third Party
 from astropy.io import fits
+from astropy.io import ascii as asc
+from astropy.nddata import bitmask
 import numpy as np
 import pandas as pd
 import photutils
+from PyQt5.QtCore import QFile, QDir
 
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
@@ -525,15 +528,44 @@ def get_guider(header, guider=None, log=None):
 def get_data_and_header(filename):
     """Open a FITS file, get the data from either the SCI or PRIMARY
     extension, and get the header from the PRIMARY extension.
+    Uses PyQt5.QtCore.QFile to run faster in the GUI
     """
-    with fits.open(filename) as hdulist:
-        if len(hdulist) > 1:
-            data = hdulist[1].data
-        else:
-            data = hdulist[0].data
-        header = hdulist[0].header
+    file = QFile(filename)
+    if file.open(QFile.ReadOnly):
+        with fits.open(filename) as hdulist:
+            if len(hdulist) > 1:
+                data = hdulist[1].data
+            else:
+                data = hdulist[0].data
+            header = hdulist[0].header
+        file.close()
 
     return data, header
+
+
+def read_ascii_file_qt(filename, **kwargs):
+    """Read in an ASCII file using PyQT5 QFile class. This should
+    be used in GUIs where OS operations are best done using PyQT5
+    functionality.
+    """
+    file = QFile(filename)
+    if file.open(QFile.ReadOnly):
+        table = asc.read(filename, **kwargs)
+        file.close()
+
+    return table
+
+
+def join_path_qt(*args):
+    """Join a list of paths like os.path.join, but using the
+    PyQT5 QDir class. This should be used in GUIs where OS
+    operations are best done using PyQT5 functionality.
+
+    Returns a string
+    """
+    list_of_paths = list(args)
+    s = '/'.join(list_of_paths)
+    return QDir.cleanPath(s)
 
 
 def make_root(root, filename):
@@ -745,24 +777,8 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
         pix_dict['do_not_use'] = 1
 
     # Update file to be only 1s and 0s to match FGS
-    data = np.zeros_like(bad_pix_data, dtype=np.uint8)
-    for i, j in itertools.product(range(len(bad_pix_data[0])), range(len(bad_pix_data[0]))):
-        pix = bad_pix_data[i, j]
-
-        # if the pixel has a value, check the value
-        if pix != 0:
-            contents = []
-            for value in bad_pix_values[::-1]:
-                if pix < value:
-                    continue
-                else:
-                    pix -= value
-                    contents.append(value)
-
-            # if the pixel contains a bad value, set the location to 1
-            # do_not_use (if nircam), dead, hot, telegraph, bad_ref_pix, rc
-            if set(pix_dict.values()) & set(contents) != set():
-                data[i, j] = 1
+    ignore_flags = [flag for flag in bad_pix_values if flag not in pix_dict.values()]
+    data = bitmask.bitfield_to_boolean_mask(bad_pix_data.astype(int), dtype=np.uint8, ignore_flags=ignore_flags)
 
     return data, pix_dict
 
@@ -779,6 +795,9 @@ def convert_nircam_bad_pixel_mask_files(filepath):
         bad_pix_hdr = bad_pix_hdu[0].header
         bad_pix_data = bad_pix_hdu[1].data
         bad_pix_values = bad_pix_hdu[2].data['VALUE']
+
+    # Remove 0 from the bad pixel values options
+    bad_pix_values = np.delete(bad_pix_values, np.where(bad_pix_values == 0))
 
     # Update file to be only 1s and 0s to match FGS
     data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, nircam=True)
