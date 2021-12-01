@@ -301,12 +301,16 @@ class MasterGui(QMainWindow):
             self.radioButton_name_manual.setChecked(True)
             return
 
-        # If on SOGS, pull out practice names from existing practice directories
+        # If on SOGS, pull out folder names from existing directories
         else:
             sogs_search = utils.join_path_qt(SOGS_PATH, '*')
             sogs_dirs = [QDir(dir).dirName() for dir in glob.glob(sogs_search)]
-            for d in ['data', 'processing', 'MAGIC_logs']:
-                sogs_dirs.remove(d)
+            for d in ['data', 'processing', 'MAGIC_logs', 'wf_guiding_training', 'analysis_notebooks',
+                      'Practices_and_Rehearsals', 'test_practice']:
+                try:
+                    sogs_dirs.remove(d)
+                except ValueError:
+                    pass
 
         # Load all OTE cars from commissioning activities YAML file
         self.commissioning_dict = utils.get_car_data()
@@ -408,12 +412,13 @@ class MasterGui(QMainWindow):
                          os.walk(utils.join_path_qt(out_dir, 'out', root))]
         list_of_files = [item for sublist in list_of_files for item in sublist]
         opposite_guider = [2 if guider == 1 else 1][0]
-        if True in [True if ('_G{}_'.format(opposite_guider) in file or '_G{}.'.format(opposite_guider) in
+        if True in [True if (f'_G{opposite_guider}_' in file or f'_G{opposite_guider}.' in
                              file) else False for file in list_of_files]:
 
-            raise ValueError('Data from GUIDER {} found in the root path: {}, which does not match the chosen '
-                             'GUIDER {}. Delete all contents from this directory before writing data with a new '
-                             'guider.'.format(opposite_guider, utils.join_path_qt(out_dir, 'out', root), guider))
+            raise ValueError(f'Data from GUIDER {opposite_guider} found in the root path: '
+                             f'{utils.join_path_qt(out_dir, "out", root)}, which does not match the chosen '
+                             f'GUIDER {guider}. Delete all contents from this directory before writing data with a new '
+                             f'guider.')
 
         # Log the APT file and observation that were queried
         if self.gs_ra is not '' and self.gs_dec is not '':
@@ -1030,7 +1035,7 @@ class MasterGui(QMainWindow):
                                       self.comboBox_practice.currentText(),
                                       self.comboBox_car.currentText().lower().replace('-', ''),
                                       'out',
-                                      'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
+                                      f'for_obs{int(self.lineEdit_obs.text()):02d}'
                                       )
             self.textEdit_name_preview.setText(path)
         else:

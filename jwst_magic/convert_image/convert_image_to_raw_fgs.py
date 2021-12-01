@@ -682,7 +682,9 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
     detection_threshold: str, optional
         Options are "standard-deviation" to set threshold=median + (3 * std) or
         "pixel-wise" to use photutils' detect_threshold() function (used only
-        for normal operations)
+        for normal operations). User can also pass a float which will be used
+        as the sigma value in ndimage.gaussian_filter." to the smoothing
+        parameter description
     save : bool, optional
         Save out all found psfs file
 
@@ -706,7 +708,7 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
     elif smoothing == 'choose center':
         gauss_sigma = 26
         npeaks = 1
-    elif isinstance(smoothing, float) or isinstance(smoothing, int):
+    elif isinstance(smoothing, (float, int)):
         gauss_sigma = smoothing
         npeaks = np.inf
 
