@@ -62,6 +62,10 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
    Due to the constraints of converting from raw pixels to ideal arcseconds, the ideal coordinates in the star and prc files in the `dhas_` and `ground_system_` directories may be less exact, by up to 0.5 arcseconds.
 
+   If you see that the red plus signs do not find the guide star's PSFs correctly, there was a problem in the image conversion section. Close the star selection GUI and follow one of 2 options: 
+      1. Go back to change the smoothing and detection threshold in the Image Conversion section of the GUI and re-run the tool
+      2. If you would like more flexibility, use the "Create pseudo-fgs image with more options" jupyter notebook in the notebooks/ folder of the repository. 
+
 ---------------------------------
 
 #### Next

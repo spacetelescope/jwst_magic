@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1615</width>
+    <width>1630</width>
     <height>1130</height>
    </rect>
   </property>
@@ -2506,6 +2506,22 @@ QPushButton:pressed {
    <sender>checkBox_useConvertedImage</sender>
    <signal>toggled(bool)</signal>
    <receiver>checkBox_noSmoothing</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>384</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>606</x>
+     <y>605</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_useConvertedImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox_detectionThreshold</receiver>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

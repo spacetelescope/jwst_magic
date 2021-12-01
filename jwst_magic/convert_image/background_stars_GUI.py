@@ -43,11 +43,11 @@ import random
 # Third Party Imports
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-from astropy.io import ascii as asc
 import fgscountrate
 import matplotlib as mpl
 import numpy as np
 from PyQt5 import uic
+from PyQt5.QtCore import QFile, QDir
 from PyQt5.QtWidgets import QDialog, QFileDialog, QTableWidgetItem, QMessageBox
 import pysiaf
 
@@ -102,9 +102,11 @@ class BackgroundStarsDialog(QDialog):
 
         # Set out directory and image name if variables are present
         if out_dir is not None and root is not None:
-            out_dir_root = utils.make_out_dir(out_dir, OUT_PATH, root)
-            utils.ensure_dir_exists(out_dir_root)
-            self.out_image = os.path.join(out_dir_root, 'background_stars_{}_G{}.png'.format(root, guider))
+            out_dir_root = QDir(utils.make_out_dir(out_dir, OUT_PATH, root))
+            if not out_dir_root.exists():
+                out_dir_root.mkpath('.')
+            self.out_image = QFile(utils.join_path_qt(out_dir_root.absolutePath(),
+                                                      f'background_stars_{root}_G{guider}.png'))
         else:
             self.out_image = None
 
@@ -219,7 +221,7 @@ class BackgroundStarsDialog(QDialog):
             self.lineEdit_definedFile.setText(filename)
 
             # Parse the file
-            tab = asc.read(filename, format='commented_header')
+            tab = utils.read_ascii_file_qt(filename, format='commented_header')
 
             if tab.colnames == ['y', 'x', 'fgs_mag']:
                 new_order = ['x', 'y', 'fgs_mag']
@@ -287,9 +289,9 @@ class BackgroundStarsDialog(QDialog):
 
         # Save out image
         if self.out_image:
-            if os.path.isfile(self.out_image):
-                os.remove(self.out_image)
-            self.canvas.fig.savefig(self.out_image, dpi=150)
+            if self.out_image.exists():
+                QFile.remove(self.out_image)
+            self.canvas.fig.savefig(self.out_image.fileName(), dpi=150)
 
     def draw_defined_stars(self):
         # Only draw stars if the table is full and numeric
@@ -347,9 +349,9 @@ class BackgroundStarsDialog(QDialog):
 
         # Save out image
         if self.out_image:
-            if os.path.isfile(self.out_image):
-                os.remove(self.out_image)
-            self.canvas.fig.savefig(self.out_image, dpi=150)
+            if self.out_image.exists():
+                QFile.remove(self.out_image)
+            self.canvas.fig.savefig(self.out_image.fileName(), dpi=150)
 
     def draw_catalog_stars(self):
         # Only draw new stars if all the needed parameters exist
@@ -426,9 +428,9 @@ class BackgroundStarsDialog(QDialog):
 
         # Save out image
         if self.out_image:
-            if os.path.isfile(self.out_image):
-                os.remove(self.out_image)
-            self.canvas.fig.savefig(self.out_image, dpi=150)
+            if self.out_image.exists():
+                QFile.remove(self.out_image)
+            self.canvas.fig.savefig(self.out_image.fileName(), dpi=150)
 
     def add_star(self):
         n_rows = self.tableWidget.rowCount()
