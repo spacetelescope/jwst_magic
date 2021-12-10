@@ -7,6 +7,7 @@ from matplotlib.colors import from_levels_and_colors
 from matplotlib import cm
 import numpy as np
 import pandas as pd
+import poppy
 from scipy import ndimage
 
 from jwst_magic import convert_image
@@ -69,24 +70,21 @@ def get_position_from_magic(image, smoothing='default', npeaks=np.inf):
     return x_list, y_list
 
 
-def get_image_information(image, info_from_shadow=None, params_to_include=None,
+def get_image_information(image, params_to_include=None,
                           target_location=None, smoothing='high'):
     """
     Take in the pick_log.txt file from Shadow to load in PSF characteristics. If no pick_log.txt
     is provided, the locations of the PSFs are found with a MAGIC function and no other PSF
     characteristics are measured.
     """
-    if info_from_shadow is not None:
-        print(f'Creating the information table from {info_from_shadow}')
-        info_df = read_shadow_log(info_from_shadow, params_to_include=params_to_include)
+    x_list, y_list = get_position_from_magic(image, smoothing=smoothing)
+    fwhm_x, fwhmy, ee = get_psf_characteristics(image, x_list, y_list)
+    print(f'Creating the information table from the X and Y values calculated using MAGIC')
+    print(f'{len(x_list)} PSFs found')
+    if x_list:
+        info_df = pd.DataFrame(data={'x': x_list, 'y': y_list})
     else:
-        x_list, y_list = get_position_from_magic(image, smoothing=smoothing)
-        print(f'Creating the information table from the X and Y values calculated using MAGIC')
-        print(f'{len(x_list)} PSFs found')
-        if x_list:
-            info_df = pd.DataFrame(data={'x': x_list, 'y': y_list})
-        else:
-            info_df = None
+        info_df = None
 
     # Make a larger dictionary that organizes the information by segment
     if target_location is None:
@@ -451,3 +449,60 @@ def list_good_psfs(info_df, fwhm_limit, ellipse_limit, seg_list=None):
                 good_inds.append(i)
 
     return good_inds
+
+# Got this from https://grit.stsci.edu/wfsc/tools/-/blob/master/ote-commissioning/pre-mimf/ote28_psf_analysis.py
+def measure_fwhm(array):
+    """Fit a Gaussian2D model to a PSF and return the fitted PSF
+    the FWHM is x and y can be found with fitted_psf.x_fwhm, fitted_psf.y_fwhm
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Array containing PSF
+
+    Returns
+    -------
+    x_fwhm : float
+        FWHM in x direction in units of pixels
+
+    y_fwhm : float
+        FWHM in y direction in units of pixels
+    """
+    yp, xp = array.shape
+    y, x, = np.mgrid[:yp, :xp]
+    p_init = models.Gaussian2D(amplitude = array.max(), x_mean=xp*0.5,y_mean=yp*0.5)
+    fit_p = fitting.LevMarLSQFitter()
+    fitted_psf = fit_p(p_init, x, y, array)
+    return fitted_psf.x_fwhm, fitted_psf.y_fwhm
+
+def measure_ee(array):
+    '''Wrapper function around poppy's measure_ee
+    '''
+    hdu1 = fits.PrimaryHDU(array)
+    new_hdul = fits.HDUList([hdu1])
+    return poppy.measure_ee(new_hdul, normalize='None')
+
+def get_psf_characteristics(data, x_list, y_list, radius):
+        '''
+
+        '''
+        # results = peaks.evaluate_peaks(psf_peaks, data, fwhm_radius=fwhm_radius,
+        #                                fwhm_method='gaussian', ee_total_radius=ee_total_radius)
+        for x, y in zip(x_list, y_list):
+            cutout = data[int(y_list[i])-radius:int(y_list[i])+radius,
+                           int(x_list[i])-radius:int(x_list[i])+radius]
+            # Measure FWHM
+            fwhm_x, fwhm_y = measure_fwhm(cutout)
+            # Measure EE
+            ee_fn = measure_ee(cutout)
+            if ee_fn is None:
+                print(f'Could not measure EE for {segment}. Recording EE of None.')
+                d['encircled_energy_1a'] = None # the encircled energy at 1 arcsec
+                d['encircled_energy_.5a'] = None # the encircled energy at half an arcsec
+            else:
+                ee_at_1arcsec = ee_fn(arcsec)
+                ee_at_half_arcsec = ee_fn(arcsec/2)
+                d['encircled_energy_1a'] = float(ee_at_1arcsec) # the encircled energy at 1 arcsec
+                d['encircled_energy_.5a'] = float(ee_at_half_arcsec) # the encircled energy at half an arcsec
+
+        return fwhm_x, fwhmy, ee
