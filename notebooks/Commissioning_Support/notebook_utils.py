@@ -1,6 +1,7 @@
 import os
 
 from astropy.io import fits
+from astropy.modeling import models, fitting
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib.colors import from_levels_and_colors
@@ -70,35 +71,108 @@ def get_position_from_magic(image, smoothing='default', npeaks=np.inf):
     return x_list, y_list
 
 
-def get_image_information(image, params_to_include=None,
-                          target_location=None, smoothing='high'):
+# Got this from https://grit.stsci.edu/wfsc/tools/-/blob/master/ote-commissioning/pre-mimf/ote28_psf_analysis.py
+def measure_fwhm(array):
+    """Fit a Gaussian2D model to a PSF and return the fitted PSF
+    the FWHM is x and y can be found with fitted_psf.x_fwhm, fitted_psf.y_fwhm
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Array containing PSF
+
+    Returns
+    -------
+    x_fwhm : float
+        FWHM in x direction in units of pixels
+
+    y_fwhm : float
+        FWHM in y direction in units of pixels
+    """
+    yp, xp = array.shape
+    y, x, = np.mgrid[:yp, :xp]
+    p_init = models.Gaussian2D(amplitude=array.max(), x_mean=xp*0.5, y_mean=yp*0.5)
+    fit_p = fitting.LevMarLSQFitter()
+    fitted_psf = fit_p(p_init, x, y, array)
+    return fitted_psf.x_fwhm, fitted_psf.y_fwhm
+
+
+def measure_ee(array, header):
+    '''Wrapper function around poppy's measure_ee
+    '''
+    hdu1 = fits.PrimaryHDU(data=array, header=header)
+    new_hdul = fits.HDUList([hdu1])
+    return poppy.measure_ee(new_hdul, normalize='None')
+
+
+def get_psf_characteristics(data, header, x_list, y_list, radius=36):
+    '''
+    Get the FWHM in x and y and the ee function for each identified PSF
+    '''
+    if 'PIXELSCL' not in header.keys():
+        print('EE cannot be measured because there is no pixelscale information.')
+
+    fwhm_xs = []
+    fwhm_ys = []
+    ee_fns = []
+    psfs = []
+    for i, (x, y) in enumerate(zip(x_list, y_list)):
+        # Cut out each measured PSF
+        cutout = data[int(y)-radius:int(y)+radius,
+                      int(x)-radius:int(x)+radius]
+        psfs.append(cutout)
+
+        # Measure FWHM
+        fwhm_x, fwhm_y = measure_fwhm(cutout)
+        fwhm_xs.append(fwhm_x)
+        fwhm_ys.append(fwhm_y)
+        # Measure EE
+        try:
+            ee_fn = measure_ee(cutout, header)
+        except KeyError:
+            ee_fn = None
+        ee_fns.append(ee_fn)
+
+    return fwhm_xs, fwhm_ys, ee_fns, psfs
+
+
+
+def get_image_information(image, header, smoothing='high'):
     """
     Take in the pick_log.txt file from Shadow to load in PSF characteristics. If no pick_log.txt
     is provided, the locations of the PSFs are found with a MAGIC function and no other PSF
     characteristics are measured.
     """
     x_list, y_list = get_position_from_magic(image, smoothing=smoothing)
-    fwhm_x, fwhmy, ee = get_psf_characteristics(image, x_list, y_list)
+    fwhm_xs, fwhm_ys, ee_fns, psfs = get_psf_characteristics(image, header, x_list, y_list)
     print(f'Creating the information table from the X and Y values calculated using MAGIC')
     print(f'{len(x_list)} PSFs found')
     if x_list:
-        info_df = pd.DataFrame(data={'x': x_list, 'y': y_list})
+        info_df = pd.DataFrame(data={'x': x_list, 'y': y_list,
+                                     'fwhm_x': fwhm_xs, 'fwhm_y': fwhm_ys,
+                                     'ee_fn': ee_fns})
     else:
         info_df = None
 
-    # Make a larger dictionary that organizes the information by segment
+    return info_df, psfs
+
+
+def get_target_location(target_location, info_df):
+    """ If we don't have a target location in the image, calculate it from the
+    locations of segment PSFs that we do have
+    """
     if target_location is None:
         target_x = np.median(info_df['x'].values)
         target_y = np.median(info_df['y'].values)
         target_location = (int(target_x), int(target_y))
     else:
         target_x, target_y = target_location
-    info_df['distance_to_target'] = distance_to_target_center(info_df['x'].values,
-                                                              info_df['y'].values,
-                                                              target_x,
-                                                              target_y)
 
-    return info_df, target_location
+    distances_to_target = distance_to_target_center(info_df['x'].values,
+                                                    info_df['y'].values,
+                                                    target_x,
+                                                    target_y)
+    return distances_to_target
 
 
 def convert_df_to_dictionary(info_df):
@@ -110,23 +184,6 @@ def convert_df_to_dictionary(info_df):
         info_dictionary = None
 
     return info_dictionary
-
-
-def read_shadow_log(filename, params_to_include=['x', 'y', 'fwhm', 'fwhm_x', 'fwhm_y', 'ellipse']):
-    """
-    From the txt file provided from Shadow, pull out helpful information.
-
-    The default is to pull out the x & y locations of each identified PSF, the average FWHM,
-    the FWHM in x and y, and the ellipticity.
-    """
-    labels = ['ra_txt', 'dec_txt', 'equinox', 'x', 'y', 'fwhm', 'fwhm_x', 'fwhm_y', 'starsize',
-              'ellipse', 'background', 'skylevel', 'brightness', 'time_local', 'time_ut', 'ra_deg',
-              'dec_deg']
-
-    info = pd.read_csv(filename, delimiter=' ', skiprows=[0, 1], names=labels)
-
-    info_squeezed = info[params_to_include].copy()
-    return info_squeezed
 
 
 def match_psf_params_to_segment(info_dictionary, matching_dictionary):
@@ -184,6 +241,11 @@ def plot_mosaic_with_psfs(mosaic, car, info_df, est_target_location=None,
     """
     x_list = info_df['x']
     y_list = info_df['y']
+
+    if xlim is None:
+        xlim = (min(x_list)-100, max(x_list)+100)
+    if ylim is None:
+        ylim = (min(y_list)-100, max(y_list)+100)
     try:
         seg_list = info_df['segment']
     except KeyError:
@@ -200,63 +262,35 @@ def plot_mosaic_with_psfs(mosaic, car, info_df, est_target_location=None,
             name = seg_list[j] if seg_list is not None else j
             plt.annotate(name, xy=(x, y), xytext=(x-75, y), c=label_color, fontsize=14,
                          weight='bold')
-        if xlim is not None:
-            plt.xlim(xlim)
-        if ylim is not None:
-            plt.ylim(ylim)
+        plt.xlim(xlim)
+        plt.ylim(ylim)
 
     plt.title(f"{car} Mosaic")
     plt.show()
 
 
-def plot_each_identified_segment_psf(image, info_df, window_size=200, num_psf_per_row=6):
+def plot_each_identified_segment_psf(psfs, num_psf_per_row=6, labels=None):
     """
     Cut each segment out of the mosaic/image provided based on the x and y locations given with
     x_list, and y_list
     """
-    x_list = info_df['x'].values
-    y_list = info_df['y'].values
-    try:
-        seg_list = info_df['segment'].values
-    except KeyError:
-        seg_list = np.arange(len(x_list))
+    if labels is None:
+        labels = np.arange(len(psfs))
 
-    radius = window_size//2
-
-    rows = len(x_list)//num_psf_per_row+1
-    columns = len(x_list) if len(x_list) < num_psf_per_row else num_psf_per_row
-    fig, ax = plt.subplots(rows, columns, figsize=(6*columns, 6*rows))
+    rows = len(psfs)//num_psf_per_row+1
+    columns = len(psfs) if len(psfs) < num_psf_per_row else num_psf_per_row
+    fig, ax = plt.subplots(rows, columns, figsize=(4*columns, 4*rows))
 
     i = 0
     for j in range(rows):
         for k in range(columns):
             try:
-                cutout = image[int(y_list[i])-radius:int(y_list[i])+radius,
-                               int(x_list[i])-radius:int(x_list[i])+radius]
-                ax[j, k].imshow(cutout, origin='lower', norm=LogNorm(vmin=1))
-                ax[j, k].set_title(f'PSF {seg_list[i]}')
+                ax[j, k].imshow(psfs[i], origin='lower', norm=LogNorm(vmin=1))
+                ax[j, k].set_title(f'PSF {labels[i]}')
                 i += 1
             except IndexError:
                 ax[j, k].axis('off')
 
-    plt.show()
-
-
-#TODO: remove?
-def plot_parameters(xs, ys, values, title, cmap=cm.RdYlGn_r):
-    """
-    Plot the PSF parameters
-    """
-    center_x = np.median(xs)
-    center_y = np.median(ys)
-
-    # plot out new image with distance color coded by how far from boresight
-    plt.figure(figsize=(10, 10))
-    plt.title(title)
-    plt.scatter(xs, ys, marker='o', s=100, c=values, cmap=cmap)
-    plt.colorbar()
-    plt.ylim(center_y+1024, center_y-1024)
-    plt.xlim(center_x-1024, center_x+1024)
     plt.show()
 
 
@@ -286,10 +320,10 @@ def plot_multiple_parameters(parameters, info_df, xs=None, ys=None, xlim=None, y
             ys = info_df['y'].values
 
         for i, param in enumerate(parameters):
-            ax = ax if len(parameters) == 1 else ax[i]
+            axs = ax if len(parameters) == 1 else ax[i]
 
             for seg, x, y in zip(segs, xs, ys):
-                ax.annotate(seg, (x, y), (x+15, y+15))
+                axs.annotate(seg, (x, y), (x+15, y+15))
 
             vmin, vmax, cmap = grab_vmin_vmax(param)
 
@@ -298,10 +332,10 @@ def plot_multiple_parameters(parameters, info_df, xs=None, ys=None, xlim=None, y
             except KeyError:
                 values = info_df[param].values
 
-            pl = ax.scatter(xs, ys, marker='o', s=100, c=values, cmap=cmap,
+            pl = axs.scatter(xs, ys, marker='o', s=100, c=values, cmap=cmap,
                             vmin=vmin, vmax=vmax)
-            fig.colorbar(pl, ax=ax, orientation='horizontal')
-            ax.set_title(f"{param} for each PSF in the image")
+            fig.colorbar(pl, ax=axs, orientation='horizontal')
+            axs.set_title(f"{param} for each PSF in the image")
 
             if xlim and ylim:
                 plt.xlim(xlim)
@@ -436,73 +470,17 @@ def create_image_array(image, info_df, window_size=60):
         return
 
 
-def list_good_psfs(info_df, fwhm_limit, ellipse_limit, seg_list=None):
+def list_good_psfs(info_df, fwhm_limit, fwhm_max_limit, seg_list=None):
     """
-    Determine which PSFs are "good" based on their FWHM and ellipticity values
+    Determine which PSFs are "good" based on their FWHM values
     """
     good_inds = []
-    for i, (fwhm, ellipse) in enumerate(zip(info_df['fwhm'], info_df['ellipse'])):
-        if fwhm < fwhm_limit and ellipse > ellipse_limit:
-            if seg_list:
-                good_inds.append(seg_list[i])
-            else:
-                good_inds.append(i)
+    for i, (fwhm_x, fwhm_y) in enumerate(zip(info_df['fwhm_x'], info_df['fwhm_y'])):
+        if fwhm_x < fwhm_limit or fwhm_y < fwhm_limit:
+            if fwhm_x < fwhm_max_limit and fwhm_y < fwhm_max_limit:
+                if seg_list:
+                    good_inds.append(seg_list[i])
+                else:
+                    good_inds.append(i)
 
     return good_inds
-
-# Got this from https://grit.stsci.edu/wfsc/tools/-/blob/master/ote-commissioning/pre-mimf/ote28_psf_analysis.py
-def measure_fwhm(array):
-    """Fit a Gaussian2D model to a PSF and return the fitted PSF
-    the FWHM is x and y can be found with fitted_psf.x_fwhm, fitted_psf.y_fwhm
-
-    Parameters
-    ----------
-    array : numpy.ndarray
-        Array containing PSF
-
-    Returns
-    -------
-    x_fwhm : float
-        FWHM in x direction in units of pixels
-
-    y_fwhm : float
-        FWHM in y direction in units of pixels
-    """
-    yp, xp = array.shape
-    y, x, = np.mgrid[:yp, :xp]
-    p_init = models.Gaussian2D(amplitude = array.max(), x_mean=xp*0.5,y_mean=yp*0.5)
-    fit_p = fitting.LevMarLSQFitter()
-    fitted_psf = fit_p(p_init, x, y, array)
-    return fitted_psf.x_fwhm, fitted_psf.y_fwhm
-
-def measure_ee(array):
-    '''Wrapper function around poppy's measure_ee
-    '''
-    hdu1 = fits.PrimaryHDU(array)
-    new_hdul = fits.HDUList([hdu1])
-    return poppy.measure_ee(new_hdul, normalize='None')
-
-def get_psf_characteristics(data, x_list, y_list, radius):
-        '''
-
-        '''
-        # results = peaks.evaluate_peaks(psf_peaks, data, fwhm_radius=fwhm_radius,
-        #                                fwhm_method='gaussian', ee_total_radius=ee_total_radius)
-        for x, y in zip(x_list, y_list):
-            cutout = data[int(y_list[i])-radius:int(y_list[i])+radius,
-                           int(x_list[i])-radius:int(x_list[i])+radius]
-            # Measure FWHM
-            fwhm_x, fwhm_y = measure_fwhm(cutout)
-            # Measure EE
-            ee_fn = measure_ee(cutout)
-            if ee_fn is None:
-                print(f'Could not measure EE for {segment}. Recording EE of None.')
-                d['encircled_energy_1a'] = None # the encircled energy at 1 arcsec
-                d['encircled_energy_.5a'] = None # the encircled energy at half an arcsec
-            else:
-                ee_at_1arcsec = ee_fn(arcsec)
-                ee_at_half_arcsec = ee_fn(arcsec/2)
-                d['encircled_energy_1a'] = float(ee_at_1arcsec) # the encircled energy at 1 arcsec
-                d['encircled_energy_.5a'] = float(ee_at_half_arcsec) # the encircled energy at half an arcsec
-
-        return fwhm_x, fwhmy, ee
