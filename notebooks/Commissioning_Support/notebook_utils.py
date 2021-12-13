@@ -432,7 +432,7 @@ def plot_nrcb_images(data_list, name_list):
     b1, b2, b3, b4 = data_list
     b1_name, b2_name, b3_name, b4_name = name_list
 
-    fig, ax = plt.subplots(2, 2, figsize=(12, 12))
+    _, ax = plt.subplots(2, 2, figsize=(12, 12))
     ax[0, 0].imshow(b3, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
     ax[0, 0].set_title(f'B3: {b3_name}')
     ax[0, 1].imshow(b1, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
