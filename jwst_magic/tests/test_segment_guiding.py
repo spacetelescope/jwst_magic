@@ -65,6 +65,7 @@ if not JENKINS:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import QDialogButtonBox, QApplication
 import pytest
+import fgscountrate
 
 # Local Imports
 from jwst_magic.tests.utils import parametrized_data
@@ -751,13 +752,20 @@ def test_resetting_SOF_count_rates(test_directory):
         segment_override_command = f.read()
 
     # Check count rates are the truncated values
-    gs_cr = segment_override_command.split(' ')[8][:-1]
-    ref1_cr = segment_override_command.split(' ')[17][:-1]
-    ref2_cr = segment_override_command.split(' ')[24][:-1]
+    gs_cr = float(segment_override_command.split(' ')[8][:-1])
+    ref1_cr = float(segment_override_command.split(' ')[17][:-1])
+    ref2_cr = float(segment_override_command.split(' ')[24][:-1])
+    gs_thresh = float(segment_override_command.split(' ')[9][:-1])
+    ref1_thresh = float(segment_override_command.split(' ')[18][:-1])
+    ref2_thresh = float(segment_override_command.split(' ')[25][:-1])
 
-    assert float(gs_cr) == GUIDE_STAR_MAX_COUNTRATE
-    assert float(ref1_cr) == REF_STAR_MAX_COUNTRATE
-    assert float(ref2_cr) == REF_STAR_MAX_COUNTRATE
+    assert np.isclose(gs_cr, GUIDE_STAR_MAX_COUNTRATE - 1e5)
+    assert np.isclose(ref1_cr, REF_STAR_MAX_COUNTRATE - 1e5)
+    assert np.isclose(ref2_cr, REF_STAR_MAX_COUNTRATE - 1e5)
+
+    assert np.isclose(gs_thresh, gs_cr-332226)
+    assert np.isclose(ref1_thresh, ref1_cr-332226)
+    assert np.isclose(ref2_thresh, ref2_cr-332226)
 
 
 def test_resetting_POF_count_rate_factors(test_directory):
@@ -783,10 +791,18 @@ def test_resetting_POF_count_rate_factors(test_directory):
     assert os.path.isfile(photometry_override_file)
     with open(photometry_override_file) as f:
         photometry_override_command = f.read()
+    count_rate_factor = float(photometry_override_command.split(' ')[3].split('=')[-1])
+    count_rate_uncertainty_factor = float(photometry_override_command.split(' ')[4].split('=')[-1])
 
-    # Check the count rate factor has changed
-    count_rate_factor = photometry_override_command.split(' ')[3].split('=')[-1][:-1]
-    assert float(count_rate_factor) < cr_factor
+    # Check the count rate factor has changed as expected
+    new_count_rate = GUIDE_STAR_MAX_COUNTRATE - 1e5
+    star_count_rate = fgscountrate.convert_fgs_mag_to_cr(10, guider=1)
+    new_count_rate_factor = new_count_rate / star_count_rate
+    new_count_rate_uncertainty_factor = (new_count_rate - 332226) / star_count_rate
+
+    assert count_rate_factor < cr_factor
+    assert np.isclose(count_rate_factor, round(new_count_rate_factor, 4))
+    assert np.isclose(count_rate_uncertainty_factor, round(new_count_rate_uncertainty_factor, 4))
 
 
 def test_convert_sky_to_idl_in_segment_guiding(test_directory):
