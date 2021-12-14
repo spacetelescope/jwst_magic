@@ -783,12 +783,15 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
     return data, pix_dict
 
 
-def convert_nircam_bad_pixel_mask_files(filepath):
+def convert_bad_pixel_mask_files(filepath, nircam):
     """
-    Converts a NIRCam bad pixel mask file to a format MAGIC can use,
+    Converts a NIRCam or FGS bad pixel mask file to a format MAGIC can use,
     switching from bit values to 1s and 0s, where 0s are good and
     1s are bad. Pixels counted as bad in the new mask were originally
     do_not_use, dead, hot, telegraph, bad_ref_pix, and RC.
+
+    filepath : str path to input file
+    nircam: bool for if NIRCam data. True includes the do not use flag
     """
     # Read in file
     with fits.open(filepath) as bad_pix_hdu:
@@ -800,7 +803,7 @@ def convert_nircam_bad_pixel_mask_files(filepath):
     bad_pix_values = np.delete(bad_pix_values, np.where(bad_pix_values == 0))
 
     # Update file to be only 1s and 0s to match FGS
-    data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, nircam=True)
+    data, pix_dict = convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values, nircam=nircam)
 
     # Write header
     bad_pix_hdr['ORIGFILE'] = os.path.basename(filepath)
@@ -810,5 +813,12 @@ def convert_nircam_bad_pixel_mask_files(filepath):
 
     # Save out file
     det = bad_pix_hdr['DETECTOR']
-    filepath_new = os.path.join(os.path.dirname(filepath), f'nircam_dq_{det.lower()}.fits')
+    if nircam:
+        filepath_new = os.path.join(os.path.dirname(filepath), f'nircam_dq_{det.lower()}.fits')
+    else:
+        guider = det.replace('UIDER', '')
+        if 'stacked' in filepath.lower():
+            filepath_new = os.path.join(os.path.dirname(filepath), f'fgs_dq_{guider}_stacked.fits')
+        else:
+            filepath_new = os.path.join(os.path.dirname(filepath), f'fgs_dq_{guider}.fits')
     write_fits(filepath_new, [data], header=[bad_pix_hdr], log=LOGGER)
