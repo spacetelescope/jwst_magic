@@ -44,8 +44,8 @@ import yaml
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.split(__location__)[0]
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
-BIASZERO_G1 = fits.getdata(os.path.join(DATA_PATH, 'g1bias0.fits'))
-BIASZERO_G2 = fits.getdata(os.path.join(DATA_PATH, 'g2bias0.fits'))
+BIASZERO_G1 = os.path.join(DATA_PATH, 'g1bias0.fits')
+BIASZERO_G2 = os.path.join(DATA_PATH, 'g2bias0.fits')
 READ_NOISE = os.path.join(DATA_PATH, 'readnoise.yaml')
 
 
@@ -209,7 +209,10 @@ class FGSDetectorEffects:
         """Add zeroth read bias structure to every frame.
         """
         # Open the zeroth read bias structure file
-        bias_file = os.path.join(DATA_PATH, 'g{}bias0.fits'.format(self.guider))
+        if self.guider == 1:
+            bias_file = BIASZERO_G1
+        else:
+            bias_file = BIASZERO_G2
         bias0 = np.copy(fits.getdata(bias_file))
 
         xlow, xhigh, ylow, yhigh = self.array_bounds
