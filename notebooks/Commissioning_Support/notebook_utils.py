@@ -25,7 +25,7 @@ GA_PSF_LOCATIONS = {'A1-1':[1037, 599], 'A2-2':[1391, 808], 'A3-3':[1375, 1218],
 NIRCAM_SW_PIXELSCALE = 0.031 # arcsec/pixel
 
 class PsfAnalysis():
-    def __init__(self, car, image, header, pixelscale, target_location):
+    def __init__(self, car, image=None, header=None, pixelscale=None, target_location=None):
         self.car = car
         self.image = image
         self.header = header
@@ -36,8 +36,12 @@ class PsfAnalysis():
 
         self.target_location = target_location
 
-        self.check_header_for_pixelscale()
-        self.corrected_image = correct_pixel_values(self.image)
+        if self.header is not None:
+            self.check_header_for_pixelscale()
+        if image is not None:
+            self.corrected_image = correct_pixel_values(self.image)
+        else:
+            self.correct_image = None
 
         # Set up attributes that will be used in the other methods
         self.info_df = [] # The data frame holding the PSF information
@@ -53,12 +57,44 @@ class PsfAnalysis():
         elif 'PIXELSCL' in self.header.keys() and self.pixelscale is None:
             self.pixelscale = self.header['PIXELSCL']
 
-    def get_psf_characteristics(self, x_list, y_list, psf_window_radius=40):
+    def get_image_information(self, smoothing='high', psf_window_radius=40):
+        """
+        Locations of the PSFs are found with a MAGIC function and then for each PSF,
+        measure the FWHM, distance from target, and create a EE function,
+        then add to a information data frame.
+        """
+        # Save the radius used to cut out the postage stamp as it will be used later
+        self.psf_window_radius = psf_window_radius
+        # Find each PSF in the input image
+        x_list, y_list = get_position_from_magic(self.corrected_image, smoothing=smoothing)
+        print(f'{len(x_list)} PSFs found')
+
+        psfs = []
+        for x, y in zip(x_list, y_list):
+            psfs.append(cut_out_psf(x, y, self.corrected_image, psf_window_radius))
+        self.create_info_df(x_list, y_list, psfs)
+
+    def create_info_df(self, x_list, y_list, psfs=None):
+        """
+        For each PSF, measure the FWHM, distance from target, and create a EE function,
+        then add to a information data frame.
+        """
+        # Get PSF characteristis for each PSF
+        if x_list:
+            fwhm_xs, fwhm_ys, self.ee_fns = self.get_psf_characteristics(psfs)
+            self.get_target_location(x_list, y_list)
+            distances_to_target = self.get_distances_to_target(x_list, y_list)
+            # Create the data frame
+            self.info_df = pd.DataFrame(data={'x': x_list, 'y': y_list,
+                                              'fwhm_x': fwhm_xs, 'fwhm_y': fwhm_ys,
+                                              'distance_to_target': distances_to_target})
+        else:
+            self.info_df = None
+
+    def get_psf_characteristics(self, psfs):
         '''
         Get the FWHM in x and y and the ee function for each identified PSF
         '''
-        # Save the radius used to cut out the postage stamp as it will be used later
-        self.psf_window_radius = psf_window_radius
         # Make sure that if we don't have the pixelscale value at this point, that the
         #  user knows that we can't measure the EE
         if 'PIXELSCL' not in self.header.keys():
@@ -67,12 +103,7 @@ class PsfAnalysis():
         fwhm_xs = []
         fwhm_ys = []
         ee_fns = []
-        for (x, y) in zip(x_list, y_list):
-            # Cut out each measured PSF
-            cutout = self.corrected_image[int(y)-psf_window_radius:int(y)+psf_window_radius,
-                                          int(x)-psf_window_radius:int(x)+psf_window_radius]
-            self.psfs.append(cutout)
-
+        for cutout in psfs:
             # Measure FWHM
             fwhm_x, fwhm_y = measure_fwhm(cutout)
             fwhm_xs.append(fwhm_x)
@@ -85,29 +116,6 @@ class PsfAnalysis():
             ee_fns.append(ee_fn)
 
         return fwhm_xs, fwhm_ys, ee_fns
-
-    def get_image_information(self, smoothing='high', psf_window_radius=40):
-        """
-        Take in the pick_log.txt file from Shadow to load in PSF characteristics. If no pick_log.txt
-        is provided, the locations of the PSFs are found with a MAGIC function and no other PSF
-        characteristics are measured.
-        """
-        # Find each PSF in the input image
-        x_list, y_list = get_position_from_magic(self.corrected_image, smoothing=smoothing)
-        print(f'{len(x_list)} PSFs found')
-        # Get PSF characteristis for each PSF
-        if x_list:
-            fwhm_xs, fwhm_ys, self.ee_fns = self.get_psf_characteristics(x_list,
-                                                                         y_list,
-                                                                         psf_window_radius)
-            self.get_target_location(x_list, y_list)
-            distances_to_target = self.get_distances_to_target(x_list, y_list)
-            # Create the data frame
-            self.info_df = pd.DataFrame(data={'x': x_list, 'y': y_list,
-                                              'fwhm_x': fwhm_xs, 'fwhm_y': fwhm_ys,
-                                              'distance_to_target': distances_to_target})
-        else:
-            self.info_df = None
 
     def get_target_location(self, x_list, y_list):
         """ If we don't have a target location in the image, calculate it from the
@@ -124,7 +132,8 @@ class PsfAnalysis():
                                                         target_x, target_y)
         return distances_to_target
 
-    def plot_mosaic_with_psfs(self, xlim=None, ylim=None, label_color='white'):
+    def plot_mosaic_with_psfs(self, xlim=None, ylim=None,
+                              label_color='white', legend_location='best'):
         """
         self.get_psf_information must be run before this method can be used
         Plot out the mosaic image with the identified PSFs and estimated target location plotted
@@ -144,11 +153,11 @@ class PsfAnalysis():
         plt.imshow(self.corrected_image, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
         plt.scatter(self.target_location[0], self.target_location[1], s=500, marker='*', c='white',
                     edgecolor='C1', label='Estimated Target Location')
-        plt.legend()
+        plt.legend(loc=legend_location)
         if x_list is not None and y_list is not None:
             for j, (x, y) in enumerate(zip(x_list, y_list)):
                 name = seg_list[j] if seg_list is not None else j
-                plt.annotate(name, xy=(x, y), xytext=(x-75, y), c=label_color, fontsize=14,
+                plt.annotate(name, xy=(x, y), xytext=(x-100, y), c=label_color, fontsize=14,
                              weight='bold')
             plt.xlim(xlim)
             plt.ylim(ylim)
@@ -217,8 +226,8 @@ class PsfAnalysis():
                 axs.set_title(f"{param} for each PSF in the image", fontsize=16)
 
                 if xlim and ylim:
-                    plt.xlim(xlim)
-                    plt.ylim(ylim)
+                    axs.set_xlim(xlim)
+                    axs.set_ylim(ylim)
 
     def plot_ee(self, num_psf_per_row=3, labels=None):
         '''If we have EE measurements, plot them
@@ -241,11 +250,13 @@ class PsfAnalysis():
             for j in range(rows):
                 for k in range(columns):
                     try:
-                        ax[j, k].plot(xs, self.ee_fns[i](xs))
+                        ys_total = self.ee_fns[i](xs)
+                        ys_percent = ys_total/ys_total.max()*100
+                        ax[j, k].plot(xs, ys_percent)
                         ax[j, k].set_title(f'PSF {labels[i]}')
                         ax[j, k].set_xlabel("Radius [arcsec]")
-                        ax[j, k].set_ylabel("Encircled Energy")
-                        ax[j, k].set_ylim(None, 6e6)
+                        ax[j, k].set_ylabel("Encircled Energy (percent)")
+                        ax[j, k].set_ylim(None, 110)
                         i += 1
                     except IndexError:
                         ax[j, k].axis('off')
@@ -300,6 +311,13 @@ def get_position_from_magic(image, smoothing='default', npeaks=np.inf):
     return x_list, y_list
 
 
+def cut_out_psf(x, y, image, psf_window_radius):
+    """ Cut out each found PSF """
+    cutout = image[int(y)-psf_window_radius:int(y)+psf_window_radius,
+                   int(x)-psf_window_radius:int(x)+psf_window_radius]
+    return cutout
+
+
 # Got this from https://grit.stsci.edu/wfsc/tools/-/blob/master/ote-commissioning/pre-mimf/ote28_psf_analysis.py
 def measure_fwhm(array):
     """Fit a Gaussian2D model to a PSF and return the fitted PSF
@@ -334,8 +352,6 @@ def measure_ee(array, header):
     return poppy.measure_ee(new_hdul, normalize='None')
 
 
-
-
 def convert_df_to_dictionary(info_df):
     """
     """
@@ -360,20 +376,47 @@ def match_psf_params_to_segment(info_dictionary, matching_dictionary):
     return seg_location_dictionary
 
 
-def add_segment_to_df(info_df, matching_dictionary):
+def create_combined_pointing_df(info_dfs, matching_dictionary, ee_fn_lists):
+    """Given multiple info_dfs, combine to include the information for all identified
+    PSFs. This also means creating a new list of encircled energy functions.
+    `info_dfs` is a list of the info_dfs in order of pointing (pointing1 first)
+    `ee_fn_lists` is a list of the ee_fns in order of pointing (pointing1 first)
     """
-    Add the Segment ID to the dataframe based on the matching in matching_dictionary
+    new_dfs = []
+    new_ee_fns = []
+    for info_df, pointing, ee_fns in zip(info_dfs, matching_dictionary.keys(), ee_fn_lists):
+        pointing_dict = matching_dictionary[pointing]
+        selected_indicies = list(pointing_dict.keys())
+        new_df = info_df.loc[selected_indicies]
+        # Make the new EE fns list
+        new_ee_fns += [ee_fns[i] for i in selected_indicies]
+        # Grab the right list of segments and add to the new dataframe
+        segments = matching_dictionary[pointing].values()
+        new_df['segment'] = segments
+        # Make sure the pointing is recorded in the new dataframe
+        new_df['pointing'] = np.repeat(pointing, len(segments))
+        new_dfs.append(new_df)
+
+    combined_info_df = pd.concat(new_dfs)
+    combined_info_df = combined_info_df[['segment', 'pointing', 'x', 'y', 'fwhm_x', 'fwhm_y',
+                                         'distance_to_target']]
+
+    return combined_info_df, new_ee_fns
+
+def get_psfs_from_all_pointings(combined_df, pointings_images, psf_window_radius):
     """
-    segments = []
+    """
+    x_list = combined_df['x']
+    y_list = combined_df['y']
+    pointing_list = combined_df['pointing']
 
-    for i in range(len(info_df)):
-        try:
-            segments.append(matching_dictionary[i])
-        except KeyError:
-            segments.append('Unknown')
+    psfs = []
+    for x, y, pointing in zip(x_list, y_list, pointing_list):
+        pointing_num = pointing.split('_')[-1]
+        image = pointings_images[int(pointing_num)-1]
+        psfs.append(cut_out_psf(x, y, image, psf_window_radius))
 
-    info_df['segment'] = segments
-    return info_df
+    return psfs
 
 
 def separate_nircam_images(all_images_list):
@@ -471,7 +514,7 @@ def create_basic_mosaic(nrca_data_list, nrcb_data_list):
     return big_image
 
 
-def create_image_array(image, info_df, window_size=60):
+def create_image_array(psfs, segment_list, window_size):
     """
     Cut out postage stamps of an image and using the locations of each PSF and it's assumed
     segment ID, place it in a large image array.
@@ -481,40 +524,45 @@ def create_image_array(image, info_df, window_size=60):
 
     ga_xs = []
     ga_ys = []
-    x_list = info_df['x'].values
-    y_list = info_df['y'].values
-    try:
-        seg_list = info_df['segment'].values
+    for psf, seg in zip(psfs, segment_list):
+        if seg != 'Unknown':
+            ga_x, ga_y = GA_PSF_LOCATIONS[seg]
+            ga_xs.append(ga_x)
+            ga_ys.append(ga_y)
+            large_image_array[ga_y-window_size: ga_y+window_size,
+                              ga_x-window_size:ga_x+window_size] = psf
 
-        for mosaic_x, mosaic_y, seg in zip(x_list, y_list, seg_list):
-            if seg != 'Unknown':
-                psf = image[mosaic_y-window_size:mosaic_y+window_size,
-                            mosaic_x-window_size:mosaic_x+window_size]
-                ga_x, ga_y = GA_PSF_LOCATIONS[seg]
-                ga_xs.append(ga_x)
-                ga_ys.append(ga_y)
-                large_image_array[ga_y-window_size: ga_y+window_size,
-                                  ga_x-window_size:ga_x+window_size] = psf
-
-        large_image_array = correct_pixel_values(large_image_array)
-        return large_image_array, ga_xs, ga_ys
-
-    except KeyError:
-        print('No segment list. Cannot make pseudo large image array')
-        return
+    large_image_array = correct_pixel_values(large_image_array)
+    return large_image_array, ga_xs, ga_ys
 
 
-def list_good_psfs(info_df, fwhm_limit, fwhm_max_limit, seg_list=None):
+def save_out_image_for_magic(image, header, filename, out_dir):
     """
-    Determine which PSFs are "good" based on their FWHM values
+    Write data to a fits file. Can take in an array/header
+    or lists of arrays/headers
     """
-    good_inds = []
-    for i, (fwhm_x, fwhm_y) in enumerate(zip(info_df['fwhm_x'], info_df['fwhm_y'])):
-        if fwhm_x < fwhm_limit or fwhm_y < fwhm_limit:
-            if fwhm_x < fwhm_max_limit and fwhm_y < fwhm_max_limit:
-                if seg_list:
-                    good_inds.append(seg_list[i])
-                else:
-                    good_inds.append(i)
+    outfile = os.path.join(out_dir, filename)
 
-    return good_inds
+    # Create a fake DQ array that treats every pixel as good
+    dq_array = np.zeros_like(image)
+
+    # Make a list of the data and header
+    data = [image, dq_array]
+    header['DETECTOR'] = 'NRCA3'
+    headers = [header, None]
+
+    header_list = header if isinstance(header, list) else [header]
+    for hdr in header_list:
+        if not any([isinstance(hdr, fits.header.Header), hdr is None]):
+            raise TypeError(f'Header to be written out in {outfile} is not either "None" or of type fits.header.Header')
+
+    hdu_list = []
+    for i, (dat, hdr) in enumerate(zip(data, headers)):
+        if i == 0:
+            hdu = fits.PrimaryHDU(data=dat, header=hdr)
+        else:
+            hdu = fits.ImageHDU(data=dat, header=hdr, name='DQ')
+        hdu_list.append(hdu)
+    hdul = fits.HDUList(hdu_list)
+
+    hdul.writeto(outfile, overwrite=True)
