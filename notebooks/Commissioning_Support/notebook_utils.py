@@ -6,9 +6,11 @@ to LOS-02.
 """
 
 import os
+import copy
 
 from astropy.io import fits
 from astropy.modeling import models, fitting
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib.colors import from_levels_and_colors
@@ -20,6 +22,8 @@ from scipy import ndimage
 
 from jwst_magic import convert_image
 
+my_cmap = copy.copy(matplotlib.cm.get_cmap('viridis')) # copy the default cmap
+my_cmap.set_bad((0, 0, 0))
 
 # DO NOT CHANGE THESE LOCATIONS
 # These values are determined by the Get simulated NIRCam locations of LOS-02 PSFs section of the Pre-LOS-02 notebook
@@ -182,10 +186,10 @@ class PsfAnalysis():
                                                         target_x, target_y)
         return distances_to_target
 
-    def plot_mosaic_with_psfs(self, xlim=None, ylim=None,
-                              label_color='white', legend_location='best'):
+    def plot_image_with_psfs(self, xlim=None, ylim=None,
+                             label_color='white', legend_location='best'):
         """
-        Plot out the mosaic image with the identified PSFs and estimated target location plotted
+        Plot out the input image with the identified PSFs and estimated target location plotted
         The info_df attribute cannot be None before trying to run this function.
         """
         if self.info_df is None:
@@ -203,7 +207,7 @@ class PsfAnalysis():
             seg_list = None
         # Plot it!
         plt.figure(figsize=(14, 14))
-        plt.imshow(self.corrected_image, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+        plt.imshow(self.corrected_image, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
         plt.scatter(self.target_location[0], self.target_location[1], s=500, marker='*', c='white',
                     edgecolor='C1', label='Estimated Target Location')
         plt.legend(loc=legend_location)
@@ -238,7 +242,7 @@ class PsfAnalysis():
         for j in range(rows):
             for k in range(columns):
                 try:
-                    ax[j, k].imshow(self.psfs[i], origin='lower', norm=LogNorm(vmin=1))
+                    ax[j, k].imshow(self.psfs[i], origin='lower', norm=LogNorm(vmin=1), cmap=my_cmap)
                     ax[j, k].set_title(f'PSF {labels[i]}')
                     i += 1
                 except IndexError:
@@ -331,7 +335,7 @@ def correct_pixel_values(image):
     """
     image_copy = image.copy()
     image_copy[image_copy > 100000] = 0
-    image_copy[image_copy <= 0] = 3e-20
+    image_copy[image_copy <= 0] = 0#3e-20
 
     return image_copy
 
@@ -473,7 +477,7 @@ def separate_nircam_images(all_images_list):
 
 def get_nrc_data_from_list(nrc_file_list):
     """
-    From a list of NIRCam A or B images, create a list of the data and filenames
+    From a list of NIRCam A or B shortwave images, create a list of the data and filenames
     """
     data_list = []
     name_list = []
@@ -487,20 +491,20 @@ def get_nrc_data_from_list(nrc_file_list):
 
 def plot_nrca_images(data_list, name_list):
     """
-    Plot the 4 SW NIRCam A images in their respecitve postions
+    Plot the 4 SW NIRCam A shortwave images in their respecitve postions
     """
 
     a1, a2, a3, a4 = data_list
     a1_name, a2_name, a3_name, a4_name = name_list
 
     _, ax = plt.subplots(2, 2, figsize=(12, 12))
-    ax[0, 0].imshow(a2, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+    ax[0, 0].imshow(a2, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
     ax[0, 0].set_title(f'A2: {a2_name}')
-    ax[0, 1].imshow(a4, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+    ax[0, 1].imshow(a4, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
     ax[0, 1].set_title(f'A4: {a4_name}')
-    ax[1, 0].imshow(a1, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+    ax[1, 0].imshow(a1, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
     ax[1, 0].set_title(f'A1: {a1_name}')
-    ax[1, 1].imshow(a3, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+    ax[1, 1].imshow(a3, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
     ax[1, 1].set_title(f'A3: {a3_name}')
 
     plt.show()
@@ -508,20 +512,20 @@ def plot_nrca_images(data_list, name_list):
 
 def plot_nrcb_images(data_list, name_list):
     """
-    Plot the 4 SW NIRCam B images in their respecitve postions
+    Plot the 4 SW NIRCam B shortwave images in their respecitve postions
     """
 
     b1, b2, b3, b4 = data_list
     b1_name, b2_name, b3_name, b4_name = name_list
 
     _, ax = plt.subplots(2, 2, figsize=(12, 12))
-    ax[0, 0].imshow(b3, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+    ax[0, 0].imshow(b3, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
     ax[0, 0].set_title(f'B3: {b3_name}')
-    ax[0, 1].imshow(b1, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+    ax[0, 1].imshow(b1, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
     ax[0, 1].set_title(f'B1: {b1_name}')
-    ax[1, 0].imshow(b4, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+    ax[1, 0].imshow(b4, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
     ax[1, 0].set_title(f'B4: {b4_name}')
-    ax[1, 1].imshow(b2, norm=LogNorm(vmin=1, vmax=1000), origin='lower')
+    ax[1, 1].imshow(b2, norm=LogNorm(vmin=1, vmax=1000), origin='lower', cmap=my_cmap)
     ax[1, 1].set_title(f'B2: {b2_name}')
 
     plt.show()
