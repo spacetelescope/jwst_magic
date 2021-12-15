@@ -1153,7 +1153,7 @@ class StarSelectorWindow(QDialog):
             self.center = self.canvas.axes.plot(self.x[i_seg_center],
                                                 self.y[i_seg_center], 'x', ms=20,
                                                 alpha=0.8, mfc='red',
-                                                mec='red', mew=5, lw=0)
+                                                mec='red', mew=2, lw=0)
 
             self.center_of_pointing = int(self.comboBox_segmentCenter.currentText())
 
@@ -1181,7 +1181,7 @@ class StarSelectorWindow(QDialog):
 
             # Plot mean location of array on canvas
             self.center = self.canvas.axes.plot(x_mean, y_mean, 'x', ms=20, alpha=0.8,
-                                                mfc='red', mec='red', mew=5, lw=0)
+                                                mfc='red', mec='red', mew=2, lw=0)
 
             self.center_of_pointing = 0
 
@@ -1219,7 +1219,7 @@ class StarSelectorWindow(QDialog):
 
             # Plot mean location of array on canvas
             self.center = self.canvas.axes.plot(x_coord, y_coord, 'x', ms=20, alpha=0.8,
-                                                mfc='red', mec='red', mew=5, lw=0)
+                                                mfc='red', mec='red', mew=2, lw=0)
             self.center_of_pointing = [y_coord, x_coord]
 
         self.canvas.draw()
