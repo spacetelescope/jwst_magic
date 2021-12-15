@@ -477,7 +477,7 @@ def separate_nircam_images(all_images_list):
 
 def get_nrc_data_from_list(nrc_file_list):
     """
-    From a list of NIRCam A or B shortwave images, create a list of the data and filenames
+    From a list of NIRCam A or B images, create a list of the data and filenames
     """
     data_list = []
     name_list = []
