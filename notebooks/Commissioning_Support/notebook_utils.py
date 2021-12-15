@@ -1,3 +1,10 @@
+"""
+This module supports JWST MAGIC notebooks, in particular the Pre-LOS-02 Guiding Analysis notebook.
+
+Included in this notebook are functions and a class that supports guiding analysis for CARs prior
+to LOS-02.
+"""
+
 import os
 
 from astropy.io import fits
@@ -15,6 +22,7 @@ from jwst_magic import convert_image
 
 
 # DO NOT CHANGE THESE LOCATIONS
+# These values are determined by the Get simulated NIRCam locations of LOS-02 PSFs section of the Pre-LOS-02 notebook
 GA_PSF_LOCATIONS = {'A1-1':[1037, 599], 'A2-2':[1391, 808], 'A3-3':[1375, 1218],
                     'A4-4':[1020, 1426], 'A5-5':[670, 1204], 'A6-6':[660, 783],
                     'B1-7':[1047, 177], 'B2-9':[1756, 608], 'B3-11':[1771, 1459],
@@ -26,8 +34,48 @@ NIRCAM_SW_PIXELSCALE = 0.031 # arcsec/pixel
 
 class PsfAnalysis():
     def __init__(self, car, image=None, header=None, pixelscale=None, target_location=None):
+        """
+        The PsfAnalysis class takes in an image and associated information in order to perform PSF
+        analysis on each PSF in that image.
+
+        Parameters:
+        -----------
+        car: string
+            The name of the CAR - this must match how it is labelled in the out path
+        image: 2D array
+            This is generally expected to be a mosaic image
+        header: fits header object
+            A header that is associated with the image, it does not need to be exactly for that
+            image if that image is made up of many other images.
+        target_location: tuple
+            The estimated location of the target in the image if measured. If not known, the
+            average of the found PSFs will be taken as this target_location
+
+        Attributes:
+        -----------
+        car:string
+            The name of the CAR - this must match how it is labelled in the out path
+        header: fits header object
+            A header that is associated with the image. It can be the header associated with one
+            of the images that makes up the mosaic.
+        pixelscale: float
+            The pixelscale associated with this image (if known)
+        target_location: tuple
+            The estimated location of the target in the image
+        corrected_image: 2D array
+            A negative value-corrected version of the input image that will be used for all analysis
+        info_df: pandas DataFrame object
+            A table of the segment PSF characteristics for each PSF found in the input image
+        psfs: list of 2D arrays
+            A list of the cutout PSFs that have been identified in the input image
+        psf_window_radius: int
+            Half the size of one side of the box used to cut out the PSFs. This will change based
+            on the pixelscale
+        ee_fns: list of scipy interpolation objects
+            A list of the enclided energy scipy interpolation objects for each PSF that has been
+            identified.
+        """
         self.car = car
-        self.image = image
         self.header = header
         if pixelscale is None:
             self.pixelscale = NIRCAM_SW_PIXELSCALE
@@ -39,18 +87,20 @@ class PsfAnalysis():
         if self.header is not None:
             self.check_header_for_pixelscale()
         if image is not None:
-            self.corrected_image = correct_pixel_values(self.image)
+            # Correct any negative values
+            self.corrected_image = correct_pixel_values(image)
         else:
-            self.correct_image = None
+            self.corrected_image = None
 
         # Set up attributes that will be used in the other methods
-        self.info_df = [] # The data frame holding the PSF information
-        self.psfs = [] # List of cutout PSFs
+        self.info_df = None # The data frame holding the PSF information
+        self.psfs = None # List of cutout PSFs
         self.psf_window_radius = None # The radius of the box used for cutting out PSFs
         self.ee_fns = None # list of EE interpolation functions
 
     def check_header_for_pixelscale(self):
-        """The measure_ee function requires the PIXELSCL header keyword
+        """Make sure that if the header does not already include the PIXELSCL keyword, add it.
+        This header keyword is required in order to measure the enircled energy
         """
         if 'PIXELSCL' not in self.header.keys() and self.pixelscale is not None:
             self.header['PIXELSCL'] = self.pixelscale
@@ -59,9 +109,10 @@ class PsfAnalysis():
 
     def get_image_information(self, smoothing='high', psf_window_radius=40):
         """
-        Locations of the PSFs are found with a MAGIC function and then for each PSF,
-        measure the FWHM, distance from target, and create a EE function,
-        then add to a information data frame.
+        In the input image, find all PSFs, cut out the PSFs and make a list of them, and
+        measure the FWHM in x and y, distance from target, and create a list of EE interpolation
+        function. Add the PSF locations, FWHM, and distance to target information to an
+        information data frame. The PSFs and EE interpolation functions are returned as lists.
         """
         # Save the radius used to cut out the postage stamp as it will be used later
         self.psf_window_radius = psf_window_radius
@@ -99,7 +150,6 @@ class PsfAnalysis():
         #  user knows that we can't measure the EE
         if 'PIXELSCL' not in self.header.keys():
             print('EE cannot be measured because there is no pixelscale information.')
-
         fwhm_xs = []
         fwhm_ys = []
         ee_fns = []
@@ -135,9 +185,12 @@ class PsfAnalysis():
     def plot_mosaic_with_psfs(self, xlim=None, ylim=None,
                               label_color='white', legend_location='best'):
         """
-        self.get_psf_information must be run before this method can be used
         Plot out the mosaic image with the identified PSFs and estimated target location plotted
+        The info_df attribute cannot be None before trying to run this function.
         """
+        if self.info_df is None:
+            print("Cannot plot anything without the info_df being populated.")
+            return
         x_list = self.info_df['x']
         y_list = self.info_df['y']
         if xlim is None:
@@ -170,6 +223,10 @@ class PsfAnalysis():
         Cut each segment out of the mosaic/image provided based on the x and y locations given with
         x_list, and y_list
         """
+        if self.psfs is None:
+            print("Cannot plot anything without the PSFs list being populated.")
+            return
+
         if labels is None:
             labels = np.arange(len(self.psfs))
 
@@ -197,6 +254,9 @@ class PsfAnalysis():
         in their GA location, we must provide the GA xs and ys in order to overide the position of
         each PSF in the original image.
         """
+        if self.info_df is None:
+            print("Cannot plot anything without the info_df being populated.")
+            return
         # Check that all parameters are in info_dictionary
         parameters = list(set(parameters) & set(list(self.info_df.columns)))
         if not parameters:
@@ -281,7 +341,6 @@ def distance_to_target_center(x, y, truth_x, truth_y):
     Calculate the distance from a segment PSF to the expected location of the target in the sky.
     truth_x and truth_y are the location of the boresight
     '''
-
     return np.sqrt((truth_x - np.asarray(x))**2 + (truth_y - np.asarray(y))**2)
 
 
@@ -352,30 +411,6 @@ def measure_ee(array, header):
     return poppy.measure_ee(new_hdul, normalize='None')
 
 
-def convert_df_to_dictionary(info_df):
-    """
-    """
-    if info_df is not None:
-        info_dictionary = info_df.to_dict(orient='index')
-    else:
-        info_dictionary = None
-
-    return info_dictionary
-
-
-def match_psf_params_to_segment(info_dictionary, matching_dictionary):
-    """
-    Match the location and other PSF parameters to the segment based on the matching
-    dictionary. Also calculate the distance from each segment to the boresight
-    """
-
-    seg_location_dictionary = {}
-    seg_location_dictionary = {matching_dictionary[ind]:info_dictionary[ind] \
-                                    for ind in matching_dictionary.keys()}
-
-    return seg_location_dictionary
-
-
 def create_combined_pointing_df(info_dfs, matching_dictionary, ee_fn_lists):
     """Given multiple info_dfs, combine to include the information for all identified
     PSFs. This also means creating a new list of encircled energy functions.
@@ -405,6 +440,7 @@ def create_combined_pointing_df(info_dfs, matching_dictionary, ee_fn_lists):
 
 def get_psfs_from_all_pointings(combined_df, pointings_images, psf_window_radius):
     """
+    Create a new list of PSF cutouts from each pointingfor a full list of each segment PSF
     """
     x_list = combined_df['x']
     y_list = combined_df['y']
@@ -420,6 +456,9 @@ def get_psfs_from_all_pointings(combined_df, pointings_images, psf_window_radius
 
 
 def separate_nircam_images(all_images_list):
+    """
+    Separate a list of NIRCam images to the NIRCam A and NIRCam B images
+    """
     nrca_images = []
     nrcb_images = []
     for fi in all_images_list:
@@ -434,7 +473,7 @@ def separate_nircam_images(all_images_list):
 
 def get_nrc_data_from_list(nrc_file_list):
     """
-    From a list of nircam A or B images, create a list of the data and filenames
+    From a list of NIRCam A or B images, create a list of the data and filenames
     """
     data_list = []
     name_list = []
@@ -448,7 +487,7 @@ def get_nrc_data_from_list(nrc_file_list):
 
 def plot_nrca_images(data_list, name_list):
     """
-    Plot the 4 SW NRCA images in their respecitve postions
+    Plot the 4 SW NIRCam A images in their respecitve postions
     """
 
     a1, a2, a3, a4 = data_list
@@ -469,7 +508,7 @@ def plot_nrca_images(data_list, name_list):
 
 def plot_nrcb_images(data_list, name_list):
     """
-    Plot the 4 SW NRCB images in their respecitve postions
+    Plot the 4 SW NIRCam B images in their respecitve postions
     """
 
     b1, b2, b3, b4 = data_list
@@ -490,7 +529,7 @@ def plot_nrcb_images(data_list, name_list):
 
 def create_basic_mosaic(nrca_data_list, nrcb_data_list):
     """
-    Create a mosaic array from 4 nrca and 4 nrcb images.
+    Create a mosaic array from 4 NIRCam A and 4 NIRCam B images.
     """
     a1, a2, a3, a4 = nrca_data_list
     b1, b2, b3, b4 = nrcb_data_list
