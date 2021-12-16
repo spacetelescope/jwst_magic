@@ -428,24 +428,21 @@ def test_apt_gsid_vs_gslimits(qtbot, master_gui, test_directory, apt_number, obs
     assert master_gui.gs_id == expected_normalize
 
     if test_type == 'gslimits only':
-        # Check that nothing has been populated in the GUI
-
+        # Check the guider hasn't been changed
         assert master_gui.buttonGroup_name.buttons()[guider_int].isChecked()
 
         # Check that RA/DEC are empty strings
         assert master_gui.gs_ra == expected_ra
         assert master_gui.gs_dec == expected_dec
     elif test_type == 'gsid and gslimits':
-        # Check that the GS ID information has been populated in the GUI
-
+        # Check the guider hasn't been changed
         assert master_gui.buttonGroup_name.buttons()[guider_int].isChecked()
 
         # Check the RA/DEC come from the GS ID
         np.testing.assert_almost_equal(master_gui.gs_ra, expected_ra, decimal=4)
         np.testing.assert_almost_equal(master_gui.gs_dec, expected_dec, decimal=4)
     elif test_type == 'nothing':
-        # Check an error is raised that there are no guide star special requirements in teh APT file
-
+        # Check the guider hasn't been changed
         assert master_gui.buttonGroup_name.buttons()[guider_int].isChecked()
 
         # Check that RA/DEC are empty strings
