@@ -379,8 +379,7 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
         str(exceptions[0][1]), expected_err)
 
 
-apt_gs_parameters = [#('', X, X, 'GS ID HERE', 'RA here', 'DEC here', 'gsid only'),  # Only GS ID defined
-                     ('1451', 1, None, '', '', '', 'gslimits only'),  # Only GS Limits defined
+apt_gs_parameters = [('1451', 1, None, '', '', '', 'gslimits only'),  # Only GS Limits defined
                      ('1141', 1, 1, 'S4OL071716', 159.506895090423, -69.6997532917772, 'gsid and gslimits'),  # Both Limits & ID defined
                      ('1141', 13, None, '', '', '', 'nothing'),  # Nothing defined
                      ]
@@ -428,15 +427,7 @@ def test_apt_gsid_vs_gslimits(qtbot, master_gui, test_directory, apt_number, obs
     assert master_gui.lineEdit_normalize.text() == expected_normalize
     assert master_gui.gs_id == expected_normalize
 
-    if test_type == 'gsid only':
-        # Check that the GS ID information has been populated in the GUI
-
-        assert master_gui.buttonGroup_name.buttons()[guider_int].isChecked()
-
-        # Check the RA/DEC come from the GS ID
-        np.testing.assert_almost_equal(master_gui.gs_ra, expected_ra, decimal=4)
-        np.testing.assert_almost_equal(master_gui.gs_dec, expected_dec, decimal=4)
-    elif test_type == 'gslimits only':
+    if test_type == 'gslimits only':
         # Check that nothing has been populated in the GUI
 
         assert master_gui.buttonGroup_name.buttons()[guider_int].isChecked()
