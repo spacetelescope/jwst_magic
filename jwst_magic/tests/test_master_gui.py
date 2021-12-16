@@ -393,7 +393,7 @@ def test_apt_gsid_vs_gslimits(qtbot, master_gui, test_directory, apt_number, obs
     """Test that the APT files populates the GUI correctly depending on
     if the Guide Star ID or Guide Star Limits are defined
     """
-    # Set the guider to be opposite of what is in the APT file. If no guider set, set to guider 1
+    # Set the guider to be what is in the APT file. If no guider set, set to guider 1
     if apt_guider == 1:
         guider_int = 1
     elif apt_guider == 2:
