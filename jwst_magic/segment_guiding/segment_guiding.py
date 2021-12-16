@@ -28,7 +28,7 @@ Use
             root=None, out_dir=None, selected_segs=None,
             guide_star_params_dict=None,
             threshold_factor=0.9, parameter_dialog=True,
-            masterGUIapp=None):
+            mainGUIapp=None):
 
 
     Or to generate a photometry override file (POF):
@@ -1040,7 +1040,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                                    center_pointing_list=None,
                                    guide_star_params_dict=None, threshold_factor=0.9,
                                    parameter_dialog=True, dialog_obj=None,
-                                   master_gui_app=None, log=None):
+                                   main_gui_app=None, log=None):
     """Run the segment guiding tool to select guide and reference stars and
     generate a segment guiding override file.
 
@@ -1104,7 +1104,7 @@ def generate_segment_override_file(segment_infile_list, guider,
     dialog_obj : SegmentGuidingDialog object, optional
         If parameter_dialog is True, can pass a pre-set dialog object or
         re-create it if dialog_obj=None
-    master_gui_app : qApplication, optional
+    main_gui_app : qApplication, optional
         qApplication instance of parent GUI
     log : logger object
         Pass a logger object (output of utils.create_logger_from_yaml) or a new log

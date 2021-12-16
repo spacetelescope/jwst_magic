@@ -28,7 +28,7 @@ from jwst_magic.convert_image.background_stars import add_background_stars
 
 if not JENKINS:
     from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsDialog
-    from jwst_magic.masterGUI import MasterGui
+    from jwst_magic.mainGUI import MainGui
 
 SOGS = utils.on_sogs_network()
 if not SOGS:
@@ -64,22 +64,22 @@ def test_directory(test_dir=TEST_DIRECTORY):
 
 
 @pytest.fixture()
-def master_gui():
-    """Set up QApplication object for the Master GUI"""
+def main_gui():
+    """Set up QApplication object for the Main GUI"""
     #global app
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
 
-    master_gui = MasterGui(root=ROOT, in_file=None, out_dir=__location__,
+    main_gui = MainGui(root=ROOT, in_file=None, out_dir=__location__,
                            segment_guiding=True, app=app, itm=False)
 
-    return master_gui
+    return main_gui
 
 
 @pytest.fixture()
 def bkgdstars_dialog():
-    """Set up QApplication object for the Master GUI"""
+    """Set up QApplication object for the Main GUI"""
     # Set defaults
     guider = 1
     fgs_mag = 12
@@ -90,7 +90,7 @@ def bkgdstars_dialog():
         app = QApplication(sys.argv)
 
     bkgdstars_dialog = BackgroundStarsDialog(guider, fgs_mag, ra=None, dec=None,
-                                             in_master_GUI=False)
+                                             in_main_GUI=False)
     return bkgdstars_dialog
 
 
@@ -118,39 +118,39 @@ def test_init_background_stars(bkgdstars_dialog):
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
-def test_run_background_stars_gui_populated(test_directory, qtbot, master_gui):
+def test_run_background_stars_gui_populated(test_directory, qtbot, main_gui):
     """Test that the RA and DEC information from APT get passed through and
     correctly populated in the background stars GUI.
     """
     # Initialize main window
-    qtbot.addWidget(master_gui)
+    qtbot.addWidget(main_gui)
 
     # Set general input
-    qtbot.keyClicks(master_gui.lineEdit_inputImage, NIRCAM_IM)
-    qtbot.mouseClick(master_gui.buttonGroup_name.buttons()[1], QtCore.Qt.LeftButton)  # set naming method
-    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)  # set to guider 2
-    qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
-    qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
-    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)
-    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
-    qtbot.keyClicks(master_gui.lineEdit_manualid, '1151')
-    qtbot.keyClicks(master_gui.lineEdit_manualobs, '01')
-    qtbot.mouseClick(master_gui.pushButton_manualid, QtCore.Qt.LeftButton)
+    qtbot.keyClicks(main_gui.lineEdit_inputImage, NIRCAM_IM)
+    qtbot.mouseClick(main_gui.buttonGroup_name.buttons()[1], QtCore.Qt.LeftButton)  # set naming method
+    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)  # set to guider 2
+    qtbot.keyClicks(main_gui.lineEdit_root, ROOT)  # set root
+    qtbot.keyClicks(main_gui.textEdit_out, __location__)  # set out directory
+    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)
+    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
+    qtbot.keyClicks(main_gui.lineEdit_manualid, '1151')
+    qtbot.keyClicks(main_gui.lineEdit_manualobs, '01')
+    qtbot.mouseClick(main_gui.pushButton_manualid, QtCore.Qt.LeftButton)
 
     # Check the RA and DEC have been populated, but PA has not
     def handle_dialog():
         try:
-            assert master_gui._bkgdstars_dialog.lineEdit_RA.text() != ''
-            assert master_gui._bkgdstars_dialog.lineEdit_Dec.text() != ''
-            assert master_gui._bkgdstars_dialog.lineEdit_PA.text() == ''
-            qtbot.mouseClick(master_gui._bkgdstars_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+            assert main_gui._bkgdstars_dialog.lineEdit_RA.text() != ''
+            assert main_gui._bkgdstars_dialog.lineEdit_Dec.text() != ''
+            assert main_gui._bkgdstars_dialog.lineEdit_PA.text() == ''
+            qtbot.mouseClick(main_gui._bkgdstars_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
         except AssertionError:
             # If something raising an error above, need to close the pop up gui anyway
-            qtbot.mouseClick(master_gui._bkgdstars_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+            qtbot.mouseClick(main_gui._bkgdstars_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
 
     with qtbot.capture_exceptions() as exceptions:
         QtCore.QTimer.singleShot(500, handle_dialog)
-        qtbot.mouseClick(master_gui.pushButton_backgroundStars, QtCore.Qt.LeftButton, delay=1)
+        qtbot.mouseClick(main_gui.pushButton_backgroundStars, QtCore.Qt.LeftButton, delay=1)
 
     # An incomplete entry pressing done will error
     expected_err = 'Background Stars GUI missing information. No background stars selected'
