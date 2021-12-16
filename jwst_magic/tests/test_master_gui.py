@@ -379,6 +379,77 @@ def test_apt_gs_populated(qtbot, master_gui, test_directory, type, button_name, 
         str(exceptions[0][1]), expected_err)
 
 
+apt_gs_parameters = [('1451', 1, None, '', '', '', 'gslimits only'),  # Only GS Limits defined
+                     ('1141', 1, 1, 'S4OL071716', 159.506895090423, -69.6997532917772, 'gsid and gslimits'),  # Both Limits & ID defined
+                     ('1141', 13, None, '', '', '', 'nothing'),  # Nothing defined
+                     ]
+
+
+@pytest.mark.parametrize('apt_number, obs_number, apt_guider, expected_normalize, '
+                         'expected_ra, expected_dec, test_type', apt_gs_parameters)
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+def test_apt_gsid_vs_gslimits(qtbot, master_gui, test_directory, apt_number, obs_number, apt_guider,
+                              expected_normalize, expected_ra, expected_dec, test_type):
+    """Test that the APT files populates the GUI correctly depending on
+    if the Guide Star ID or Guide Star Limits are defined
+    """
+    # Set the guider to be what is in the APT file. If no guider set, set to guider 1
+    if apt_guider == 1:
+        guider_int = 1
+    elif apt_guider == 2:
+        guider_int = 0
+    else:
+        guider_int = 1  # Set guider button to guider 1
+    master_gui.buttonGroup_guider.buttons()[guider_int].setChecked(True)  # set to the same guider as APT
+
+    # Set basic info
+    master_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method
+    master_gui.lineEdit_root.setText(ROOT)  # set root
+    master_gui.textEdit_out.setText(__location__)  # set out directory
+    master_gui.lineEdit_manualid.setText(str(apt_number))
+    master_gui.lineEdit_manualobs.setText(str(obs_number))
+
+    if test_type == 'nothing':
+        with qtbot.capture_exceptions() as exceptions:
+            qtbot.mouseClick(master_gui.pushButton_manualid, QtCore.Qt.LeftButton, delay=1)
+        expected_err = "This observation doesn't have a Guide Star Special Requirement"
+        assert expected_err in str(exceptions[0][1]), \
+            f"Wrong error captured. Caught: '{str(exceptions[0][1])}', Expected: '{expected_err}'"
+    else:
+        master_gui.pushButton_manualid.click()
+
+    # Check Attributes
+    assert master_gui.program_id == int(apt_number)
+    assert master_gui.observation_num == int(obs_number)
+    assert master_gui.visit_num == 1
+
+    # Check that the guide star ID is populated in the normalize line correctly
+    assert master_gui.lineEdit_normalize.text() == expected_normalize
+    assert master_gui.gs_id == expected_normalize
+
+    if test_type == 'gslimits only':
+        # Check the guider hasn't been changed
+        assert master_gui.buttonGroup_name.buttons()[guider_int].isChecked()
+
+        # Check that RA/DEC are empty strings
+        assert master_gui.gs_ra == expected_ra
+        assert master_gui.gs_dec == expected_dec
+    elif test_type == 'gsid and gslimits':
+        # Check the guider hasn't been changed
+        assert master_gui.buttonGroup_name.buttons()[guider_int].isChecked()
+
+        # Check the RA/DEC come from the GS ID
+        np.testing.assert_almost_equal(master_gui.gs_ra, expected_ra, decimal=4)
+        np.testing.assert_almost_equal(master_gui.gs_dec, expected_dec, decimal=4)
+    elif test_type == 'nothing':
+        # Check the guider hasn't been changed
+        assert master_gui.buttonGroup_name.buttons()[guider_int].isChecked()
+
+        # Check that RA/DEC are empty strings
+        assert master_gui.gs_ra == expected_ra
+        assert master_gui.gs_dec == expected_dec
+
+
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
 @patch('jwst_magic.masterGUI.MasterGui.mismatched_apt_guider_dialog', autospec=True)
