@@ -47,7 +47,7 @@ class PsfAnalysis():
         car: string
             The name of the CAR - this must match how it is labelled in the out path
         image: 2D array
-            This is generally expected to be a mosaic image
+            This is generally expected to be a mosaic image, but can also be a single detector image
         header: fits header object
             A header that is associated with the image, it does not need to be exactly for that
             image if that image is made up of many other images.
@@ -57,7 +57,7 @@ class PsfAnalysis():
 
         Attributes:
         -----------
-        car:string
+        car: string
             The name of the CAR - this must match how it is labelled in the out path
         header: fits header object
             A header that is associated with the image. It can be the header associated with one
@@ -80,16 +80,13 @@ class PsfAnalysis():
             identified.
         """
         self.car = car
-        self.header = header
-        if pixelscale is None:
-            self.pixelscale = NIRCAM_SW_PIXELSCALE
-        else:
-            self.pixelscale = pixelscale
-
+        self.pixelscale = pixelscale
         self.target_location = target_location
 
+        self.header = header
         if self.header is not None:
             self.check_header_for_pixelscale()
+
         if image is not None:
             # Correct any negative values
             self.corrected_image = correct_pixel_values(image)
@@ -106,10 +103,19 @@ class PsfAnalysis():
         """Make sure that if the header does not already include the PIXELSCL keyword, add it.
         This header keyword is required in order to measure the enircled energy
         """
-        if 'PIXELSCL' not in self.header.keys() and self.pixelscale is not None:
-            self.header['PIXELSCL'] = self.pixelscale
-        elif 'PIXELSCL' in self.header.keys() and self.pixelscale is None:
+        # If we have the pixelscale in the header, and no pixelscale is passed through, use the header value
+        if 'PIXELSCL' in self.header.keys() and self.pixelscale is None:
             self.pixelscale = self.header['PIXELSCL']
+        # If we don't have a header value, and we don't have a passed in value, use the NIRCam SW pixelscale
+        elif 'PIXELSCL' not in self.header.keys() and self.pixelscale is None:
+            self.pixelscale = NIRCAM_SW_PIXELSCALE
+        # If we don't have a value in the header but one is passed in, use that one and update the header
+        elif 'PIXELSCL' not in self.header.keys() and self.pixelscale is not None:
+            self.header['PIXELSCL'] = self.pixelscale
+        # If both are given, make the user figure out which one to use.
+        elif 'PIXELSCL' in self.header.keys() and self.pixelscale is not None:
+            if self.header['PIXELSCL'] != self.pixelscale:
+                raise ValueError(f"The header gives a pixelscale of {self.header['PIXELSCL']} while the user provided a pixelscale of {self.pixelscale}. Please either change the header value, or pass in `None` for the pixelscale.")
 
     def get_image_information(self, smoothing='high', psf_window_radius=40):
         """
@@ -127,14 +133,15 @@ class PsfAnalysis():
         psfs = []
         for x, y in zip(x_list, y_list):
             psfs.append(cut_out_psf(x, y, self.corrected_image, psf_window_radius))
+        self.psfs = psfs
         self.create_info_df(x_list, y_list, psfs)
 
     def create_info_df(self, x_list, y_list, psfs=None):
         """
-        For each PSF, measure the FWHM, distance from target, and create a EE function,
+        For each PSF, measure the FWHM, distance from target, and create an EE function,
         then add to a information data frame.
         """
-        # Get PSF characteristis for each PSF
+        # Get PSF characteristics for each PSF
         if x_list:
             fwhm_xs, fwhm_ys, self.ee_fns = self.get_psf_characteristics(psfs)
             self.get_target_location(x_list, y_list)
@@ -147,9 +154,7 @@ class PsfAnalysis():
             self.info_df = None
 
     def get_psf_characteristics(self, psfs):
-        '''
-        Get the FWHM in x and y and the ee function for each identified PSF
-        '''
+        """ Get the FWHM in x and y and the ee function for each identified PSF """
         # Make sure that if we don't have the pixelscale value at this point, that the
         #  user knows that we can't measure the EE
         if 'PIXELSCL' not in self.header.keys():
@@ -172,15 +177,15 @@ class PsfAnalysis():
         return fwhm_xs, fwhm_ys, ee_fns
 
     def get_target_location(self, x_list, y_list):
-        """ If we don't have a target location in the image, calculate it from the
+        """
+        If we don't have a target location in the image, calculate it from the
         locations of segment PSFs that we do have
         """
         if self.target_location is None:
             self.target_location = (int(np.median(x_list)), int(np.median(y_list)))
 
     def get_distances_to_target(self, x_list, y_list):
-        """Calculate the distance to the target location for each known PSF
-        """
+        """Calculate the distance to the target location for each known PSF """
         target_x, target_y = self.target_location
         distances_to_target = distance_to_target_center(x_list, y_list,
                                                         target_x, target_y)
@@ -264,7 +269,7 @@ class PsfAnalysis():
         # Check that all parameters are in info_dictionary
         parameters = list(set(parameters) & set(list(self.info_df.columns)))
         if not parameters:
-            print('Requested parameters are not in the povided data frame. Nothing to plot')
+            print('Requested parameters are not in the provided data frame. Nothing to plot')
         else:
             fig, ax = plt.subplots(1, len(parameters), figsize=(6*len(parameters), 8))
             try:
@@ -272,8 +277,9 @@ class PsfAnalysis():
             except KeyError:
                 segs = np.arange(len(self.info_df))
 
-            if xs is None and ys is None:
+            if xs is None:
                 xs = self.info_df['x'].values
+            if ys is None:
                 ys = self.info_df['y'].values
 
             for i, param in enumerate(parameters):
@@ -294,8 +300,7 @@ class PsfAnalysis():
                     axs.set_ylim(ylim)
 
     def plot_ee(self, num_psf_per_row=3, labels=None):
-        '''If we have EE measurements, plot them
-        '''
+        """ If we have EE measurements, plot them """
         if self.pixelscale is not None:
             ee_pixel_radius = self.psf_window_radius
             ee_arcsec_radius = ee_pixel_radius * self.pixelscale
@@ -341,15 +346,16 @@ def correct_pixel_values(image):
 
 
 def distance_to_target_center(x, y, truth_x, truth_y):
-    '''
+    """
     Calculate the distance from a segment PSF to the expected location of the target in the sky.
     truth_x and truth_y are the location of the boresight
-    '''
+    """
     return np.sqrt((truth_x - np.asarray(x))**2 + (truth_y - np.asarray(y))**2)
 
 
 def get_position_from_magic(image, smoothing='default', npeaks=np.inf):
-    """ Get x and y postitions of each identifiable PSF in the MOSAIC. The identified PSFs
+    """
+    Get x and y postitions of each identifiable PSF in the input image. The identified PSFs
     might not all be from the target star and some from the target star might be missing
     """
 
@@ -383,7 +389,8 @@ def cut_out_psf(x, y, image, psf_window_radius):
 
 # Got this from https://grit.stsci.edu/wfsc/tools/-/blob/master/ote-commissioning/pre-mimf/ote28_psf_analysis.py
 def measure_fwhm(array):
-    """Fit a Gaussian2D model to a PSF and return the fitted PSF
+    """
+    Fit a Gaussian2D model to a PSF and return the fitted PSF
     the FWHM is x and y can be found with fitted_psf.x_fwhm, fitted_psf.y_fwhm
 
     Parameters
@@ -408,15 +415,15 @@ def measure_fwhm(array):
 
 
 def measure_ee(array, header):
-    '''Wrapper function around poppy's measure_ee
-    '''
+    """Wrapper function around poppy's measure_ee """
     hdu1 = fits.PrimaryHDU(data=array, header=header)
     new_hdul = fits.HDUList([hdu1])
     return poppy.measure_ee(new_hdul, normalize='None')
 
 
 def create_combined_pointing_df(info_dfs, matching_dictionary, ee_fn_lists):
-    """Given multiple info_dfs, combine to include the information for all identified
+    """
+    Given multiple info_dfs, combine to include the information for all identified
     PSFs. This also means creating a new list of encircled energy functions.
     `info_dfs` is a list of the info_dfs in order of pointing (pointing1 first)
     `ee_fn_lists` is a list of the ee_fns in order of pointing (pointing1 first)
@@ -440,11 +447,13 @@ def create_combined_pointing_df(info_dfs, matching_dictionary, ee_fn_lists):
     combined_info_df = combined_info_df[['segment', 'pointing', 'x', 'y', 'fwhm_x', 'fwhm_y',
                                          'distance_to_target']]
 
-    return combined_info_df, new_ee_fns
+    sorted_combined_info_df = combined_info_df.sort_values(by='segment')
+
+    return sorted_combined_info_df, new_ee_fns
 
 def get_psfs_from_all_pointings(combined_df, pointings_images, psf_window_radius):
     """
-    Create a new list of PSF cutouts from each pointingfor a full list of each segment PSF
+    Create a new list of PSF cutouts from each pointing for a full list of each segment PSF
     """
     x_list = combined_df['x']
     y_list = combined_df['y']
@@ -491,7 +500,7 @@ def get_nrc_data_from_list(nrc_file_list):
 
 def plot_nrca_images(data_list, name_list):
     """
-    Plot the 4 SW NIRCam A shortwave images in their respecitve postions
+    Plot the 4 SW NIRCam A shortwave images in their respective postions
     """
 
     a1, a2, a3, a4 = data_list
@@ -512,7 +521,7 @@ def plot_nrca_images(data_list, name_list):
 
 def plot_nrcb_images(data_list, name_list):
     """
-    Plot the 4 SW NIRCam B shortwave images in their respecitve postions
+    Plot the 4 SW NIRCam B shortwave images in their respective postions
     """
 
     b1, b2, b3, b4 = data_list
@@ -562,18 +571,17 @@ def create_image_array(psfs, segment_list, window_size):
     Cut out postage stamps of an image and using the locations of each PSF and it's assumed
     segment ID, place it in a large image array.
     """
-    # Create an array of zeros the size of a standard dector size
+    # Create an array of zeros the size of a standard detector size
     large_image_array = np.zeros([2048, 2048])
 
     ga_xs = []
     ga_ys = []
     for psf, seg in zip(psfs, segment_list):
-        if seg != 'Unknown':
-            ga_x, ga_y = GA_PSF_LOCATIONS[seg]
-            ga_xs.append(ga_x)
-            ga_ys.append(ga_y)
-            large_image_array[ga_y-window_size: ga_y+window_size,
-                              ga_x-window_size:ga_x+window_size] = psf
+        ga_x, ga_y = GA_PSF_LOCATIONS[seg]
+        ga_xs.append(ga_x)
+        ga_ys.append(ga_y)
+        large_image_array[ga_y-window_size: ga_y+window_size,
+                          ga_x-window_size:ga_x+window_size] = psf
 
     large_image_array = correct_pixel_values(large_image_array)
     return large_image_array, ga_xs, ga_ys
