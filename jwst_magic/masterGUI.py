@@ -1915,7 +1915,8 @@ def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_
         app = QApplication(sys.argv)
 
     # Add icon
-    app.setWindowIcon(QtGui.QIcon('magic_logo.png'))
+    path = os.path.join(os.path.dirname(sys.modules[__name__].__file__), 'magic_logo.png')
+    app.setWindowIcon(QtGui.QIcon(path))
     ex = MasterGui(root, norm_value, norm_unit, nircam_det, nircam, smoothing,
                    steps, in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
                    file_writer, segment_guiding, app=app, itm=itm)
