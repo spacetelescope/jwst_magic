@@ -30,7 +30,7 @@ This GUI can be run in the python shell or as a module, as such:
 
     Optional arguments:
         ``print_output`` - enable output to the terminal
-        ``masterGUIapp`` - qApplication instance of parent GUI
+        ``mainGUIapp`` - qApplication instance of parent GUI
 
 References
 ----------
@@ -334,7 +334,7 @@ class StarSelectorWindow(QDialog):
     quit
         Closes the application
     """
-    def __init__(self, data, x, y, dist, guider, out_dir, qApp, in_master_GUI,
+    def __init__(self, data, x, y, dist, guider, out_dir, qApp, in_main_GUI,
                  print_output=False):
         """Initializes class; sets up user interface.
 
@@ -357,16 +357,16 @@ class StarSelectorWindow(QDialog):
             jwst_magic/. This path is the level outside the out/root/ dir
         qApp : qApplication
             qApplication instance of parent GUI
-        in_master_GUI : bool
+        in_main_GUI : bool
             Denotes if the GUI is being launched as a dialog box from
-            the master GUI
+            the main GUI
         print_output : bool, optional
             Flag enabling output to the terminal
         """
         # Initialize runtime attributes
         self.qApp = qApp
         self.print_output = print_output
-        self.in_master_GUI = in_master_GUI
+        self.in_main_GUI = in_main_GUI
 
         # Initialize construction attributes
         self.image_dim = 800
@@ -1265,8 +1265,8 @@ class StarSelectorWindow(QDialog):
             except AttributeError:
                 pass
 
-            # If not being called from the master GUI, exit the whole application
-            if not self.in_master_GUI:
+            # If not being called from the main GUI, exit the whole application
+            if not self.in_main_GUI:
                 self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
 
             # Close the star selector dialog window
@@ -1288,8 +1288,8 @@ class StarSelectorWindow(QDialog):
         except AttributeError:
             pass
 
-        # If not being called from the master GUI, exit the whole application
-        if not self.in_master_GUI:
+        # If not being called from the main GUI, exit the whole application
+        if not self.in_main_GUI:
             self.qApp.exit(0)  # Works only with self.close() after; same as qApp.quit()
 
         # Close the star selector dialog window
@@ -1490,7 +1490,7 @@ class StarSelectorWindow(QDialog):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def run_SelectStars(data, x, y, dist, guider, out_dir, print_output=True, masterGUIapp=None):
+def run_SelectStars(data, x, y, dist, guider, out_dir, print_output=True, mainGUIapp=None):
     """Calls a PyQt GUI to allow interactive user selection of guide and
     reference stars.
 
@@ -1513,7 +1513,7 @@ def run_SelectStars(data, x, y, dist, guider, out_dir, print_output=True, master
         jwst_magic/. This path is the level outside the out/root/ dir
     print_output : bool, optional
         Flag enabling output to the terminal
-    masterGUIapp : qApplication, optional
+    mainGUIapp : qApplication, optional
         qApplication instance of parent GUI
 
     Returns
@@ -1523,24 +1523,24 @@ def run_SelectStars(data, x, y, dist, guider, out_dir, print_output=True, master
     """
 
     # RUN GUI
-    if masterGUIapp:
-        qApp = masterGUIapp
-        in_master_GUI = True
+    if mainGUIapp:
+        qApp = mainGUIapp
+        in_main_GUI = True
     else:
         qApp = QtCore.QCoreApplication.instance()
         if qApp is None:
             qApp = QApplication(sys.argv)
-        in_master_GUI = False
+        in_main_GUI = False
 
     window = StarSelectorWindow(data=data, x=x, y=y, dist=dist, guider=guider, out_dir=out_dir,
-                                qApp=qApp, in_master_GUI=in_master_GUI,
+                                qApp=qApp, in_main_GUI=in_main_GUI,
                                 print_output=print_output)
     try:
         plt.get_current_fig_manager().window.raise_()  # Bring window to front
     except AttributeError:
         pass
 
-    if masterGUIapp:
+    if mainGUIapp:
         window.exec_()  # Begin interactive session; pauses until window.exit() is called
     else:
         qApp.exec_()

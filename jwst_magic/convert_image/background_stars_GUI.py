@@ -13,7 +13,7 @@ Authors
 Use
 ---
     from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsDialog
-    dialog = BackgroundStarsDialog(guider, fgs_mag, in_master_GUI=in_master_GUI)
+    dialog = BackgroundStarsDialog(guider, fgs_mag, in_main_GUI=in_main_GUI)
 
 Notes
 -----
@@ -64,7 +64,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class BackgroundStarsDialog(QDialog):
-    def __init__(self, guider, fgs_mag, in_master_GUI, out_dir=None, root=None, ra=None, dec=None):
+    def __init__(self, guider, fgs_mag, in_main_GUI, out_dir=None, root=None, ra=None, dec=None):
         """Defines attributes; calls initUI() method to set up user interface.
 
         Parameters
@@ -73,8 +73,8 @@ class BackgroundStarsDialog(QDialog):
             guider number (1 or 2)
         fgs_mag : float
             brightness of the guide star in FGS Magnitude
-        in_master_GUI : bool
-            is this module being called as part of the master GUI?
+        in_main_GUI : bool
+            is this module being called as part of the main GUI?
         out_dir : str, optional
             Where output files will be saved. If not provided, the
             image(s) will be saved within the repository at
@@ -92,7 +92,7 @@ class BackgroundStarsDialog(QDialog):
         self.guider = guider
         self.fgs_mag = fgs_mag
         self.image_dim = 400
-        self.in_master_GUI = in_master_GUI
+        self.in_main_GUI = in_main_GUI
         self.method = None
         self.extended = None
         self.x = []
@@ -574,7 +574,7 @@ class BackgroundStarsDialog(QDialog):
         return queried_catalog
 
     def return_dict(self):
-        """Create dictionary to pass back to master gui"""
+        """Create dictionary to pass back to main gui"""
         if self.x != [] and self.y != [] and list(self.fgs_mags) != []:
             bkgd_stars_dict = {'x': self.x,
                                'y': self.y,

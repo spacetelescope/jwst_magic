@@ -6,7 +6,7 @@ import subprocess
 
 JENKINS = '/home/developer/workspace/' in os.getcwd()
 if not JENKINS:
-    from jwst_magic.masterGUI import run_MasterGui as run_tool_GUI
+    from jwst_magic.mainGUI import run_MainGui as run_tool_GUI
     from jwst_magic.run_magic import run_all as run_tool
 
 module_path = pkg_resources.resource_filename('jwst_magic', '')
