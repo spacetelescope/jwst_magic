@@ -927,21 +927,21 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
     norm_unit : str, optional
         Specifies the unit of norm_value ("FGS Magnitude", "FGS countrate",
         or "Guide Star ID")
-    smoothing: str or float, optional
+    smoothing : str or float, optional
         Options are "low" for minimal smoothing (e.g. MIMF), "high" for large
         smoothing (e.g. GA), "default" for medium smoothing for other cases,
         or "choose center" for finding the center of a MIMF PSF. User can also
         pass a float which will be used as the sigma value in ndimage.gaussian_filter.
-    detection_threshold: str, optional
+    detection_threshold : str, optional
         Options are "standard-deviation" to set threshold=median + (3 * std)
         or "pixel-wise" to use photutils' detect_threshold() function (used
         only for normal operations)
-    psf_size: int, optional
+    psf_size : int, optional
         Set the size of the stamps to use when cutting out PSFs from the image.
         Input is the edge of the square size in pixels (e.g. if 100, the stamp
         will be 100px x 100px). If not set, default values will be used based
         on smoothing choice.
-    all_found_psfs_file: str, optional
+    all_found_psfs_file : str, optional
         A pre-made all_found_psfs file to use when creating the pseudo-FGS
         image rather than making a new one in the code. This can be used
         when MAGIC's current smoothing methods aren't sufficient in
