@@ -1,7 +1,7 @@
 astropy
 ipython
 jupyter
-matplotlib>=3.3
+matplotlib>=3.5.1
 notebook
 numpy
 pyqt5>=5.11,<6.0
