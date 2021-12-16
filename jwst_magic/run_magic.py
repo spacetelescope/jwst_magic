@@ -64,7 +64,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             nircam_det=None, nircam=True, smoothing='default', detection_threshold='standard-deviation',
             steps=None, guiding_selections_file=None, bkgd_stars=False,
             bkgrdstars_hdr=None, out_dir=None, convert_im=True,
-            star_selection=True, file_writer=True, masterGUIapp=None, copy_original=True,
+            star_selection=True, file_writer=True, mainGUIapp=None, copy_original=True,
             normalize=True, coarse_pointing=False, jitter_rate_arcsec=None, itm=False,
             shift_id_attitude=True, thresh_factor=0.6, use_oss_defaults=False, override_bright_guiding=False,
             logger_passed=False, log_filename=None):
@@ -116,8 +116,8 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
         Run the  star_selector module?
     file_writer : boolean, optional
         Run the fsw_file_writer module?
-    masterGUIapp : PyQt5.QtCore.QCoreApplication instance, optional
-        The QApplication instance of the master GUI, if it is already
+    mainGUIapp : PyQt5.QtCore.QCoreApplication instance, optional
+        The QApplication instance of the main GUI, if it is already
         open.
     copy_original : boolean, optional
         Copy the original data to {out_dir}/{root}?
@@ -223,7 +223,7 @@ def run_all(image, guider, root=None, norm_value=None, norm_unit=None,
             psf_center_path=psf_center_file,
             smoothing=smoothing,
             out_dir=out_dir,
-            logger_passed=True, masterGUIapp=masterGUIapp)
+            logger_passed=True, mainGUIapp=mainGUIapp)
         LOGGER.info("*** Star Selection: COMPLETE ***")
 
     # Create all files for FSW/DHAS/FGSES/etc.

@@ -473,7 +473,7 @@ def copy_all_selections_yaml(file_to_copy, final_file, guiding_selections_file_l
 
 
 def manual_star_selection(data, all_found_psfs_path, guider,
-                          out_dir, choose_center=False, testing=False, masterGUIapp=None):
+                          out_dir, choose_center=False, testing=False, mainGUIapp=None):
     """Launches a GUI to prompt the user to click-to-select guide and
     reference stars.
 
@@ -494,7 +494,7 @@ def manual_star_selection(data, all_found_psfs_path, guider,
         Automatically choose the one, highly-smoothed, PSF found in the image
     testing : bool, optional
         Generates indices randomly (for running pytests)
-    masterGUIapp : qApplication, optional
+    mainGUIapp : qApplication, optional
         qApplication instance of parent GUI
 
     Returns
@@ -536,7 +536,7 @@ def manual_star_selection(data, all_found_psfs_path, guider,
         inds_list, center_of_pointing = SelectStarsGUI.run_SelectStars(gui_data, x, y, dist, guider,
                                                                        out_dir=out_dir,
                                                                        print_output=False,
-                                                                       masterGUIapp=masterGUIapp)
+                                                                       mainGUIapp=mainGUIapp)
 
         # Print indices of each guiding configuration
         for i in range(len(inds_list)):
@@ -571,7 +571,7 @@ def manual_star_selection(data, all_found_psfs_path, guider,
 
 def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file_list=None,
                 psf_center_path=None, smoothing='default', choose_center=False,
-                testing=False, out_dir=None, masterGUIapp=None, logger_passed=False):
+                testing=False, out_dir=None, mainGUIapp=None, logger_passed=False):
     """Select guide and reference segments.
 
     Locate all of the segments in the provided data, then either parse a
@@ -608,7 +608,7 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
         Where output files will be saved. If not provided, the
         image(s) will be saved within the repository at
         jwst_magic/. This path is the level outside the out/root/ dir
-    masterGUIapp : qApplication, optional
+    mainGUIapp : qApplication, optional
         qApplication instance of parent GUI
     logger_passed : bool, optional
         Denotes if a logger object has already been generated.
@@ -698,7 +698,7 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
                                                                                          out_dir,
                                                                                          choose_center,
                                                                                          testing,
-                                                                                         masterGUIapp)
+                                                                                         mainGUIapp)
             old_configs = [False] * len(cols_list)
 
         if center_of_pointing is not None:
