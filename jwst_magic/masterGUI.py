@@ -1865,37 +1865,63 @@ class MasterGui(QMainWindow):
                 != obs_number:
             raise ValueError('Failed to find the right observation. The user will need to check the APT file by hand.')
 
+        # Pull the special requirements
         sr = [x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "SpecialRequirements"][0]
 
-        # Try to pull the Guide Star information
+        # Try to pull out the guider
         try:
             gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
+            guider = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "Guider"][0].text
+            LOGGER.info(
+                f'Master GUI: APT {program_id} Obs {obs_number} has Guider {guider}')
+        except IndexError:
+            guider = ''
+
+        # Try to pull out the guide star ID
+        try:
+            gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
+            gs_id = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStar"][0].text
+            LOGGER.info(
+                f'Master GUI: APT {program_id} Obs {obs_number} has a Guide Star ID of {gs_id}')
         except IndexError:
             self.lineEdit_normalize.setText('')
+            gs_id = ''
+
+        # Try to pull out the guide star limits
+        try:
+            gslim = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarLimits"][0]
+            brightlim = [x for x in gslim.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarBrightLimit"][0].text
+            dimlim = [x for x in gslim.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarFaintLimit"][0].text
+            LOGGER.info(
+                f'Master GUI: APT {program_id} Obs {obs_number} has Guide Star Limits of {brightlim} - {dimlim}')
+        except IndexError:
+            brightlim = None
+            dimlim = None
+
+        # If nothing is defined
+        if False not in [x is None or x is '' for x in [guider, gs_id, brightlim, dimlim]]:
             shutil.rmtree(apt_file_path)
             raise ValueError("This observation doesn't have a Guide Star Special Requirement")
 
-        # Pull out the guide star ID and the guider number
-        gs_id = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStar"][0].text
-        guider = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "Guider"][0].text
-
         # Account for if the guider is written as "guider 1" or "guider1"
-        if not isinstance(guider, int):
+        if guider != '' and not isinstance(guider, int):
             guider = guider.lower().replace(' ', '').split('guider')[1]
-
-        LOGGER.info(f'Master GUI: APT has been queried and found guide star {gs_id} and guider {guider}')
 
         # Tear down temporary directory
         shutil.rmtree(apt_file_path)
 
         # Use Guide Star ID to get RA/DEC using default GSC in fgscountrate module
-        try:
-            ra, dec = renormalize.query_guide_star_catalog(gs_id=gs_id)
-        except ValueError as err:
-            self.lineEdit_normalize.setText('')
-            raise ValueError(str(err))
-
-        LOGGER.info(f'Master GUI: The Guide Star Catalog have been queried and found RA of {ra} and DEC of {dec}')
+        if gs_id != '':
+            try:
+                ra, dec = renormalize.query_guide_star_catalog(gs_id=gs_id)
+                LOGGER.info(
+                    f'Master GUI: The Guide Star Catalog have been queried and found RA of {ra} and DEC of {dec}')
+            except ValueError as err:
+                self.lineEdit_normalize.setText('')
+                raise ValueError(str(err))
+        else:
+            ra = ''
+            dec = ''
 
         return gs_id, guider, ra, dec
 
