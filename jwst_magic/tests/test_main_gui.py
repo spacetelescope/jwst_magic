@@ -87,7 +87,7 @@ def main_gui():
         app = QApplication(sys.argv)
 
     main_gui = MainGui(root=ROOT, in_file=None, out_dir=__location__,
-                           segment_guiding=True, app=app, itm=False)
+                       segment_guiding=True, app=app, itm=False)
 
     return main_gui
 
@@ -259,7 +259,7 @@ apt_parameters = [(pytest.param("commissioning", 0, 'SOF', marks=pytest.mark.ski
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 def test_apt_gs_populated(qtbot, main_gui, test_directory, type, button_name, filetype):
     """
-    Test APT info + GS Info are populated into segment guiding SOFand POF GUIs
+    Test APT info + GS Info are populated into segment guiding SOF and POF GUIs
     correctly for both manual and commissioning naming methods
     """
     # Initialize main window
