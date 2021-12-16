@@ -1868,16 +1868,23 @@ class MasterGui(QMainWindow):
         # Pull the special requirements
         sr = [x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "SpecialRequirements"][0]
 
-        # Try to pull out the guide star ID
+        # Try to pull out the guider
         try:
             gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
             guider = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "Guider"][0].text
+            LOGGER.info(
+                f'Master GUI: APT {program_id} Obs {obs_number} has Guider {guider}')
+        except IndexError:
+            guider = ''
+
+        # Try to pull out the guide star ID
+        try:
+            gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
             gs_id = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStar"][0].text
             LOGGER.info(
-                f'Master GUI: APT {program_id} Obs {obs_number} has a Guide Star ID of {gs_id} and Guider {guider}')
+                f'Master GUI: APT {program_id} Obs {obs_number} has a Guide Star ID of {gs_id}')
         except IndexError:
             self.lineEdit_normalize.setText('')
-            guider = ''
             gs_id = ''
 
         # Try to pull out the guide star limits
