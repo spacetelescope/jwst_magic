@@ -1,5 +1,5 @@
 """
-This module is for any extra widgets/objects needed for the QT windows to keep masterGUI.py from
+This module is for any extra widgets/objects needed for the QT windows to keep mainGUI.py from
 getting too messy
 
 """

@@ -146,7 +146,7 @@ class EmittingStream(QtCore.QObject):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-class MasterGui(QMainWindow):
+class MainGui(QMainWindow):
     def __init__(self, root=None, norm_value=12.0, norm_units='FGS Magnitude',
                  nircam_det=None, nircam=True, smoothing='default',
                  steps=None, in_file=None, bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
@@ -178,7 +178,7 @@ class MasterGui(QMainWindow):
         QMainWindow.__init__(self)
 
         # Import .ui file
-        uic.loadUi(os.path.join(__location__, 'masterGUI.ui'), self)
+        uic.loadUi(os.path.join(__location__, 'mainGUI.ui'), self)
 
         # Set up the custom output stream
         EmittingStream(self.textEdit_log)
@@ -422,7 +422,7 @@ class MasterGui(QMainWindow):
 
         # Log the APT file and observation that were queried
         if self.gs_ra is not '' and self.gs_dec is not '':
-            LOGGER.info(f"Master GUI: Queried Program ID {self.program_id} and Obs #{self.observation_num}")
+            LOGGER.info(f"Main GUI: Queried Program ID {self.program_id} and Obs #{self.observation_num}")
 
         # Convert image
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -553,12 +553,12 @@ class MasterGui(QMainWindow):
             inds_list, center_of_pointing = run_SelectStars(data, x, y, 20, guider,
                                                             out_dir=root_dir.absolutePath(),
                                                             print_output=False,
-                                                            masterGUIapp=self.app)
+                                                            mainGUIapp=self.app)
 
             # Print indices of each guiding configuration
             for i in range(len(inds_list)):
                 ind = inds_list[i]
-                LOGGER.info(f'Master GUI: Guiding Configuration {i} - GS = {ind[0]}, RS = {", ".join([str(c) for c in ind[1:]])}')
+                LOGGER.info(f'Main GUI: Guiding Configuration {i} - GS = {ind[0]}, RS = {", ".join([str(c) for c in ind[1:]])}')
 
             # Rewrite the id.prc and acq.prc files
             threshold_factor = float(self.lineEdit_threshold.text())
@@ -611,7 +611,7 @@ class MasterGui(QMainWindow):
                     center_pointing_files = [self.all_found_psfs_file.replace('unshifted_all_found_psfs_',
                                                                               'center_pointing_')] * len(guiding_files)
 
-                LOGGER.info('Master GUI: Pulling center of pointing information from same location as guiding files')
+                LOGGER.info('Main GUI: Pulling center of pointing information from same location as guiding files')
 
                 # Load selected guiding_selections*.txt
                 if len(self.comboBox_guidingcommands.checkedItems()) == 0:
@@ -651,7 +651,7 @@ class MasterGui(QMainWindow):
                     self.visit_num, ra=self.gs_ra, dec=self.gs_dec,
                     root=root, out_dir=out_dir, selected_segs_list=selected_segs_list,
                     center_pointing_list=center_pointing_list,
-                    master_gui_app=self.app, parameter_dialog=True,
+                    main_gui_app=self.app, parameter_dialog=True,
                     dialog_obj=self._test_sg_dialog, log=LOGGER
                 )
 
@@ -694,7 +694,7 @@ class MasterGui(QMainWindow):
                                                  convert_im=convert_im,
                                                  star_selection=star_selection,
                                                  file_writer=file_writer,
-                                                 masterGUIapp=self.app,
+                                                 mainGUIapp=self.app,
                                                  copy_original=copy_original,
                                                  normalize=normalize,
                                                  coarse_pointing=coarse_point,
@@ -866,7 +866,7 @@ class MasterGui(QMainWindow):
         self._bkgdstars_dialog = background_stars_GUI.BackgroundStarsDialog(guider, fgs_mag,
                                                                             out_dir=out_dir, root=root,
                                                                             ra=self.gs_ra, dec=self.gs_dec,
-                                                                            in_master_GUI=True)
+                                                                            in_main_GUI=True)
         accepted = self._bkgdstars_dialog.exec()
 
         # Pull dict of (x,y) and mag values for each star
@@ -1384,7 +1384,7 @@ class MasterGui(QMainWindow):
 
             # This would occur in the case of a POF
             if len(txt_files) == 0:
-                LOGGER.warning('Master GUI: No guiding_selections and/or all_found_psf files found. This may be okay '
+                LOGGER.warning('Main GUI: No guiding_selections and/or all_found_psf files found. This may be okay '
                                'depending on the situation (e.g. when making a POF).')
 
                 # Clear the guiding selections combo box
@@ -1429,7 +1429,7 @@ class MasterGui(QMainWindow):
 
                 except IndexError:
                     LOGGER.warning(
-                        'Master GUI: Missing guiding_selections and/or all_found_psf files. This may be okay depending '
+                        'Main GUI: Missing guiding_selections and/or all_found_psf files. This may be okay depending '
                         'on the situation (e.g. when making a POF).')
 
                     # Clear the guiding selections combo box
@@ -1800,9 +1800,9 @@ class MasterGui(QMainWindow):
         Catalog using the jwst-fgs-countrate module.
 
         Code adapted from:
-            https://github.com/spacetelescope/jwst_magic/blob/master/fgs-commissioning/
+            https://github.com/spacetelescope/jwst_magic/blob/main/fgs-commissioning/
                 notebooks/generate_commissioning_activities_yaml.ipynb
-            https://grit.stsci.edu/jsahlmann/aptxml/blob/master/aptxml/manipulate.py
+            https://grit.stsci.edu/jsahlmann/aptxml/blob/main/aptxml/manipulate.py
 
         Parameters
         ----------
@@ -1829,7 +1829,7 @@ class MasterGui(QMainWindow):
         if not isinstance(obs_number, int):
             obs_number = int(obs_number)
 
-        LOGGER.info(f"Master GUI: Checking Program ID {program_id} and Obs #{obs_number}")
+        LOGGER.info(f"Main GUI: Checking Program ID {program_id} and Obs #{obs_number}")
 
         # Build temporary directory
         apt_file_path = utils.join_path_qt(__location__, 'data', 'temp_apt')
@@ -1865,37 +1865,63 @@ class MasterGui(QMainWindow):
                 != obs_number:
             raise ValueError('Failed to find the right observation. The user will need to check the APT file by hand.')
 
+        # Pull the special requirements
         sr = [x for x in observation.iterchildren() if x.tag.split(namespace_tag)[1] == "SpecialRequirements"][0]
 
-        # Try to pull the Guide Star information
+        # Try to pull out the guider
         try:
             gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
+            guider = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "Guider"][0].text
+            LOGGER.info(
+                f'Main GUI: APT {program_id} Obs {obs_number} has Guider {guider}')
+        except IndexError:
+            guider = ''
+
+        # Try to pull out the guide star ID
+        try:
+            gs = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarID"][0]
+            gs_id = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStar"][0].text
+            LOGGER.info(
+                f'Main GUI: APT {program_id} Obs {obs_number} has a Guide Star ID of {gs_id}')
         except IndexError:
             self.lineEdit_normalize.setText('')
+            gs_id = ''
+
+        # Try to pull out the guide star limits
+        try:
+            gslim = [x for x in sr.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarLimits"][0]
+            brightlim = [x for x in gslim.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarBrightLimit"][0].text
+            dimlim = [x for x in gslim.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStarFaintLimit"][0].text
+            LOGGER.info(
+                f'Main GUI: APT {program_id} Obs {obs_number} has Guide Star Limits of {brightlim} - {dimlim}')
+        except IndexError:
+            brightlim = None
+            dimlim = None
+
+        # If nothing is defined
+        if False not in [x is None or x is '' for x in [guider, gs_id, brightlim, dimlim]]:
             shutil.rmtree(apt_file_path)
             raise ValueError("This observation doesn't have a Guide Star Special Requirement")
 
-        # Pull out the guide star ID and the guider number
-        gs_id = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "GuideStar"][0].text
-        guider = [x for x in gs.iterchildren() if x.tag.split(namespace_tag)[1] == "Guider"][0].text
-
         # Account for if the guider is written as "guider 1" or "guider1"
-        if not isinstance(guider, int):
+        if guider != '' and not isinstance(guider, int):
             guider = guider.lower().replace(' ', '').split('guider')[1]
-
-        LOGGER.info(f'Master GUI: APT has been queried and found guide star {gs_id} and guider {guider}')
 
         # Tear down temporary directory
         shutil.rmtree(apt_file_path)
 
         # Use Guide Star ID to get RA/DEC using default GSC in fgscountrate module
-        try:
-            ra, dec = renormalize.query_guide_star_catalog(gs_id=gs_id)
-        except ValueError as err:
-            self.lineEdit_normalize.setText('')
-            raise ValueError(str(err))
-
-        LOGGER.info(f'Master GUI: The Guide Star Catalog have been queried and found RA of {ra} and DEC of {dec}')
+        if gs_id != '':
+            try:
+                ra, dec = renormalize.query_guide_star_catalog(gs_id=gs_id)
+                LOGGER.info(
+                    f'Main GUI: The Guide Star Catalog have been queried and found RA of {ra} and DEC of {dec}')
+            except ValueError as err:
+                self.lineEdit_normalize.setText('')
+                raise ValueError(str(err))
+        else:
+            ra = ''
+            dec = ''
 
         return gs_id, guider, ra, dec
 
@@ -1904,7 +1930,7 @@ class MasterGui(QMainWindow):
 # MAIN FUNCTION
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_det=None,
+def run_MainGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_det=None,
                   nircam=True, smoothing='default', steps=None, in_file=None,
                   bkgd_stars=False, out_dir=OUT_PATH, convert_im=True,
                   star_selection=True, star_selection_gui=True, file_writer=True,
@@ -1914,7 +1940,10 @@ def run_MasterGui(root=None, norm_value=12.0, norm_unit="FGS Magnitude", nircam_
     if app is None:
         app = QApplication(sys.argv)
 
-    ex = MasterGui(root, norm_value, norm_unit, nircam_det, nircam, smoothing,
+    # Add icon
+    path = os.path.join(os.path.dirname(sys.modules[__name__].__file__), 'magic_logo.png')
+    app.setWindowIcon(QtGui.QIcon(path))
+    ex = MainGui(root, norm_value, norm_unit, nircam_det, nircam, smoothing,
                    steps, in_file, bkgd_stars, out_dir, convert_im, star_selection_gui,
                    file_writer, segment_guiding, app=app, itm=itm)
     # #return ex.settings

@@ -28,7 +28,7 @@ Use
             root=None, out_dir=None, selected_segs=None,
             guide_star_params_dict=None,
             threshold_factor=0.9, parameter_dialog=True,
-            masterGUIapp=None):
+            mainGUIapp=None):
 
 
     Or to generate a photometry override file (POF):
@@ -397,12 +397,15 @@ class SegmentGuidingCalculator:
 
         # Check the count rate factor of the guide star and reset if needed for override file
         if self.override_type == "POF" and None not in (self.norm_value, self.norm_unit):
-            countrate, _ = renormalize.convert_to_countrate_fgsmag(self.norm_value, self.norm_unit, self.fgs_num)
-            if countrate * self.countrate_factor > GUIDE_STAR_MAX_COUNTRATE:
-                old_factor = self.countrate_factor
-                self.countrate_factor = GUIDE_STAR_MAX_COUNTRATE / countrate
+            star_countrate, _ = renormalize.convert_to_countrate_fgsmag(self.norm_value, self.norm_unit, self.fgs_num)
+            if star_countrate * self.countrate_factor > GUIDE_STAR_MAX_COUNTRATE:
+                old_factor, old_uncertainty_factor = (self.countrate_factor, self.countrate_uncertainty_factor)
+                truncated_countrate = GUIDE_STAR_MAX_COUNTRATE - 1e5
+                self.countrate_factor = truncated_countrate / star_countrate
+                self.countrate_uncertainty_factor = (truncated_countrate - 332226) / star_countrate
                 LOGGER.info('Segment Guiding: Count rate factor is too high given the count rate of the star. '
-                            f'Updating count rate factor from {old_factor} to {self.countrate_factor}')
+                            f'Updating count rate factor from {old_factor} +/- {old_uncertainty_factor} to '
+                            f'{self.countrate_factor} +/- {self.countrate_uncertainty_factor}')
         elif self.override_type == "POF":
             LOGGER.warning('Segment Guiding: Cannot check count rate factor due to missing normalization '
                            'information. This may cause the override file to fail.')
@@ -461,7 +464,7 @@ class SegmentGuidingCalculator:
                         file_orientations.append(new_seg_file_id)
 
                 # Set uncertainties
-                uncertainty = np.array(self.countrate_array_flat) * self.threshold_factor
+                uncertainty_list = np.array(self.countrate_array_flat) * self.threshold_factor
 
                 # Write the commands for each orientation
                 for i_o, (orientation, file_ids) in enumerate(zip(orientations, file_orientations)):
@@ -479,17 +482,20 @@ class SegmentGuidingCalculator:
 
                     # Check the count rates for the guide vs ref stars and truncate if needed for override file
                     countrate = self.countrate_array_flat[guide_seg_id]
+                    uncertainty = uncertainty_list[guide_seg_id]
                     cr_max_value = GUIDE_STAR_MAX_COUNTRATE if label == 'star' else REF_STAR_MAX_COUNTRATE
                     if countrate > cr_max_value:
-                        countrate = cr_max_value
+                        countrate = cr_max_value - 1e5
+                        uncertainty = countrate - 332226
                         LOGGER.info(f'Segment Guiding:The count rate for star {guide_star_file_id} is too high for '
-                                      f'the override file. Updating count rate for from '
-                                      f'{self.countrate_array_flat[guide_seg_id]} to {countrate}')
+                                    f'the override file. Updating count rate for from '
+                                    f'{self.countrate_array_flat[guide_seg_id]} +/- {uncertainty_list[guide_seg_id]} '
+                                    f'to {countrate} +/ {uncertainty}')
 
                     # Format segment properties (ID, RA, Dec, countrate, uncertainty)
                     star_string = f' -{label}{seg} = {guide_star_file_id}, ' \
                                   f'{self.seg_ra_flat[guide_seg_id]:.6f}, {self.seg_dec_flat[guide_seg_id]:.6f}, ' \
-                                  f'{countrate:.1f}, {uncertainty[guide_seg_id]:.1f}'
+                                  f'{countrate:.1f}, {uncertainty:.1f}'
 
                     if not self._refonly or (self._refonly and label == 'star'):
                         # Add list of segment IDs for all reference stars
@@ -1034,7 +1040,7 @@ def generate_segment_override_file(segment_infile_list, guider,
                                    center_pointing_list=None,
                                    guide_star_params_dict=None, threshold_factor=0.9,
                                    parameter_dialog=True, dialog_obj=None,
-                                   master_gui_app=None, log=None):
+                                   main_gui_app=None, log=None):
     """Run the segment guiding tool to select guide and reference stars and
     generate a segment guiding override file.
 
@@ -1098,7 +1104,7 @@ def generate_segment_override_file(segment_infile_list, guider,
     dialog_obj : SegmentGuidingDialog object, optional
         If parameter_dialog is True, can pass a pre-set dialog object or
         re-create it if dialog_obj=None
-    master_gui_app : qApplication, optional
+    main_gui_app : qApplication, optional
         qApplication instance of parent GUI
     log : logger object
         Pass a logger object (output of utils.create_logger_from_yaml) or a new log
