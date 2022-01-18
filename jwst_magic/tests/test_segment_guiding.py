@@ -65,6 +65,7 @@ if not JENKINS:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import QDialogButtonBox, QApplication
 import pytest
+import fgscountrate
 
 # Local Imports
 from jwst_magic.tests.utils import parametrized_data
@@ -74,7 +75,7 @@ from jwst_magic.segment_guiding.segment_guiding import (generate_segment_overrid
                                                         REF_STAR_MAX_COUNTRATE)
 if not JENKINS:
     from jwst_magic.segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
-    from jwst_magic.masterGUI import MasterGui
+    from jwst_magic.mainGUI import MainGui
 
 SOGS = utils.on_sogs_network()
 if not SOGS:
@@ -126,17 +127,17 @@ def test_directory(test_dir=TEST_DIRECTORY):
         shutil.rmtree(test_dir)
 
 @pytest.fixture()
-def master_gui():
-    """Set up QApplication object for the Master GUI"""
+def main_gui():
+    """Set up QApplication object for the Main GUI"""
     #global app
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
 
-    master_gui = MasterGui(root=ROOT, in_file=None, out_dir=__location__,
+    main_gui = MainGui(root=ROOT, in_file=None, out_dir=__location__,
                            segment_guiding=True, app=app, itm=False)
 
-    return master_gui
+    return main_gui
 
 
 test_data = PARAMETRIZED_DATA['test_generate_segment_override_file']
@@ -389,38 +390,38 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
-def test_no_image_needed_for_pof(qtbot, master_gui):
+def test_no_image_needed_for_pof(qtbot, main_gui):
     """Test that POF dialog box will pop up without an image"""
     # Initialize main window
-    qtbot.addWidget(master_gui)
+    qtbot.addWidget(main_gui)
 
     # Set main GUI parameters
-    qtbot.mouseClick(master_gui.buttonGroup_name.buttons()[1], QtCore.Qt.LeftButton)   # set manual naming method
-    qtbot.keyClicks(master_gui.lineEdit_root, ROOT)  # set root
-    qtbot.keyClicks(master_gui.textEdit_out, __location__)  # set out directory
-    qtbot.mouseClick(master_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)  # set to guider 1
-    assert master_gui.buttonGroup_name.buttons()[1].isChecked()
-    assert master_gui.lineEdit_root.text() == ROOT
-    assert master_gui.textEdit_out.toPlainText() == __location__
-    assert master_gui.buttonGroup_guider.checkedButton().text() == '1'
+    qtbot.mouseClick(main_gui.buttonGroup_name.buttons()[1], QtCore.Qt.LeftButton)   # set manual naming method
+    qtbot.keyClicks(main_gui.lineEdit_root, ROOT)  # set root
+    qtbot.keyClicks(main_gui.textEdit_out, __location__)  # set out directory
+    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)  # set to guider 1
+    assert main_gui.buttonGroup_name.buttons()[1].isChecked()
+    assert main_gui.lineEdit_root.text() == ROOT
+    assert main_gui.textEdit_out.toPlainText() == __location__
+    assert main_gui.buttonGroup_guider.checkedButton().text() == '1'
 
     # Set normalization parameters
-    qtbot.keyClicks(master_gui.lineEdit_normalize, 'S4FM000115')
+    qtbot.keyClicks(main_gui.lineEdit_normalize, 'S4FM000115')
 
-    master_gui.groupBox_imageConverter.setChecked(False)
-    master_gui.groupBox_starSelector.setChecked(False)
-    master_gui.groupBox_fileWriter.setChecked(False)
-    master_gui.groupBox_segmentGuiding.setChecked(True)
+    main_gui.groupBox_imageConverter.setChecked(False)
+    main_gui.groupBox_starSelector.setChecked(False)
+    main_gui.groupBox_fileWriter.setChecked(False)
+    main_gui.groupBox_segmentGuiding.setChecked(True)
 
-    qtbot.mouseClick(master_gui.radioButton_photometryOverride, QtCore.Qt.LeftButton)
+    qtbot.mouseClick(main_gui.radioButton_photometryOverride, QtCore.Qt.LeftButton)
 
     # Click run button and then the OK button of the pop up
     def handle_dialog():
-        qtbot.mouseClick(master_gui._test_sg_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+        qtbot.mouseClick(main_gui._test_sg_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
 
     with qtbot.capture_exceptions() as exceptions:
         QtCore.QTimer.singleShot(500, handle_dialog)
-        qtbot.mouseClick(master_gui.pushButton_run, QtCore.Qt.LeftButton, delay=1)
+        qtbot.mouseClick(main_gui.pushButton_run, QtCore.Qt.LeftButton, delay=1)
 
     # Check the default state leads to a specific error
     expected_err = "invalid literal for int() with base 10: ''"
@@ -469,12 +470,12 @@ V3 PA @ GS    : 157.123400
 
   Star Name  |    File ID   |   MAGIC ID   |      RA      |      Dec     |    Ideal X   |    Ideal Y   |  OSS Ideal X |  OSS Ideal Y |     Raw X    |     Raw Y
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-star1        | 1            | 1            | 90.987859    | -67.354849   | 0.000000     | -0.000000    | -0.000000    | -0.000000    | 1345.000000  | 840.000000   
-star2        | 4            | 4            | 90.986049    | -67.361953   | -12.743294   | 22.314882    | 12.743294    | 22.314882    | 1023.000000  | 1024.000000  
-ref_only1    | 2            | 2            | 90.986954    | -67.358401   | -6.371648    | 11.157441    | 6.371648     | 11.157441    | 1184.000000  | 932.000000   
-ref_only2    | 3            | 3            | 90.980300    | -67.352779   | -6.516346    | -11.084610   | 6.516346     | -11.084610   | 1505.000000  | 934.000000   
-ref_only3    | 5            | 18           | 90.954105    | -67.360775   | -51.413376   | 0.360593     | 51.413376    | 0.360593     | 1340.000000  | 1582.000000  
-ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -32.223067   | -11.008252   | 32.223067    | -11.008252   | 1504.000000  | 1305.000000  
+star1        | 1            | 1            | 90.987859    | -67.354849   | 0.000000     | -0.000000    | -0.000000    | -0.000000    | 1345.000000  | 840.000000
+star2        | 4            | 4            | 90.986049    | -67.361953   | -12.743294   | 22.314882    | 12.743294    | 22.314882    | 1023.000000  | 1024.000000
+ref_only1    | 2            | 2            | 90.986954    | -67.358401   | -6.371648    | 11.157441    | 6.371648     | 11.157441    | 1184.000000  | 932.000000
+ref_only2    | 3            | 3            | 90.980300    | -67.352779   | -6.516346    | -11.084610   | 6.516346     | -11.084610   | 1505.000000  | 934.000000
+ref_only3    | 5            | 18           | 90.954105    | -67.360775   | -51.413376   | 0.360593     | 51.413376    | 0.360593     | 1340.000000  | 1582.000000
+ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -32.223067   | -11.008252   | 32.223067    | -11.008252   | 1504.000000  | 1305.000000
 '''.split('\n')
 
     with open(report_file) as f:
@@ -751,13 +752,20 @@ def test_resetting_SOF_count_rates(test_directory):
         segment_override_command = f.read()
 
     # Check count rates are the truncated values
-    gs_cr = segment_override_command.split(' ')[8][:-1]
-    ref1_cr = segment_override_command.split(' ')[17][:-1]
-    ref2_cr = segment_override_command.split(' ')[24][:-1]
+    gs_cr = float(segment_override_command.split(' ')[8][:-1])
+    ref1_cr = float(segment_override_command.split(' ')[17][:-1])
+    ref2_cr = float(segment_override_command.split(' ')[24][:-1])
+    gs_thresh = float(segment_override_command.split(' ')[9][:-1])
+    ref1_thresh = float(segment_override_command.split(' ')[18][:-1])
+    ref2_thresh = float(segment_override_command.split(' ')[25][:-1])
 
-    assert float(gs_cr) == GUIDE_STAR_MAX_COUNTRATE
-    assert float(ref1_cr) == REF_STAR_MAX_COUNTRATE
-    assert float(ref2_cr) == REF_STAR_MAX_COUNTRATE
+    assert np.isclose(gs_cr, GUIDE_STAR_MAX_COUNTRATE - 1e5)
+    assert np.isclose(ref1_cr, REF_STAR_MAX_COUNTRATE - 1e5)
+    assert np.isclose(ref2_cr, REF_STAR_MAX_COUNTRATE - 1e5)
+
+    assert np.isclose(gs_thresh, gs_cr-332226)
+    assert np.isclose(ref1_thresh, ref1_cr-332226)
+    assert np.isclose(ref2_thresh, ref2_cr-332226)
 
 
 def test_resetting_POF_count_rate_factors(test_directory):
@@ -783,10 +791,18 @@ def test_resetting_POF_count_rate_factors(test_directory):
     assert os.path.isfile(photometry_override_file)
     with open(photometry_override_file) as f:
         photometry_override_command = f.read()
+    count_rate_factor = float(photometry_override_command.split(' ')[3].split('=')[-1])
+    count_rate_uncertainty_factor = float(photometry_override_command.split(' ')[4].split('=')[-1])
 
-    # Check the count rate factor has changed
-    count_rate_factor = photometry_override_command.split(' ')[3].split('=')[-1][:-1]
-    assert float(count_rate_factor) < cr_factor
+    # Check the count rate factor has changed as expected
+    new_count_rate = GUIDE_STAR_MAX_COUNTRATE - 1e5
+    star_count_rate = fgscountrate.convert_fgs_mag_to_cr(10, guider=1)
+    new_count_rate_factor = new_count_rate / star_count_rate
+    new_count_rate_uncertainty_factor = (new_count_rate - 332226) / star_count_rate
+
+    assert count_rate_factor < cr_factor
+    assert np.isclose(count_rate_factor, round(new_count_rate_factor, 4))
+    assert np.isclose(count_rate_uncertainty_factor, round(new_count_rate_uncertainty_factor, 4))
 
 
 def test_convert_sky_to_idl_in_segment_guiding(test_directory):
