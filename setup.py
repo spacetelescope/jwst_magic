@@ -22,7 +22,7 @@ from __future__ import (absolute_import, division,
 from setuptools import setup, find_packages
 import socket
 
-VERSION = '3.1.0'
+VERSION = '4.0.0'
 
 INSTALL_REQUIRES = [
     'numpy',
