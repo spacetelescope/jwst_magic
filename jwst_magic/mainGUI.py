@@ -421,7 +421,7 @@ class MainGui(QMainWindow):
                              f'guider.')
 
         # Log the APT file and observation that were queried
-        if self.gs_ra is not '' and self.gs_dec is not '':
+        if self.gs_ra != '' and self.gs_dec != '':
             LOGGER.info(f"Main GUI: Queried Program ID {self.program_id} and Obs #{self.observation_num}")
 
         # Convert image
@@ -1899,7 +1899,7 @@ class MainGui(QMainWindow):
             dimlim = None
 
         # If nothing is defined
-        if False not in [x is None or x is '' for x in [guider, gs_id, brightlim, dimlim]]:
+        if False not in [x == None or x == '' for x in [guider, gs_id, brightlim, dimlim]]:
             shutil.rmtree(apt_file_path)
             raise ValueError("This observation doesn't have a Guide Star Special Requirement")
 

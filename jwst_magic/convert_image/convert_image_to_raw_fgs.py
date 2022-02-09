@@ -727,7 +727,7 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
 
     # Use labeling to map locations of objects in array
     # (Kept for possible alternate countrate calculations; see count_rate_total)
-    objects = ndimage.measurements.label(smoothed_data > threshold)[0]
+    objects = ndimage.label(smoothed_data > threshold)[0]
     # NOTE: num_objects might not equal num_psfs
 
     # Calculate count rate
