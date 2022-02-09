@@ -2,22 +2,22 @@ channels:
 - http://ssb.stsci.edu/astroconda
 - defaults
 dependencies:
-- astropy
+- pip
+- python>=3.8
 - ipython
 - jupyter
 - notebook
-- numpy
-- python>=3.7
 - pyyaml
 - requests
-- pytest
-- photutils
-- scipy
-- pandas
-- pip
 - pip:
-  - pyqt5>=5.11,<6.0
-  - pytest-qt
-  - jwst
-  - pysiaf>=0.12.0
+  - git+https://github.com/spacetelescope/jwst
+  - astropy>=5.0
   - matplotlib>=3.5.1
+  - numpy
+  - pandas
+  - photutils
+  - pyqt5>=5.11
+  - pysiaf>=0.14.0
+  - pytest
+  - pytest-qt
+  - scipy
