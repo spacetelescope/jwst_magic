@@ -255,7 +255,7 @@ class BackgroundStarsDialog(QDialog):
         self.x = random.sample(range(size), nstars_random)
         self.y = random.sample(range(size), nstars_random)
         self.fgs_mags = random.sample(
-            set(np.linspace(vmin, vmax, 100)),
+            list(np.linspace(vmin, vmax, 100)),
             nstars_random
         )
 
