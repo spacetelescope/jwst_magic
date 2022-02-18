@@ -1731,7 +1731,8 @@ class MainGui(QMainWindow):
         """
         # If you change the main path, update the guiding selections based on that information
         if self.sender() in [self.pushButton_inputImage, self.lineEdit_inputImage, self.buttonGroup_guider,
-                             self.lineEdit_root, self.textEdit_out]:
+                             self.lineEdit_root, self.textEdit_out,
+                             self.lineEdit_obs, self.comboBox_car, self.comboBox_practice]:
             new_guiding_selections = True
 
         if self.is_valid_path_defined():
