@@ -84,7 +84,7 @@ import numpy as np
 import pysiaf
 from scipy import signal
 from scipy import ndimage
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 from scipy.signal import medfilt2d
 
 # Local Imports
