@@ -624,6 +624,11 @@ class MainGui(QMainWindow):
                 if self.checkBox_configorder.isChecked():
                     combobox_filenames = self.change_config_order_dialog(combobox_filenames)
 
+                # Log the configs chosen in their new order
+                config_string = '\n'.join(combobox_filenames)
+                LOGGER.info(f'Main GUI: Chosen configs in the order they will go into the override file are: \n'
+                            f'{config_string}')
+
                 selected_segs_list = []
                 segment_infile_list = []
                 center_pointing_list = []
@@ -1173,6 +1178,7 @@ class MainGui(QMainWindow):
                                  'Order Dialog Box." Re-run the Segment Guiding section of this GUI and carefully '
                                  're-order the files.')
             else:
+                LOGGER.info(f"Main GUI: User has changed the config order.")
                 return config_list
         else:
             raise ValueError('Change Config Order Dialog Box Canceled.')
@@ -1725,7 +1731,8 @@ class MainGui(QMainWindow):
         """
         # If you change the main path, update the guiding selections based on that information
         if self.sender() in [self.pushButton_inputImage, self.lineEdit_inputImage, self.buttonGroup_guider,
-                             self.lineEdit_root, self.textEdit_out]:
+                             self.lineEdit_root, self.textEdit_out,
+                             self.lineEdit_obs, self.comboBox_car, self.comboBox_practice]:
             new_guiding_selections = True
 
         if self.is_valid_path_defined():

@@ -396,7 +396,7 @@ def correct_image(image, upper_threshold=None, upper_limit=None):
     return img
 
 
-def count_rate_total(data, objects, num_objects, x, y, countrate_3x3=True):
+def count_rate_total(data, objects, num_objects, x, y, countrate_3x3=True, log=None):
     """Get the count rates within each object from a segmentation image.
 
     Parameters
@@ -438,10 +438,16 @@ def count_rate_total(data, objects, num_objects, x, y, countrate_3x3=True):
             max_y = int(y_old) + image_window
             sources = find_peaks(data[min_y:max_y, min_x:max_x],
                                  box_size=1, npeaks=1, threshold='standard-deviation')
-            x_new = sources['x_peak'][0] + x_old - image_window  # find new x value
-            y_new = sources['y_peak'][0] + y_old - image_window  # find new y value
-            # Get the 3x3 count rate
-            countrate.append(get_countrate_3x3(x_new, y_new, np.array(data)))
+            # If no source was found with the original threshold, skip the star
+            if sources is None:
+                if log is not None:
+                    log.info(f'Find Peaks function cannot find a peak near (y,x) = ({y_old}, {x_old}).')
+                countrate.append(0)
+            else:
+                x_new = sources['x_peak'][0] + x_old - image_window  # find new x value
+                y_new = sources['y_peak'][0] + y_old - image_window  # find new y value
+                # Get the 3x3 count rate
+                countrate.append(get_countrate_3x3(x_new, y_new, np.array(data)))
         else:
             countrate.append(np.sum(im * data))
         val.append(np.sum(im * 1.))  # Number of pixels in object
