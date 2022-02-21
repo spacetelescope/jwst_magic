@@ -84,7 +84,7 @@ import numpy as np
 import pysiaf
 from scipy import signal
 from scipy import ndimage
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 from scipy.signal import medfilt2d
 
 # Local Imports
@@ -731,11 +731,15 @@ def create_all_found_psfs_file(data, guider, root, out_dir, smoothing='default',
     # NOTE: num_objects might not equal num_psfs
 
     # Calculate count rate
-    countrate, val = utils.count_rate_total(data, objects, num_psfs, x_list, y_list, countrate_3x3=True)
+    countrate, val = utils.count_rate_total(data, objects, num_psfs, x_list, y_list, countrate_3x3=True, log=LOGGER)
+
     segment_labels = utils.match_psfs_to_segments(x_list, y_list, smoothing)
     all_cols = utils.create_cols_for_coords_counts(x_list, y_list, countrate, val,
                                                    labels=segment_labels,
                                                    inds=range(len(x_list)))
+
+    # If the countrate for a PSF is 0, remove that row (if we couldn't find a count rate for it in count_rate_total)
+    all_cols = [col for col in all_cols if float(col[3]) != 0]
 
     if save is True:
         all_found_psfs_path = save_all_found_psfs_file(all_cols, guider, root, out_dir)
