@@ -127,39 +127,39 @@ def test_change_car_and_obs_commissioning(main_gui):
     file by hand
     """
     # Set main GUI parameters
-    main_gui.buttonGroup_guider.buttons()[0].setChecked(True)  # set to guider 2
+    main_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
 
     # Set naming method
     main_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
     main_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
-    main_gui.comboBox_car.setCurrentText('OTE-16')
-    main_gui.lineEdit_obs.setText('01')
+    main_gui.comboBox_car.setCurrentText('LOS-02')
+    main_gui.lineEdit_obs.setText('02')
     main_gui.pushButton_commid.click()  # handle editingfinished not being called in code
 
     # Check Attributes
-    assert main_gui.program_id == 1151
-    assert main_gui.observation_num == 1
+    assert main_gui.program_id == 1410
+    assert main_gui.observation_num == 2
     assert main_gui.visit_num == 1
 
-    assert main_gui.lineEdit_normalize.text() == 'N4EJ000427'
-    assert main_gui.gs_id == 'N4EJ000427'
-    np.testing.assert_almost_equal(main_gui.gs_ra, 267.812553, decimal=4)
-    np.testing.assert_almost_equal(main_gui.gs_dec, 63.111531, decimal=4)
+    assert main_gui.lineEdit_normalize.text() == 'S433000025'
+    assert main_gui.gs_id == 'S433000025'
+    np.testing.assert_almost_equal(main_gui.gs_ra, 118.192795288963, decimal=4)
+    np.testing.assert_almost_equal(main_gui.gs_dec, -74.1609932764399, decimal=4)
 
     # Re-set CAR & OBS
+    main_gui.lineEdit_obs.setText('06')
     main_gui.comboBox_car.setCurrentText('OTE-13')
-    main_gui.lineEdit_obs.setText('01')
     main_gui.pushButton_commid.click()
 
     # Re-Check Attributes
     assert main_gui.program_id == 1148
-    assert main_gui.observation_num == 1
+    assert main_gui.observation_num == 6
     assert main_gui.visit_num == 1
 
-    assert main_gui.lineEdit_normalize.text() == 'N4LO000097'
-    assert main_gui.gs_id == 'N4LO000097'
-    np.testing.assert_almost_equal(main_gui.gs_ra, 254.326768, decimal=4)
-    np.testing.assert_almost_equal(main_gui.gs_dec, 68.856895, decimal=4)
+    assert main_gui.lineEdit_normalize.text() == 'N42J000231'
+    assert main_gui.gs_id == 'N42J000231'
+    np.testing.assert_almost_equal(main_gui.gs_ra, 268.01618875394, decimal=4)
+    np.testing.assert_almost_equal(main_gui.gs_dec, 74.5987576983134, decimal=4)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
@@ -174,39 +174,39 @@ def test_update_apt_button_commissioning(main_gui):
     file by hand
     """
     # Set main GUI parameters
-    main_gui.buttonGroup_guider.buttons()[0].setChecked(True)  # set to guider 2
+    main_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
 
     # Set naming method
     main_gui.buttonGroup_name.buttons()[0].setChecked(True)  # set commissioning naming method
     main_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
-    main_gui.comboBox_car.setCurrentText('OTE-16')
-    main_gui.lineEdit_obs.setText('01')
+    main_gui.comboBox_car.setCurrentText('OTE-13')
+    main_gui.lineEdit_obs.setText('06')
     main_gui.pushButton_commid.click()
 
     # Check Attributes
-    assert main_gui.program_id == 1151
-    assert main_gui.observation_num == 1
+    assert main_gui.program_id == 1148
+    assert main_gui.observation_num == 6
     assert main_gui.visit_num == 1
 
-    assert main_gui.lineEdit_normalize.text() == 'N4EJ000427'
-    assert main_gui.gs_id == 'N4EJ000427'
-    np.testing.assert_almost_equal(main_gui.gs_ra, 267.812553, decimal=4)
-    np.testing.assert_almost_equal(main_gui.gs_dec, 63.111531, decimal=4)
+    assert main_gui.lineEdit_normalize.text() == 'N42J000231'
+    assert main_gui.gs_id == 'N42J000231'
+    np.testing.assert_almost_equal(main_gui.gs_ra, 268.01618875394, decimal=4)
+    np.testing.assert_almost_equal(main_gui.gs_dec, 74.5987576983134, decimal=4)
 
     # Re-set APT number and press button
-    main_gui.lineEdit_commid.setText('1148')
+    main_gui.lineEdit_commid.setText('1410')
     main_gui.pushButton_commid.click()
     #QtCore.QTimer.singleShot(0, main_gui.pushButton_commid.clicked)
 
     # Re-Check Attributes
-    assert main_gui.program_id == 1148
-    assert main_gui.observation_num == 1
+    assert main_gui.program_id == 1410
+    assert main_gui.observation_num == 6
     assert main_gui.visit_num == 1
 
-    assert main_gui.lineEdit_normalize.text() == 'N4LO000097'
-    assert main_gui.gs_id == 'N4LO000097'
-    np.testing.assert_almost_equal(main_gui.gs_ra, 254.326768, decimal=4)
-    np.testing.assert_almost_equal(main_gui.gs_dec, 68.856895, decimal=4)
+    assert main_gui.lineEdit_normalize.text() == 'S433000025'
+    assert main_gui.gs_id == 'S433000025'
+    np.testing.assert_almost_equal(main_gui.gs_ra, 118.192795, decimal=4)
+    np.testing.assert_almost_equal(main_gui.gs_dec, -74.160993, decimal=4)
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
