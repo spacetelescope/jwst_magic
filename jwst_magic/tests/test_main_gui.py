@@ -268,17 +268,17 @@ def test_apt_gs_populated(qtbot, main_gui, test_directory, type, button_name, fi
     # Set general input
     qtbot.keyClicks(main_gui.lineEdit_inputImage, INPUT_IMAGE)
     qtbot.mouseClick(main_gui.buttonGroup_name.buttons()[button_name], QtCore.Qt.LeftButton)  # set naming method
-    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)  # set to guider 2
+    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)  # set to guider 1
 
     # Set practice information
     if type == 'commissioning':
         main_gui.comboBox_practice.setCurrentText(COM_PRACTICE_DIR)
         main_gui.comboBox_car.setCurrentText('OTE-13')
-        main_gui.lineEdit_obs.setText('01')
+        main_gui.lineEdit_obs.setText('05')
         main_gui.pushButton_commid.click()
 
         assert main_gui.buttonGroup_name.buttons()[0].isChecked()
-        assert main_gui.lineEdit_obs.text() == '01'
+        assert main_gui.lineEdit_obs.text() == '05'
         assert main_gui.lineEdit_commid.text() == '1148'
 
         # Delete contents of directory to avoid auto-populating with old data
@@ -288,20 +288,19 @@ def test_apt_gs_populated(qtbot, main_gui, test_directory, type, button_name, fi
         qtbot.keyClicks(main_gui.lineEdit_root, ROOT)  # set root
         qtbot.keyClicks(main_gui.textEdit_out, __location__)  # set out directory
         qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)
-        qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
         qtbot.keyClicks(main_gui.lineEdit_manualid, '1148')
-        qtbot.keyClicks(main_gui.lineEdit_manualobs, '01')
+        qtbot.keyClicks(main_gui.lineEdit_manualobs, '05')
         qtbot.mouseClick(main_gui.pushButton_manualid, QtCore.Qt.LeftButton)
 
         assert main_gui.buttonGroup_name.buttons()[1].isChecked()
         assert main_gui.lineEdit_manualid.text() == '1148'
-        assert main_gui.lineEdit_manualobs.text() == '01'
+        assert main_gui.lineEdit_manualobs.text() == '05'
         assert main_gui.lineEdit_root.text() == ROOT
         assert main_gui.textEdit_out.toPlainText() == __location__
 
-    assert main_gui.buttonGroup_guider.checkedButton().text() == '2'
+    assert main_gui.buttonGroup_guider.checkedButton().text() == '1'
     assert main_gui.program_id == 1148
-    assert main_gui.observation_num == 1
+    assert main_gui.observation_num == 5
     assert main_gui.visit_num == 1
 
     # Set detector
@@ -351,7 +350,7 @@ def test_apt_gs_populated(qtbot, main_gui, test_directory, type, button_name, fi
     def handle_dialog():
         try:
             assert main_gui._test_sg_dialog.lineEdit_programNumber.text() == '1148'
-            assert main_gui._test_sg_dialog.lineEdit_observationNumber.text() == '1'
+            assert main_gui._test_sg_dialog.lineEdit_observationNumber.text() == '5'
             assert main_gui._test_sg_dialog.lineEdit_visitNumber.text() == '1'
             if filetype == 'SOF':
                 assert main_gui._test_sg_dialog.lineEdit_RA.text() != ''
