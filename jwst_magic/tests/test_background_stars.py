@@ -175,17 +175,17 @@ def test_run_background_stars_gui_populated(test_directory, qtbot, main_gui):
     qtbot.keyClicks(main_gui.textEdit_out, __location__)  # set out directory
     qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)
     qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
-    qtbot.keyClicks(main_gui.lineEdit_manualid, '1151')
-    qtbot.keyClicks(main_gui.lineEdit_manualobs, '01')
+    qtbot.keyClicks(main_gui.lineEdit_manualid, '1148')
+    qtbot.keyClicks(main_gui.lineEdit_manualobs, '05')
     qtbot.mouseClick(main_gui.pushButton_manualid, QtCore.Qt.LeftButton)
 
     # Check the RA and DEC have been populated, but PA has not
     def handle_dialog():
         try:
             qtbot.keyClicks(main_gui._bkgdstars_dialog.lineEdit_PA, '288.1927')
-            assert main_gui._bkgdstars_dialog.lineEdit_RA.text() != '267.945708136204'
-            assert main_gui._bkgdstars_dialog.lineEdit_Dec.text() != '72.5072727429058'
-            assert main_gui._bkgdstars_dialog.lineEdit_PA.text() == '288.1927'
+            assert np.isclose(float(main_gui._bkgdstars_dialog.lineEdit_RA.text()), 267.945708136204)
+            assert np.isclose(float(main_gui._bkgdstars_dialog.lineEdit_Dec.text()), 72.5072727429058)
+            assert np.isclose(float(main_gui._bkgdstars_dialog.lineEdit_PA.text()), 288.1927)
             qtbot.mouseClick(main_gui._bkgdstars_dialog.pushButton_queryGSC, QtCore.Qt.LeftButton)
             qtbot.mouseClick(main_gui._bkgdstars_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
         except AssertionError:
