@@ -118,7 +118,7 @@ def test_init_background_stars(bkgdstars_dialog):
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
-def test_run_background_stars_gui_populated(test_directory, qtbot, main_gui):
+def test_run_background_stars_gui_empty(test_directory, qtbot, main_gui):
     """Test that the RA and DEC information from APT get passed through and
     correctly populated in the background stars GUI.
     """
@@ -156,6 +156,48 @@ def test_run_background_stars_gui_populated(test_directory, qtbot, main_gui):
     expected_err = 'Background Stars GUI missing information. No background stars selected'
     assert expected_err in str(exceptions[0][1]), "Wrong error captured. Caught: '{}', Expected: '{}'".format(
         str(exceptions[0][1]), expected_err)
+
+
+@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
+def test_run_background_stars_gui_populated(test_directory, qtbot, main_gui):
+    """Test that the RA and DEC information from APT get passed through and
+    correctly populated in the background stars GUI.
+    """
+    # Initialize main window
+    qtbot.addWidget(main_gui)
+
+    # Set general input
+    qtbot.keyClicks(main_gui.lineEdit_inputImage, NIRCAM_IM)
+    qtbot.mouseClick(main_gui.buttonGroup_name.buttons()[1], QtCore.Qt.LeftButton)  # set naming method
+    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)  # set to guider 2
+    qtbot.keyClicks(main_gui.lineEdit_root, ROOT)  # set root
+    qtbot.keyClicks(main_gui.textEdit_out, __location__)  # set out directory
+    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[1], QtCore.Qt.LeftButton)
+    qtbot.mouseClick(main_gui.buttonGroup_guider.buttons()[0], QtCore.Qt.LeftButton)
+    qtbot.keyClicks(main_gui.lineEdit_manualid, '1151')
+    qtbot.keyClicks(main_gui.lineEdit_manualobs, '01')
+    qtbot.mouseClick(main_gui.pushButton_manualid, QtCore.Qt.LeftButton)
+
+    # Check the RA and DEC have been populated, but PA has not
+    def handle_dialog():
+        try:
+            qtbot.keyClicks(main_gui._bkgdstars_dialog.lineEdit_PA, '288.1927')
+            assert main_gui._bkgdstars_dialog.lineEdit_RA.text() != '267.945708136204'
+            assert main_gui._bkgdstars_dialog.lineEdit_Dec.text() != '72.5072727429058'
+            assert main_gui._bkgdstars_dialog.lineEdit_PA.text() == '288.1927'
+            qtbot.mouseClick(main_gui._bkgdstars_dialog.pushButton_queryGSC, QtCore.Qt.LeftButton)
+            qtbot.mouseClick(main_gui._bkgdstars_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+        except AssertionError:
+            # If something raising an error above, need to close the pop up gui anyway
+            qtbot.mouseClick(main_gui._bkgdstars_dialog.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+
+    QtCore.QTimer.singleShot(500, handle_dialog)
+    qtbot.mouseClick(main_gui.pushButton_backgroundStars, QtCore.Qt.LeftButton, delay=1)
+
+    # The complete entry pressing done will raise a message
+    assert main_gui._bkgdstars_dialog.method == 'catalog'
+    assert 'background stars added from a GSC query' in main_gui.textEdit_backgroundStars.toPlainText()
 
 
 @pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
