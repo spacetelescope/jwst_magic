@@ -576,7 +576,7 @@ class BackgroundStarsDialog(QDialog):
     def return_dict(self):
         """Create dictionary to pass back to main gui"""
         # Check all of these are not empty lists ([] = False in Python)
-        if self.x and self.y and list(self.fgs_mags):
+        if list(self.x) and list(self.y) and list(self.fgs_mags):
             bkgd_stars_dict = {'x': self.x,
                                'y': self.y,
                                'fgs_mag': self.fgs_mags,
