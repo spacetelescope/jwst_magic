@@ -32,7 +32,7 @@ One of the main features of MAGIC is that it allows the user to determine the gu
       1. For general guiding, this includes all of the operational steps: ID, ACQ, and TRK. (These are the default selections.)
       2. For calibration observations, add the CAL step.
    4. If you want to shift your image so that the selected guide star is moved to the center of the image, ensure the **Place the guide star at the ID attitude** box is checked. This will place the guide star at the ID attitude at (Ideal X, Ideal Y) = (0, 0).
-   5. If you are testing data for a possible photometry override file and you want the data written to the FSW products to be the default values OSS would use if there were no POF submitted, check the **Use Default OSS Numbers** box. However, if you have only selected one guide star with no reference stars, and do *not* check the **Use OSS Defaults** box, even if the guide star is above the bright star trigger, the code will still not overwrite the user-defined threshold, since it assumes the threshold was confirmed via DHAS testing. Be sure to have guide star information populated in the Image Conversion section, even if you keep the **Normalize** box unchecked.
+   5. If you are testing data for a possible photometry override file and you want the data written to the FSW products to be the default values OSS would use if there were no POF submitted, check the **Use Default OSS Numbers** box. However, if you have only selected one guide star with no reference stars, and do *not* check the **Use OSS Defaults** box, even if the guide star is above the bright star trigger, the code will still not overwrite the user-defined threshold, since it assumes the threshold was confirmed via flight software simulator testing. Be sure to have guide star information populated in the Image Conversion section, even if you keep the **Normalize** box unchecked.
 
 3. Run the tool
 
@@ -40,14 +40,14 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
 4. Monitor the terminal window from which you launched the GUI to notice any possible errors that are raised.
 
-  Note:	The output that appears in the command line is also written inside the repository at `/jwst-magic/jwst_magic/logs` or on the SOGS network at `***REMOVED***/guiding/MAGIC_logs`
+  Note:	The output that appears in the command line is also written inside the repository at `/jwst-magic/jwst_magic/logs`
 
 5. When the Star Selection GUI appears:
 
    ![Star Selection GUI window](./figs/figure9_star_selection2.png)
 
    1. Inspect the PSFs in the image by moving your cursor over different PSFs. Examine the profile plot to see the distribution of light. The red horizontal line represents the saturation level of the FGS detector.
-   2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix C](appendix_c_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
+   2. Select, by clicking, which PSFs will be the guide star and the reference stars. The first star selected will be the guide star, while any subsequent stars will be reference stars. *See [Appendix A](appendix_mirror_states.md) to choose the guide and reference stars based on the mirror state.*
    3. Utilize the pop-up of the WSS mapping of segment names in the FGS Raw frame by checking the **Show WSS Numbers** or **Show WSS Numbers - Inverted Array** check box (*A*). Un-check the button to close the pop-up.
    3. If you want to change your selections while in the tool, use the **Make Guide Star** (*B*) button to change the guide star, use the **Delete** button (*C*) to remove individual selections, and use the **Clear Selections** button (*D*) to start over.
    4. When you are happy with your selections, click the **Save Command** button (*E*). You will see the IDs of the stars you selected appear in the **Override Commands** table (*F*).
@@ -58,28 +58,22 @@ One of the main features of MAGIC is that it allows the user to determine the gu
 
    The output files will be located in the specified out directory, including the `guiding_selections` file that will include X/Y pixel coordinates and the 3x3 count rate sum around the bright pixel in the selected PSFs.
 
-   All of the .fits and .dat files that are written to the `dhas_` and `ground_system_` directories have had the counts in those images capped at 65,535. All .fits files in the `stsci_` directory have not had such a cap applied (with the singular exception of the LOSTRK.fits file).
+   All of the .fits and .dat files that are written to the `dhas_` (directory for all flight software simulator files) and `ground_system_` directories have had the counts in those images capped at 65,535. All .fits files in the `stsci_` directory have not had such a cap applied (with the singular exception of the LOSTRK.fits file).
 
    Due to the constraints of converting from raw pixels to ideal arcseconds, the ideal coordinates in the star and prc files in the `dhas_` and `ground_system_` directories may be less exact, by up to 0.5 arcseconds.
 
-   If you see that the red plus signs do not find the guide star's PSFs correctly, there was a problem in the image conversion section. Close the star selection GUI and follow one of 2 options: 
+   If you see that the red plus signs do not find the guide star's PSFs correctly, there was a problem in the image conversion section. Close the star selection GUI and follow one of 2 options:
       1. Go back to change the smoothing and detection threshold in the Image Conversion section of the GUI and re-run the tool
-      2. If you would like more flexibility, use the "Create pseudo-fgs image with more options" jupyter notebook in the notebooks/ folder of the repository. 
+      2. If you would like more flexibility, use the "Create pseudo-fgs image with more options" jupyter notebook in the notebooks/ folder of the repository.
 
 ---------------------------------
 
 #### Next
 
-###### Section V: [Testing Selections in DHAS](v_testing_in_dhas.md)
+###### Section V: [Contingency: Re-selecting Stars](v_contingency_reselect_stars.md)
 
-###### Section VI: [Contingency: Re-selecting Stars and Re-running DHAS](vi_contingency_reselect_stars.md)
+###### Section VI: [Writing the Segment Override File (SOF)](vi_write_sof.md)
 
-###### Section VII: [Writing the Segment Override File (SOF)](vii_write_sof.md)
+###### Section VII: [Writing the Photometry Override File (POF)](vii_write_pof.md)
 
-###### Section VIII: [Writing the Photometry Override File (POF)](viii_write_pof.md)
-
-###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
-
-###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
-
-###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)
+###### Appendix A: [Mirror States Expected During JWST OTE Commissioning](appendix_mirror_states.md)

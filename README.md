@@ -2,6 +2,8 @@
     <img src ="magic_logo.png" alt="MAGIC logo" width="275"/>
 </p>
 
+
+
 # Multi-Application Guiding Interface for Commissioning (MAGIC)
 
 [![PyPI - License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/spacetelescope/jwql/blob/master/LICENSE)
@@ -9,8 +11,12 @@
 [![STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Build Status](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/badge/icon)](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/)
 
+> **WARNING**: As of April 2022, active development and maintanence has ceased on this project since it was expected and developed to be used solely during JWST OTE Commissioning.
+
 For use internal to STScI, please clone our mirror repository on grit: https://grit.stsci.edu/JWST-FGS/jwst-magic/
 For developers, see the GitHub repository: https://github.com/spacetelescope/jwst_magic/
+
+Please note that MAGIC has only been developed and used on MacOS machines. Any use on a different operating system may result in errors.
 
 ----------
 
@@ -21,18 +27,18 @@ The Multi-Application Guiding Interface for Commissioning (MAGIC) package provid
 These tools comprise of four main components that can be run individually or together:
 
 ### 1. NIRCam or FGS science to FGS raw image conversion (``convert_image``)
-This module will convert an input image (from *any* NIRCam or FGS detectors) to a pseudo-FGS raw image. This pseudo-FGS raw image is *not* a simulated image, but an expectation of the image that the FGS flight software will see. This module appropriately rotates the image from the science frame if necessary, adjusts the pixel scale and image size if converting from a NIRCam image, corrects bad pixels, and normalizes the image to the magnitude and count rates of a specified guide star.
+This module will convert a JWST input image (from *any* NIRCam or FGS detector) to a pseudo-FGS raw image. This pseudo-FGS raw image is *not* a simulated image, but an expectation of the image that the FGS flight software will see. This module appropriately rotates the image from the science frame if necessary, adjusts the pixel scale and image size if converting from a NIRCam image, corrects bad pixels, and normalizes the image to the magnitude and count rates of a specified guide star.
 
 ### 2. Star Selection Tool (``star_selector``)
 This module takes in a raw FGS image and allows the user to choose the guide and reference star PSFs using a GUI.
 
 
 ### 3. Flight Software File Writer (``fsw_file_writer``)
-This module creates all the files necessary to test guide and reference star candidates in an FGS raw image, with different flight software simulators such as the FGS DHAS, FGSES, etc. This includes all the files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
+This module creates all the files necessary to test guide and reference star candidates in an FGS raw image, with different flight software simulators. This includes all the files necessary to run the ID, ACQ1, ACQ2, and TRK steps in these simulators.
 
 
 ### 4. Segment Guiding Tool (``segment_guiding``)
-Allows the user to override the guide star catalog with the selected guide and reference star PSFs that will be used to facilitate guiding on unstacked and/or un-phased PSFs during JWST commissioning.
+Allows the user to override the guide star catalog with the selected guide and reference star PSFs that will be used to facilitate guiding on unstacked and/or un-phased PSFs during JWST OTE commissioning.
 
 
 Installation notes
@@ -43,7 +49,7 @@ This package is developed in a Python ≥3.7 environment.
 
 1. ``$ cd`` into the directory where you want to keep the package
 
-2. Clone the repository to your local machine (we recommend you have SSH keys set up). 
+2. Clone the repository to your local machine (we recommend you have SSH keys set up).
     If you are on GitHub:
     ```
     git clone git@github.com:spacetelescope/jwst_magic.git
@@ -53,7 +59,7 @@ This package is developed in a Python ≥3.7 environment.
     git clone git@grit.stsci.edu:JWST-FGS/jwst-magic.git
     ```
 
-3. Activate a AstroConda (Python 3) environment (For installing AstroConda go [here](http://stsci-env.readthedocs.io/en/latest/installing_anaconda.html)) or create a MAGIC-specific environment by navigating to the directory where the `setup.py` file lives in the `jwst_magic` package and create a new conda environment, for example named 'magic', from the `environment.yml` file:
+3. Create a MAGIC-specific environment by navigating to the directory where the `setup.py` file lives in the `jwst_magic` package and create a new conda environment, for example named 'magic', from the `environment.yml` file:
 
     ```
     conda env create --name magic --file=environment.yml
@@ -108,7 +114,7 @@ These tools are best run in the `IPython` terminal, in the conda environment whe
 
 Known Issues
 -----------------
-As with all software packages, there are several known issues for MAGIC. A [current list of known issues is available](https://jwstitarwiki.stsci.edu/display/WFSCOWG/MAGIC+Known+Issues+and+Work+Arounds), but please note that there is restricted access to this page.
+As with all software packages, there are several known issues for MAGIC. A current list of known issues is available[here](./docs/known_issues.md).
 
 Documentation
 -----------------
@@ -117,8 +123,7 @@ For the full documentation, including step-by-step directions for using this pac
 Contributing
 -----------------
 There are two pages to review before you begin contributing to the `jwst_magic` package.
-The first is our [style guide](./style_guide/style_guide.md) and the second is our suggested [git workflow page](./style_guide/git_workflow.md),
-which contains an in-depth explanation of the workflow.
+The first is our [style guide](./style_guide/style_guide.md) and the second is our suggested [git workflow page](./style_guide/git_workflow.md), which contains an in-depth explanation of the workflow.
 
 The following is an example of a best work flow for contributing to the project
 (adapted from the [`spacetelescope` `jwql` contribution guidelines](https://github.com/spacetelescope/jwql)):
@@ -153,13 +158,10 @@ Questions
 -----------------
 Any questions regarding the `jwst_magic` project or its software should be directed to the current development team.
 
-Current Development Team
+Development Team
 -----------------
-* Shannon Osborne (GitHub: @shanosborne; Grit: @sosborne)
-* Keira Brooks (GitHub: @kjbrooks; Grit: @kbrooks)
+* Shannon Osborne (GitHub: @shanosborne)
+* Keira Brooks (GitHub: @kjbrooks)
 * Sherie Holfeltz
-
-Past Members of the Development Team
------------------
 * Lauren Chambers (GitHub: @laurenmarietta)
 * Kathryn St. Laurent

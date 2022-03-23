@@ -8,15 +8,13 @@
 
 ###### Section IV: [Selecting Guide & Reference Stars for an Input Image and Writing Out Files](iv_select_stars_and_write_files.md)
 
-###### Section V: [Testing Selections in DHAS](v_testing_in_dhas.md)
+###### Section V: [Contingency: Re-selecting Stars](v_contingency_reselect_stars.md)
 
-###### Section VI: [Contingency: Re-selecting Stars and Re-running DHAS](vi_contingency_reselect_stars.md)
-
-###### Section VII: [Writing the Segment Override File (SOF)](vii_write_sof.md)
+###### Section VI: [Writing the Segment Override File (SOF)](vi_write_sof.md)
 
 -----------------------------------------
 
-VIII.	Writing the Photometry Override File (POF)
+VII.	Writing the Photometry Override File (POF)
 ================================================
 In the case of MIMF where we only need to change the photometry of the guide star (the RA and Dec and expected count rates are taken from the APT file), we need to make an override for Planning & Scheduling but this is for the photometry and will have no information about the segments (because the PSFs from the individual segments are stacked).
 
@@ -25,7 +23,7 @@ Creating a photometry override file through MAGIC:
 --------------------------------------------------
 1. Load the file for this observation, select the guider, the set the out directory and root.
 
-2. As in section VII, in the main GUI, select the **Segment Guiding** check box. All other options in the interface will be disabled. Note: You do not need to run the other parts of MAGIC when creating a photometry override file.
+2. As in Section VI, in the main GUI, select the **Segment Guiding** check box. All other options in the interface will be disabled. Note: You do not need to run the other parts of MAGIC when creating a photometry override file.
 
 3. Select the **Create photometry override file** radio button (*B* in figure below)
 
@@ -51,7 +49,7 @@ Creating a photometry override file through MAGIC:
 
    Note: If you used the APT query functionality in [Section III](iii_determining_and_loading_the_input_image.md), the Program ID, Observation Number, Visit Number, and RA and DEC of the guide star should be pre-populated.
 
-   *See [Appendix C](appendix_c_mirror_states.md) for information about the count rate factor based on the mirror state.*
+   *See [Appendix A](appendix_mirror_states.md) for information about the count rate factor based on the mirror state.*
 
 6. Click **OK**
 
@@ -59,8 +57,4 @@ Creating a photometry override file through MAGIC:
 
 #### Next
 
-###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
-
-###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
-
-###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)
+###### Appendix A: [Mirror States Expected During JWST OTE Commissioning](appendix_mirror_states.md)

@@ -8,25 +8,23 @@
 
 ###### Section IV: [Selecting Guide & Reference Stars for an Input Image and Writing Out Files](iv_select_stars_and_write_files.md)
 
-###### Section V: [Testing Selections in DHAS](v_testing_in_dhas.md)
-
-###### Section VI: [Contingency: Re-selecting Stars and Re-running DHAS](vi_contingency_reselect_stars.md)
+###### Section V: [Contingency: Re-selecting Stars](v_contingency_reselect_stars.md)
 
 -----------------------------------------
 
-VII. Writing the Segment Override File (SOF)
+VI. Writing the Segment Override File (SOF)
 =========================================================
 
 Another very important part of MAGIC is creating the override file that can be used to override the way guide and reference stars are selected by the GSSS. This file only has to be created when using MAGIC for commissioning activities and their rehearsals where the segments of JWST’s primary mirror are unstacked. In that case we use the PSFs created by each segment as our guide and reference stars.
 1. In the main GUI, select the **Segment Guiding** box. All other options in the interface will be disabled.
 
-   ![Figure 13: Segment Guiding Section of the Main GUI](./figs/figure13_segment_guiding.png)
+   ![Segment Guiding Section of the Main GUI](./figs/figure13_segment_guiding.png)
 
 2. If the image has been shifted so the guide star is at the ID attitude, use the radio buttons (*A*) to designate whether to generate the override file using the original (unshifted) image (**Use original image**) or using the shifted image (**Use image shifted to ID attitude** which will be available when you have selected the "Place the guide star at the ID attitude" button in the FSW File Writer section).
 
 3. Determine what kind of override file to generate:
 
-   1. If creating a photometry override file, click the **Create photometry override file** radio button (*B*) and see [Section VIII](viii_write_pof.md).
+   1. If creating a photometry override file, click the **Create photometry override file** radio button (*B*) and see [Section VII](vii_write_pof.md).
 
    2. If creating a segment override file, load guiding selections files by clicking the **Read in commands from files** radio button (*C*). By default, the path will point to the directory where all the files have been saved for this root, and the drop down box below will be populated with all the available guiding selections files in that path.
       1. Toggle between the **Use image shifted to ID attitude** radio button and the **Use Original Image** radio buttons to show the shifted and unshifted selections files available in that path respectively.
@@ -73,7 +71,7 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
       - Either in **X,Y** pixels with the NIRCam detector specified, or in **V2,V3**
 
-   8. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. This will be auto-populated from the threshold entered in the main GUI, but can be changed here based on DHAS testing results.
+   8. **Uncertainty factor** – the degree of uncertainty in the count rate of each segment. This will be auto-populated from the threshold entered in the main GUI, but can be changed here based on flight software simulator testing results.
 
    Note: If you used the APT query functionality in [Section III](iii_determining_and_loading_the_input_image.md), the Program ID, Observation Number, Visit Number, and RA and DEC of the guide star should be pre-populated.
 
@@ -83,10 +81,6 @@ WebForm.aspx), and query with the guide star ID in the “HST ID” field to det
 
 #### Next
 
-###### Section VIII: [Writing the Photometry Override File (POF)](viii_write_pof.md)
+###### Section VII: [Writing the Photometry Override File (POF)](vii_write_pof.md)
 
-###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
-
-###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
-
-###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)
+###### Appendix A: [Mirror States Expected During JWST OTE Commissioning](appendix_mirror_states.md)
