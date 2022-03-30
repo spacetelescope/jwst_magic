@@ -77,3 +77,15 @@ jwst_magic.egg-info/*
 # PyCharm #
 ###########
 .idea/*
+
+# Obsolete MAGIC files #
+########################
+docs/magic_user_guide/*/*dhas*
+docs/magic_user_guide/vi_contingency_reselect_stars.md
+docs/magic_user_guide/appendix_a_installing_magic.md
+docs/magic_user_guide/appendix_c_mirror_states.md
+docs/magic_user_guide/magic_pdf_disclaimer.md
+docs/magic_user_guide/figs/*_v4.png
+docs/magic_user_guide/figs/*_ACQ_*.png
+docs/magic_user_guide/figs/*_TRK_*.png
+docs/magic_user_guide/figs/matlab_logo.png
