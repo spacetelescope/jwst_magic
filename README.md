@@ -11,7 +11,8 @@
 [![STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Build Status](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/badge/icon)](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/)
 
-> **WARNING**: As of April 2022, active development and maintanence has ceased on this project since it was expected and developed to be used solely during JWST OTE Commissioning.
+> **WARNING**: As of April 2022, active development and maintenance has ceased on this project since it was expected and developed to be used solely during JWST OTE Commissioning which is complete.
+*No further support of this project should be expected.*
 
 For use internal to STScI, please clone our mirror repository on grit: https://grit.stsci.edu/JWST-FGS/jwst-magic/
 For developers, see the GitHub repository: https://github.com/spacetelescope/jwst_magic/
@@ -43,7 +44,7 @@ Allows the user to override the guide star catalog with the selected guide and r
 
 Installation notes
 ------------------
-This package is developed in a Python ≥3.7 environment.
+This package was developed in a Python ≥3.7 environment.
 
 ##### To install
 
@@ -122,6 +123,8 @@ For the full documentation, including step-by-step directions for using this pac
 
 Contributing
 -----------------
+> **WARNING**: No further development of this project is expected. This section remains solely for completeness.
+
 There are two pages to review before you begin contributing to the `jwst_magic` package.
 The first is our [style guide](./style_guide/style_guide.md) and the second is our suggested [git workflow page](./style_guide/git_workflow.md), which contains an in-depth explanation of the workflow.
 
@@ -139,6 +142,8 @@ The following is an example of a best work flow for contributing to the project
 
 Versioning
 -----------------
+> **WARNING**: No further development of this project is expected. This section remains solely for completeness.
+
 This repository follows the principles of ["Semantic Versioning"](https://semver.org/), such that
 
 > Given a version number MAJOR.MINOR.PATCH, increment the:
@@ -150,13 +155,14 @@ When releasing a new version, developers should change the version number in `se
 
 Code of Conduct
 -----------------
+> **WARNING**: No further development of this project is expected. This section remains solely for completeness.
+
 Users and contributors to `jwst_magic` should adhere to the [Code of Conduct](./CODE_OF_CONDUCT.md).
-Any issues or violations pertaining to the Code of Conduct should be brought to
-the attention of a MAGIC team member listed below.
+Any issues or violations pertaining to the Code of Conduct should be brought to the attention of a MAGIC team member listed below.
 
 Questions
 -----------------
-Any questions regarding the `jwst_magic` project or its software should be directed to the current development team.
+No further development of this project is expected, so no support will be given to future questions. We encourage you to look to the documentation for answers.
 
 Development Team
 -----------------
