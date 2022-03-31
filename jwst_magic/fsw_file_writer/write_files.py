@@ -275,7 +275,7 @@ def write_strips(obj):
                                       obj.filename_root + 'strips.fits')
     # Write to strips to fits file
     filename_hdr = os.path.join(DATA_PATH,
-                                'newG{}magicHdrImg.fits'.format(obj.guider))
+                                'header_g{}.fits'.format(obj.guider))
     hdr0 = fits.getheader(filename_hdr, ext=0)
 
     strips = utils.correct_image(obj.strips, upper_threshold=65535, upper_limit=65535)

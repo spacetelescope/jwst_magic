@@ -34,19 +34,33 @@ Notes
 
 # Standard Library Imports
 import os
+import logging
 
 # Third Party Imports
 from astropy.io import fits
 import numpy as np
 import yaml
 
+# Local Imports
+from jwst_magic.utils import utils
+
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.split(__location__)[0]
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
-BIASZERO_G1 = os.path.join(DATA_PATH, 'g1bias0.fits')
-BIASZERO_G2 = os.path.join(DATA_PATH, 'g2bias0.fits')
-READ_NOISE = os.path.join(DATA_PATH, 'readnoise.yaml')
+BIASZERO_G1 = os.path.join(DATA_PATH, 'reference_files', 'g1bias0.fits')
+BIASZERO_G2 = os.path.join(DATA_PATH, 'reference_files', 'g2bias0.fits')
+
+# Start logger
+LOGGER = logging.getLogger(__name__)
+
+try:
+    data_path_central_store = '***REMOVED***/share/wf_guiding/magic_data_files'
+    READ_NOISE = os.path.join(data_path_central_store, 'readnoise.yaml')
+except FileNotFoundError:
+    READ_NOISE = os.path.join(DATA_PATH, 'readnoise.yaml')
+    LOGGER.warning('Detector Effects: Cannot access central store. Using local version of ' \
+                   'readnoise.yaml which will have zeros for all subarrays unless otherwise specified.')
 
 
 class FGSDetectorEffects:
@@ -209,10 +223,9 @@ class FGSDetectorEffects:
         """Add zeroth read bias structure to every frame.
         """
         # Open the zeroth read bias structure file
-        if self.guider == 1:
-            bias_file = BIASZERO_G1
-        else:
-            bias_file = BIASZERO_G2
+        bias_file = BIASZERO_G1 if self.guider == 1 else BIASZERO_G2
+        utils.check_for_reference_file(bias_file, 'SUPERBIAS', 'FGS', self.guider)
+
         bias0 = np.copy(fits.getdata(bias_file))
 
         xlow, xhigh, ylow, yhigh = self.array_bounds
