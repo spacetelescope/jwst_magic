@@ -169,7 +169,9 @@ def bad_pixel_correction(data, nircam, detector, dq_array=None):
             bad_pixel_map_yaml = yaml.safe_load(f.read())
 
         instr = 'NIRCAM' if nircam else 'FGS'
+        #TODO: Make sure this is working
         bad_pixel_mask_file = os.path.join(DATA_PATH, bad_pixel_map_yaml[instr.upper()][detector.upper()])
+        utils.check_for_reference_file(bad_pixel_mask_file, 'MASK', instr, detector.upper())
         with fits.open(bad_pixel_mask_file) as bad_pix_hdu:
             bad_pix_data = bad_pix_hdu[0].data
 
@@ -242,48 +244,7 @@ def transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector
     image = np.rot90(image, k=n_90_deg_rots)
 
     # 2) Transform to FGS raw
-    image = transform_sci_to_fgs_raw(image, to_fgs_detector)
-
-    return image
-
-
-def transform_sci_to_fgs_raw(image, to_fgs_detector):
-    """Rotate NIRCam or FGS image from DMS/science coordinate frame
-    (the expected frame for output DMS images) to FGS raw. Note that
-    it is not necessary to specify the input image detector because
-    the DMS coordinate frame is identical for all FGS and NIRCam
-    detectors.
-
-    Parameters
-    ----------
-    image : 2-D numpy array
-        Input image data
-    to_fgs_detector : int
-        Guider number of the desired output image (1 or 2)
-
-    Returns
-    -------
-    image : 2-D numpy array
-        Image data with coordinate frame transformation applied
-
-    """
-    # Get the Det2Sci angle and parity from the SIAF
-    to_fgs_detector = 'FGS' + str(to_fgs_detector)
-    fgs_siaf = pysiaf.Siaf('FGS')
-    aperture = fgs_siaf['{}_FULL'.format(to_fgs_detector)]
-    angle = aperture.DetSciYAngle
-    parity = aperture.DetSciParity
-
-    # Flip the X axis according to the parity
-    if parity == -1:
-        image = np.fliplr(image)
-
-    # Rotate the image according to the angle
-    n_90_deg_rots = angle // 90
-    image = np.rot90(image, k=n_90_deg_rots)
-
-    # Because goal is FGS raw (not det), swap X and Y
-    image = np.swapaxes(image, 0, 1)
+    image = utils.transform_sci_to_fgs_raw(image, to_fgs_detector)
 
     return image
 
@@ -331,7 +292,7 @@ def transform_nircam_image(image, to_fgs_detector, from_nircam_detector, header,
     # Perform the transformation
     if nircam_coord_frame == 'sci':
         LOGGER.info("Image Conversion: Input NIRCam image in SCI coordinate frame.")
-        image = transform_sci_to_fgs_raw(image, to_fgs_detector)
+        image = utils.transform_sci_to_fgs_raw(image, to_fgs_detector)
 
     elif nircam_coord_frame == 'raw' or nircam_coord_frame == 'det':
         LOGGER.info("Image Conversion: Input NIRCam image in RAW/DET coordinate frame.")
@@ -1139,7 +1100,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             else:
                 LOGGER.info(
                     "Image Conversion: Expect that data provided is in science/DMS frame; rotating to raw FGS frame.")
-                data = transform_sci_to_fgs_raw(data, guider)
+                data = utils.transform_sci_to_fgs_raw(data, guider)
 
         # Apply Gaussian filter to simulate coarse pointing
         if coarse_pointing:
@@ -1277,7 +1238,7 @@ def write_fgs_im(data, out_dir, root, guider, hdr_dict=None, fgsout_path=None):
     fgsout_file = os.path.join(fgsout_path, 'unshifted_{}_G{}.fits'.format(root, guider))
 
     # Load header file needed for DHAS
-    header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+    header_file = os.path.join(DATA_PATH, f'header_g{guider}.fits')
     hdr = fits.getheader(header_file, ext=0)
     hdr.add_blank('DHAS-Required Header Information', before='DATE')
     hdr.add_blank('', before='DATE')

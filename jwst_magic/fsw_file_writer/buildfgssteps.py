@@ -720,7 +720,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     # Load header file (try to use the converted image to get distortion information)
     header_file = os.path.join(out_dir.split(root)[0], root, 'FGS_imgs', f'unshifted_{root}_G{guider}.fits')
     if not os.path.exists(header_file):
-        header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+        header_file = os.path.join(DATA_PATH, 'header_g{}.fits'.format(guider))
     hdr = fits.getheader(header_file, ext=0)
     hdr['IDATTPIX'] = (hdr_keyword, 'Image shifted to place GS at ID attitude')
 

@@ -108,7 +108,12 @@ class Mkproc(object):
         # Find templates. If template path not given, script will assume that a
         # 'templates' directory that includes are necessary prc templates lives
         # in the same directory as this script
-        template_path = os.path.join(PACKAGE_PATH, 'data', 'templates')
+        # TODO: be smarter
+        data_path_central_store = '/itar/jwst/tel/share/wf_guiding/magic_data_files'
+        template_path = os.path.join(data_path_central_store, 'templates')
+        if not os.path.exists(template_path):
+            template_path = os.path.join(PACKAGE_PATH, 'data', 'templates')
+            LOGGER.warning('Make Proc: Cannot access central store. No prc can be made unless access to central store can be restored.')
 
         self.find_templates(guider, step=step, template_path=template_path)
 
