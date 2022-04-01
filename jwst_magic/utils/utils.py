@@ -142,7 +142,7 @@ def determine_log_path(out_dir_path):
     if os.path.exists(out_dir_path):
         log_path = out_dir_path
     else:
-        log_path = os.environ.get('MAGIC_LOG_SOGS')
+        log_path = os.environ.get('MAGIC_LOG_LOCATION')
         if not log_path:
             log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
         ensure_dir_exists(log_path)
@@ -793,7 +793,7 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
     return data, pix_dict
 
 
-def convert_bad_pixel_mask_files(filepath, nircam):
+def convert_bad_pixel_mask_files(filepath, out_filepath, nircam):
     """
     Converts a NIRCam or FGS bad pixel mask file to a format MAGIC can use,
     switching from bit values to 1s and 0s, where 0s are good and
@@ -801,6 +801,7 @@ def convert_bad_pixel_mask_files(filepath, nircam):
     do_not_use, dead, hot, telegraph, bad_ref_pix, and RC.
 
     filepath : str path to input file
+    out_filepath: str path to where to save file
     nircam: bool for if NIRCam data. True includes the do not use flag
     """
     # Read in file
@@ -822,16 +823,7 @@ def convert_bad_pixel_mask_files(filepath, nircam):
                              f'bad pixel attributes: {", ".join(pix_dict.keys())}.'
 
     # Save out file
-    det = bad_pix_hdr['DETECTOR']
-    if nircam:
-        filepath_new = os.path.join(os.path.dirname(filepath), f'nircam_dq_{det.lower()}.fits')
-    else:
-        guider = det.replace('UIDER', '')
-        if 'stacked' in filepath.lower():
-            filepath_new = os.path.join(os.path.dirname(filepath), f'fgs_dq_{guider}_stacked.fits')
-        else:
-            filepath_new = os.path.join(os.path.dirname(filepath), f'fgs_dq_{guider}.fits')
-    write_fits(filepath_new, [data], header=[bad_pix_hdr], log=LOGGER)
+    write_fits(out_filepath, [data], header=[bad_pix_hdr], log=LOGGER)
 
 
 def rotate_zero_bias_file(bias_file, expected_filepath, guider):
@@ -869,19 +861,18 @@ def check_reference_files():
         bad_pixel_map_yaml = yaml.safe_load(f.read())
 
     # There is only one case where we don't grab a new file so we set the default to True
-    grab_new_file = True
-    dets = {'GUIDER1':'fgs',
-            'GUIDER2':'fgs',
-            'NRCA1':'NIRCam',
-            'NRCA2':'NIRCam',
-            'NRCA3':'NIRCam',
-            'NRCA4':'NIRCam',
-            'NRCALONG':'NIRCam',
-            'NRCB1':'NIRCam',
-            'NRCB2':'NIRCam',
-            'NRCB3':'NIRCam',
-            'NRCB4':'NIRCam',
-            'NRCBLONG':'NIRCam',
+    dets = {'GUIDER1':'FGS',
+            'GUIDER2':'FGS',
+            'NRCA1':'NIRCAM',
+            'NRCA2':'NIRCAM',
+            'NRCA3':'NIRCAM',
+            'NRCA4':'NIRCAM',
+            'NRCALONG':'NIRCAM',
+            'NRCB1':'NIRCAM',
+            'NRCB2':'NIRCAM',
+            'NRCB3':'NIRCAM',
+            'NRCB4':'NIRCAM',
+            'NRCBLONG':'NIRCAM',
             }
     for detector, instrument in dets.items():
         # Set parameters for CRDS query
@@ -889,8 +880,8 @@ def check_reference_files():
         reftypes = ['MASK']
         if instrument.lower() == 'nircam':
             read_pattern = 'ANY'
-        else:
-            read_pattern = 'FGS'
+        elif instrument.lower() == 'fgs':
+            read_pattern = instrument
             reftypes.append('SUPERBIAS')
         current_date = datetime.datetime.now()
         parameters = {'INSTRUME':instrument, 'DETECTOR':detector,
@@ -901,6 +892,7 @@ def check_reference_files():
 
         reffile_mapping = get_reffiles(parameters, reftypes, download=False)
         for reftype in reftypes:
+            grab_new_file = True
             if reftype == 'MASK':
                 # If we are comparing the bad pixel masks, look for filenames in bad_pixel_mask.yaml
                 expected_filepath = os.path.join(DATA_PATH,
@@ -911,8 +903,8 @@ def check_reference_files():
                     grab_new_file = original_filename != reffile_mapping[reftype.lower()]
                 if grab_new_file:
                     # Download the file
-                    reffile_mapping = get_reffiles(parameters, reftype, download=True)
-                    convert_bad_pixel_mask_files(reffile_mapping[reftype.lower()],
+                    mask_mapping = get_reffiles(parameters, [reftype], download=True)
+                    convert_bad_pixel_mask_files(mask_mapping[reftype.lower()], expected_filepath,
                                                  detector)
             else:
                 # If we are comparing bias files names, this is only for FGS
@@ -924,8 +916,8 @@ def check_reference_files():
                     grab_new_file = original_filename != reffile_mapping[reftype.lower()]
                 if grab_new_file:
                     # Download the file
-                    reffile_mapping = get_reffiles(parameters, reftype, download=True)
-                    rotate_zero_bias_file(reffile_mapping[reftype.lower()], expected_filepath,
+                    bias_mapping = get_reffiles(parameters, [reftype], download=True)
+                    rotate_zero_bias_file(bias_mapping[reftype.lower()], expected_filepath,
                                           detector[-1])
 
 def get_original_filename(filepath):
@@ -968,6 +960,7 @@ def get_reffiles(parameter_dict, reffile_types, download=True):
             reffile_mapping = crds.getreferences(parameter_dict, reftypes=reffile_types,
                                                  context=None, ignore_cache=False,
                                                  observatory="jwst")
+            print(reffile_mapping)
         except CrdsLookupError:
             raise ValueError("ERROR: CRDSLookupError when trying to find reference files " \
                              "for parameters: {}".format(parameter_dict))
