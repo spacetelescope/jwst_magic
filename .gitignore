@@ -81,5 +81,5 @@ jwst_magic.egg-info/*
 # Reference files #
 ########################
 jwst_magic/data/reference_files
-jwst_magic/data/reference_files/*
-jwst_magic/data/newG*magicHdrImg.fits
+jwst_magic/data/templates
+jwst_magic/data/readnoise.yaml
