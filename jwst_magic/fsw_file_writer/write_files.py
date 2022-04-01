@@ -338,6 +338,13 @@ def write_prc(obj):
         Don't need to include the yoffset in the .prc IF the strips
         offset parameter in DHAS is set to 12
     """
+    # Find templates. If template path not found, cannot make .prc files.
+    template_path = os.path.join(PACKAGE_PATH, 'data', 'templates')
+    if not os.path.exists(template_path):
+        LOGGER.error('Write Files: Cannot find templates for making' \
+                     'prc files. **No prc files will be created.**')
+        return
+
     if obj.step == 'ID':
         step = 'ID'
         acq1_imgsize = None

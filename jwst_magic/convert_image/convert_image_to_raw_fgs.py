@@ -89,7 +89,7 @@ from scipy.signal import medfilt2d
 
 # Local Imports
 from jwst_magic.convert_image import renormalize
-from jwst_magic.utils import utils
+from jwst_magic.utils import coordinate_transforms
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -169,9 +169,7 @@ def bad_pixel_correction(data, nircam, detector, dq_array=None):
             bad_pixel_map_yaml = yaml.safe_load(f.read())
 
         instr = 'NIRCAM' if nircam else 'FGS'
-        #TODO: Make sure this is working
         bad_pixel_mask_file = os.path.join(DATA_PATH, bad_pixel_map_yaml[instr.upper()][detector.upper()])
-        utils.check_for_reference_file(bad_pixel_mask_file, 'MASK', instr, detector.upper())
         with fits.open(bad_pixel_mask_file) as bad_pix_hdu:
             bad_pix_data = bad_pix_hdu[0].data
 
@@ -204,49 +202,6 @@ def bad_pixel_correction(data, nircam, detector, dq_array=None):
                 new_data[i, j] = np.median(vals)
 
     return new_data
-
-
-def transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector):
-    """Transform image from NIRCam detector raw/det coordinate frame to FGS
-    raw, using transformations as defined by the Science Instrument
-    Aperture File (SIAF).
-
-    Parameters
-    ----------
-    image : 2-D numpy array
-        Input image data
-    from_nircam_detector : str
-        Name of NIRCam detector of the input image (A1, A2, A3, A4, A5,
-        B1, B2, B3, B4, or B5)
-    to_fgs_detector : int
-        Guider number of the desired output image (1 or 2)
-
-    Returns
-    -------
-    image : 2-D numpy array
-        Image data with coordinate frame transformation applied
-    """
-
-    # 1) Transform to NIRCam sci
-    # Get the Det2Sci angle and parity from the SIAF
-    from_nircam_detector = 'NRC' + from_nircam_detector
-    nircam_siaf = pysiaf.Siaf('NIRCam')
-    aperture = nircam_siaf['{}_FULL'.format(from_nircam_detector)]
-    angle = aperture.DetSciYAngle
-    parity = aperture.DetSciParity
-
-    # Flip the X axis according to the parity
-    if parity == -1:
-        image = np.fliplr(image)
-
-    # Rotate the image according to the angle
-    n_90_deg_rots = angle // 90
-    image = np.rot90(image, k=n_90_deg_rots)
-
-    # 2) Transform to FGS raw
-    image = utils.transform_sci_to_fgs_raw(image, to_fgs_detector)
-
-    return image
 
 
 def transform_nircam_image(image, to_fgs_detector, from_nircam_detector, header,
@@ -292,11 +247,11 @@ def transform_nircam_image(image, to_fgs_detector, from_nircam_detector, header,
     # Perform the transformation
     if nircam_coord_frame == 'sci':
         LOGGER.info("Image Conversion: Input NIRCam image in SCI coordinate frame.")
-        image = utils.transform_sci_to_fgs_raw(image, to_fgs_detector)
+        image = coordinate_transforms.transform_sci_to_fgs_raw(image, to_fgs_detector)
 
     elif nircam_coord_frame == 'raw' or nircam_coord_frame == 'det':
         LOGGER.info("Image Conversion: Input NIRCam image in RAW/DET coordinate frame.")
-        image = transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector)
+        image = coordinate_transforms.transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector)
 
     else:
         raise ValueError('Unrecognized coordinate frame name.')
@@ -1100,7 +1055,7 @@ def convert_im(input_im, guider, root, out_dir=None, nircam=True,
             else:
                 LOGGER.info(
                     "Image Conversion: Expect that data provided is in science/DMS frame; rotating to raw FGS frame.")
-                data = utils.transform_sci_to_fgs_raw(data, guider)
+                data = coordinate_transforms.transform_sci_to_fgs_raw(data, guider)
 
         # Apply Gaussian filter to simulate coarse pointing
         if coarse_pointing:

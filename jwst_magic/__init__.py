@@ -1,8 +1,10 @@
 import importlib
 import os
-import pkg_resources
 import socket
 import subprocess
+import pkg_resources
+
+from jwst_magic.utils import utils
 
 JENKINS = '/home/developer/workspace/' in os.getcwd()
 if not JENKINS:
@@ -59,3 +61,6 @@ else:
     # The SOGS case cannot be checked due to network access on SOGS machines
     print("Your MAGIC package is up to date")
     print("Your FGS Countrate package is up to date")
+
+# Make sure that all of our references are up to date and saved locally
+utils.check_reference_files()

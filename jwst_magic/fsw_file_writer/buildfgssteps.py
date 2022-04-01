@@ -224,9 +224,6 @@ class BuildFGSSteps(object):
                                                                   normal_ops=self.use_oss_defaults,
                                                                   override_bright_guiding=self.override_bright_guiding)
 
-        # TODO: Add case that extracts countrates from input_im and the x/y
-        # coords/inds so this module is no longer dependent on ALLpsfs
-
     def build_step(self, section, configfile=None):
         """Read out the parameters in the config.ini, and alter class
         attributes to build the current step accordingly.

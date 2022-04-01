@@ -50,18 +50,10 @@ PACKAGE_PATH = os.path.split(__location__)[0]
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 BIASZERO_G1 = os.path.join(DATA_PATH, 'reference_files', 'g1bias0.fits')
 BIASZERO_G2 = os.path.join(DATA_PATH, 'reference_files', 'g2bias0.fits')
+READ_NOISE = os.path.join(DATA_PATH, 'readnoise.yaml')
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
-
-try:
-    data_path_central_store = '/itar/jwst/tel/share/wf_guiding/magic_data_files'
-    READ_NOISE = os.path.join(data_path_central_store, 'readnoise.yaml')
-except FileNotFoundError:
-    READ_NOISE = os.path.join(DATA_PATH, 'readnoise.yaml')
-    LOGGER.warning('Detector Effects: Cannot access central store. Using local version of ' \
-                   'readnoise.yaml which will have zeros for all subarrays unless otherwise specified.')
-
 
 class FGSDetectorEffects:
     """Fetch the bias file for the specified guider, crop to the
@@ -209,23 +201,23 @@ class FGSDetectorEffects:
         """Add read noise to every frame.
         """
         # Load all the read noise values from the yaml
-        with open(READ_NOISE, encoding="utf-8") as f:
-            read_noise_dict = yaml.safe_load(f.read())
+        try:
+            with open(READ_NOISE, encoding="utf-8") as f:
+                read_noise_dict = yaml.safe_load(f.read())
+            # Get the read noise value for the current step
+            array_size = self.imgsize if self.imgsize != 43 else 32
+            read_noise = read_noise_dict['guider{}'.format(self.guider)][array_size]
 
-        # Get the read noise value for the current step
-        array_size = self.imgsize if self.imgsize != 43 else 32
-        read_noise = read_noise_dict['guider{}'.format(self.guider)][array_size]
-
-        # Add normally distributed read noise to the bias, with a mean value = 0 and STD = read noise
-        self.bias += np.random.normal(loc=0, scale=read_noise, size=np.shape(self.bias)).astype(int)
+            # Add normally distributed read noise to the bias, with a mean value = 0 and STD = read noise
+            self.bias += np.random.normal(loc=0, scale=read_noise, size=np.shape(self.bias)).astype(int)
+        except FileNotFoundError:
+            LOGGER.error('Detector Effects: Cannot find readnoise.yaml in repository. **No read noise added.**')
 
     def add_zeroth_read_bias(self):
         """Add zeroth read bias structure to every frame.
         """
         # Open the zeroth read bias structure file
         bias_file = BIASZERO_G1 if self.guider == 1 else BIASZERO_G2
-        utils.check_for_reference_file(bias_file, 'SUPERBIAS', 'FGS', self.guider)
-
         bias0 = np.copy(fits.getdata(bias_file))
 
         xlow, xhigh, ylow, yhigh = self.array_bounds
