@@ -1080,7 +1080,7 @@ class StarSelectorWindow(QDialog):
         self.tableWidget_commands.setItem(n_commands, 0, item)
         self.n_orientations += 1
 
-        # Update the canvas TODO: do this for the last row of the table only
+        # Update the canvas
         for i_row, ind in enumerate(selected_indices):
             ind = ind - 1
             gs = i_row == 0

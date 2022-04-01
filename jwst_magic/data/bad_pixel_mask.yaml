@@ -3,12 +3,12 @@ NIRCAM:
   NRCA2: reference_files/nircam_dq_nrca2.fits
   NRCA3: reference_files/nircam_dq_nrca3.fits
   NRCA4: reference_files/nircam_dq_nrca4.fits
-  NRCA5: reference_files/nircam_dq_nrcalong.fits
+  NRCALONG: reference_files/nircam_dq_nrcalong.fits
   NRCB1: reference_files/nircam_dq_nrcb1.fits
   NRCB2: reference_files/nircam_dq_nrcb2.fits
   NRCB3: reference_files/nircam_dq_nrcb3.fits
   NRCB4: reference_files/nircam_dq_nrcb4.fits
-  NRCB5: reference_files/nircam_dq_nrcblong.fits
+  NRCBLONG: reference_files/nircam_dq_nrcblong.fits
 
 FGS:
   GUIDER1: reference_files/fgs_dq_G1.fits

@@ -1,10 +1,6 @@
 """Collection of unit tests to verify the correct function of the Image
 Conversion tool.
 
-TODO
-(In the future, this will) Runs the following tests:
-    1. Test all of convert_image
-
 Authors
 -------
     - Keira Brooks

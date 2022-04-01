@@ -634,8 +634,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
 
     LOGGER.info("FSW File Writing: Shifting guide star to ID attitude ({}, {})".format(xend, yend))
     shifted_image = shift(image, (dy, dx), mode='constant', cval=bkg, prefilter=True)
-    # TODO: ? Should we be shifting the seed image and re-adding the bias on top of it?
-    # TODO: Save out seed and bias separately, shift seed here, and re-add bias on top of it
 
     # 2) Write new shifted guiding_selections*.txt
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
