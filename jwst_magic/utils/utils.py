@@ -881,7 +881,7 @@ def check_reference_files():
         if instrument.lower() == 'nircam':
             read_pattern = 'ANY'
         elif instrument.lower() == 'fgs':
-            read_pattern = instrument
+            read_pattern = 'FGSRAPID'
             reftypes.append('SUPERBIAS')
         current_date = datetime.datetime.now()
         parameters = {'INSTRUME':instrument, 'DETECTOR':detector,
@@ -960,7 +960,6 @@ def get_reffiles(parameter_dict, reffile_types, download=True):
             reffile_mapping = crds.getreferences(parameter_dict, reftypes=reffile_types,
                                                  context=None, ignore_cache=False,
                                                  observatory="jwst")
-            print(reffile_mapping)
         except CrdsLookupError:
             raise ValueError("ERROR: CRDSLookupError when trying to find reference files " \
                              "for parameters: {}".format(parameter_dict))
