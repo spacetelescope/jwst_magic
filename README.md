@@ -104,6 +104,7 @@ The `jwst_magic` package installation process will also check for the following 
   * `requests`
   * `jwst`
 
+**Note**: In order to run MAGIC fully as intended, you will need to make sure you have copied a set of files to your local repository. In order to know what files are required, please reach out to the current maintainer of this code. MAGIC can still be run, but not all files will be written out and some of image files may be missing some of the expected noise components.
 
 Running the Tools
 -----------------
@@ -163,6 +164,10 @@ Any issues or violations pertaining to the Code of Conduct should be brought to 
 Questions
 -----------------
 No further development of this project is expected, so no support will be given to future questions. We encourage you to look to the documentation for answers.
+
+Code Maintainer
+-----------------
+* Shannon Osborne (GitHub: @shanosborne)
 
 Development Team
 -----------------
