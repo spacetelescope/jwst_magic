@@ -831,7 +831,6 @@ def rotate_zero_bias_file(bias_file, expected_filepath, guider):
     Given a bias file from the CRDS, rotate to the FGS raw reference frame
     """
     ensure_dir_exists(os.path.dirname(expected_filepath))
-    print(os.path.dirname(expected_filepath))
     hdu = fits.open(bias_file)
     header = hdu[0].header
     image = hdu['SCI'].data
@@ -904,6 +903,8 @@ def check_reference_files():
                 if grab_new_file:
                     # Download the file
                     mask_mapping = get_reffiles(parameters, [reftype], download=True)
+                    print(f"Grabbing latest {instrument} {detector} mask file from CRDS: " \
+                                f"{os.path.basename(mask_mapping[reftype.lower()])}")
                     convert_bad_pixel_mask_files(mask_mapping[reftype.lower()], expected_filepath,
                                                  detector)
             else:
@@ -917,6 +918,8 @@ def check_reference_files():
                 if grab_new_file:
                     # Download the file
                     bias_mapping = get_reffiles(parameters, [reftype], download=True)
+                    print(f"Grabbing latest  {instrument} {detector} bias files from CRDS: " \
+                                f"{os.path.basename(bias_mapping[reftype.lower()])}")
                     rotate_zero_bias_file(bias_mapping[reftype.lower()], expected_filepath,
                                           detector[-1])
 
