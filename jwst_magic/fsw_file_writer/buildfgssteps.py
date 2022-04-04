@@ -382,7 +382,8 @@ class BuildFGSSteps(object):
         array_bounds : list, tuple
             The subarray location of the step
         """
-        dq_file = os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(self.guider))
+        dq_file = os.path.join(DATA_PATH, 'reference_files',
+                               'fgs_dq_G{}.fits'.format(self.guider))
         dq_arr = np.copy(fits.getdata(dq_file))
 
         # Cut and duplicate DQ to match shape of bias file
