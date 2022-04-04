@@ -89,7 +89,7 @@ from scipy.signal import medfilt2d
 
 # Local Imports
 from jwst_magic.convert_image import renormalize
-from jwst_magic.utils import coordinate_transforms
+from jwst_magic.utils import utils, coordinate_transforms
 
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

@@ -215,7 +215,7 @@ def test_use_apt_button_manual(main_gui, test_directory):
     Test that re-setting apt to blank re-sets program id/obs/visit attributes
     """
     # Set main GUI parameters
-    main_gui.buttonGroup_guider.buttons()[0].setChecked(True)  # set to guider 2
+    main_gui.buttonGroup_guider.buttons()[1].setChecked(True)  # set to guider 1
 
     # Set basic info
     main_gui.buttonGroup_name.buttons()[1].setChecked(True)  # set manual naming method

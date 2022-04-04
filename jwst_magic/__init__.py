@@ -4,7 +4,7 @@ import socket
 import subprocess
 import pkg_resources
 
-from jwst_magic.utils import utils
+from .utils.utils import check_reference_files
 
 JENKINS = '/home/developer/workspace/' in os.getcwd()
 if not JENKINS:
@@ -63,4 +63,9 @@ else:
     print("Your FGS Countrate package is up to date")
 
 # Make sure that all of our references are up to date and saved locally
-utils.check_reference_files()
+try:
+    check_reference_files()
+except FileNotFoundError:
+    print('Your CRDS cache may be corrupted, out of date, or you do not have access to the internet. ' \
+          'If you have internet access, please delete your CRDS cache directory (in your /home ' \
+          'directory) and then re-import MAGIC in a new IPython session.')

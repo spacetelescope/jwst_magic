@@ -27,6 +27,8 @@ from jwst_magic.fsw_file_writer.buildfgssteps import OSS_TRIGGER, COUNTRATE_CONV
 from jwst_magic.fsw_file_writer.rewrite_prc import rewrite_prc
 from jwst_magic.utils import utils
 
+JENKINS = '/home/developer/workspace/' in os.getcwd()
+
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
@@ -312,7 +314,7 @@ def test_oss_defaults(test_directory, data, use_oss_defaults, selected_segs, psf
     else:
         assert fileobj.threshold[0] == fileobj.countrate[0] - BRIGHT_STAR_THRESHOLD_ADDEND
 
-
+@pytest.mark.skipif(JENKINS, reason="Can't access prc templates on CI")
 def test_rewrite_prc(open_image, test_directory):
     """Compare the results from reqrite_prc and buildfgsteps -
     check shifted guiding selections and ID prc file"""
@@ -382,6 +384,7 @@ def test_rewrite_prc(open_image, test_directory):
 prc_list = [('ID', 'ID', False, 237576.0000, None),
             ('ACQ1', 'ACQ', False, 237576.0000, None),
             ('ACQ1', 'ACQ', True, None, 100000)]
+@pytest.mark.skipif(JENKINS, reason="Can't access prc templates on CI")
 @pytest.mark.parametrize('step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate', prc_list)
 def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate):
     """Check the right thresholds make it into the ACQ prc files"""
