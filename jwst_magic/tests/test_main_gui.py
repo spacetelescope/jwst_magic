@@ -230,10 +230,10 @@ def test_use_apt_button_manual(main_gui, test_directory):
     assert main_gui.observation_num == 1
     assert main_gui.visit_num == 1
 
-    assert main_gui.lineEdit_normalize.text() == 'N4EJ000427'
-    assert main_gui.gs_id == 'N4EJ000427'
-    np.testing.assert_almost_equal(main_gui.gs_ra, 267.812553, decimal=4)
-    np.testing.assert_almost_equal(main_gui.gs_dec, 63.111531, decimal=4)
+    assert main_gui.lineEdit_normalize.text() == 'N42J000231'
+    assert main_gui.gs_id == 'N42J000231'
+    np.testing.assert_almost_equal(main_gui.gs_ra, 268.016188, decimal=4)
+    np.testing.assert_almost_equal(main_gui.gs_dec, 74.598757, decimal=4)
 
     # Reset to blank
     main_gui.lineEdit_manualid.setText('')
@@ -424,11 +424,11 @@ def test_apt_guider_disagree_manual(mock_dialog, main_gui, test_directory):
     main_gui.pushButton_manualid.click()
 
     # Check setting to the matching guider is fine
-    main_gui.buttonGroup_guider.buttons()[0].click()  # set to guider 2
+    main_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
     assert mock_dialog.call_count == 0  # Check dialog box doesn't pop up
 
     # Check setting the wrong guider fails
-    main_gui.buttonGroup_guider.buttons()[1].click()  # set to guider 1
+    main_gui.buttonGroup_guider.buttons()[0].click()  # set to guider 2
     assert mock_dialog.called  # Check dialog box pops up
 
     # Check it works setting the guider before choosing CAR/Obs
