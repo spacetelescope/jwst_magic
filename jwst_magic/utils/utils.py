@@ -793,7 +793,7 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
     return data, pix_dict
 
 
-def convert_bad_pixel_mask_files(filepath, out_filepath, nircam):
+def convert_bad_pixel_mask_files(filepath, out_filepath, instrument):
     """
     Converts a NIRCam or FGS bad pixel mask file to a format MAGIC can use,
     switching from bit values to 1s and 0s, where 0s are good and
@@ -802,8 +802,9 @@ def convert_bad_pixel_mask_files(filepath, out_filepath, nircam):
 
     filepath : str path to input file
     out_filepath: str path to where to save file
-    nircam: bool for if NIRCam data. True includes the do not use flag
+    instrument: str FGS or NIRCAM. Use of NIRCAM will include the do not use flag
     """
+    nircam = True if instrument.lower() == 'nircam' else False
     # Read in file
     with fits.open(filepath) as bad_pix_hdu:
         bad_pix_hdr = bad_pix_hdu[0].header
@@ -906,7 +907,7 @@ def check_reference_files():
                     print(f"Grabbing latest {instrument} {detector} mask file from CRDS: " \
                                 f"{os.path.basename(mask_mapping[reftype.lower()])}")
                     convert_bad_pixel_mask_files(mask_mapping[reftype.lower()], expected_filepath,
-                                                 detector)
+                                                 instrument)
             else:
                 # If we are comparing bias files names, this is only for FGS
                 expected_filepath = os.path.join(DATA_PATH, 'reference_files',
