@@ -861,18 +861,18 @@ def check_reference_files():
         bad_pixel_map_yaml = yaml.safe_load(f.read())
 
     # There is only one case where we don't grab a new file so we set the default to True
-    dets = {'GUIDER1':'FGS',
-            'GUIDER2':'FGS',
-            'NRCA1':'NIRCAM',
-            'NRCA2':'NIRCAM',
-            'NRCA3':'NIRCAM',
-            'NRCA4':'NIRCAM',
-            'NRCALONG':'NIRCAM',
-            'NRCB1':'NIRCAM',
-            'NRCB2':'NIRCAM',
-            'NRCB3':'NIRCAM',
-            'NRCB4':'NIRCAM',
-            'NRCBLONG':'NIRCAM',
+    dets = {'GUIDER1': 'FGS',
+            'GUIDER2': 'FGS',
+            'NRCA1': 'NIRCAM',
+            'NRCA2': 'NIRCAM',
+            'NRCA3': 'NIRCAM',
+            'NRCA4': 'NIRCAM',
+            'NRCALONG': 'NIRCAM',
+            'NRCB1': 'NIRCAM',
+            'NRCB2': 'NIRCAM',
+            'NRCB3': 'NIRCAM',
+            'NRCB4': 'NIRCAM',
+            'NRCBLONG': 'NIRCAM',
             }
     for detector, instrument in dets.items():
         # Set parameters for CRDS query
@@ -884,11 +884,11 @@ def check_reference_files():
             read_pattern = 'FGSRAPID'
             reftypes.append('SUPERBIAS')
         current_date = datetime.datetime.now()
-        parameters = {'INSTRUME':instrument, 'DETECTOR':detector,
-                      'SUBARRAY':'FULL', 'EXP_TYPE':imaging,
-                      'READPATT':read_pattern,
-                      'DATE-OBS':datetime.date.today().isoformat(),
-                      'TIME-OBS':current_date.time().isoformat()}
+        parameters = {'INSTRUME': instrument, 'DETECTOR': detector,
+                      'SUBARRAY': 'FULL', 'EXP_TYPE': imaging,
+                      'READPATT': read_pattern,
+                      'DATE-OBS': datetime.date.today().isoformat(),
+                      'TIME-OBS': current_date.time().isoformat()}
 
         reffile_mapping = get_reffiles(parameters, reftypes, download=False)
         for reftype in reftypes:
@@ -904,8 +904,8 @@ def check_reference_files():
                 if grab_new_file:
                     # Download the file
                     mask_mapping = get_reffiles(parameters, [reftype], download=True)
-                    print(f"Grabbing latest {instrument} {detector} mask file from CRDS: " \
-                                f"{os.path.basename(mask_mapping[reftype.lower()])}")
+                    print(f"Grabbing latest {instrument} {detector} mask file from CRDS: "
+                          f"{os.path.basename(mask_mapping[reftype.lower()])}")
                     convert_bad_pixel_mask_files(mask_mapping[reftype.lower()], expected_filepath,
                                                  instrument)
             else:
@@ -919,10 +919,11 @@ def check_reference_files():
                 if grab_new_file:
                     # Download the file
                     bias_mapping = get_reffiles(parameters, [reftype], download=True)
-                    print(f"Grabbing latest  {instrument} {detector} bias files from CRDS: " \
-                                f"{os.path.basename(bias_mapping[reftype.lower()])}")
+                    print(f"Grabbing latest  {instrument} {detector} bias files from CRDS: "
+                          f"{os.path.basename(bias_mapping[reftype.lower()])}")
                     rotate_zero_bias_file(bias_mapping[reftype.lower()], expected_filepath,
                                           detector[-1])
+
 
 def get_original_filename(filepath):
     """
@@ -952,7 +953,7 @@ def get_reffiles(parameter_dict, reffile_types, download=True):
         If True (default), the identified best reference files will be
         downloaded. If False, the dictionary of best reference files will
         still be returned, but the files will not be downloaded. The use
-        of False is primarily intended to support testing on Travis.
+        of False is primarily intended to support testing on CI.
     """
     # IMPORTANT: Import of crds package must be done AFTER the environment
     # variables are set in the functions above
@@ -965,7 +966,7 @@ def get_reffiles(parameter_dict, reffile_types, download=True):
                                                  context=None, ignore_cache=False,
                                                  observatory="jwst")
         except CrdsLookupError:
-            raise ValueError("ERROR: CRDSLookupError when trying to find reference files " \
+            raise ValueError("ERROR: CRDSLookupError when trying to find reference files "
                              "for parameters: {}".format(parameter_dict))
 
     else:
@@ -976,13 +977,13 @@ def get_reffiles(parameter_dict, reffile_types, download=True):
                                                       context=None, ignore_cache=False,
                                                       observatory="jwst", fast=True)
         except CrdsLookupError:
-            raise ValueError("ERROR: CRDSLookupError when trying to find reference files " \
+            raise ValueError("ERROR: CRDSLookupError when trying to find reference files "
                              "for parameters: {}".format(parameter_dict))
 
     # Check for missing files
     for key, value in reffile_mapping.items():
         if "NOT FOUND" in value:
-            raise ValueError("ERROR: No {} reference file found when using parameter " \
+            raise ValueError("ERROR: No {} reference file found when using parameter "
                              "dictionary: {}".format(key, parameter_dict))
 
     return reffile_mapping
