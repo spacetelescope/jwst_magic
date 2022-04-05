@@ -92,6 +92,9 @@ This package was developed in a Python ≥3.7 environment.
     pip install -e .
     ```
 
+7. (Optional) In order to run MAGIC fully as intended, you will need to copy a set of proprietary files to your local repository. If you feel you should have access to these files, reach out to the current maintainer of this code for more information. MAGIC can still be run without these files, but not all files will be written out and some of image files may be missing some of the expected noise components.
+
+
 The `jwst_magic` package installation process will also check for the following package dependencies, and automatically install them using pip if they are not found:
   * `astropy`
   * `matplotlib`
@@ -103,8 +106,6 @@ The `jwst_magic` package installation process will also check for the following 
   * `pyyaml`
   * `requests`
   * `jwst`
-
-**Note**: In order to run MAGIC fully as intended, you will need to make sure you have copied a set of files to your local repository. In order to know what files are required, please reach out to the current maintainer of this code. MAGIC can still be run, but not all files will be written out and some of image files may be missing some of the expected noise components.
 
 Running the Tools
 -----------------
