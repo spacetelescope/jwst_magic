@@ -66,6 +66,5 @@ else:
 try:
     check_reference_files()
 except FileNotFoundError:
-    print('Your CRDS cache may be corrupted, out of date, or you do not have access to the ' \
-          'internet. If you have internet access, please delete your CRDS cache directory ' \
-          '(in your /home directory) and then re-import MAGIC in a new IPython session.')
+    print('Warning: Cannot check for newest reference files. See solutions '
+          'https://github.com/spacetelescope/jwst_magic#running-the-tools')

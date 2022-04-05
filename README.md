@@ -114,6 +114,12 @@ These tools are best run in the `IPython` terminal, in the conda environment whe
 
     In[2]: jwst_magic.run_tool_GUI()
 
+If you see the print out `Warning: Cannot check for newest reference files.`, there are a few possible issues:
+* You may not be connected to the internet
+* You may have a problem with your CRDS cache, in which case:
+   * Delete your CRDS cache directory (in your /home directory)
+   * Re-import MAGIC in a new `IPython` session (which will re-download your cache)
+
 Known Issues
 -----------------
 As with all software packages, there are several known issues for MAGIC. A current list of known issues is available[here](./docs/known_issues.md).
