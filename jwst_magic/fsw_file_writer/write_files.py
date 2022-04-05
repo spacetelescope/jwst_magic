@@ -341,7 +341,7 @@ def write_prc(obj):
     # Find templates. If template path not found, cannot make .prc files.
     template_path = os.path.join(PACKAGE_PATH, 'data', 'templates')
     if not os.path.exists(template_path):
-        LOGGER.error('Write Files: Cannot find templates for making' \
+        LOGGER.error('Write Files: Cannot find templates for making ' \
                      'prc files. **No prc files will be created.**')
         return
 
