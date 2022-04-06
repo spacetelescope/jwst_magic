@@ -186,6 +186,9 @@ for guider in [1, 2]:
 def test_correct_count_rate(open_image, test_directory, guider, step, correct_data_dict):
     """Check that image data is being generated with counts and count
     rates as expected. Test for all guider steps and both guiders.
+
+    This test uses use_readnoise=False to run test independent of the readnoise data, which
+    1) isn't available on JENKINS and 2) may change in the future
     """
 
     # Input data
@@ -200,7 +203,7 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=CENTER_POINTING_1,
         psf_center_file=None, logger_passed=True)
     BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
-                        out_dir=TEST_DIRECTORY, shift_id_attitude=True)
+                        out_dir=TEST_DIRECTORY, shift_id_attitude=True, use_readnoise=False)
 
     # Assert ~exactly for time-normalized data (before detector effects are added)
     assert np.isclose(correct_data_dict['time_normed_im'][0], np.min(BFS.time_normed_im)), \

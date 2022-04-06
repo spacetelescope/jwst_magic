@@ -74,6 +74,9 @@ class FGSDetectorEffects:
         Number of ramps in the integration
     imgsize : int
         Dimension of the image array (pixels)
+    use_readnoise : bool, True
+        Include the readnoise data in the detector effects. Only
+        False for testing case.
 
     Returns
     -------
@@ -85,7 +88,7 @@ class FGSDetectorEffects:
     ValueError
         Invalid guider number provided
     """
-    def __init__(self, guider, xcoord, ycoord, nreads, nramps, imgsize):
+    def __init__(self, guider, xcoord, ycoord, nreads, nramps, imgsize, use_readnoise=True):
         # Check that the guider is valid
         if int(guider) not in [1, 2]:
             raise ValueError("Guider {} not recognized.".format(guider))
@@ -96,6 +99,7 @@ class FGSDetectorEffects:
         self.nreads = nreads
         self.nramps = nramps
         self.imgsize = imgsize
+        self.use_readnoise = use_readnoise
 
         # Create an empty array of the appropriate size
         self.bias = np.zeros((nramps * nreads, imgsize, imgsize))
@@ -115,7 +119,8 @@ class FGSDetectorEffects:
         """
         # Add bias and noise
         self.add_zeroth_read_bias()
-        self.add_read_noise()
+        if self.use_readnoise:
+            self.add_read_noise()
         self.add_ktc_noise()
         # bias = add_pedestal()
 

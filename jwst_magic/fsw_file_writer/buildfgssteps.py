@@ -82,7 +82,7 @@ class BuildFGSSteps(object):
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
                  out_dir=None, thresh_factor=0.6, logger_passed=False, psf_center_file=None,
                  shift_id_attitude=True, use_oss_defaults=False, catalog_countrate=None,
-                 override_bright_guiding=False):
+                 override_bright_guiding=False, use_readnoise=True):
         """Initialize the class and call build_fgs_steps().
         """
         # Check path exists
@@ -106,6 +106,7 @@ class BuildFGSSteps(object):
             self.catalog_countrate = catalog_countrate
             self.threshold = None
             self.override_bright_guiding = override_bright_guiding
+            self.use_readnoise = use_readnoise
             if 'config' in guiding_selections_file:
                 self.config = guiding_selections_file.split('/')[-1].split('.txt')[0].split('config')[-1]
             else:
@@ -303,7 +304,7 @@ class BuildFGSSteps(object):
             nramps = config_ini.getint(step, 'nramps')
             det_eff = detector_effects.FGSDetectorEffects(
                 self.guider, self.xarr, self.yarr, self.nreads, nramps,
-                config_ini.getint(step, 'imgsize')
+                config_ini.getint(step, 'imgsize'), self.use_readnoise
             )
             self.bias = det_eff.add_detector_effects()
 
