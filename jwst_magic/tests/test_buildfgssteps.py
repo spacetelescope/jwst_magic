@@ -27,6 +27,8 @@ from jwst_magic.fsw_file_writer.buildfgssteps import OSS_TRIGGER, COUNTRATE_CONV
 from jwst_magic.fsw_file_writer.rewrite_prc import rewrite_prc
 from jwst_magic.utils import utils
 
+JENKINS = '/home/developer/workspace/' in os.getcwd()
+
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
 NIRCAM_IM = os.path.join(__location__, 'data', 'nircam_data_1_ga.fits')
@@ -173,7 +175,8 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, gu
 
 
 correct_count_rate_parameters = []
-test_data = PARAMETRIZED_DATA['test_correct_count_rate']
+test_data = PARAMETRIZED_DATA['test_correct_count_rate']['without-ref-files'] if JENKINS else \
+    PARAMETRIZED_DATA['test_correct_count_rate']['with-ref-files']
 for guider in [1, 2]:
     for step in ['CAL', 'ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']:
         g = 'guider{}'.format(guider)
@@ -183,6 +186,9 @@ for guider in [1, 2]:
 def test_correct_count_rate(open_image, test_directory, guider, step, correct_data_dict):
     """Check that image data is being generated with counts and count
     rates as expected. Test for all guider steps and both guiders.
+
+    This test uses use_readnoise=False to run test independent of the readnoise data, which
+    1) isn't available on JENKINS and 2) may change in the future
     """
 
     # Input data
@@ -197,7 +203,7 @@ def test_correct_count_rate(open_image, test_directory, guider, step, correct_da
         all_found_psfs_file=SEGMENT_INFILE_CMIMF, center_pointing_file=CENTER_POINTING_1,
         psf_center_file=None, logger_passed=True)
     BFS = BuildFGSSteps(fgs_im, guider, ROOT, step, guiding_selections_file=guiding_selections_file,
-                        out_dir=TEST_DIRECTORY, shift_id_attitude=True)
+                        out_dir=TEST_DIRECTORY, shift_id_attitude=True, use_readnoise=False)
 
     # Assert ~exactly for time-normalized data (before detector effects are added)
     assert np.isclose(correct_data_dict['time_normed_im'][0], np.min(BFS.time_normed_im)), \
@@ -312,7 +318,7 @@ def test_oss_defaults(test_directory, data, use_oss_defaults, selected_segs, psf
     else:
         assert fileobj.threshold[0] == fileobj.countrate[0] - BRIGHT_STAR_THRESHOLD_ADDEND
 
-
+@pytest.mark.skipif(JENKINS, reason="Can't access prc templates on CI")
 def test_rewrite_prc(open_image, test_directory):
     """Compare the results from reqrite_prc and buildfgsteps -
     check shifted guiding selections and ID prc file"""
@@ -382,6 +388,7 @@ def test_rewrite_prc(open_image, test_directory):
 prc_list = [('ID', 'ID', False, 237576.0000, None),
             ('ACQ1', 'ACQ', False, 237576.0000, None),
             ('ACQ1', 'ACQ', True, None, 100000)]
+@pytest.mark.skipif(JENKINS, reason="Can't access prc templates on CI")
 @pytest.mark.parametrize('step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate', prc_list)
 def test_prc_thresholds(test_directory, step, step_name, use_oss_defaults, guide_star_countrate, catalog_countrate):
     """Check the right thresholds make it into the ACQ prc files"""

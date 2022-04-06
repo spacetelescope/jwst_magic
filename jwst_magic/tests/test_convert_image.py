@@ -1,10 +1,6 @@
 """Collection of unit tests to verify the correct function of the Image
 Conversion tool.
 
-TODO
-(In the future, this will) Runs the following tests:
-    1. Test all of convert_image
-
 Authors
 -------
     - Keira Brooks
@@ -39,8 +35,9 @@ import pytest
 
 from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.convert_image import convert_image_to_raw_fgs
-from jwst_magic.utils import utils
+from jwst_magic.utils import utils, coordinate_transforms
 
+JENKINS = '/home/developer/workspace/' in os.getcwd()
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_convertim"
@@ -84,8 +81,9 @@ norm_parameters = [
     (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1812.),
     (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 5770.),
     (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6445.),  # uses fgs_mag = 12 by default
-    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 141800.), # NRC contains TEST keyword - tests ped
-    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.), # non-ITM FGS image - tests ped
+    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 141800. if not JENKINS else 141754),
+        # NRC contains TEST keyword - tests ped; 2 sets of numbers for availability with DQ file on jenkins
+    (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.),  # non-ITM FGS image - tests ped
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
 def test_convert_im_normalization(test_directory, image, guider, nircam, norm_value, norm_unit, itm, data_max):
@@ -134,7 +132,7 @@ def test_transform_sci_to_fgs_raw():
         data = hdulist[1].data
 
     # Transform sci to FGS1 raw
-    image = convert_image_to_raw_fgs.transform_sci_to_fgs_raw(data, 1)
+    image = coordinate_transforms.transform_sci_to_fgs_raw(data, 1)
     sources = utils.find_peaks(image, box_size=5, threshold=np.max(image) * .05)
 
     coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
@@ -142,7 +140,7 @@ def test_transform_sci_to_fgs_raw():
         'Incorrect transformation from DMS/science frame to raw FGS1 frame'
 
     # Transform sci to FGS2 raw
-    image = convert_image_to_raw_fgs.transform_sci_to_fgs_raw(data, 2)
+    image = coordinate_transforms.transform_sci_to_fgs_raw(data, 2)
     sources = utils.find_peaks(image, box_size=5, threshold=np.max(image) * .05)
     coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
     assert np.array_equal(np.array(coords), test_data[1]), \
@@ -156,28 +154,28 @@ def test_transform_nircam_raw_to_fgs_raw():
         data = hdulist[1].data
 
     # Transform NRCA3 raw to FGS1 raw
-    image = convert_image_to_raw_fgs.transform_nircam_raw_to_fgs_raw(data, 'A3', 1)
+    image = coordinate_transforms.transform_nircam_raw_to_fgs_raw(data, 'A3', 1)
     sources = utils.find_peaks(image, box_size=5, threshold=np.max(image) * .05)
     coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
     assert np.array_equal(np.array(coords), test_data[0]),\
         'Incorrect transformation from raw NRCA3 (thus also A1, A5, B2, B4) frame to raw FGS1 frame'
 
     # Transform NRCB1 raw to FGS1 raw
-    image = convert_image_to_raw_fgs.transform_nircam_raw_to_fgs_raw(data, 'B1', 1)
+    image = coordinate_transforms.transform_nircam_raw_to_fgs_raw(data, 'B1', 1)
     sources = utils.find_peaks(image, box_size=5, threshold=np.max(image) * .05)
     coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
     assert np.array_equal(np.array(coords), test_data[1]), \
         'Incorrect transformation from raw NRCB1 (thus also A2, A4, B3, B5) frame to raw FGS1 frame'
 
     # Transform NRCA5 raw to FGS2 raw
-    image = convert_image_to_raw_fgs.transform_nircam_raw_to_fgs_raw(data, 'A5', 2)
+    image = coordinate_transforms.transform_nircam_raw_to_fgs_raw(data, 'A5', 2)
     sources = utils.find_peaks(image, box_size=5, threshold=np.max(image) * .05)
     coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
     assert np.array_equal(np.array(coords), test_data[2]), \
         'Incorrect transformation from raw NRCA5 (thus also A1, A3, B2, B4) frame to raw FGS2 frame'
 
     # Transform NRCB1 raw to FGS2 raw
-    image = convert_image_to_raw_fgs.transform_nircam_raw_to_fgs_raw(data, 'B1', 2)
+    image = coordinate_transforms.transform_nircam_raw_to_fgs_raw(data, 'B1', 2)
     sources = utils.find_peaks(image, box_size=5, threshold=np.max(image) * .05)
     coords = [(x, y) for (x, y) in sources['x_peak', 'y_peak']]
     assert np.array_equal(np.array(coords), test_data[3]), \

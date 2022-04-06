@@ -20,6 +20,7 @@ Use
 """
 
 from astropy import units as u
+import numpy as np
 import pysiaf
 
 # Open SIAF with pysiaf
@@ -251,3 +252,87 @@ def convert_sky_to_idl(gs_ra, gs_dec, pa, ra_list, dec_list, guider, oss=False):
     idl_x, idl_y = fgs.sky_to_idl(ra_list * u.deg, dec_list * u.deg)
 
     return idl_x.round(decimals=7), idl_y.round(decimals=7)
+
+
+def transform_sci_to_fgs_raw(image, to_fgs_detector):
+    """Rotate NIRCam or FGS image from DMS/science coordinate frame
+    (the expected frame for output DMS images) to FGS raw. Note that
+    it is not necessary to specify the input image detector because
+    the DMS coordinate frame is identical for all FGS and NIRCam
+    detectors.
+
+    Parameters
+    ----------
+    image : 2-D numpy array
+        Input image data
+    to_fgs_detector : int
+        Guider number of the desired output image (1 or 2)
+
+    Returns
+    -------
+    image : 2-D numpy array
+        Image data with coordinate frame transformation applied
+
+    """
+    # Get the Det2Sci angle and parity from the SIAF
+    to_fgs_detector = 'FGS' + str(to_fgs_detector)
+    fgs_siaf = pysiaf.Siaf('FGS')
+    aperture = fgs_siaf['{}_FULL'.format(to_fgs_detector)]
+    angle = aperture.DetSciYAngle
+    parity = aperture.DetSciParity
+
+    # Flip the X axis according to the parity
+    if parity == -1:
+        image = np.fliplr(image)
+
+    # Rotate the image according to the angle
+    n_90_deg_rots = angle // 90
+    image = np.rot90(image, k=n_90_deg_rots)
+
+    # Because goal is FGS raw (not det), swap X and Y
+    image = np.swapaxes(image, 0, 1)
+
+    return image
+
+
+def transform_nircam_raw_to_fgs_raw(image, from_nircam_detector, to_fgs_detector):
+    """Transform image from NIRCam detector raw/det coordinate frame to FGS
+    raw, using transformations as defined by the Science Instrument
+    Aperture File (SIAF).
+
+    Parameters
+    ----------
+    image : 2-D numpy array
+        Input image data
+    from_nircam_detector : str
+        Name of NIRCam detector of the input image (A1, A2, A3, A4, A5,
+        B1, B2, B3, B4, or B5)
+    to_fgs_detector : int
+        Guider number of the desired output image (1 or 2)
+
+    Returns
+    -------
+    image : 2-D numpy array
+        Image data with coordinate frame transformation applied
+    """
+
+    # 1) Transform to NIRCam sci
+    # Get the Det2Sci angle and parity from the SIAF
+    from_nircam_detector = 'NRC' + from_nircam_detector
+    nircam_siaf = pysiaf.Siaf('NIRCam')
+    aperture = nircam_siaf['{}_FULL'.format(from_nircam_detector)]
+    angle = aperture.DetSciYAngle
+    parity = aperture.DetSciParity
+
+    # Flip the X axis according to the parity
+    if parity == -1:
+        image = np.fliplr(image)
+
+    # Rotate the image according to the angle
+    n_90_deg_rots = angle // 90
+    image = np.rot90(image, k=n_90_deg_rots)
+
+    # 2) Transform to FGS raw
+    image = transform_sci_to_fgs_raw(image, to_fgs_detector)
+
+    return image
