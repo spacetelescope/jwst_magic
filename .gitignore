@@ -77,3 +77,9 @@ jwst_magic.egg-info/*
 # PyCharm #
 ###########
 .idea/*
+
+# Reference files #
+########################
+jwst_magic/data/reference_files
+jwst_magic/data/templates
+jwst_magic/data/readnoise.yaml

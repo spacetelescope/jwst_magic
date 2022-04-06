@@ -1,22 +1,6 @@
 """Collection of unit tests to verify the correct function of the Segment
 Guiding tool.
 
-TODO
-(In the future, this will) Runs the following tests:
-    1. Test all of the different parameters in run_tool individually.
-    2. Test with the params dict with ra, dec, and/or pa set to None
-    3. Test with the params dict with ra, dec, and/or pa set to floats
-    4. Test with the params dict with ra, dec, and/or pa set to ints
-    5. Test with the params dict with ra, dec, and/or pa set out of range
-    6. Test with parameter_dialog turned on with ra, dec, and/or pa set to None
-    7. Test with parameter_dialog turned on with ra, dec, and/or pa set to floats
-    8. Test with parameter_dialog turned on with ra, dec, and/or pa set to ints
-    9. Test with parameter_dialog turned on with ra, dec, and/or pa set out of range
-    10. Test with program_id, observation_num, and/or visit_num set to ints
-    11. Test with program_id, observation__num, and/or visit_num set to strings
-    12. Test with program_id, observation__num, and/or visit_num set to floats
-    13. Test with SEGMENT_INFILE and/or guide set to None
-
 Authors
 -------
     - Keira Brooks

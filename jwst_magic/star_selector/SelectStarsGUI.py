@@ -90,10 +90,10 @@ matplotlib.rcParams['mathtext.bf'] = 'serif:normal'
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.split(__location__)[0]
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
-WSS_NUMBERS_G1 = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider1.png')
-WSS_NUMBERS_G2 = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider2.png')
-WSS_NUMBERS_G1_INVERTED = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider1_inverted.png')
-WSS_NUMBERS_G2_INVERTED = os.path.join(DATA_PATH, 'fgs_raw_orientation_numbering_wss_guider2_inverted.png')
+WSS_NUMBERS_G1 = os.path.join(DATA_PATH, 'fgs_raw_orientation_wss_numbering', 'guider1.png')
+WSS_NUMBERS_G2 = os.path.join(DATA_PATH, 'fgs_raw_orientation_wss_numbering', 'guider2.png')
+WSS_NUMBERS_G1_INVERTED = os.path.join(DATA_PATH, 'fgs_raw_orientation_wss_numbering', 'guider1_inverted.png')
+WSS_NUMBERS_G2_INVERTED = os.path.join(DATA_PATH, 'fgs_raw_orientation_wss_numbering', 'guider2_inverted.png')
 
 
 class StarClickerMatplotlibCanvas(FigureCanvas):
@@ -1080,7 +1080,7 @@ class StarSelectorWindow(QDialog):
         self.tableWidget_commands.setItem(n_commands, 0, item)
         self.n_orientations += 1
 
-        # Update the canvas TODO: do this for the last row of the table only
+        # Update the canvas
         for i_row, ind in enumerate(selected_indices):
             ind = ind - 1
             gs = i_row == 0

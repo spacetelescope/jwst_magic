@@ -949,13 +949,6 @@ class MainGui(QMainWindow):
         elif self.sender() == self.checkBox_noSmoothing and self.checkBox_noSmoothing.isChecked():
             self.checkBox_globalAlignment.setChecked(False)
 
-    def toggle_convert_im(self):
-        # TODO: it's unclear why I (KJB) set this to false. but we want to be able
-        # to normalize ITM images so I have commented this out until I better understand it
-        # if self.itm:
-        #     self.checkBox_normalize.setEnabled(False)
-        pass
-
     def update_segment_guiding_shift(self):
         """This gets triggered when you select the segment guiding
         box or when you click one of the id attitude radio buttons"""

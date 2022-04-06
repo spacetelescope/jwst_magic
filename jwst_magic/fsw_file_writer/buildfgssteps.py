@@ -82,7 +82,7 @@ class BuildFGSSteps(object):
     def __init__(self, im, guider, root, step, guiding_selections_file=None, configfile=None,
                  out_dir=None, thresh_factor=0.6, logger_passed=False, psf_center_file=None,
                  shift_id_attitude=True, use_oss_defaults=False, catalog_countrate=None,
-                 override_bright_guiding=False):
+                 override_bright_guiding=False, use_readnoise=True):
         """Initialize the class and call build_fgs_steps().
         """
         # Check path exists
@@ -106,6 +106,7 @@ class BuildFGSSteps(object):
             self.catalog_countrate = catalog_countrate
             self.threshold = None
             self.override_bright_guiding = override_bright_guiding
+            self.use_readnoise = use_readnoise
             if 'config' in guiding_selections_file:
                 self.config = guiding_selections_file.split('/')[-1].split('.txt')[0].split('config')[-1]
             else:
@@ -224,9 +225,6 @@ class BuildFGSSteps(object):
                                                                   normal_ops=self.use_oss_defaults,
                                                                   override_bright_guiding=self.override_bright_guiding)
 
-        # TODO: Add case that extracts countrates from input_im and the x/y
-        # coords/inds so this module is no longer dependent on ALLpsfs
-
     def build_step(self, section, configfile=None):
         """Read out the parameters in the config.ini, and alter class
         attributes to build the current step accordingly.
@@ -306,7 +304,7 @@ class BuildFGSSteps(object):
             nramps = config_ini.getint(step, 'nramps')
             det_eff = detector_effects.FGSDetectorEffects(
                 self.guider, self.xarr, self.yarr, self.nreads, nramps,
-                config_ini.getint(step, 'imgsize')
+                config_ini.getint(step, 'imgsize'), self.use_readnoise
             )
             self.bias = det_eff.add_detector_effects()
 
@@ -385,14 +383,19 @@ class BuildFGSSteps(object):
         array_bounds : list, tuple
             The subarray location of the step
         """
-        dq_file = os.path.join(DATA_PATH, 'fgs_dq_G{}.fits'.format(self.guider))
-        dq_arr = np.copy(fits.getdata(dq_file))
+        try:
 
-        # Cut and duplicate DQ to match shape of bias file
-        xlow, xhigh, ylow, yhigh = array_bounds
-        dq_arr = dq_arr[xlow:xhigh, ylow:yhigh]
-        dq_arr = np.stack([dq_arr] * nramps * nreads, axis=0)
-        image[dq_arr == 1] = 0
+            dq_file = os.path.join(DATA_PATH, 'reference_files',
+                                   'fgs_dq_G{}.fits'.format(self.guider))
+            dq_arr = np.copy(fits.getdata(dq_file))
+
+            # Cut and duplicate DQ to match shape of bias file
+            xlow, xhigh, ylow, yhigh = array_bounds
+            dq_arr = dq_arr[xlow:xhigh, ylow:yhigh]
+            dq_arr = np.stack([dq_arr] * nramps * nreads, axis=0)
+            image[dq_arr == 1] = 0
+        except FileNotFoundError:
+            LOGGER.error('FSW File Writing: Cannot find DQ file in repository. **No DQ data added.**')
 
         return image
 
@@ -637,8 +640,6 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
 
     LOGGER.info("FSW File Writing: Shifting guide star to ID attitude ({}, {})".format(xend, yend))
     shifted_image = shift(image, (dy, dx), mode='constant', cval=bkg, prefilter=True)
-    # TODO: ? Should we be shifting the seed image and re-adding the bias on top of it?
-    # TODO: Save out seed and bias separately, shift seed here, and re-add bias on top of it
 
     # 2) Write new shifted guiding_selections*.txt
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -720,7 +721,7 @@ def shift_to_id_attitude(image, root, guider, out_dir, guiding_selections_file,
     # Load header file (try to use the converted image to get distortion information)
     header_file = os.path.join(out_dir.split(root)[0], root, 'FGS_imgs', f'unshifted_{root}_G{guider}.fits')
     if not os.path.exists(header_file):
-        header_file = os.path.join(DATA_PATH, 'newG{}magicHdrImg.fits'.format(guider))
+        header_file = os.path.join(DATA_PATH, 'header_g{}.fits'.format(guider))
     hdr = fits.getheader(header_file, ext=0)
     hdr['IDATTPIX'] = (hdr_keyword, 'Image shifted to place GS at ID attitude')
 

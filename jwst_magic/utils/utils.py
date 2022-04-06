@@ -15,16 +15,17 @@ Use
 # STDLIB
 from collections import OrderedDict
 import csv
+import datetime
 import itertools
 import logging
 import logging.config
 import os
 import re
-import requests
 import string
 import socket
 import sys
 import time
+import requests
 import yaml
 
 # Third Party
@@ -36,8 +37,12 @@ import pandas as pd
 import photutils
 from PyQt5.QtCore import QFile, QDir
 
+# Local Imports
+from jwst_magic.utils import coordinate_transforms
+
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
-LOG_CONFIG_FILE = os.path.join(PACKAGE_PATH, 'data', 'logging.yaml')
+DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
+LOG_CONFIG_FILE = os.path.join(DATA_PATH, 'logging.yaml')
 
 # Start logger
 LOGGER = logging.getLogger(__name__)
@@ -81,7 +86,7 @@ def create_logger_from_yaml(module_name, path=LOG_CONFIG_FILE, out_dir_root='',
     log_path = determine_log_path(out_dir_root)
 
     # Parse logging level input
-    if type(level) != int:
+    if not isinstance(level, int):
         if level.upper() == 'DEBUG':
             level = logging.DEBUG
         elif level.upper() == 'INFO':
@@ -137,9 +142,8 @@ def determine_log_path(out_dir_path):
     if os.path.exists(out_dir_path):
         log_path = out_dir_path
     else:
-        if on_sogs_network():
-            log_path = "***REMOVED***/guiding/MAGIC_logs/"
-        else:
+        log_path = os.environ.get('MAGIC_LOG_LOCATION')
+        if not log_path:
             log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
         ensure_dir_exists(log_path)
 
@@ -789,7 +793,7 @@ def convert_bad_pixel_mask_data(bad_pix_data, bad_pix_values=None, nircam=True):
     return data, pix_dict
 
 
-def convert_bad_pixel_mask_files(filepath, nircam):
+def convert_bad_pixel_mask_files(filepath, out_filepath, instrument):
     """
     Converts a NIRCam or FGS bad pixel mask file to a format MAGIC can use,
     switching from bit values to 1s and 0s, where 0s are good and
@@ -797,8 +801,10 @@ def convert_bad_pixel_mask_files(filepath, nircam):
     do_not_use, dead, hot, telegraph, bad_ref_pix, and RC.
 
     filepath : str path to input file
-    nircam: bool for if NIRCam data. True includes the do not use flag
+    out_filepath: str path to where to save file
+    instrument: str FGS or NIRCAM. Use of NIRCAM will include the do not use flag
     """
+    nircam = True if instrument.lower() == 'nircam' else False
     # Read in file
     with fits.open(filepath) as bad_pix_hdu:
         bad_pix_hdr = bad_pix_hdu[0].header
@@ -818,13 +824,166 @@ def convert_bad_pixel_mask_files(filepath, nircam):
                              f'bad pixel attributes: {", ".join(pix_dict.keys())}.'
 
     # Save out file
-    det = bad_pix_hdr['DETECTOR']
-    if nircam:
-        filepath_new = os.path.join(os.path.dirname(filepath), f'nircam_dq_{det.lower()}.fits')
+    write_fits(out_filepath, [data], header=[bad_pix_hdr], log=LOGGER)
+
+
+def rotate_zero_bias_file(bias_file, expected_filepath, guider):
+    """
+    Given a bias file from the CRDS, rotate to the FGS raw reference frame
+    """
+    ensure_dir_exists(os.path.dirname(expected_filepath))
+    hdu = fits.open(bias_file)
+    header = hdu[0].header
+    image = hdu['SCI'].data
+    new_image = coordinate_transforms.transform_sci_to_fgs_raw(image,
+                                                               to_fgs_detector=guider)
+
+    header['ORIGFILE'] = os.path.basename(bias_file)
+    header['HISTORY'] = 'This file was updated by jwst_magic software to be rotated from the DMS Science ' \
+                        f'Frame into the FGS{guider} Raw Frame'
+    hdul = fits.PrimaryHDU(data=new_image, header=header)
+    hdul.writeto(expected_filepath, overwrite=True)
+
+
+def check_reference_files():
+    """
+    Given a file path, file type, and the detector that it is for, check if the reference
+    file exists in MAGIC and is the right one, and if not, pull the latest file from CRDS
+    and convert it as needed.
+    """
+    # Set CRDS server
+    crds_server = os.environ.get('CRDS_SERVER_URL')
+    if crds_server is None:
+        os.environ["CRDS_SERVER_URL"] = "https://jwst-crds.stsci.edu"
+
+    # Open the bad pixel mask yaml file that will indicate where those files should live
+    with open(os.path.join(DATA_PATH, 'bad_pixel_mask.yaml')) as f:
+        bad_pixel_map_yaml = yaml.safe_load(f.read())
+
+    # There is only one case where we don't grab a new file so we set the default to True
+    dets = {'GUIDER1': 'FGS',
+            'GUIDER2': 'FGS',
+            'NRCA1': 'NIRCAM',
+            'NRCA2': 'NIRCAM',
+            'NRCA3': 'NIRCAM',
+            'NRCA4': 'NIRCAM',
+            'NRCALONG': 'NIRCAM',
+            'NRCB1': 'NIRCAM',
+            'NRCB2': 'NIRCAM',
+            'NRCB3': 'NIRCAM',
+            'NRCB4': 'NIRCAM',
+            'NRCBLONG': 'NIRCAM',
+            }
+    for detector, instrument in dets.items():
+        # Set parameters for CRDS query
+        imaging = f'{instrument}_IMAGE'
+        reftypes = ['MASK']
+        if instrument.lower() == 'nircam':
+            read_pattern = 'ANY'
+        elif instrument.lower() == 'fgs':
+            read_pattern = 'FGSRAPID'
+            reftypes.append('SUPERBIAS')
+        current_date = datetime.datetime.now()
+        parameters = {'INSTRUME': instrument, 'DETECTOR': detector,
+                      'SUBARRAY': 'FULL', 'EXP_TYPE': imaging,
+                      'READPATT': read_pattern,
+                      'DATE-OBS': datetime.date.today().isoformat(),
+                      'TIME-OBS': current_date.time().isoformat()}
+
+        reffile_mapping = get_reffiles(parameters, reftypes, download=False)
+        for reftype in reftypes:
+            grab_new_file = True
+            if reftype == 'MASK':
+                # If we are comparing the bad pixel masks, look for filenames in bad_pixel_mask.yaml
+                expected_filepath = os.path.join(DATA_PATH,
+                                                 bad_pixel_map_yaml[instrument][detector])
+                if os.path.exists(expected_filepath):
+                    # We want grab a new file if the filenames do NOT match
+                    original_filename = get_original_filename(expected_filepath)
+                    grab_new_file = original_filename != reffile_mapping[reftype.lower()]
+                if grab_new_file:
+                    # Download the file
+                    mask_mapping = get_reffiles(parameters, [reftype], download=True)
+                    print(f"Grabbing latest {instrument} {detector} mask file from CRDS: "
+                          f"{os.path.basename(mask_mapping[reftype.lower()])}")
+                    convert_bad_pixel_mask_files(mask_mapping[reftype.lower()], expected_filepath,
+                                                 instrument)
+            else:
+                # If we are comparing bias files names, this is only for FGS
+                expected_filepath = os.path.join(DATA_PATH, 'reference_files',
+                                                 f'g{detector[-1]}bias0.fits')
+                if os.path.exists(expected_filepath):
+                    # We want grab a new file if the filenames do NOT match
+                    original_filename = get_original_filename(expected_filepath)
+                    grab_new_file = original_filename != reffile_mapping[reftype.lower()]
+                if grab_new_file:
+                    # Download the file
+                    bias_mapping = get_reffiles(parameters, [reftype], download=True)
+                    print(f"Grabbing latest  {instrument} {detector} bias files from CRDS: "
+                          f"{os.path.basename(bias_mapping[reftype.lower()])}")
+                    rotate_zero_bias_file(bias_mapping[reftype.lower()], expected_filepath,
+                                          detector[-1])
+
+
+def get_original_filename(filepath):
+    """
+    From a fits header, get the value for the 'ORIGFILE' keyword.
+    """
+    header = fits.getheader(filepath)
+    original_filename = header['ORIGFILE']
+    return original_filename
+
+
+def get_reffiles(parameter_dict, reffile_types, download=True):
+    """Adapted from mirage.crds_tools
+    Determine CRDS's best reference files to use for a particular
+    observation, and download them if they are not already present in
+    the CRDS_PATH. The determination is made based on the information in
+    the parameter_dictionary.
+
+    Parameters
+    ----------
+    parameter_dict : dict
+        Dictionary of basic metadata from the file to be processed by the
+        returned reference files (e.g. INSTRUME, DETECTOR, etc)
+    reffile_types : list
+        List of reference file types to look up and download. These must
+        be contained in CRDS's list of reference file types.
+    download : bool
+        If True (default), the identified best reference files will be
+        downloaded. If False, the dictionary of best reference files will
+        still be returned, but the files will not be downloaded. The use
+        of False is primarily intended to support testing on CI.
+    """
+    # IMPORTANT: Import of crds package must be done AFTER the environment
+    # variables are set in the functions above
+    import crds
+    from crds import CrdsLookupError
+
+    if download:
+        try:
+            reffile_mapping = crds.getreferences(parameter_dict, reftypes=reffile_types,
+                                                 context=None, ignore_cache=False,
+                                                 observatory="jwst")
+        except CrdsLookupError:
+            raise ValueError("ERROR: CRDSLookupError when trying to find reference files "
+                             "for parameters: {}".format(parameter_dict))
+
     else:
-        guider = det.replace('UIDER', '')
-        if 'stacked' in filepath.lower():
-            filepath_new = os.path.join(os.path.dirname(filepath), f'fgs_dq_{guider}_stacked.fits')
-        else:
-            filepath_new = os.path.join(os.path.dirname(filepath), f'fgs_dq_{guider}.fits')
-    write_fits(filepath_new, [data], header=[bad_pix_hdr], log=LOGGER)
+        # If the files will not be downloaded, still return the same local
+        # paths that are returned when the files are downloaded.
+        try:
+            reffile_mapping = crds.getrecommendations(parameter_dict, reftypes=reffile_types,
+                                                      context=None, ignore_cache=False,
+                                                      observatory="jwst", fast=True)
+        except CrdsLookupError:
+            raise ValueError("ERROR: CRDSLookupError when trying to find reference files "
+                             "for parameters: {}".format(parameter_dict))
+
+    # Check for missing files
+    for key, value in reffile_mapping.items():
+        if "NOT FOUND" in value:
+            raise ValueError("ERROR: No {} reference file found when using parameter "
+                             "dictionary: {}".format(key, parameter_dict))
+
+    return reffile_mapping

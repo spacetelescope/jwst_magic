@@ -70,13 +70,13 @@ When provided with:
 
 the segment guiding tool calculates the effective RA and Dec of all segments on the sky. This information can then be used to override the guide star catalog with new RA, Dec, and count rate values for the requested guide and reference star PSFs
 
-  [Section VII: Writing the Segment Override File (SOF)](vii_write_sof.md)
+  [Section VI: Writing the Segment Override File (SOF)](vi_write_sof.md)
 
 **Photometry Override**
 
 When provided with a count rate factor and a threshold factor, the tool will provide the necessary information to override the guide star catalog with a new count rate for a specific guide star
 
-  [Section VIII: Writing the Photometry Override File (POF)](viii_write_pof.md)
+  [Section VII: Writing the Photometry Override File (POF)](vii_write_pof.md)
 
 ----------------------------------------------------
 
@@ -88,16 +88,10 @@ When provided with a count rate factor and a threshold factor, the tool will pro
 
 ###### Section IV: [Selecting Guide & Reference Stars for an Input Image and Writing Out Files](iv_select_stars_and_write_files.md)
 
-###### Section V: [Testing Selections in DHAS](v_testing_in_dhas.md)
+###### Section V: [Contingency: Re-selecting Stars](v_contingency_reselect_stars.md)
 
-###### Section VI: [Contingency: Re-selecting Stars and Re-running DHAS](vi_contingency_reselect_stars.md)
+###### Section VI: [Writing the Segment Override File (SOF)](vi_write_sof.md)
 
-###### Section VII: [Writing the Segment Override File (SOF)](vii_write_sof.md)
+###### Section VII: [Writing the Photometry Override File (POF)](vii_write_pof.md)
 
-###### Section VIII: [Writing the Photometry Override File (POF)](viii_write_pof.md)
-
-###### Appendix A: [Installing the JWST MAGIC Package](appendix_a_installing_magic.md)
-
-###### Appendix B: [Setting Up DHAS](appendix_b_opening_dhas.md)
-
-###### Appendix C: [Mirror State Procedures](appendix_c_mirror_states.md)
+###### Appendix A: [Mirror States Expected During JWST OTE Commissioning](appendix_mirror_states.md)

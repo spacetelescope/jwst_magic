@@ -1,8 +1,12 @@
 import importlib
 import os
-import pkg_resources
 import socket
 import subprocess
+import pkg_resources
+
+from crds import CrdsLookupError, CrdsNetworkError, CrdsDownloadError
+
+from .utils.utils import check_reference_files
 
 JENKINS = '/home/developer/workspace/' in os.getcwd()
 if not JENKINS:
@@ -59,3 +63,11 @@ else:
     # The SOGS case cannot be checked due to network access on SOGS machines
     print("Your MAGIC package is up to date")
     print("Your FGS Countrate package is up to date")
+
+# Make sure that all of our references are up to date and saved locally
+if not JENKINS:
+    try:
+        check_reference_files()
+    except (FileNotFoundError, CrdsLookupError, CrdsNetworkError, CrdsDownloadError, ValueError):
+        print('Warning: Cannot check for newest reference files. See solutions '
+              'https://github.com/spacetelescope/jwst_magic#running-the-tools')

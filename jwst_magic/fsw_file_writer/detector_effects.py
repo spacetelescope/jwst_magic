@@ -34,20 +34,26 @@ Notes
 
 # Standard Library Imports
 import os
+import logging
 
 # Third Party Imports
 from astropy.io import fits
 import numpy as np
 import yaml
 
+# Local Imports
+from jwst_magic.utils import utils
+
 # Paths
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.split(__location__)[0]
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
-BIASZERO_G1 = os.path.join(DATA_PATH, 'g1bias0.fits')
-BIASZERO_G2 = os.path.join(DATA_PATH, 'g2bias0.fits')
+BIASZERO_G1 = os.path.join(DATA_PATH, 'reference_files', 'g1bias0.fits')
+BIASZERO_G2 = os.path.join(DATA_PATH, 'reference_files', 'g2bias0.fits')
 READ_NOISE = os.path.join(DATA_PATH, 'readnoise.yaml')
 
+# Start logger
+LOGGER = logging.getLogger(__name__)
 
 class FGSDetectorEffects:
     """Fetch the bias file for the specified guider, crop to the
@@ -68,6 +74,9 @@ class FGSDetectorEffects:
         Number of ramps in the integration
     imgsize : int
         Dimension of the image array (pixels)
+    use_readnoise : bool, True
+        Include the readnoise data in the detector effects. Only
+        False for testing case.
 
     Returns
     -------
@@ -79,7 +88,7 @@ class FGSDetectorEffects:
     ValueError
         Invalid guider number provided
     """
-    def __init__(self, guider, xcoord, ycoord, nreads, nramps, imgsize):
+    def __init__(self, guider, xcoord, ycoord, nreads, nramps, imgsize, use_readnoise=True):
         # Check that the guider is valid
         if int(guider) not in [1, 2]:
             raise ValueError("Guider {} not recognized.".format(guider))
@@ -90,6 +99,7 @@ class FGSDetectorEffects:
         self.nreads = nreads
         self.nramps = nramps
         self.imgsize = imgsize
+        self.use_readnoise = use_readnoise
 
         # Create an empty array of the appropriate size
         self.bias = np.zeros((nramps * nreads, imgsize, imgsize))
@@ -109,7 +119,8 @@ class FGSDetectorEffects:
         """
         # Add bias and noise
         self.add_zeroth_read_bias()
-        self.add_read_noise()
+        if self.use_readnoise:
+            self.add_read_noise()
         self.add_ktc_noise()
         # bias = add_pedestal()
 
@@ -195,30 +206,32 @@ class FGSDetectorEffects:
         """Add read noise to every frame.
         """
         # Load all the read noise values from the yaml
-        with open(READ_NOISE, encoding="utf-8") as f:
-            read_noise_dict = yaml.safe_load(f.read())
+        try:
+            with open(READ_NOISE, encoding="utf-8") as f:
+                read_noise_dict = yaml.safe_load(f.read())
+            # Get the read noise value for the current step
+            array_size = self.imgsize if self.imgsize != 43 else 32
+            read_noise = read_noise_dict['guider{}'.format(self.guider)][array_size]
 
-        # Get the read noise value for the current step
-        array_size = self.imgsize if self.imgsize != 43 else 32
-        read_noise = read_noise_dict['guider{}'.format(self.guider)][array_size]
-
-        # Add normally distributed read noise to the bias, with a mean value = 0 and STD = read noise
-        self.bias += np.random.normal(loc=0, scale=read_noise, size=np.shape(self.bias)).astype(int)
+            # Add normally distributed read noise to the bias, with a mean value = 0 and STD = read noise
+            self.bias += np.random.normal(loc=0, scale=read_noise, size=np.shape(self.bias)).astype(int)
+        except FileNotFoundError:
+            LOGGER.error('Detector Effects: Cannot find readnoise.yaml in repository. **No read noise added.**')
 
     def add_zeroth_read_bias(self):
         """Add zeroth read bias structure to every frame.
         """
         # Open the zeroth read bias structure file
-        if self.guider == 1:
-            bias_file = BIASZERO_G1
-        else:
-            bias_file = BIASZERO_G2
-        bias0 = np.copy(fits.getdata(bias_file))
+        bias_file = BIASZERO_G1 if self.guider == 1 else BIASZERO_G2
+        try:
+            bias0 = np.copy(fits.getdata(bias_file))
 
-        xlow, xhigh, ylow, yhigh = self.array_bounds
+            xlow, xhigh, ylow, yhigh = self.array_bounds
 
-        # Get zeroth read bias structure from FITS file
-        self.bias += bias0[xlow:xhigh, ylow:yhigh]
+            # Get zeroth read bias structure from FITS file
+            self.bias += bias0[xlow:xhigh, ylow:yhigh]
+        except FileNotFoundError:
+            LOGGER.error('Detector Effects: Cannot find bias file in repository. **No zeroth read bias added.**')
 
     def get_subarray_location(self):
         """Get the bounds of the subarray for the given step.
