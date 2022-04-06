@@ -383,15 +383,19 @@ class BuildFGSSteps(object):
         array_bounds : list, tuple
             The subarray location of the step
         """
-        dq_file = os.path.join(DATA_PATH, 'reference_files',
-                               'fgs_dq_G{}.fits'.format(self.guider))
-        dq_arr = np.copy(fits.getdata(dq_file))
+        try:
 
-        # Cut and duplicate DQ to match shape of bias file
-        xlow, xhigh, ylow, yhigh = array_bounds
-        dq_arr = dq_arr[xlow:xhigh, ylow:yhigh]
-        dq_arr = np.stack([dq_arr] * nramps * nreads, axis=0)
-        image[dq_arr == 1] = 0
+            dq_file = os.path.join(DATA_PATH, 'reference_files',
+                                   'fgs_dq_G{}.fits'.format(self.guider))
+            dq_arr = np.copy(fits.getdata(dq_file))
+
+            # Cut and duplicate DQ to match shape of bias file
+            xlow, xhigh, ylow, yhigh = array_bounds
+            dq_arr = dq_arr[xlow:xhigh, ylow:yhigh]
+            dq_arr = np.stack([dq_arr] * nramps * nreads, axis=0)
+            image[dq_arr == 1] = 0
+        except FileNotFoundError:
+            LOGGER.error('FSW File Writing: Cannot find DQ file in repository. **No DQ data added.**')
 
         return image
 
