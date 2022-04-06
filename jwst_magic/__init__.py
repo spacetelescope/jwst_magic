@@ -65,8 +65,9 @@ else:
     print("Your FGS Countrate package is up to date")
 
 # Make sure that all of our references are up to date and saved locally
-try:
-    check_reference_files()
-except (FileNotFoundError, CrdsLookupError, CrdsNetworkError, CrdsDownloadError, ValueError):
-    print('Warning: Cannot check for newest reference files. See solutions '
-          'https://github.com/spacetelescope/jwst_magic#running-the-tools')
+if not JENKINS:
+    try:
+        check_reference_files()
+    except (FileNotFoundError, CrdsLookupError, CrdsNetworkError, CrdsDownloadError, ValueError):
+        print('Warning: Cannot check for newest reference files. See solutions '
+              'https://github.com/spacetelescope/jwst_magic#running-the-tools')
