@@ -175,7 +175,8 @@ def test_shift_to_id_attitude(open_image, test_directory, guiding_selections, gu
 
 
 correct_count_rate_parameters = []
-test_data = PARAMETRIZED_DATA['test_correct_count_rate']
+test_data = PARAMETRIZED_DATA['test_correct_count_rate']['without-ref-files'] if JENKINS else \
+    PARAMETRIZED_DATA['test_correct_count_rate']['with-ref-files']
 for guider in [1, 2]:
     for step in ['CAL', 'ID', 'ACQ1', 'ACQ2', 'TRK', 'LOSTRK']:
         g = 'guider{}'.format(guider)

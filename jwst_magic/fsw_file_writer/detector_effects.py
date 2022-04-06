@@ -223,12 +223,15 @@ class FGSDetectorEffects:
         """
         # Open the zeroth read bias structure file
         bias_file = BIASZERO_G1 if self.guider == 1 else BIASZERO_G2
-        bias0 = np.copy(fits.getdata(bias_file))
+        try:
+            bias0 = np.copy(fits.getdata(bias_file))
 
-        xlow, xhigh, ylow, yhigh = self.array_bounds
+            xlow, xhigh, ylow, yhigh = self.array_bounds
 
-        # Get zeroth read bias structure from FITS file
-        self.bias += bias0[xlow:xhigh, ylow:yhigh]
+            # Get zeroth read bias structure from FITS file
+            self.bias += bias0[xlow:xhigh, ylow:yhigh]
+        except FileNotFoundError:
+            LOGGER.error('Detector Effects: Cannot find bias file in repository. **No zeroth read bias added.**')
 
     def get_subarray_location(self):
         """Get the bounds of the subarray for the given step.
