@@ -72,7 +72,7 @@ for (os in matrix_os) {
         // Execute a series of test commands
         bc.test_cmds = [
             // Run pytest
-            "pytest --junitxml=results.xml",
+            "pytest jwst_magic/tests --junitxml=results.xml",
         ]
 
         // Add the build to the matrix
