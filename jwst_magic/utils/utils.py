@@ -142,7 +142,8 @@ def determine_log_path(out_dir_path):
     if os.path.exists(out_dir_path):
         log_path = out_dir_path
     else:
-        log_path = os.environ.get('MAGIC_LOG_LOCATION')
+        out_path = os.environ.get('MAGIC_OUT_PATH')
+        log_path = os.path.join(out_path, 'MAGIC_logs')
         if not log_path:
             log_path = os.path.join(os.path.dirname(PACKAGE_PATH), 'logs')
         ensure_dir_exists(log_path)

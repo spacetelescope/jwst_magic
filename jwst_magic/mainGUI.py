@@ -82,7 +82,7 @@ from jwst_magic.utils import utils
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 OUT_PATH = os.path.split(PACKAGE_PATH)[0]  # Location of out/ and logs/ directory
-SOGS_PATH = '***REMOVED***/guiding/'
+MAGIC_OUT_PATH = os.environ.get('MAGIC_OUT_PATH') # Location only for Commissioning Naming
 
 LOGGER = logging.getLogger(__name__)
 
@@ -303,7 +303,7 @@ class MainGui(QMainWindow):
 
         # If on SOGS, pull out folder names from existing directories
         else:
-            sogs_search = utils.join_path_qt(SOGS_PATH, '*')
+            sogs_search = utils.join_path_qt(MAGIC_OUT_PATH, '*')
             sogs_dirs = [QDir(dir).dirName() for dir in glob.glob(sogs_search)]
             for d in ['data', 'processing', 'MAGIC_logs', 'wf_guiding_training', 'analysis_notebooks',
                       'Practices_and_Rehearsals', 'test_practice']:
@@ -390,7 +390,7 @@ class MainGui(QMainWindow):
             root_dir = QDir(utils.join_path_qt(out_dir, 'out', root))
         elif self.radioButton_name_commissioning.isChecked():
             root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
-            out_dir = utils.join_path_qt(SOGS_PATH,
+            out_dir = utils.join_path_qt(MAGIC_OUT_PATH,
                                          self.comboBox_practice.currentText(),
                                          self.comboBox_car.currentText().lower().replace('-', ''),
                                          )
@@ -840,7 +840,7 @@ class MainGui(QMainWindow):
             out_dir = self.textEdit_out.toPlainText().rstrip()
         elif self.radioButton_name_commissioning.isChecked():
             root = 'for_obs{:02d}'.format(int(self.lineEdit_obs.text()))
-            out_dir = utils.join_path_qt(SOGS_PATH,
+            out_dir = utils.join_path_qt(MAGIC_OUT_PATH,
                                          self.comboBox_practice.currentText(),
                                          self.comboBox_car.currentText().lower().replace('-', ''),
                                          )
@@ -1029,7 +1029,7 @@ class MainGui(QMainWindow):
 
         # Update the preview output path
         if valid_all:
-            path = utils.join_path_qt(SOGS_PATH,
+            path = utils.join_path_qt(MAGIC_OUT_PATH,
                                       self.comboBox_practice.currentText(),
                                       self.comboBox_car.currentText().lower().replace('-', ''),
                                       'out',
