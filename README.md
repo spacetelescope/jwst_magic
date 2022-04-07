@@ -6,10 +6,10 @@
 
 # Multi-Application Guiding Interface for Commissioning (MAGIC)
 
-[![PyPI - License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/spacetelescope/jwql/blob/master/LICENSE)
+[![PyPI - License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/spacetelescope/jwst_magic/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)](https://www.python.org/)
 [![STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
-[![Build Status](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/badge/icon)](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/master/)
+[![Build Status](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/main/badge/icon)](https://ssbjenkins.stsci.edu/job/STScI/job/jwst_magic/job/main/)
 
 > **WARNING**: As of April 2022, active development and maintenance has ceased on this project since it was expected and developed to be used solely during JWST OTE Commissioning which is complete.
 *No further support of this project should be expected.*
@@ -143,7 +143,7 @@ The following is an example of a best work flow for contributing to the project
    short description of the issue (e.g. `JWSTFGS-375-fix-fgs-image-conversion`)
 2. Make your software changes.
 3. Push that branch to your personal GitHub repository (i.e. origin).
-4. On the `jwst_magic` repository, create a pull request that merges the branch into `jwst_magic:master`.
+4. On the `jwst_magic` repository, create a pull request that merges the branch into `jwst_magic:main`.
 5. Assign a reviewer from the team for the pull request.
 6. Iterate with the reviewer over any needed changes until the reviewer accepts and merges your branch.
 7. Delete your local copy of your branch.
