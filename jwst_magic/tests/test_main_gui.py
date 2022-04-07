@@ -47,7 +47,7 @@ INPUT_IMAGE = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')
 INPUT_IMAGE2 = os.path.join(__location__, 'data', 'nircam_mimf_cal.fits')
 COMMAND_FILE = os.path.join(__location__, 'data', 'guiding_selections_test_main_G1.txt')
 
-# Only needed if computer is on SOGS (directory in SOGS_PATH = '***REMOVED***/guiding/')
+# Only used if using commissioning naming
 COM_PRACTICE_DIR = 'magic_pytest_practice'
 
 
