@@ -26,8 +26,7 @@ from jwst_magic.fsw_file_writer.buildfgssteps import OSS_TRIGGER, COUNTRATE_CONV
     BRIGHT_STAR_THRESHOLD_ADDEND
 from jwst_magic.fsw_file_writer.rewrite_prc import rewrite_prc
 from jwst_magic.utils import utils
-
-GHA = '/home/runner/work/' in os.getcwd()
+from jwst_magic.utils.utils import GHA
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 FGS_CMIMF_IM = os.path.join(__location__, 'data', 'fgs_data_2_cmimf.fits')

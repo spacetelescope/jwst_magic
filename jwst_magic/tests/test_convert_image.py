@@ -38,7 +38,7 @@ from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.convert_image import convert_image_to_raw_fgs
 from jwst_magic.utils import utils, coordinate_transforms
 
-GHA = '/home/runner/work/' in os.getcwd()
+from jwst_magic.utils.utils import GHA
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_convertim"

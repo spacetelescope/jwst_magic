@@ -6,9 +6,8 @@ import pkg_resources
 
 from crds import CrdsLookupError, CrdsNetworkError, CrdsDownloadError
 
-from .utils.utils import check_reference_files
+from .utils.utils import GHA, check_reference_files
 
-GHA = '/home/runner/work/' in os.getcwd()
 if not GHA:
     from jwst_magic.mainGUI import run_MainGui as run_tool_GUI
     from jwst_magic.run_magic import run_all as run_tool

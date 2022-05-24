@@ -16,17 +16,16 @@ import shutil
 import sys
 
 import numpy as np
-GHA = '/home/runner/work/' in os.getcwd()
-if not GHA:
-    from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QTableWidgetItem, QDialogButtonBox, QApplication
 import pytest
 
 # Local Imports
 from jwst_magic.utils import utils
+from jwst_magic.utils.utils import GHA
 from jwst_magic.convert_image.background_stars import add_background_stars
 
 if not GHA:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QTableWidgetItem, QDialogButtonBox, QApplication
     from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsDialog
     from jwst_magic.mainGUI import MainGui
 

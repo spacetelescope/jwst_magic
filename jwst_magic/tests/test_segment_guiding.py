@@ -44,20 +44,20 @@ import sys
 
 # Third Party Imports
 import numpy as np
-GHA = '/home/runner/work/' in os.getcwd()
-if not GHA:
-    from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
 import pytest
 import fgscountrate
 
 # Local Imports
 from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.utils import utils, coordinate_transforms
+from jwst_magic.utils.utils import GHA
 from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file, SegmentGuidingCalculator,
                                                         generate_photometry_override_file, GUIDE_STAR_MAX_COUNTRATE,
                                                         REF_STAR_MAX_COUNTRATE)
+
 if not GHA:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
     from jwst_magic.segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
     from jwst_magic.mainGUI import MainGui
 

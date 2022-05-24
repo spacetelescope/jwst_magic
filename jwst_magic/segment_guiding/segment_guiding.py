@@ -52,9 +52,6 @@ from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from jwst.assign_wcs.util import calc_rotation_matrix
 import matplotlib
-GHA = '/home/runner/work/' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not GHA:
-    matplotlib.use("Qt5Agg")
 import matplotlib.path as mpltPath
 import matplotlib.pyplot as plt
 import numpy as np
@@ -62,11 +59,15 @@ import pysiaf
 from pysiaf.utils import rotations
 
 # Local Imports
-if not GHA:
-    from jwst_magic.segment_guiding import SegmentGuidingGUI
 from jwst_magic.convert_image import renormalize
 from jwst_magic.convert_image.convert_image_to_raw_fgs import FGS1_SCALE, FGS2_SCALE
 from jwst_magic.utils import coordinate_transforms, utils
+from jwst_magic.utils.utils import GHA
+
+if not GHA:
+    from jwst_magic.segment_guiding import SegmentGuidingGUI
+if matplotlib.get_backend() != 'Qt5Agg' and not GHA:
+    matplotlib.use("Qt5Agg")
 
 # Start logger
 LOGGER = logging.getLogger(__name__)

@@ -23,16 +23,15 @@ from unittest.mock import patch
 
 # Third Party Imports
 import numpy as np
-GHA = '/home/runner/work/' in os.getcwd()
-if not GHA:
-    from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
 import pytest
 
 # Local Imports
 from jwst_magic.utils import utils
+from jwst_magic.utils.utils import GHA
 
 if not GHA:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
     from jwst_magic.mainGUI import MainGui
 
 SOGS = utils.on_sogs_network()

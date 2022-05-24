@@ -38,9 +38,6 @@ import yaml
 from astropy.io import ascii as asc
 from astropy.io import fits
 import matplotlib
-GHA = '/home/runner/work/' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not GHA:
-    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from matplotlib import rcParams
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
@@ -48,9 +45,13 @@ import numpy as np
 from scipy import ndimage
 
 # Local Imports
+from jwst_magic.utils import utils
+from jwst_magic.utils.utils import GHA
+
 if not GHA:
     from jwst_magic.star_selector import SelectStarsGUI
-from jwst_magic.utils import utils
+if matplotlib.get_backend() != 'Qt5Agg' and not GHA:
+    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 
 # Adjust matplotlib parameters
 rcParams['image.origin'] = 'upper'
