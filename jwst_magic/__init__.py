@@ -8,8 +8,8 @@ from crds import CrdsLookupError, CrdsNetworkError, CrdsDownloadError
 
 from .utils.utils import check_reference_files
 
-JENKINS = '/home/developer/workspace/' in os.getcwd()
-if not JENKINS:
+GHA = '/home/runner/work/' in os.getcwd()
+if not GHA:
     from jwst_magic.mainGUI import run_MainGui as run_tool_GUI
     from jwst_magic.run_magic import run_all as run_tool
 
@@ -30,7 +30,7 @@ except FileNotFoundError:
     __version__ = '0.0.0'
 
 # Make sure that all of our references are up to date and saved locally
-if not JENKINS:
+if not GHA:
     try:
         check_reference_files()
     except (FileNotFoundError, CrdsLookupError, CrdsNetworkError, CrdsDownloadError, ValueError):

@@ -52,8 +52,8 @@ from astropy.coordinates import SkyCoord
 from astropy.io import ascii as asc
 from jwst.assign_wcs.util import calc_rotation_matrix
 import matplotlib
-JENKINS = '/home/developer/workspace/' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
+GHA = '/home/runner/work/' in os.getcwd()
+if matplotlib.get_backend() != 'Qt5Agg' and not GHA:
     matplotlib.use("Qt5Agg")
 import matplotlib.path as mpltPath
 import matplotlib.pyplot as plt
@@ -62,7 +62,7 @@ import pysiaf
 from pysiaf.utils import rotations
 
 # Local Imports
-if not JENKINS:
+if not GHA:
     from jwst_magic.segment_guiding import SegmentGuidingGUI
 from jwst_magic.convert_image import renormalize
 from jwst_magic.convert_image.convert_image_to_raw_fgs import FGS1_SCALE, FGS2_SCALE
@@ -1182,7 +1182,7 @@ def generate_segment_override_file(segment_infile_list, guider,
             )
 
         # Check if there is an existing file with the same prog/obs/visit
-        if not JENKINS:
+        if not GHA:
             overwrite_existing_file = SegmentGuidingGUI.check_override_overwrite(
                 out_dir, program_id, observation_num, visit_num, logger=LOGGER
             )
@@ -1216,7 +1216,7 @@ def generate_segment_override_file(segment_infile_list, guider,
         sg.calculate_effective_ra_dec()
         sg.write_override_file()  # Print and save final output
 
-        if not JENKINS:
+        if not GHA:
             sg.plot_segments()  # Save .pngs of plots
 
     except Exception as e:

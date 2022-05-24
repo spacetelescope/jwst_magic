@@ -38,7 +38,7 @@ from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.convert_image import convert_image_to_raw_fgs
 from jwst_magic.utils import utils, coordinate_transforms
 
-JENKINS = '/home/developer/workspace/' in os.getcwd()
+GHA = '/home/runner/work/' in os.getcwd()
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 ROOT = "test_convertim"
@@ -82,8 +82,8 @@ norm_parameters = [
     (NIRCAM_IM, 1, True, 'N13I000018', 'Guide Star ID', True, 1812.),
     (FGS_GA_IM, 2, False, 12, 'FGS Magnitude', True, 5770.),
     (NIRCAM_IM, 2, True, '', 'Guide Star ID', True, 6445.),  # uses fgs_mag = 12 by default
-    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 141800. if not JENKINS else 141754),
-        # NRC contains TEST keyword - tests ped; 2 sets of numbers for availability with DQ file on jenkins
+    (NIRCAM_PED_IM, 1, True, 12, 'FGS Magnitude', False, 141800. if not GHA else 141754),
+        # NRC contains TEST keyword - tests ped; 2 sets of numbers for availability with DQ file on GHA
     (FGS_PED_IM, 1, False, 12, 'FGS Magnitude', False, 163398.),  # non-ITM FGS image - tests ped
 ]
 @pytest.mark.parametrize('image, guider, nircam, norm_value, norm_unit, itm, data_max', norm_parameters)
