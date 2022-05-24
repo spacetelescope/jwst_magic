@@ -14,9 +14,6 @@
 > **WARNING**: As of April 2022, active development and maintenance has ceased on this project since it was expected and developed to be used solely during JWST OTE Commissioning which is complete.
 *No further support of this project should be expected.*
 
-For use internal to STScI, please clone our mirror repository on grit: https://grit.stsci.edu/JWST-FGS/jwst-magic/
-For developers, see the GitHub repository: https://github.com/spacetelescope/jwst_magic/
-
 Please note that MAGIC has only been developed and used on MacOS machines. Any use on a different operating system may result in errors.
 
 ----------
