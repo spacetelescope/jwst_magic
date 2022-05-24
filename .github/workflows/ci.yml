@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v2
@@ -23,8 +23,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install pytest
-        git clone https://github.com/spacetelescope/jwst-fgs-countrate.git
-        python -m pip install jwst-fgs-countrate/
+        python -m pip install git+https://github.com/spacetelescope/jwst-fgs-countrate
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Run Tests
       run: |
