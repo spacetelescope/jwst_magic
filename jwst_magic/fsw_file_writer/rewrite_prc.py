@@ -6,6 +6,7 @@ without rerunning image conversion and star selection.
 Authors
 -------
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---

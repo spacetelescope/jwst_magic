@@ -11,6 +11,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
@@ -37,9 +38,6 @@ import yaml
 from astropy.io import ascii as asc
 from astropy.io import fits
 import matplotlib
-JENKINS = '/home/developer/workspace/' in os.getcwd()
-if matplotlib.get_backend() != 'Qt5Agg' and not JENKINS:
-    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 from matplotlib import rcParams
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
@@ -47,9 +45,13 @@ import numpy as np
 from scipy import ndimage
 
 # Local Imports
-if not JENKINS:
-    from jwst_magic.star_selector import SelectStarsGUI
 from jwst_magic.utils import utils
+from jwst_magic.utils.utils import GHA
+
+if not GHA:
+    from jwst_magic.star_selector import SelectStarsGUI
+if matplotlib.get_backend() != 'Qt5Agg' and not GHA:
+    matplotlib.use('Qt5Agg')  # Make sure that we are using Qt5
 
 # Adjust matplotlib parameters
 rcParams['image.origin'] = 'upper'
@@ -738,7 +740,7 @@ def select_psfs(data, root, guider, all_found_psfs_path, guiding_selections_file
             guiding_selections_path_list.append(guiding_selections_path)
 
             # Save PNG of image and all PSF locations in out_dir
-            if not JENKINS:
+            if not GHA:
                 plot_selections(data, all_coords, cols, root,
                                os.path.join(out_dir, f'guiding_config_{i}',
                                             f'plot_selections_{root}_G{guider}_config{i}.png'))

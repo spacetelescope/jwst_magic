@@ -16,17 +16,16 @@ import shutil
 import sys
 
 import numpy as np
-JENKINS = '/home/developer/workspace/' in os.getcwd()
-if not JENKINS:
-    from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QTableWidgetItem, QDialogButtonBox, QApplication
 import pytest
 
 # Local Imports
 from jwst_magic.utils import utils
+from jwst_magic.utils.utils import GHA
 from jwst_magic.convert_image.background_stars import add_background_stars
 
-if not JENKINS:
+if not GHA:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QTableWidgetItem, QDialogButtonBox, QApplication
     from jwst_magic.convert_image.background_stars_GUI import BackgroundStarsDialog
     from jwst_magic.mainGUI import MainGui
 
@@ -108,7 +107,7 @@ def test_add_background_stars():
     assert image[200, 1500] != 1 # check a star was added here
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_init_background_stars(bkgdstars_dialog):
     """Make sure the background_stars GUI can launch without errors.
     """
@@ -116,7 +115,7 @@ def test_init_background_stars(bkgdstars_dialog):
     QtCore.QTimer.singleShot(0, bkgdstars_dialog.buttonBox.button(QDialogButtonBox.Cancel).clicked)
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
 def test_run_background_stars_gui_empty(test_directory, qtbot, main_gui):
     """Test that the RA and DEC information from APT get passed through and
@@ -158,7 +157,7 @@ def test_run_background_stars_gui_empty(test_directory, qtbot, main_gui):
         str(exceptions[0][1]), expected_err)
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
 def test_run_background_stars_gui_populated(test_directory, qtbot, main_gui):
     """Test that the RA and DEC information from APT get passed through and
@@ -199,7 +198,7 @@ def test_run_background_stars_gui_populated(test_directory, qtbot, main_gui):
     assert 'background stars added from a GSC query' in main_gui.textEdit_backgroundStars.toPlainText()
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_run_background_stars_gui_query(bkgdstars_dialog):
     """Test running the GUI works when using the GSC query method"""
 
@@ -221,7 +220,7 @@ def test_run_background_stars_gui_query(bkgdstars_dialog):
     assert len(list(bkgdstars_dialog.fgs_mags)) == len(bkgdstars_dialog.hstid)
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_run_background_stars_gui_random(bkgdstars_dialog):
     """Test running the GUI works when using the random method"""
     fgs_mag = 12 # to match the default in the bkgdstars_dialog call
@@ -251,7 +250,7 @@ def test_run_background_stars_gui_random(bkgdstars_dialog):
     assert bkgdstars_dialog.hstid == []
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_run_background_stars_gui_user_input(bkgdstars_dialog):
     """Test running the GUI works when using the user-chosen method"""
     # Create a empty row at bottom of table and add data to row

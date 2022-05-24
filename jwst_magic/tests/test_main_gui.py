@@ -12,7 +12,7 @@ Use
 
 Notes
 -----
-    Add the line `@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")`
+    Add the line `@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")`
     above tests that call pyqt5
 """
 # Standard Library Imports
@@ -23,16 +23,15 @@ from unittest.mock import patch
 
 # Third Party Imports
 import numpy as np
-JENKINS = '/home/developer/workspace/' in os.getcwd()
-if not JENKINS:
-    from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
 import pytest
 
 # Local Imports
 from jwst_magic.utils import utils
+from jwst_magic.utils.utils import GHA
 
-if not JENKINS:
+if not GHA:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
     from jwst_magic.mainGUI import MainGui
 
 SOGS = utils.on_sogs_network()
@@ -92,7 +91,7 @@ def main_gui():
     return main_gui
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
 def test_change_practice_commissioning(main_gui):
     """
@@ -115,7 +114,7 @@ def test_change_practice_commissioning(main_gui):
     assert not mock.called, 'method should not have been called'
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
 def test_change_car_and_obs_commissioning(main_gui):
     """
@@ -162,7 +161,7 @@ def test_change_car_and_obs_commissioning(main_gui):
     np.testing.assert_almost_equal(main_gui.gs_dec, 74.5987576983134, decimal=4)
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
 def test_update_apt_button_commissioning(main_gui):
     """
@@ -209,7 +208,7 @@ def test_update_apt_button_commissioning(main_gui):
     np.testing.assert_almost_equal(main_gui.gs_dec, -74.160993, decimal=4)
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_use_apt_button_manual(main_gui, test_directory):
     """
     Test that re-setting apt to blank re-sets program id/obs/visit attributes
@@ -256,7 +255,7 @@ apt_parameters = [(pytest.param("commissioning", 0, 'SOF', marks=pytest.mark.ski
                   (pytest.param("manual", 1, 'SOF', marks=pytest.mark.skipif(SOGS, reason="SOGS naming not available"))),
                   (pytest.param("manual", 1, 'POF', marks=pytest.mark.skipif(SOGS, reason="SOGS naming not available")))]
 @pytest.mark.parametrize('type, button_name , filetype', apt_parameters)
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_apt_gs_populated(qtbot, main_gui, test_directory, type, button_name, filetype):
     """
     Test APT info + GS Info are populated into segment guiding SOF and POF GUIs
@@ -378,7 +377,7 @@ def test_apt_gs_populated(qtbot, main_gui, test_directory, type, button_name, fi
         str(exceptions[0][1]), expected_err)
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
 @patch('jwst_magic.mainGUI.MainGui.mismatched_apt_guider_dialog', autospec=True)
 def test_apt_guider_disagree_commissioning(mock_dialog, main_gui):
@@ -407,7 +406,7 @@ def test_apt_guider_disagree_commissioning(mock_dialog, main_gui):
     assert mock_dialog.called  # Check dialog box pops up
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @patch("jwst_magic.mainGUI.MainGui.mismatched_apt_guider_dialog", autospec=True)
 def test_apt_guider_disagree_manual(mock_dialog, main_gui, test_directory):
     """
@@ -437,7 +436,7 @@ def test_apt_guider_disagree_manual(mock_dialog, main_gui, test_directory):
     assert mock_dialog.called  # Check dialog box pops up
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_sg_commands(qtbot, main_gui):
     """
     Test that the segment guiding section of the GUI behaves as expected,
@@ -504,7 +503,7 @@ def test_sg_commands(qtbot, main_gui):
     assert len(main_gui.comboBox_guidingcommands.checkedItems()) == 0
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_shifted_data(main_gui):
     """
     Check that if shifted data is created, the following parts of
@@ -557,7 +556,7 @@ def test_shifted_data(main_gui):
     assert shift_cmds[0] == 'Command 1: ' + shifted_file
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @pytest.mark.skipif(not SOGS, reason="SOGS naming not available")
 def test_commissioning_naming_input_errors(qtbot, main_gui):
     """Test that the correct errors come up when bad inputs are loaded in commissioning naming"""

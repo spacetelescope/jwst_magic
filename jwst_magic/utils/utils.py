@@ -40,6 +40,9 @@ from PyQt5.QtCore import QFile, QDir
 # Local Imports
 from jwst_magic.utils import coordinate_transforms
 
+# Define GitHub Actions Variable
+GHA = '/home/runner/work/' in os.getcwd()
+
 PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__)).split('utils')[0]
 DATA_PATH = os.path.join(PACKAGE_PATH, 'data')
 LOG_CONFIG_FILE = os.path.join(DATA_PATH, 'logging.yaml')

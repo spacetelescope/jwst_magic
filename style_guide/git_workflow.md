@@ -44,7 +44,7 @@ Following that, any changes that you want to eventually make to the master branc
 
       e. Click "Commit"
 
-3. Once the changes to your branch have been made, be sure to run tests locally using the command line command `pytest jwst_magic` before pushing your code and creating a pull request. This will allow GUI tests to be run, which cannot be run with Jenkins.
+3. Once the changes to your branch have been made, be sure to run tests locally using the command line command `pytest jwst_magic` before pushing your code and creating a pull request. This will allow GUI tests to be run, which cannot be run with GHA.
 
 
 4. Push the branch to the GitHub repository - this will deliver all committed changes to the branch version on the web which makes it accessible to other team members. The following are the commands to do this:

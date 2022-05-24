@@ -34,7 +34,7 @@ The following are ways to run segment_guiding:
                              parameter_dialog=False)
 
 As of 10/23/2019 there are 39 tests for this module. 4 tests cannot be run with
-Jenkins because they test the GUI.
+GHA because they test the GUI.
 """
 # Standard Library Imports
 from datetime import datetime
@@ -44,20 +44,20 @@ import sys
 
 # Third Party Imports
 import numpy as np
-JENKINS = '/home/developer/workspace/' in os.getcwd()
-if not JENKINS:
-    from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
 import pytest
 import fgscountrate
 
 # Local Imports
 from jwst_magic.tests.utils import parametrized_data
 from jwst_magic.utils import utils, coordinate_transforms
+from jwst_magic.utils.utils import GHA
 from jwst_magic.segment_guiding.segment_guiding import (generate_segment_override_file, SegmentGuidingCalculator,
                                                         generate_photometry_override_file, GUIDE_STAR_MAX_COUNTRATE,
                                                         REF_STAR_MAX_COUNTRATE)
-if not JENKINS:
+
+if not GHA:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QDialogButtonBox, QApplication
     from jwst_magic.segment_guiding.SegmentGuidingGUI import SegmentGuidingDialog
     from jwst_magic.mainGUI import MainGui
 
@@ -295,7 +295,7 @@ def test_fail_photometry_override_file(test_directory, countrate_factor, countra
     assert error in str(excinfo.value)
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_cancel_file_dialog():
     """Raise a segment override file dialog window and cancel it.
     """
@@ -312,7 +312,7 @@ def test_cancel_file_dialog():
     assert not accepted
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_SOF_parameters_dialog():
     # Initialize dialog window
     segment_guiding_dialog = SegmentGuidingDialog("SOF", 1, PROGRAM_ID, OBSERVATION_NUM, VISIT_NUM)
@@ -342,7 +342,7 @@ def test_SOF_parameters_dialog():
 pof_dialog_parameters = [('1142', '8', '2', None, None, (None, '1142', '8', '2', None, 0.0, 0.6)),
                          ('1142', '8', '2', 0.0123, 0.50, (None, '1142', '8', '2', None, 0.0123, 0.50))]
 @pytest.mark.parametrize('program_id, obs_num, visit_num, countrate_factor, countrate_uncertainty_factor, out_params', pof_dialog_parameters)
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
                                countrate_uncertainty_factor, out_params):
     # Initialize dialog window
@@ -372,7 +372,7 @@ def test_POF_parameters_dialog(program_id, obs_num, visit_num, countrate_factor,
     assert params == out_params
 
 
-@pytest.mark.skipif(JENKINS, reason="Can't import PyQt5 on Jenkins server.")
+@pytest.mark.skipif(GHA, reason="Can't import PyQt5 on GHA server.")
 @pytest.mark.skipif(SOGS, reason="Can't import pytest-qt on SOGS machine.")
 def test_no_image_needed_for_pof(qtbot, main_gui):
     """Test that POF dialog box will pop up without an image"""
@@ -442,7 +442,7 @@ def test_write_override_report(test_directory):
     assert os.path.isfile(report_file)
 
     correct_file = '''Guide Star Override Report
-Generated on 2021/07/12 at 14:20:45 by sosborne
+Generated on 2022/05/24 at 17:34:01 by sosborne
 
 Program ID    : 1141
 Observation # : 7
