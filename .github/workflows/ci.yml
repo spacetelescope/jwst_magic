@@ -28,6 +28,10 @@ jobs:
         python -m pip install pytest
         python -m pip install git+https://github.com/spacetelescope/jwst-fgs-countrate
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Print out
+      run: |
+        python -c "import os; os.getcwd()"
+
     - name: Test with pytest
       run: |
         pytest
