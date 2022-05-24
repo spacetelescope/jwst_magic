@@ -15,7 +15,7 @@ Authors
     - Colin Cox (original creator, May 2017)
     - Lauren Chambers (modifications in 2018)
     - Keira Brooks (modifications in 2018)
-    - Shannon Osborne (modifications in 2020)
+    - Shannon Osborne (modifications in 2020-2022)
 
 Use
 ---

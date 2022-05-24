@@ -4,6 +4,7 @@ utils.coordinate_transforms module.
 Authors
 -------
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---

@@ -6,6 +6,7 @@ Authors
 -------
     - Keira Brooks
     - Lauren Chambers
+    - Shannon Osborne
 
 Use
 ---
