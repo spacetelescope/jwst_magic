@@ -27,8 +27,8 @@ def test_idl2dhas():
         "Incorrect conversion from ideal to DHAS coordinates."
 
 
-raw2dhas_parameters = [(1, (-53.563954655999986, -50.428367427999994)),
-                       (2, (-53.149448727999996, 50.25679589999999))]
+raw2dhas_parameters = [(1, (-53.454858927999986, -50.336197037999995)),
+                       (2, (-53.05303055199999, 50.216422318))]
 @pytest.mark.parametrize('guider, correct_conversion', raw2dhas_parameters)
 def test_raw2dhas(guider, correct_conversion):
     x_dhas, y_dhas = coordinate_transforms.raw2dhas(*PIXEL_COORDS, guider)
@@ -38,8 +38,8 @@ def test_raw2dhas(guider, correct_conversion):
         "Incorrect conversion from FGS raw to DHAS coordinates."
 
 
-raw2idl_parameters = [(1, (53.563954655999986, -50.428367427999994)),
-                      (2, (53.149448727999996, 50.25679589999999))]
+raw2idl_parameters = [(1, (53.454858927999986, -50.336197037999995)),
+                      (2, (53.05303055199999, 50.216422318))]
 @pytest.mark.parametrize('guider, correct_conversion', raw2idl_parameters)
 def test_raw2idl(guider, correct_conversion):
     x_idealangle, y_idealangle = coordinate_transforms.raw2idl(*PIXEL_COORDS, guider)
@@ -49,8 +49,8 @@ def test_raw2idl(guider, correct_conversion):
         "Incorrect conversion from FGS raw to ideal coordinates."
 
 
-raw2tel_parameters = [(1, (154.01361684103352, -749.5556063870631)),
-                      (2, (-30.13725333672268, -649.0559724725167))]
+raw2tel_parameters = [(1, (154.12067457260562, -749.4610764935308)),
+                      (2, (-30.04096977266842, -649.0966660356402))]
 @pytest.mark.parametrize('guider, correct_conversion', raw2tel_parameters)
 def test_raw2tel(guider, correct_conversion):
     v2, v3 = coordinate_transforms.raw2tel(*PIXEL_COORDS, guider)
@@ -63,9 +63,9 @@ def test_raw2tel(guider, correct_conversion):
 def test_convert_boresight_to_v2v3():
     v2v3_offset = coordinate_transforms.nrcpixel_offset_to_v2v3_offset(-20.4, -140.53, 'NRCA3')
 
-    assert np.isclose(v2v3_offset[0], -0.638167896), \
+    assert np.isclose(v2v3_offset[0], -0.6380422319), \
         "V2 value does not match expected value for boresight offset."
-    assert np.isclose(v2v3_offset[1], -4.4203823924000005), \
+    assert np.isclose(v2v3_offset[1], -4.4200943059), \
         "V3 value does not match expected value for boresight offset."
 
 
