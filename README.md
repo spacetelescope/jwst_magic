@@ -41,7 +41,7 @@ Allows the user to override the guide star catalog with the selected guide and r
 
 Installation notes
 ------------------
-This package was developed in a Python ≥3.7 environment.
+This package was developed in a Python ≥3.8 environment.
 
 ##### To install
 
