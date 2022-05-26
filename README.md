@@ -169,14 +169,10 @@ Questions
 -----------------
 No further development of this project is expected, so no support will be given to future questions. We encourage you to look to the documentation for answers.
 
-Code Maintainer
------------------
-* Shannon Osborne (GitHub: @shanosborne)
-
-Development Team
------------------
+Former Development Team
+-----------------------
 * Shannon Osborne (GitHub: @shanosborne)
 * Keira Brooks (GitHub: @kjbrooks)
-* Sherie Holfeltz
+* Sherie Holfeltz (GitHub: @stholfeltz)
 * Lauren Chambers (GitHub: @laurenmarietta)
 * Kathryn St. Laurent
