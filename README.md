@@ -9,7 +9,7 @@
 [![PyPI - License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/spacetelescope/jwst_magic/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)](https://www.python.org/)
 [![STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
-[![Build Status](https://github.com/spacetelescope/jwst_magic/workflows/jwst_magic%20CI/badge.svg)](https://github.com/spacetelescope/jwst_magic/actions)
+[![Build Status](https://github.com/spacetelescope/jwst_magic/workflows/MAGIC%20CI/badge.svg)](https://github.com/spacetelescope/jwst_magic/actions)
 
 > **WARNING**: As of April 2022, active development and maintenance has ceased on this project since it was expected and developed to be used solely during JWST OTE Commissioning which is complete.
 *No further support of this project should be expected.*
