@@ -39,6 +39,7 @@ GHA because they test the GUI.
 # Standard Library Imports
 from datetime import datetime
 import os
+import re
 import shutil
 import sys
 
@@ -87,6 +88,15 @@ VISIT_NUM = 1
 TEST_DIRECTORY = os.path.join(__location__, 'out', ROOT)
 
 PARAMETRIZED_DATA = parametrized_data()['test_segment_guiding']
+
+
+def isfloat(i):
+    """Helper function to test if a value can be turned into a float"""
+    try:
+        float(i)
+        return True
+    except ValueError:
+        return False
 
 
 @pytest.fixture()
@@ -466,7 +476,13 @@ ref_only4    | 6            | 12           | 90.963395    | -67.355716   | -32.2
         lines = f.read().split('\n')
 
     for l, c in zip(lines[2:], correct_file[2:]):
-        assert l.rstrip() == c.rstrip()
+        # Compare line by line, but for the table section, compare the floats as floats rather than as strings so -0 = +0
+        if '|' not in l:
+            assert l.rstrip() == c.rstrip()
+        else:
+            l = [float(item) if isfloat(item) else item for item in re.split('\s+\|\s+', l.rstrip())]
+            c = [float(item) if isfloat(item) else item for item in re.split('\s+\|\s+', c.rstrip())]
+            assert l == c
 
 
 sof_wo_obs_visit_parameters = [(OBSERVATION_NUM, ''),

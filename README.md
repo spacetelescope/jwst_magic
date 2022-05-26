@@ -7,9 +7,9 @@
 # Multi-Application Guiding Interface for Commissioning (MAGIC)
 
 [![PyPI - License](https://img.shields.io/pypi/l/Django.svg)](https://github.com/spacetelescope/jwst_magic/blob/main/LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.7%20%7C%203.8%20%7C%203.9-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.8%20%7C%203.9%20%7C%203.10-blue.svg)](https://www.python.org/)
 [![STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
-[![Build Status](https://github.com/spacetelescope/jwst_magic/workflows/jwst_magic%20CI/badge.svg)](https://github.com/spacetelescope/jwst_magic/actions)
+[![Build Status](https://github.com/spacetelescope/jwst_magic/workflows/MAGIC%20CI/badge.svg)](https://github.com/spacetelescope/jwst_magic/actions)
 
 > **WARNING**: As of April 2022, active development and maintenance has ceased on this project since it was expected and developed to be used solely during JWST OTE Commissioning which is complete.
 *No further support of this project should be expected.*
@@ -41,7 +41,7 @@ Allows the user to override the guide star catalog with the selected guide and r
 
 Installation notes
 ------------------
-This package was developed in a Python ≥3.7 environment.
+This package was developed in a Python ≥3.8 environment.
 
 ##### To install
 
@@ -169,14 +169,10 @@ Questions
 -----------------
 No further development of this project is expected, so no support will be given to future questions. We encourage you to look to the documentation for answers.
 
-Code Maintainer
------------------
-* Shannon Osborne (GitHub: @shanosborne)
-
-Development Team
------------------
+Former Development Team
+-----------------------
 * Shannon Osborne (GitHub: @shanosborne)
 * Keira Brooks (GitHub: @kjbrooks)
-* Sherie Holfeltz
+* Sherie Holfeltz (GitHub: @stholfeltz)
 * Lauren Chambers (GitHub: @laurenmarietta)
 * Kathryn St. Laurent
