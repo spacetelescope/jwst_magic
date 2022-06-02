@@ -94,15 +94,17 @@ This package was developed in a Python ≥3.8 environment.
 
 The `jwst_magic` package installation process will also check for the following package dependencies, and automatically install them using pip if they are not found:
   * `astropy`
+  * `jwst`
   * `matplotlib`
   * `numpy`
+  * `pandas`
   * `photutils`
   * `PyQt5`
   * `pysiaf`
   * `pytest`
   * `pyyaml`
   * `requests`
-  * `jwst`
+  * `scipy`
 
 Running the Tools
 -----------------
